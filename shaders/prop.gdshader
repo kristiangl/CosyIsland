@@ -19,4 +19,5 @@ void vertex() {
 void fragment() {
 	ALBEDO = mix(COLOR.rgb, tint.rgb, tint_mix);
 	ROUGHNESS = 1.0;
+	EMISSION = cel_ambient(ALBEDO);
 }

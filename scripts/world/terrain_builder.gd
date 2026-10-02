@@ -34,8 +34,8 @@ static func fresh_material() -> ShaderMaterial:
 	if _fresh_material == null:
 		_fresh_material = ShaderMaterial.new()
 		_fresh_material.shader = load("res://shaders/water.gdshader")
-		_fresh_material.set_shader_parameter("shallow", Color("6fcfc0"))
-		_fresh_material.set_shader_parameter("deep", Color("3c9fb0"))
+		_fresh_material.set_shader_parameter("shallow", Color("a6e6dc"))
+		_fresh_material.set_shader_parameter("deep", Color("7cc8d8"))
 		_fresh_material.set_shader_parameter("ripple_scale", 1.6)
 		_fresh_material.set_shader_parameter("flow", Vector2(0.0, -0.4))
 		_fresh_material.set_shader_parameter("shore_waves", 0.0)

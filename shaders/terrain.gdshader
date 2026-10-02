@@ -8,12 +8,12 @@ render_mode world_vertex_coords, specular_disabled;
 #include "res://shaders/include/grass_colour.gdshaderinc"
 #include "res://shaders/include/toon_light.gdshaderinc"
 
-uniform vec3 sand_light : source_color = vec3(0.80, 0.68, 0.48);
-uniform vec3 sand_dark : source_color = vec3(0.74, 0.62, 0.43);
-uniform vec3 sand_wet : source_color = vec3(0.60, 0.52, 0.40);
-uniform vec3 cliff_light : source_color = vec3(0.60, 0.47, 0.35);
-uniform vec3 cliff_dark : source_color = vec3(0.42, 0.32, 0.26);
-uniform vec3 bed_colour : source_color = vec3(0.45, 0.52, 0.42);
+uniform vec3 sand_light : source_color = vec3(0.98, 0.91, 0.76);
+uniform vec3 sand_dark : source_color = vec3(0.95, 0.86, 0.70);
+uniform vec3 sand_wet : source_color = vec3(0.86, 0.79, 0.68);
+uniform vec3 cliff_light : source_color = vec3(0.84, 0.70, 0.60);
+uniform vec3 cliff_dark : source_color = vec3(0.73, 0.59, 0.53);
+uniform vec3 bed_colour : source_color = vec3(0.58, 0.74, 0.70);
 
 varying vec3 world_pos;
 
@@ -44,4 +44,5 @@ void fragment() {
 	}
 	ALBEDO = col;
 	ROUGHNESS = 1.0;
+	EMISSION = cel_ambient(ALBEDO);
 }

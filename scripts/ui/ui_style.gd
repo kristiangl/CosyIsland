@@ -24,8 +24,17 @@ static func panel(colour: Color = CREAM, radius: int = 26) -> StyleBoxFlat:
 	return sb
 
 
+## Fredoka (SIL Open Font License, see assets/fonts/OFL.txt), semi-bold.
+static func font(weight: int = 560) -> FontVariation:
+	var fv := FontVariation.new()
+	fv.base_font = load("res://assets/fonts/Fredoka.ttf")
+	fv.variation_opentype = {TextServerManager.get_primary_interface().name_to_tag("weight"): weight}
+	return fv
+
+
 static func theme() -> Theme:
 	var t := Theme.new()
+	t.default_font = font()
 	t.default_font_size = 20
 	t.set_color("font_color", "Label", BROWN)
 	t.set_color("font_color", "Button", BROWN)

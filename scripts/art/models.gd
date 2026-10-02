@@ -6,20 +6,20 @@ extends RefCounted
 ## Everything uses one shared prop material and vertex colours, so the art style can be
 ## tuned in shaders/prop.gdshader and the palette constants below.
 
-const BARK := Color("7a5536")
-const BARK_LIGHT := Color("9a7048")
-const LEAF_DARK := Color("386a3b")
-const LEAF_MID := Color("4a7f42")
-const LEAF_LIGHT := Color("679a4e")
-const FRUIT_LEAF := Color("54833f")
-const PALM_LEAF := Color("4a8540")
-const ROCK := Color("a3a196")
-const WOOD_END := Color("e3c08f")
-const FABRIC := Color("5b9f8e")
-const FABRIC_DARK := Color("3f7469")
-const CREAM := Color("f4ead2")
-const PLANK := Color("b0814f")
-const PLANK_DARK := Color("8a6239")
+const BARK := Color("a87d62")
+const BARK_LIGHT := Color("c19a7c")
+const LEAF_DARK := Color("6aac72")
+const LEAF_MID := Color("80c17e")
+const LEAF_LIGHT := Color("9cd28f")
+const FRUIT_LEAF := Color("7fbf80")
+const PALM_LEAF := Color("78bd7a")
+const ROCK := Color("bdb8cc")
+const WOOD_END := Color("f6dcb4")
+const FABRIC := Color("7fc6b8")
+const FABRIC_DARK := Color("4f9488")
+const CREAM := Color("fff6e4")
+const PLANK := Color("d4a77e")
+const PLANK_DARK := Color("b08463")
 
 static var _cache: Dictionary = {}
 static var _material: ShaderMaterial
@@ -29,8 +29,8 @@ static func material() -> ShaderMaterial:
 	if _material == null:
 		_material = ShaderMaterial.new()
 		_material.shader = load("res://shaders/prop.gdshader")
-		# Softer falloff than the ground so round shapes like canopies read as round.
-		_material.set_shader_parameter("light_softness", 0.45)
+		# A touch softer than the ground so round shapes keep a hint of roundness.
+		_material.set_shader_parameter("light_softness", 0.1)
 	return _material
 
 
@@ -145,7 +145,7 @@ static func _palm(k: MeshKit, variant: int) -> void:
 		k.leaf(top, dir, 1.55, 0.5, leaf if i % 2 == 0 else leaf_light, 0.75)
 	for i in 3:
 		var a := TAU * i / 3.0
-		k.sphere(top + Vector3(cos(a) * 0.14, -0.14, sin(a) * 0.14), Vector3.ONE * 0.12, MeshKit.lin(Color("6b4a2b"), 0.6), 4, 7)
+		k.sphere(top + Vector3(cos(a) * 0.14, -0.14, sin(a) * 0.14), Vector3.ONE * 0.12, MeshKit.lin(Color("a07858"), 0.6), 4, 7)
 
 
 static func _rock(k: MeshKit, variant: int) -> void:
@@ -245,7 +245,7 @@ static func _tent(k: MeshKit) -> void:
 	var pole := MeshKit.lin(PLANK_DARK)
 	for z in [d + 0.05, -d - 0.05]:
 		k.cylinder(Vector3(0, h - 0.2, z), Vector3(0, h + 0.25, z), 0.04, 0.035, pole, 5)
-	var flag := MeshKit.lin(Color("e8766b"), 0.8)
+	var flag := MeshKit.lin(Color("f5a3a3"), 0.8)
 	var fa := k.vertex(Vector3(0, h + 0.25, d + 0.05), Vector3.BACK, flag)
 	var fb := k.vertex(Vector3(0.3, h + 0.17, d + 0.05), Vector3.BACK, flag)
 	var fc := k.vertex(Vector3(0, h + 0.09, d + 0.05), Vector3.BACK, flag)

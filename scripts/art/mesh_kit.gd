@@ -2,7 +2,7 @@ class_name MeshKit
 extends RefCounted
 ## Small toolkit for building low-poly meshes out of primitives in code.
 ##
-## Colours are given in sRGB and stored linear in the vertex colours. Vertex colour
+## Colours are given and stored in sRGB. Vertex colour
 ## alpha carries the wind sway weight (see shaders/prop.gdshader). Triangles are wound
 ## automatically from the supplied normals, so callers never think about winding.
 
@@ -11,13 +11,16 @@ var normals := PackedVector3Array()
 var colours := PackedColorArray()
 var indices := PackedInt32Array()
 
+const SHADE_SCALE := 0.35
+
 ## Applied to everything added; push and pop it to build nested parts.
 var xform := Transform3D.IDENTITY
 
 
+## Vertex colour for a palette colour, with the wind sway weight in alpha. Colours stay
+## sRGB: the Compatibility renderer converts ALBEDO to linear itself.
 static func lin(c: Color, sway: float = 0.0) -> Color:
-	var l := c.srgb_to_linear()
-	return Color(l.r, l.g, l.b, sway)
+	return Color(c.r, c.g, c.b, sway)
 
 
 func vertex(p: Vector3, n: Vector3, c: Color) -> int:
@@ -67,7 +70,8 @@ func sphere(centre: Vector3, radius: Vector3, c: Color, rings: int = 6, segments
 			var n := Vector3(unit.x / radius.x, unit.y / radius.y, unit.z / radius.z).normalized()
 			var col := c
 			if shade > 0.0:
-				var f := 1.0 - shade * (0.5 - unit.y * 0.5)
+				# Kept subtle: the cel lighting does the real shading.
+				var f := 1.0 - shade * SHADE_SCALE * (0.5 - unit.y * 0.5)
 				col = Color(c.r * f, c.g * f, c.b * f, c.a)
 			vertex(centre + unit * r, n, col)
 	var row := segments + 1

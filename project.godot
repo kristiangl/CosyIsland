@@ -50,6 +50,14 @@ curve_amount={
 "type": "float",
 "value": 0.004
 }
+cel_lit={
+"type": "vec3",
+"value": Vector3(1, 0.99, 0.96)
+}
+cel_shadow={
+"type": "vec3",
+"value": Vector3(0.73, 0.7, 0.89)
+}
 wind_strength={
 "type": "float",
 "value": 1.0

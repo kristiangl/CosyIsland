@@ -22,6 +22,7 @@ func _ready() -> void:
 	camera.far = 600.0
 	add_child(camera)
 	camera.make_current()
+	_add_outline_pass()
 	if target:
 		focus = target.global_position
 
@@ -37,6 +38,20 @@ func _process(delta: float) -> void:
 	camera.position = focus + Vector3(0, sin(pitch), cos(pitch)) * distance
 	camera.look_at(focus)
 	RenderingServer.global_shader_parameter_set("curve_origin", focus)
+
+
+## Full-screen ink outline pass (see shaders/outline_post.gdshader).
+func _add_outline_pass() -> void:
+	var quad := MeshInstance3D.new()
+	quad.name = "OutlinePass"
+	var mesh := QuadMesh.new()
+	quad.mesh = mesh
+	var mat := ShaderMaterial.new()
+	mat.shader = load("res://shaders/outline_post.gdshader")
+	quad.material_override = mat
+	quad.extra_cull_margin = 16384.0
+	quad.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	camera.add_child(quad)
 
 
 func _frame_island() -> void:

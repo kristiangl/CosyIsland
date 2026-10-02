@@ -2,7 +2,7 @@ shader_type sky;
 
 // Painted gradient sky driven by the time of day (see DayNight).
 
-uniform vec3 top_colour : source_color = vec3(0.35, 0.62, 0.92);
+uniform vec3 top_colour : source_color = vec3(0.55, 0.77, 0.95);
 uniform vec3 horizon_colour : source_color = vec3(0.86, 0.93, 0.96);
 uniform vec3 sun_colour : source_color = vec3(1.0, 0.95, 0.8);
 uniform vec3 sun_direction = vec3(0.0, 0.5, -1.0);

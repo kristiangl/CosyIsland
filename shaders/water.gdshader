@@ -8,8 +8,8 @@ render_mode world_vertex_coords, specular_disabled;
 #include "res://shaders/include/world.gdshaderinc"
 #include "res://shaders/include/toon_light.gdshaderinc"
 
-uniform vec3 shallow : source_color = vec3(0.33, 0.74, 0.74);
-uniform vec3 deep : source_color = vec3(0.12, 0.40, 0.63);
+uniform vec3 shallow : source_color = vec3(0.60, 0.90, 0.88);
+uniform vec3 deep : source_color = vec3(0.40, 0.70, 0.88);
 uniform vec3 foam : source_color = vec3(0.97, 0.98, 0.95);
 uniform float ripple_scale = 1.0;
 uniform vec2 flow = vec2(0.0, 0.0);
@@ -45,4 +45,5 @@ void fragment() {
 
 	ALBEDO = col;
 	ROUGHNESS = 0.6;
+	EMISSION = cel_ambient(ALBEDO);
 }

@@ -209,6 +209,33 @@ func _test_crafting() -> void:
 	var stool := w.place_item("wooden_stool", Rect2i(spot, Vector2i.ONE), 1)
 	Inventory.remove_item("wooden_stool", 1)
 	check(w.pack_up(stool) and Inventory.count_of("wooden_stool") == 1, "furniture packs back into the pockets")
+
+	# Small things go on tables, and the table can't be packed until they're off.
+	var table := w.place_item("wooden_table", Rect2i(spot, Vector2i(2, 1)), 0)
+	check(w.surface_height(spot.x, spot.y) > 0.5, "a table has a top to put things on")
+	check(w.can_place_on_surface(spot), "can put something on an empty table")
+	var pot := w.place_on_surface("teapot", spot, 0)
+	check(w.surface_item_at(spot.x, spot.y) == pot, "the teapot sits on the table")
+	check(not w.can_place_on_surface(spot), "one small thing per table tile")
+	check(w.can_place_on_surface(spot + Vector2i(1, 0)), "the other half of the table is still free")
+	check(w.object_at(spot.x, spot.y) == table, "the table still owns the tile")
+	check(not w.pack_up(table), "can't pack a table with things on it")
+	var saved: Dictionary = JSON.parse_string(JSON.stringify(w.to_save()))
+	var w2 := World.new()
+	add_child(w2)
+	w2.setup(IslandGenerator.generate(42), saved)
+	check(w2.surface_item_at(spot.x, spot.y).get("item", "") == "teapot", "things on tables survive a save round trip")
+	w2.free()
+	check(w.pack_up(pot) and Inventory.count_of("teapot") == 1, "things on tables pack up")
+	check(w.pack_up(table), "an empty table packs up")
+
+	var bench_seat := w.place_item("log_bench", Rect2i(spot, Vector2i(2, 1)), 0)
+	var spots := w.seats(bench_seat)
+	check(spots.size() == 2, "a two-tile bench seats two (got %d)" % spots.size())
+	if spots.size() == 2:
+		check(spots[0]["position"].distance_to(spots[1]["position"]) > 0.9, "bench seats are side by side")
+		check(spots[0]["facing"].is_equal_approx(Vector3(0, 0, 1)), "an unrotated bench faces south")
+	check(w.seats(w.place_item("wooden_box", Rect2i(spot + Vector2i(0, 2), Vector2i.ONE), 0)).is_empty(), "boxes aren't seats")
 	w.free()
 
 	# Islands saved before the DIY update get a workbench added on load.

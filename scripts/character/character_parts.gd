@@ -6,15 +6,22 @@ extends RefCounted
 ##   legs pivot at the hips (y = HIP_Y), arms pivot at the shoulders, the head pivots at
 ##   the neck and its mesh is centred HEAD_CENTRE above that.
 ## Parts that belong to a pivot (sleeves, trouser legs, shoes) are built in that pivot's
-## local space. Head-mounted parts (hair, hats, glasses) are built around the head centre.
+## local space. Arms and legs come in two pieces each, upper (from the shoulder or hip)
+## and lower (from the elbow or knee), so they can bend. Head-mounted parts (hair, hats, glasses) are built around the head centre.
 ##
 ## Vertex colour: red = brightness, green = 0 for trim (which takes the second colour).
 
 const HIP_Y := 0.4
 const LEG_X := 0.085
 const LEG_LENGTH := 0.3
+## Hip to knee, and knee to the ankle (the foot sits just below it).
+const LEG_UPPER := 0.13
+const LEG_LOWER := 0.17
 const SHOULDER := Vector3(0.19, 0.67, 0.0)
 const ARM_LENGTH := 0.24
+## Shoulder to elbow, and elbow to the middle of the hand.
+const ARM_UPPER := 0.12
+const ARM_LOWER := 0.12
 const NECK_Y := 0.74
 const HEAD_CENTRE := Vector3(0, 0.32, 0)
 const HEAD_RADIUS := Vector3(0.38, 0.35, 0.36)
@@ -46,28 +53,38 @@ static func torso_skin() -> ArrayMesh:
 	return k.commit()
 
 
-static func arm_skin() -> ArrayMesh:
-	var k := MeshKit.new()
-	k.sphere(Vector3.ZERO, Vector3.ONE * 0.058, PLAIN, 6, 10)
-	k.cylinder(Vector3.ZERO, Vector3(0, -ARM_LENGTH + 0.03, 0), 0.056, 0.05, PLAIN, 10, false)
-	k.sphere(Vector3(0, -ARM_LENGTH, 0), Vector3(0.062, 0.066, 0.06), PLAIN, 6, 10)
-	return k.commit()
+## {"upper": shoulder to elbow, "lower": forearm and hand}.
+static func arm_skin() -> Dictionary:
+	var upper := MeshKit.new()
+	upper.sphere(Vector3.ZERO, Vector3.ONE * 0.058, PLAIN, 6, 10)
+	upper.cylinder(Vector3.ZERO, Vector3(0, -ARM_UPPER, 0), 0.056, 0.053, PLAIN, 10, false)
+	var lower := MeshKit.new()
+	lower.sphere(Vector3.ZERO, Vector3.ONE * 0.053, PLAIN, 5, 10)
+	lower.cylinder(Vector3.ZERO, Vector3(0, -ARM_LOWER + 0.03, 0), 0.053, 0.05, PLAIN, 10, false)
+	lower.sphere(Vector3(0, -ARM_LOWER, 0), Vector3(0.062, 0.066, 0.06), PLAIN, 6, 10)
+	return {"upper": upper.commit(), "lower": lower.commit()}
 
 
-static func leg_skin(barefoot: bool) -> ArrayMesh:
-	var k := MeshKit.new()
-	k.cylinder(Vector3(0, 0.02, 0), Vector3(0, -LEG_LENGTH + 0.02, 0), 0.066, 0.058, PLAIN, 10, false)
+## {"upper": thigh, "lower": shin (and a bare foot)}.
+static func leg_skin(barefoot: bool) -> Dictionary:
+	var upper := MeshKit.new()
+	upper.cylinder(Vector3(0, 0.02, 0), Vector3(0, -LEG_UPPER, 0), 0.066, 0.062, PLAIN, 10, false)
+	var lower := MeshKit.new()
+	lower.sphere(Vector3.ZERO, Vector3.ONE * 0.062, PLAIN, 5, 10)
+	lower.cylinder(Vector3.ZERO, Vector3(0, -LEG_LOWER + 0.02, 0), 0.062, 0.058, PLAIN, 10, false)
 	if barefoot:
-		k.sphere(Vector3(0, -LEG_LENGTH - 0.005, 0.025), Vector3(0.065, 0.05, 0.095), PLAIN, 6, 10)
-	return k.commit()
+		lower.sphere(Vector3(0, -LEG_LOWER - 0.005, 0.025), Vector3(0.065, 0.05, 0.095), PLAIN, 6, 10)
+	return {"upper": upper.commit(), "lower": lower.commit()}
 
 
 # --- Tops --------------------------------------------------------------------------
 
-## Returns {"torso": ArrayMesh, "sleeve": ArrayMesh or null}.
+## Returns {"torso": ArrayMesh, "sleeve": ArrayMesh or null, "cuff": ArrayMesh or null}:
+## the sleeve sits on the upper arm, the cuff (long sleeves) on the forearm.
 static func top(style: String) -> Dictionary:
 	var k := MeshKit.new()
 	var sleeve := MeshKit.new()
+	var cuff := MeshKit.new()
 	var shell := TORSO_RADIUS + Vector3(0.016, 0.014, 0.016)
 	k.sphere(TORSO_CENTRE, shell, PLAIN, 10, 18)
 	match style:
@@ -76,7 +93,7 @@ static func top(style: String) -> Dictionary:
 			_short_sleeve(sleeve)
 		"long_tee":
 			_hem(k, 0.4, 0.205)
-			_long_sleeve(sleeve, 0.064, false)
+			_long_sleeve(sleeve, cuff, 0.064, false)
 		"tank":
 			_hem(k, 0.4, 0.205)
 			for s: float in [-1.0, 1.0]:
@@ -94,17 +111,17 @@ static func top(style: String) -> Dictionary:
 			k.sphere(Vector3(0, 0.47, 0.14), Vector3(0.12, 0.05, 0.035), SHADED, 4, 10)
 			for s: float in [-1.0, 1.0]:
 				k.cylinder(Vector3(s * 0.045, 0.72, 0.15), Vector3(s * 0.05, 0.6, 0.175), 0.008, 0.008, TRIM, 4, true)
-			_long_sleeve(sleeve, 0.07, true)
+			_long_sleeve(sleeve, cuff, 0.07, true)
 		"sweater":
 			_hem(k, 0.39, 0.212, SHADED)
 			k.cylinder(Vector3(0, 0.72, 0), Vector3(0, 0.78, 0), 0.085, 0.08, SHADED, 14, false)
-			_long_sleeve(sleeve, 0.072, true)
+			_long_sleeve(sleeve, cuff, 0.072, true)
 		"coat":
 			k.cylinder(Vector3(0, 0.46, 0), Vector3(0, 0.22, 0), 0.205, 0.25, PLAIN, 16, true)
 			_collar(k)
 			for i in 4:
 				k.sphere(Vector3(0.05, 0.64 - i * 0.1, 0.18 if i < 2 else 0.2), Vector3.ONE * 0.016, TRIM, 3, 6)
-			_long_sleeve(sleeve, 0.072, true)
+			_long_sleeve(sleeve, cuff, 0.072, true)
 		"dress":
 			k.cylinder(Vector3(0, 0.47, 0), Vector3(0, 0.17, 0), 0.2, 0.3, PLAIN, 18, true)
 			_hem(k, 0.18, 0.3, TRIM)
@@ -114,7 +131,8 @@ static func top(style: String) -> Dictionary:
 			for s: float in [-1.0, 1.0]:
 				k.cylinder(Vector3(s * 0.1, 0.62, 0.12), Vector3(s * 0.12, 0.76, 0.0), 0.02, 0.02, TRIM, 6, false)
 			sleeve = null
-	return {"torso": k.commit(), "sleeve": sleeve.commit() if sleeve else null}
+	return {"torso": k.commit(), "sleeve": sleeve.commit() if sleeve else null,
+		"cuff": cuff.commit() if not cuff.is_empty() else null}
 
 
 static func _hem(k: MeshKit, y: float, r: float, c: Color = PLAIN) -> void:
@@ -131,18 +149,21 @@ static func _short_sleeve(k: MeshKit) -> void:
 	k.cylinder(Vector3(0, 0.0, 0), Vector3(0, -0.11, 0), 0.074, 0.07, PLAIN, 10, true)
 
 
-static func _long_sleeve(k: MeshKit, r: float, cuff_shaded: bool) -> void:
+static func _long_sleeve(k: MeshKit, lower: MeshKit, r: float, cuff_shaded: bool) -> void:
 	k.sphere(Vector3(0, 0.0, 0), Vector3.ONE * (r + 0.005), PLAIN, 6, 10)
-	k.cylinder(Vector3(0, 0.0, 0), Vector3(0, -ARM_LENGTH + 0.05, 0), r, r - 0.006, PLAIN, 10, false)
-	k.cylinder(Vector3(0, -ARM_LENGTH + 0.07, 0), Vector3(0, -ARM_LENGTH + 0.035, 0), r + 0.004, r + 0.004, SHADED if cuff_shaded else PLAIN, 10, true)
+	k.cylinder(Vector3(0, 0.0, 0), Vector3(0, -ARM_UPPER, 0), r, r - 0.003, PLAIN, 10, false)
+	lower.sphere(Vector3.ZERO, Vector3.ONE * (r - 0.003), PLAIN, 5, 10)
+	lower.cylinder(Vector3.ZERO, Vector3(0, -ARM_LOWER + 0.05, 0), r - 0.003, r - 0.006, PLAIN, 10, false)
+	lower.cylinder(Vector3(0, -ARM_LOWER + 0.07, 0), Vector3(0, -ARM_LOWER + 0.035, 0), r + 0.004, r + 0.004, SHADED if cuff_shaded else PLAIN, 10, true)
 
 
 # --- Bottoms -----------------------------------------------------------------------
 
-## Returns {"hips": ArrayMesh, "leg": ArrayMesh or null}.
+## Returns {"hips": ArrayMesh, "leg": thigh piece or null, "shin": lower piece or null}.
 static func bottom(style: String) -> Dictionary:
 	var k := MeshKit.new()
 	var leg := MeshKit.new()
+	var shin := MeshKit.new()
 	if style != "overalls":
 		# Tucked just inside the top's hem so nothing pokes out below it.
 		k.sphere(Vector3(0, 0.41, 0), Vector3(0.185, 0.1, 0.155), PLAIN, 6, 16)
@@ -150,9 +171,9 @@ static func bottom(style: String) -> Dictionary:
 		"shorts":
 			leg.cylinder(Vector3(0, 0.03, 0), Vector3(0, -0.1, 0), 0.08, 0.078, PLAIN, 10, true)
 		"trousers":
-			leg.cylinder(Vector3(0, 0.03, 0), Vector3(0, -LEG_LENGTH + 0.04, 0), 0.078, 0.072, PLAIN, 10, true)
+			_trouser_leg(leg, shin, 0.078, 0.072, 0.04)
 		"leggings":
-			leg.cylinder(Vector3(0, 0.03, 0), Vector3(0, -LEG_LENGTH + 0.05, 0), 0.07, 0.064, PLAIN, 10, true)
+			_trouser_leg(leg, shin, 0.07, 0.065, 0.05)
 		"skirt":
 			k.cylinder(Vector3(0, 0.48, 0), Vector3(0, 0.28, 0), 0.2, 0.27, PLAIN, 18, true)
 			leg = null
@@ -170,15 +191,23 @@ static func bottom(style: String) -> Dictionary:
 				k.cylinder(Vector3(s * 0.085, 0.67, front - 0.005), Vector3(s * 0.11, 0.775, 0.02), 0.022, 0.022, PLAIN, 6, true)
 				k.cylinder(Vector3(s * 0.11, 0.775, 0.02), Vector3(s * 0.09, 0.56, -TORSO_RADIUS.z - 0.025), 0.022, 0.022, PLAIN, 6, true)
 				k.sphere(Vector3(s * 0.085, 0.66, front + 0.012), Vector3.ONE * 0.017, TRIM, 3, 6)
-			leg.cylinder(Vector3(0, 0.03, 0), Vector3(0, -LEG_LENGTH + 0.04, 0), 0.08, 0.076, PLAIN, 10, true)
-	return {"hips": k.commit(), "leg": leg.commit() if leg else null}
+			_trouser_leg(leg, shin, 0.08, 0.075, 0.04)
+	return {"hips": k.commit(), "leg": leg.commit() if leg else null,
+		"shin": shin.commit() if not shin.is_empty() else null}
+
+
+static func _trouser_leg(upper: MeshKit, lower: MeshKit, r_top: float, r_bottom: float, hem: float) -> void:
+	upper.cylinder(Vector3(0, 0.03, 0), Vector3(0, -LEG_UPPER, 0), r_top, r_top - 0.002, PLAIN, 10, false)
+	lower.sphere(Vector3.ZERO, Vector3.ONE * (r_top - 0.002), PLAIN, 5, 10)
+	lower.cylinder(Vector3.ZERO, Vector3(0, -LEG_LOWER + hem, 0), r_top - 0.002, r_bottom, PLAIN, 10, true)
 
 
 # --- Shoes -------------------------------------------------------------------------
 
+## Built on the shin, so the foot is LEG_LOWER below the knee.
 static func shoe(style: String) -> ArrayMesh:
 	var k := MeshKit.new()
-	var y := -LEG_LENGTH
+	var y := -LEG_LOWER
 	match style:
 		"sneakers":
 			k.sphere(Vector3(0, y + 0.01, 0.03), Vector3(0.078, 0.06, 0.115), PLAIN, 6, 12)

@@ -15,6 +15,9 @@ var facing := Vector3(0, 0, 1)
 var model: CharacterModel
 var _speed := 0.0
 var _busy := 0.0
+## The furniture being sat on, or -1.
+var _seat_uid := -1
+var _stand_spot := Vector3.ZERO
 
 
 func setup(w: World, start: Vector3, look: Dictionary) -> void:
@@ -29,22 +32,35 @@ func setup(w: World, start: Vector3, look: Dictionary) -> void:
 func _physics_process(delta: float) -> void:
 	var active := Game.mode == Game.Mode.PLAY or Game.mode == Game.Mode.PLACING
 	var input := Input.get_vector("move_left", "move_right", "move_up", "move_down") if active else Vector2.ZERO
+	if _seat_uid >= 0:
+		# Any push on the stick (or cancel) gets back up.
+		if input.length() > 0.5 or (active and Input.is_action_just_pressed("cancel")):
+			_stand_up()
+		model.animate(delta, 0.0)
+		return
 	if _busy > 0.0:
 		_busy -= delta
 		input = Vector2.ZERO
 	var dir := Vector3(input.x, 0, input.y)
 	var running := Input.is_action_pressed("run") and Game.mode == Game.Mode.PLAY
 	var target_speed := dir.length() * (RUN_SPEED if running else WALK_SPEED)
-	_speed = move_toward(_speed, target_speed, delta * 30.0)
+	var old_speed := _speed
+	# Quick to get going, a touch quicker to stop.
+	_speed = move_toward(_speed, target_speed, delta * (16.0 if target_speed > _speed else 24.0))
+	var old_yaw := atan2(facing.x, facing.z)
 	if dir.length() > 0.1:
-		facing = facing.slerp(dir.normalized(), 1.0 - exp(-delta * 16.0)).normalized()
-		_move(dir.normalized() * _speed * delta)
-	model.rotation.y = atan2(facing.x, facing.z)
-	model.animate(delta, _speed if dir.length() > 0.1 else 0.0)
+		facing = facing.slerp(dir.normalized(), 1.0 - exp(-delta * 14.0)).normalized()
+	if _speed > 0.01:
+		var heading := dir.normalized() if dir.length() > 0.1 else facing
+		_move(heading * _speed * delta)
+	var yaw := atan2(facing.x, facing.z)
+	model.rotation.y = yaw
+	var turn_rate := wrapf(yaw - old_yaw, -PI, PI) / maxf(delta, 0.0001)
+	model.animate(delta, _speed, turn_rate, (_speed - old_speed) / maxf(delta, 0.0001))
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if Game.mode != Game.Mode.PLAY or _busy > 0.0:
+	if Game.mode != Game.Mode.PLAY or _busy > 0.0 or _seat_uid >= 0:
 		return
 	if event.is_action_pressed("use"):
 		_use()
@@ -112,7 +128,7 @@ func _use() -> void:
 	match tool_kind:
 		"axe", "shovel":
 			_busy = SWING_TIME
-			model.swing("chop")
+			model.play("chop")
 			await get_tree().create_timer(IMPACT_TIME).timeout
 			if kind in ["tree", "fruit_tree", "palm"]:
 				if tool_kind == "axe":
@@ -127,13 +143,15 @@ func _use() -> void:
 		_:
 			if kind in ["tree", "fruit_tree", "palm"]:
 				_busy = SWING_TIME
-				model.swing("shake")
+				model.play("shake")
 				world.shake(obj, position)
 
 
 func _interact(obj: Dictionary) -> void:
 	var def := ItemDB.placeable(obj["item"])
-	if def.get("workbench", false):
+	if def.has("seat"):
+		_sit_on(obj)
+	elif def.get("workbench", false):
 		Events.workbench_opened.emit()
 	elif obj["item"] == "tent_kit":
 		Events.toast.emit("Home sweet home! (You'll be able to go inside soon.)")
@@ -141,19 +159,63 @@ func _interact(obj: Dictionary) -> void:
 		Events.toast.emit("What a lovely %s." % ItemDB.display_name(obj["item"]).to_lower())
 
 
+func _sit_on(obj: Dictionary) -> void:
+	var spots := world.seats(obj)
+	if spots.is_empty():
+		return
+	spots.sort_custom(func(a, b): return a["position"].distance_to(position) < b["position"].distance_to(position))
+	var spot: Dictionary = spots[0]
+	_seat_uid = obj["uid"]
+	_stand_spot = position
+	facing = spot["facing"]
+	var seat_pos: Vector3 = spot["position"] - facing * 0.04
+	_busy = 0.25
+	var tw := create_tween().set_parallel()
+	tw.tween_property(self, "position", seat_pos, 0.22).set_trans(Tween.TRANS_QUAD)
+	# Lift the model so the hips rest on the seat.
+	tw.tween_property(model, "position:y", spot["height"] - CharacterParts.HIP_Y + 0.05, 0.22)
+	model.rotation.y = atan2(facing.x, facing.z)
+	model.set_sitting(true)
+
+
+func _stand_up() -> void:
+	_seat_uid = -1
+	model.set_sitting(false)
+	# Step off towards the front if there's room, else back where we came from.
+	var front := position + facing * 0.85
+	var goal := _stand_spot
+	if world.is_walkable(front.x, front.z):
+		goal = Vector3(front.x, world.ground_height(front.x, front.z), front.z)
+	_busy = 0.2
+	var tw := create_tween().set_parallel()
+	tw.tween_property(self, "position", goal, 0.2).set_trans(Tween.TRANS_QUAD)
+	tw.tween_property(model, "position:y", 0.0, 0.2)
+
+
+func is_sitting() -> bool:
+	return _seat_uid >= 0
+
+
 func _pick_up() -> void:
 	for t in [tile(), target_tile()]:
 		if world.pick_up(t.x, t.y):
-			_busy = 0.25
-			model.swing("shake")
+			_busy = 0.3
+			model.play("pickup")
 			return
-	# Furniture can be packed back into the pockets.
+	# Things on tables come off first, then furniture can be packed back into the pockets.
+	var front := target_tile()
+	var on_table := world.surface_item_at(front.x, front.y)
+	if not on_table.is_empty():
+		if world.pack_up(on_table):
+			_busy = 0.3
+			model.play("pickup")
+		return
 	var obj := _facing_object()
 	if obj.get("kind", "") == "placed":
 		_turn_towards(obj)
 		if world.pack_up(obj):
-			_busy = 0.25
-			model.swing("shake")
+			_busy = 0.3
+			model.play("pickup")
 
 
 func _turn_towards(obj: Dictionary) -> void:

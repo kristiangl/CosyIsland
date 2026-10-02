@@ -30,6 +30,9 @@ func _ready() -> void:
 	for pair in Game.args.get("base", "").split(",", false):
 		var kv: PackedStringArray = pair.split(":")
 		base[kv[0]] = kv[1]
+	if Game.args.has("poses"):
+		_pose_sheet(base)
+		return
 	if Game.args.has("vary"):
 		# One character per option of the given key, on the --base look.
 		for opt in Appearance.options(Game.args["vary"]):
@@ -48,9 +51,38 @@ func _ready() -> void:
 		c.position = Vector3((i - (count - 1) * 0.5) * spacing, 0, 0)
 		c.rotation.y = angle
 		add_child(c)
+	_add_camera()
+
+
+func _add_camera() -> void:
 	var cam := CameraRig.new()
 	add_child(cam)
 	cam.set_process(false)
 	cam.camera.fov = 30
 	cam.camera.position = Vector3(0, 2.2, 7.2)
 	cam.camera.look_at(Vector3(0, 0.75, 0))
+
+
+## One character per pose, frozen part-way through: idle, walk, run, chop, pickup, sit,
+## cheer, shake. Each is stepped with fixed time steps to the interesting moment.
+func _pose_sheet(look: Dictionary) -> void:
+	var poses := [["idle", 0.0, 0.5], ["walk", 3.4, 0.33], ["run", 6.4, 0.3], ["chop", 0.0, 0.17],
+		["pickup", 0.0, 0.17], ["sit", 0.0, 0.5], ["cheer", 0.0, 0.35], ["shake", 0.0, 0.2]]
+	var spacing := 0.85
+	for i in poses.size():
+		var c := CharacterModel.new(look)
+		c.position = Vector3((i - (poses.size() - 1) * 0.5) * spacing, 0, 0)
+		c.rotation.y = deg_to_rad(float(Game.args.get("angle", "35")))
+		add_child(c)
+		var pose: String = poses[i][0]
+		var speed: float = poses[i][1]
+		var time: float = poses[i][2]
+		if pose in ["chop", "pickup", "cheer", "shake"]:
+			c.play(pose)
+		if pose == "sit":
+			c.set_sitting(true)
+			c.position.y = 0.12
+		var steps := int(time / 0.01)
+		for s in steps:
+			c.animate(0.01, speed)
+	_add_camera()

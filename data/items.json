@@ -135,7 +135,8 @@
 				],
 				"model": "furniture:workbench",
 				"rotatable": true,
-				"workbench": true
+				"workbench": true,
+				"surface": 0.8
 			}
 		},
 		"wooden_stool": {
@@ -151,7 +152,8 @@
 					1
 				],
 				"model": "furniture:wooden_stool",
-				"rotatable": true
+				"rotatable": true,
+				"seat": 0.48
 			}
 		},
 		"wooden_chair": {
@@ -167,7 +169,8 @@
 					1
 				],
 				"model": "furniture:wooden_chair",
-				"rotatable": true
+				"rotatable": true,
+				"seat": 0.48
 			}
 		},
 		"wooden_table": {
@@ -183,7 +186,8 @@
 					1
 				],
 				"model": "furniture:wooden_table",
-				"rotatable": true
+				"rotatable": true,
+				"surface": 0.75
 			}
 		},
 		"log_bench": {
@@ -199,7 +203,8 @@
 					1
 				],
 				"model": "furniture:log_bench",
-				"rotatable": true
+				"rotatable": true,
+				"seat": 0.53
 			}
 		},
 		"stump_table": {
@@ -215,7 +220,8 @@
 					1
 				],
 				"model": "furniture:stump_table",
-				"rotatable": true
+				"rotatable": true,
+				"surface": 0.56
 			}
 		},
 		"wooden_box": {
@@ -231,7 +237,8 @@
 					1
 				],
 				"model": "furniture:wooden_box",
-				"rotatable": true
+				"rotatable": true,
+				"surface": 0.66
 			}
 		},
 		"wooden_shelf": {
@@ -263,7 +270,8 @@
 					2
 				],
 				"model": "furniture:simple_bed",
-				"rotatable": true
+				"rotatable": true,
+				"seat": 0.45
 			}
 		},
 		"barrel": {
@@ -279,7 +287,8 @@
 					1
 				],
 				"model": "furniture:barrel",
-				"rotatable": true
+				"rotatable": true,
+				"surface": 0.76
 			}
 		},
 		"firewood_pile": {
@@ -295,7 +304,8 @@
 					1
 				],
 				"model": "furniture:firewood_pile",
-				"rotatable": true
+				"rotatable": true,
+				"surface": 0.5
 			}
 		},
 		"campfire": {
@@ -345,7 +355,8 @@
 					1
 				],
 				"model": "furniture:stone_stool",
-				"rotatable": true
+				"rotatable": true,
+				"seat": 0.4
 			}
 		},
 		"flower_pot": {
@@ -361,7 +372,8 @@
 					1
 				],
 				"model": "furniture:flower_pot",
-				"rotatable": true
+				"rotatable": true,
+				"small": true
 			}
 		},
 		"clay_vase": {
@@ -377,7 +389,8 @@
 					1
 				],
 				"model": "furniture:clay_vase",
-				"rotatable": true
+				"rotatable": true,
+				"small": true
 			}
 		},
 		"garden_lantern": {
@@ -474,7 +487,8 @@
 					1
 				],
 				"model": "furniture:iron_bench",
-				"rotatable": true
+				"rotatable": true,
+				"seat": 0.49
 			}
 		},
 		"garden_well": {
@@ -491,6 +505,92 @@
 				],
 				"model": "furniture:garden_well",
 				"rotatable": true
+			}
+		},
+		"teapot": {
+			"name": "Teapot",
+			"category": "furniture",
+			"stack": 1,
+			"price": 300,
+			"color": "#f4a6c0",
+			"desc": "A round little teapot. Tea for two?",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "furniture:teapot",
+				"rotatable": true,
+				"small": true
+			}
+		},
+		"candle_set": {
+			"name": "Candles",
+			"category": "furniture",
+			"stack": 1,
+			"price": 300,
+			"color": "#fff4e0",
+			"desc": "Three candles that glow softly at night.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "furniture:candle_set",
+				"rotatable": true,
+				"small": true,
+				"light": true
+			}
+		},
+		"book_stack": {
+			"name": "Book Stack",
+			"category": "furniture",
+			"stack": 1,
+			"price": 300,
+			"color": "#78a6dc",
+			"desc": "A wobbly pile of favourite books.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "furniture:book_stack",
+				"rotatable": true,
+				"small": true
+			}
+		},
+		"potted_plant": {
+			"name": "Potted Plant",
+			"category": "furniture",
+			"stack": 1,
+			"price": 300,
+			"color": "#86c27a",
+			"desc": "A leafy plant in a tiny pot.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "furniture:potted_plant",
+				"rotatable": true,
+				"small": true
+			}
+		},
+		"fruit_bowl": {
+			"name": "Fruit Bowl",
+			"category": "furniture",
+			"stack": 1,
+			"price": 300,
+			"color": "#e09a72",
+			"desc": "A wooden bowl piled with fruit.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "furniture:fruit_bowl",
+				"rotatable": true,
+				"small": true
 			}
 		}
 	},

@@ -157,6 +157,35 @@
 				"stone": 10,
 				"wood": 4
 			}
+		},
+		"teapot": {
+			"materials": {
+				"clay": 3
+			}
+		},
+		"candle_set": {
+			"materials": {
+				"clay": 1,
+				"wood": 1
+			},
+			"known": true
+		},
+		"book_stack": {
+			"materials": {
+				"wood": 3
+			}
+		},
+		"potted_plant": {
+			"materials": {
+				"clay": 2,
+				"tree_branch": 1
+			},
+			"known": true
+		},
+		"fruit_bowl": {
+			"materials": {
+				"wood": 3
+			}
 		}
 	}
 }

@@ -22,6 +22,7 @@ var _objects: Dictionary = {}   # uid -> object dictionary
 var _nodes: Dictionary = {}     # uid -> Node3D
 var _occupant: Dictionary = {}  # tile index -> uid
 var _deck: Dictionary = {}      # tile index -> bridge deck height
+var _on_surface: Dictionary = {} # tile index -> uid of a small thing sitting on furniture
 var _rng := RandomNumberGenerator.new()
 var _is_night := false
 var _light_check := 0.0
@@ -128,9 +129,12 @@ func remove_object(uid: int) -> void:
 		return
 	for tile in footprint(obj):
 		var i := data.idx(tile.x, tile.y)
+		if obj.has("on"):
+			_on_surface.erase(i)
+			continue
 		if _occupant.get(i, -1) == uid:
 			_occupant.erase(i)
-		if obj["kind"] == "placed":
+		if obj["kind"] == "placed" and grass:
 			grass.set_tile_visible(data, tile.x, tile.y, true)
 	_objects.erase(uid)
 	data.objects.erase(obj)
@@ -166,10 +170,12 @@ func _register(obj: Dictionary) -> void:
 		var ends := [Vector2i(obj["x"], obj["z"]) - axis, Vector2i(obj["x"], obj["z"]) + axis * obj["length"]]
 		for end: Vector2i in ends:
 			grass.set_tile_visible(data, end.x, end.y, false)
+	elif obj.has("on"):
+		_on_surface[data.idx(obj["x"], obj["z"])] = uid
 	else:
 		for tile in footprint(obj):
 			_occupant[data.idx(tile.x, tile.y)] = uid
-			if obj["kind"] == "placed":
+			if obj["kind"] == "placed" and grass:
 				grass.set_tile_visible(data, tile.x, tile.y, false)
 	_spawn_node(obj)
 
@@ -195,6 +201,8 @@ func _spawn_node(obj: Dictionary) -> void:
 				node.rotation.y = PI * 0.5
 		"placed":
 			node.rotation.y = -PI * 0.5 * obj.get("rot", 0)
+			if obj.has("on"):
+				y += ItemDB.placeable(_objects.get(obj["on"], {}).get("item", "")).get("surface", 0.0)
 		"tree", "fruit_tree", "palm", "rock", "flower":
 			node.rotation.y = fposmod(obj["uid"] * 2.399, TAU)
 			if obj["kind"] == "flower":
@@ -310,6 +318,10 @@ func pack_up(obj: Dictionary) -> bool:
 	if obj.get("fixed", false) or ItemDB.placeable(obj["item"]).get("structure", false):
 		Events.toast.emit("That's staying right where it is.")
 		return false
+	for tile in footprint(obj):
+		if not obj.has("on") and _on_surface.has(data.idx(tile.x, tile.y)):
+			Events.toast.emit("Clear the things off it first.")
+			return false
 	if Inventory.add_item(obj["item"]) > 0:
 		Events.toast.emit("Your pockets are full!")
 		return false
@@ -430,6 +442,50 @@ func can_place(rect: Rect2i, player_pos: Vector3) -> bool:
 			elif not is_equal_approx(level, h):
 				return false
 	return not rect.has_point(Vector2i(floori(player_pos.x), floori(player_pos.z)))
+
+
+# --- Surfaces and seats --------------------------------------------------------------
+
+## The small thing sitting on furniture at this tile, if any.
+func surface_item_at(x: int, z: int) -> Dictionary:
+	if not data.in_bounds(x, z):
+		return {}
+	return _objects.get(_on_surface.get(data.idx(x, z), -1), {})
+
+
+## Height of the furniture top at this tile that small things can stand on, or -1.
+func surface_height(x: int, z: int) -> float:
+	var obj := object_at(x, z)
+	if obj.get("kind", "") != "placed":
+		return -1.0
+	return ItemDB.placeable(obj["item"]).get("surface", -1.0)
+
+
+func can_place_on_surface(tile: Vector2i) -> bool:
+	return surface_height(tile.x, tile.y) > 0.0 and not _on_surface.has(data.idx(tile.x, tile.y))
+
+
+func place_on_surface(item_id: String, tile: Vector2i, rot: int) -> Dictionary:
+	var base := object_at(tile.x, tile.y)
+	var obj := add_object({"kind": "placed", "item": item_id, "x": tile.x, "z": tile.y,
+		"w": 1, "d": 1, "rot": rot, "on": base["uid"]})
+	_pop_in(obj)
+	return obj
+
+
+## Where you can sit on a piece of furniture: one spot per tile of width, each as
+## {"position": Vector3, "facing": Vector3, "height": float}. Empty if it's not a seat.
+func seats(obj: Dictionary) -> Array[Dictionary]:
+	var spots: Array[Dictionary] = []
+	var height: float = ItemDB.placeable(obj.get("item", "")).get("seat", -1.0)
+	var node := node_of(obj.get("uid", -1))
+	if height <= 0.0 or node == null:
+		return spots
+	var width: int = ItemDB.placeable(obj["item"])["footprint"][0]
+	for i in width:
+		var local := Vector3(i - (width - 1) * 0.5, 0, 0)
+		spots.append({"position": node.global_transform * local, "facing": node.global_basis * Vector3.BACK, "height": height})
+	return spots
 
 
 func place_item(item_id: String, rect: Rect2i, rot: int) -> Dictionary:

@@ -13,6 +13,8 @@ var _item := ""
 var _size := Vector2i.ONE
 var _rot := 0
 var _rotatable := true
+var _small := false
+var _on_table := false
 var _rect := Rect2i()
 var _valid := false
 var _ghost: MeshInstance3D
@@ -49,6 +51,7 @@ func begin(slot: int) -> void:
 	_item = item
 	_size = Vector2i(def["footprint"][0], def["footprint"][1])
 	_rotatable = def.get("rotatable", true)
+	_small = def.get("small", false)
 	_rot = 0
 	_ghost.mesh = Models.get_mesh(def.get("model", "drop:" + item))
 	visible = true
@@ -61,10 +64,19 @@ func _process(_delta: float) -> void:
 		return
 	var dir := player.cardinal()
 	var size := _size if _rot % 2 == 0 else Vector2i(_size.y, _size.x)
-	_rect = world.placement_rect(player.tile() + dir, dir, size)
-	_valid = world.can_place(_rect, player.position)
+	var front := player.tile() + dir
+	# Small things can go on top of tables, boxes and the like.
+	_on_table = _small and world.can_place_on_surface(front)
+	if _on_table:
+		_rect = Rect2i(front, Vector2i.ONE)
+		_valid = true
+	else:
+		_rect = world.placement_rect(front, dir, size)
+		_valid = world.can_place(_rect, player.position)
 	var centre := Vector2(_rect.position) + Vector2(_rect.size) * 0.5
 	var y := world.ground_height(centre.x, centre.y)
+	if _on_table:
+		y += world.surface_height(front.x, front.y)
 	_ghost.position = Vector3(centre.x, y + 0.02, centre.y)
 	_ghost.rotation.y = -PI * 0.5 * _rot
 	_footprint.position = Vector3(centre.x, y + 0.03, centre.y)
@@ -82,7 +94,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("use"):
 		get_viewport().set_input_as_handled()
 		if _valid:
-			world.place_item(_item, _rect, _rot)
+			if _on_table:
+				world.place_on_surface(_item, _rect.position, _rot)
+			else:
+				world.place_item(_item, _rect, _rot)
 			Inventory.remove_from_slot(_slot)
 			Events.toast.emit("Perfect spot!" if _item != "tent_kit" else "Your tent is up! Welcome home.")
 			_end()

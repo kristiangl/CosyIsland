@@ -12,6 +12,7 @@ extends Node3D
 ##   --at=X,Z           start the player at a world position
 ##   --demo             pitch the tent, place furniture and chop a tree before the screenshot
 ##   --demo=decor       same, but stay by the furniture instead of chopping
+##   --demo=sit         same, and sit on the chair
 ##   --ui=pockets|pause|creator|crafting|placing   open a menu or mode (for screenshots)
 
 const AUTOSAVE_SECONDS := 60.0
@@ -188,6 +189,20 @@ func _run_demo() -> void:
 			if world.can_place(rect, player.position):
 				world.place_item(decor[spot], rect, 0)
 				spot += 1
+	# Small things on the tables.
+	var small := ["teapot", "fruit_bowl", "potted_plant", "candle_set", "book_stack"]
+	for obj in world.objects():
+		if obj["kind"] != "placed" or obj.has("on") or small.is_empty():
+			continue
+		for t in world.footprint(obj):
+			if not small.is_empty() and world.can_place_on_surface(t):
+				world.place_on_surface(small.pop_front(), t, 0)
+	if Game.args["demo"] == "sit":
+		var seats := world.objects().filter(func(o): return o["kind"] == "placed" and o["item"] == "wooden_chair")
+		if not seats.is_empty():
+			player._sit_on(seats[0])
+			camera_rig.focus = player.position
+		return
 	if Game.args["demo"] == "decor":
 		player.position = Vector3(spawn.x + 0.5, world.ground_height(spawn.x + 0.5, spawn.y + 4.5), spawn.y + 4.5)
 		camera_rig.focus = player.position

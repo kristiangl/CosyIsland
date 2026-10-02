@@ -41,6 +41,11 @@ static func build(k: MeshKit, id: String) -> void:
 		"birdhouse": _birdhouse(k)
 		"iron_bench": _iron_bench(k)
 		"garden_well": _well(k)
+		"teapot": _teapot(k)
+		"candle_set": _candles(k)
+		"book_stack": _books(k)
+		"potted_plant": _potted_plant(k)
+		"fruit_bowl": _fruit_bowl(k)
 		_:
 			k.box(Vector3(0, 0.3, 0), Vector3(0.6, 0.6, 0.6), c(Color.MAGENTA))
 
@@ -277,3 +282,55 @@ static func _well(k: MeshKit) -> void:
 	k.xform = Transform3D.IDENTITY
 	k.cylinder(Vector3(0.1, 1.3, 0), Vector3(0.1, 0.95, 0), 0.01, 0.01, c(WOOD_LIGHT), 4)
 	k.cylinder(Vector3(0.1, 0.8, 0), Vector3(0.1, 0.95, 0), 0.08, 0.1, c(WOOD), 10, true)
+
+
+# --- Tabletop things (small enough to sit on tables) -------------------------------
+
+static func _teapot(k: MeshKit) -> void:
+	var pink := Color("f4a6c0")
+	k.sphere(Vector3(0, 0.13, 0), Vector3(0.15, 0.12, 0.15), c(pink), 8, 12)
+	k.sphere(Vector3(0, 0.25, 0), Vector3(0.08, 0.03, 0.08), c(pink.lightened(0.2)), 4, 10)
+	k.sphere(Vector3(0, 0.29, 0), Vector3.ONE * 0.025, c(CREAM), 3, 6)
+	k.cylinder(Vector3(0.12, 0.12, 0), Vector3(0.22, 0.2, 0), 0.03, 0.018, c(pink), 6)
+	k.cylinder(Vector3(-0.13, 0.2, 0), Vector3(-0.2, 0.12, 0), 0.02, 0.02, c(pink), 5)
+	k.cylinder(Vector3(-0.2, 0.12, 0), Vector3(-0.13, 0.06, 0), 0.02, 0.02, c(pink), 5)
+
+
+static func _candles(k: MeshKit) -> void:
+	k.cylinder(Vector3.ZERO, Vector3(0, 0.02, 0), 0.2, 0.2, c(CLAY), 12, true)
+	var spots := [[Vector3(-0.08, 0, 0.04), 0.2], [Vector3(0.08, 0, 0.05), 0.14], [Vector3(0.0, 0, -0.08), 0.26]]
+	for s in spots:
+		var base: Vector3 = s[0]
+		var h: float = s[1]
+		k.cylinder(base, base + Vector3(0, h, 0), 0.045, 0.045, c(CREAM), 8, true)
+		k.cone(base + Vector3(0, h, 0), base + Vector3(0, h + 0.07, 0), 0.025, c(GLOW, 0.5), 6)
+
+
+static func _books(k: MeshKit) -> void:
+	var colours := [Color("78a6dc"), Color("f28e7e"), Color("f4d672"), Color("aadfc8")]
+	var y := 0.0
+	for i in colours.size():
+		var h := 0.05 + (i % 2) * 0.015
+		k.xform = Transform3D(Basis(Vector3.UP, (i - 1.5) * 0.25), Vector3(0, y + h * 0.5, 0))
+		k.box(Vector3.ZERO, Vector3(0.3 - i * 0.02, h, 0.22), c(colours[i]), c(CREAM))
+		y += h
+	k.xform = Transform3D.IDENTITY
+
+
+static func _potted_plant(k: MeshKit) -> void:
+	k.cylinder(Vector3.ZERO, Vector3(0, 0.14, 0), 0.08, 0.1, c(CLAY), 10, true)
+	k.cylinder(Vector3(0, 0.13, 0), Vector3(0, 0.16, 0), 0.11, 0.11, c(CLAY_DARK), 10, true)
+	var leaf := Color("86c27a")
+	for i in 6:
+		var a := TAU * i / 6.0
+		k.leaf(Vector3(0, 0.15, 0), Vector3(cos(a), 1.4, sin(a)), 0.22, 0.1, c(leaf, 0.6), 0.05)
+	k.leaf(Vector3(0, 0.15, 0), Vector3(0.1, 1, 0), 0.26, 0.1, c(leaf.lightened(0.15), 0.6), 0.0)
+
+
+static func _fruit_bowl(k: MeshKit) -> void:
+	k.cylinder(Vector3.ZERO, Vector3(0, 0.1, 0), 0.12, 0.22, c(WOOD), 14, true, c(WOOD_LIGHT))
+	var fruit := [Color("e0453a"), Color("f2922b"), Color("c9d64a"), Color("f7a98f")]
+	for i in fruit.size():
+		var a := TAU * i / fruit.size()
+		k.sphere(Vector3(cos(a) * 0.08, 0.15, sin(a) * 0.08), Vector3.ONE * 0.075, c(fruit[i]), 5, 8)
+	k.sphere(Vector3(0, 0.22, 0), Vector3.ONE * 0.07, c(Color("c41e3a")), 5, 8)

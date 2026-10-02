@@ -96,35 +96,49 @@ static func _shade(c: Color, f: float) -> Color:
 
 # --- Nature --------------------------------------------------------------------------
 
+## Trees in the Animal Crossing manner: a short trunk under stacked, rounded tiers of
+## leaves, each a ring of soft puffs, so the cel lighting picks out every layer.
 static func _tree(k: MeshKit, variant: int, fruit: String, fruit_count: int) -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = variant * 7919 + 17
 	var bark := MeshKit.lin(BARK, 0.12)
-	k.cylinder(Vector3.ZERO, Vector3(0.03, 1.3, 0.0), 0.17, 0.1, bark, 7, false, MeshKit.lin(BARK_LIGHT, 0.3))
+	var lean := Vector3(rng.randf_range(-0.06, 0.06), 0, rng.randf_range(-0.06, 0.06))
+	k.cylinder(Vector3.ZERO, Vector3(0, 0.7, 0) + lean * 0.5, 0.17, 0.13, bark, 8, false)
+	k.cylinder(Vector3(0, 0.7, 0) + lean * 0.5, Vector3(0, 1.45, 0) + lean, 0.13, 0.09, bark, 8, false, MeshKit.lin(BARK_LIGHT, 0.3))
 	for i in 3:
 		var a := TAU * i / 3.0 + rng.randf() * 0.8
 		var dir := Vector3(cos(a), 0.0, sin(a))
-		k.cylinder(dir * 0.05 + Vector3(0, 0.28, 0), dir * 0.3 + Vector3(0, 0.0, 0), 0.08, 0.035, bark, 5, false)
+		k.cylinder(dir * 0.05 + Vector3(0, 0.26, 0), dir * 0.3, 0.08, 0.035, bark, 5, false)
 	var fruity := fruit != ""
-	var dark := MeshKit.lin(FRUIT_LEAF if fruity else LEAF_DARK, 1.0)
-	var mid := MeshKit.lin(_shade(FRUIT_LEAF, 1.06) if fruity else LEAF_MID, 1.0)
-	var light := MeshKit.lin(_shade(FRUIT_LEAF, 1.13) if fruity else LEAF_LIGHT, 1.0)
-	var centre := Vector3(0, 1.9 if not fruity else 1.75, 0)
-	k.sphere(centre, Vector3(0.95, 0.75, 0.95), dark, 9, 14, 0.45, 0.12, variant)
-	var lumps := 5 + variant % 2
-	for i in lumps:
-		var a := TAU * i / lumps + rng.randf() * 0.7
-		var r := rng.randf_range(0.45, 0.6)
-		var off := Vector3(cos(a) * 0.62, rng.randf_range(-0.2, 0.3), sin(a) * 0.62)
-		k.sphere(centre + off, Vector3(r, r * 0.85, r), mid if off.y < 0.1 else light, 8, 12, 0.5, 0.14, variant * 10 + i)
-	k.sphere(centre + Vector3(rng.randf_range(-0.15, 0.15), 0.52, 0.05), Vector3(0.55, 0.45, 0.55), light, 8, 12, 0.35, 0.12, variant + 99)
+	var leaf := FRUIT_LEAF if fruity else LEAF_MID
+	var colours := [leaf.darkened(0.16), leaf.lightened(0.04), leaf.lightened(0.2)]
+	# Tier: [height, radius, thickness, puffs]
+	var tiers := [[1.3, 1.02, 0.3, 9], [1.86, 0.8, 0.28, 8], [2.36, 0.5, 0.26, 6]]
+	if fruity:
+		tiers = [[1.3, 0.98, 0.32, 8], [1.84, 0.7, 0.3, 7], [2.28, 0.38, 0.26, 5]]
+	for t in tiers.size():
+		var tier: Array = tiers[t]
+		var y: float = tier[0]
+		var r: float = tier[1]
+		var thick: float = tier[2]
+		var puffs: int = tier[3]
+		var col := MeshKit.lin(colours[t], 1.0)
+		var centre := Vector3(0, y, 0) + lean
+		# A domed middle with a scalloped rim of puffs drooping a little at the edge.
+		k.sphere(centre + Vector3(0, thick * 0.25, 0), Vector3(r * 0.72, thick * 1.1, r * 0.72), col, 8, 14, 0.6, 0.06, variant * 7 + t)
+		var turn := rng.randf() * TAU
+		for i in puffs:
+			var a := turn + TAU * i / puffs + rng.randf_range(-0.12, 0.12)
+			var pr := r * rng.randf_range(0.34, 0.4)
+			var off := Vector3(cos(a) * r * 0.68, -thick * 0.25 + rng.randf_range(-0.03, 0.03), sin(a) * r * 0.68)
+			k.sphere(centre + off, Vector3(pr, thick * 0.8, pr), col, 7, 10, 0.6, 0.08, variant * 31 + t * 7 + i)
 	if fruity and fruit_count > 0:
 		var fruit_col := MeshKit.lin(ItemDB.color_of(fruit), 1.0)
-		var spots := [Vector3(-0.55, -0.1, 0.75), Vector3(0.5, 0.15, 0.78), Vector3(0.0, -0.3, 0.95)]
+		var spots := [Vector3(-0.55, 1.02, 0.6), Vector3(0.55, 1.05, 0.58), Vector3(0.0, 0.98, 0.82)]
 		for i in mini(fruit_count, spots.size()):
-			var s: Vector3 = spots[i]
-			k.sphere(centre + s, Vector3.ONE * 0.13, fruit_col, 5, 8, 0.3)
-			k.cylinder(centre + s + Vector3(0, 0.1, 0), centre + s + Vector3(0.02, 0.18, 0), 0.015, 0.01, MeshKit.lin(BARK, 1.0), 4, false)
+			var s: Vector3 = spots[i] + lean
+			k.sphere(s, Vector3.ONE * 0.13, fruit_col, 6, 9, 0.3)
+			k.cylinder(s + Vector3(0, 0.1, 0), s + Vector3(0.02, 0.2, 0), 0.015, 0.01, MeshKit.lin(BARK, 1.0), 4, false)
 
 
 static func _palm(k: MeshKit, variant: int) -> void:

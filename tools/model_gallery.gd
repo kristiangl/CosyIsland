@@ -2,6 +2,7 @@ extends Node3D
 ## Shows every furniture model (or every item drop with --drops) in a grid, lit like the
 ## island, for checking the art:
 ##   tools/screenshot_scene.sh out.png res://tools/model_gallery.tscn [--drops] [--only=id,id]
+##     [--keys=model_key,model_key]  (any Models key, e.g. tree:0,fruit_tree:1:apple:3)
 
 
 func _ready() -> void:
@@ -30,7 +31,9 @@ func _ready() -> void:
 				keys.append("drop:" + id)
 		elif def.get("category", "") == "furniture":
 			keys.append(def["placeable"]["model"])
-	if Game.args.has("only"):
+	if Game.args.has("keys"):
+		keys.assign(Game.args["keys"].split(","))
+	elif Game.args.has("only"):
 		keys.clear()
 		for id in Game.args["only"].split(","):
 			keys.append("furniture:" + id)

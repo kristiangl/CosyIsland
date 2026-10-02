@@ -87,6 +87,12 @@ func _build_terrain() -> void:
 	fresh.material_override = TerrainBuilder.fresh_material()
 	fresh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(fresh)
+	var foam := MeshInstance3D.new()
+	foam.name = "BankFoam"
+	foam.mesh = TerrainBuilder.build_bank_foam(data)
+	foam.material_override = TerrainBuilder.foam_material()
+	foam.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(foam)
 	grass = GrassField.new()
 	grass.name = "Grass"
 	grass.build(data, float(Game.args.get("grass", "1.0")))

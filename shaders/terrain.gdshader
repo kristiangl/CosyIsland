@@ -18,10 +18,34 @@ uniform vec3 cliff_dark : source_color = vec3(0.62, 0.55, 0.54);
 uniform vec3 bed_colour : source_color = vec3(0.58, 0.74, 0.70);
 
 varying vec3 world_pos;
+varying vec3 world_normal;
 
 void vertex() {
 	world_pos = VERTEX;
+	world_normal = NORMAL;
 	VERTEX = curve_world(VERTEX);
+}
+
+// Chunky stacked stones: staggered rows of blocks with darker joints, a lighter top
+// edge on each block and a little tone variation from block to block.
+vec3 cliff_colour(vec3 n, vec3 p) {
+	vec2 along = normalize(vec2(-n.z, n.x) + vec2(0.0001));
+	float u = dot(p.xz, along);
+	// Wobble the rows so the stones look piled rather than laid.
+	float y = p.y + (value_noise(vec2(u * 2.2, 1.0)) - 0.5) * 0.12;
+	float row_h = 0.42;
+	float row = floor(y / row_h);
+	float v = fract(y / row_h);
+	float width = 0.6 + hash21(vec2(row, 3.0)) * 0.35;
+	float uu = u / width + hash21(vec2(row, 7.0));
+	float block = floor(uu);
+	float fu = fract(uu);
+	float tone = hash21(vec2(block, row));
+	vec3 col = mix(cliff_dark, cliff_light, 0.35 + tone * 0.4);
+	col = mix(col, col * 1.12, smoothstep(0.72, 0.8, v));
+	float edge_u = min(fu, 1.0 - fu) * width;
+	float joint = max(1.0 - smoothstep(0.0, 0.05, v), 1.0 - smoothstep(0.0, 0.035, edge_u + (value_noise(p.xz * 9.0 + p.y) - 0.5) * 0.02));
+	return mix(col, cliff_dark * 0.88, joint * 0.6);
 }
 
 vec3 sand_colour(vec2 xz, float y) {
@@ -45,10 +69,7 @@ void fragment() {
 	} else if (kind > 0.625) {
 		col = grass_colour(xz);
 	} else if (kind > 0.375) {
-		// Soft horizontal strata, wobbled so they look hand drawn.
-		float wobble = fbm(vec2(xz.x + xz.y, world_pos.y) * 0.8) * 0.35;
-		float strata = smoothstep(0.45, 0.55, fract(world_pos.y * 1.6 + wobble));
-		col = mix(cliff_dark, cliff_light, strata * 0.5 + 0.3);
+		col = cliff_colour(world_normal, world_pos);
 	} else {
 		col = bed_colour * (0.9 + fbm(xz * 0.5) * 0.15);
 	}

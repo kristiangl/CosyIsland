@@ -16,6 +16,7 @@ const T := IslandData.Tile
 static var _terrain_material: ShaderMaterial
 static var _sea_material: ShaderMaterial
 static var _fresh_material: ShaderMaterial
+static var _foam_material: ShaderMaterial
 
 
 static func terrain_material() -> ShaderMaterial:
@@ -32,6 +33,13 @@ static func sea_material() -> ShaderMaterial:
 	return _sea_material
 
 
+static func foam_material() -> ShaderMaterial:
+	if _foam_material == null:
+		_foam_material = ShaderMaterial.new()
+		_foam_material.shader = load("res://shaders/foam.gdshader")
+	return _foam_material
+
+
 static func fresh_material() -> ShaderMaterial:
 	if _fresh_material == null:
 		_fresh_material = ShaderMaterial.new()
@@ -41,7 +49,7 @@ static func fresh_material() -> ShaderMaterial:
 		_fresh_material.set_shader_parameter("ripple_scale", 1.6)
 		_fresh_material.set_shader_parameter("flow", Vector2(0.0, -0.4))
 		_fresh_material.set_shader_parameter("shore_waves", 0.0)
-		_fresh_material.set_shader_parameter("bank_foam", 0.5)
+		_fresh_material.set_shader_parameter("ripple_strength", 0.55)
 	return _fresh_material
 
 
@@ -113,10 +121,11 @@ static func _split_top(k: MeshKit, d: IslandData, p: Array[Vector3], split: Dict
 
 static func _cliff(k: MeshKit, a: Vector3, b: Vector3, low_a: float, low_b: float, out: Vector3, grass_lip: bool) -> void:
 	if grass_lip and a.y - low_a > 0.3 and b.y - low_b > 0.3:
-		# A lip of grass hanging over the top of the cliff.
+		# A lip of grass hanging over the top of the cliff, with a scalloped edge.
 		var lip := Vector3(0, LIP, 0)
 		_wall(k, a, b, a.y - LIP, b.y - LIP, out, GRASS_KIND)
 		_wall(k, a - lip, b - lip, low_a, low_b, out, CLIFF_KIND)
+		_lip_drips(k, a - lip + out * 0.004, b - lip + out * 0.004, out)
 	else:
 		_wall(k, a, b, low_a, low_b, out, CLIFF_KIND)
 
@@ -166,6 +175,24 @@ static func _top(k: MeshKit, a: Vector3, b: Vector3, c: Vector3, t: int, weights
 	k.tri(ids[0], ids[1], ids[2], n)
 
 
+## Little rounded tongues of grass hanging below the lip.
+static func _lip_drips(k: MeshKit, a: Vector3, b: Vector3, out: Vector3) -> void:
+	var length := a.distance_to(b)
+	var count := maxi(2, int(round(length / 0.22)))
+	var col := Color(1, 1, 1, GRASS_KIND)
+	for i in count:
+		var t0 := float(i) / count
+		var t1 := float(i + 1) / count
+		var p0 := a.lerp(b, t0)
+		var p1 := a.lerp(b, t1)
+		var mid := (p0 + p1) * 0.5
+		var seed := absf(sin(mid.x * 12.9898 + mid.z * 78.233) * 43758.5453)
+		var drop := 0.04 + fposmod(seed, 1.0) * 0.09
+		var tip := mid - Vector3(0, drop, 0)
+		var ids := [k.vertex(p0, out, col), k.vertex(p1, out, col), k.vertex(tip, out, col)]
+		k.tri(ids[0], ids[1], ids[2], out)
+
+
 static func _wall(k: MeshKit, top_a: Vector3, top_b: Vector3, low_a: float, low_b: float, outward: Vector3, kind: float) -> void:
 	var col := Color(1, 1, 1, kind)
 	var a := k.vertex(top_a, outward, col)
@@ -175,38 +202,92 @@ static func _wall(k: MeshKit, top_a: Vector3, top_b: Vector3, low_a: float, low_
 	k.quad(a, b, c, dd, outward)
 
 
-## Rivers and ponds. Vertex red is 0 where the water meets a bank.
+## Rivers and ponds: flat surfaces at each tile's water level, including the river half
+## of land tiles cut along a diagonal. Banks get their foam from build_bank_foam().
 static func build_fresh_water(d: IslandData) -> ArrayMesh:
 	var k := MeshKit.new()
+	var col := Color(0.4, 0, 0, 1)
 	for z in d.height:
 		for x in d.width:
 			if d.tile(x, z) != T.WATER:
 				continue
 			var y := d.water_surface(x, z)
-			var corners_xz := [Vector2i(x, z), Vector2i(x + 1, z), Vector2i(x + 1, z + 1), Vector2i(x, z + 1)]
 			var ids: Array[int] = []
-			for cxz in corners_xz:
-				var bank := false
-				for off in [Vector2i(-1, -1), Vector2i(0, -1), Vector2i(-1, 0), Vector2i(0, 0)]:
-					var tt := d.tile(cxz.x + off.x, cxz.y + off.y)
-					bank = bank or (tt != T.WATER and tt != T.OCEAN)
-				ids.append(k.vertex(Vector3(cxz.x, y, cxz.y), Vector3.UP, Color(0.0 if bank else 0.4, 0, 0, 1)))
+			for cxz: Vector2i in [Vector2i(x, z), Vector2i(x + 1, z), Vector2i(x + 1, z + 1), Vector2i(x, z + 1)]:
+				ids.append(k.vertex(Vector3(cxz.x, y, cxz.y), Vector3.UP, col))
 			k.quad(ids[0], ids[1], ids[2], ids[3], Vector3.UP)
-	# Land tiles whose corner was cut down to a river bed need water over that half.
 	for i in d.splits:
 		var split: Dictionary = d.splits[i]
 		if split["tile"] != T.WATER:
 			continue
-		var x: int = i % d.width
-		var z: int = i / d.width
-		var y := maxf(IslandData.tier_height(split["tier"]) - IslandData.WATER_DROP, IslandData.SEA_LEVEL)
-		var pts := [Vector3(x, y, z), Vector3(x + 1, y, z), Vector3(x + 1, y, z + 1), Vector3(x, y, z + 1)]
+		var y := _split_water_level(split)
+		var pts := _tile_points(i % d.width, i / d.width, y)
 		var c: int = split["corner"]
-		var a := k.vertex(pts[(c + 3) % 4], Vector3.UP, Color(0, 0, 0, 1))
-		var b := k.vertex(pts[c], Vector3.UP, Color(0.4, 0, 0, 1))
-		var e := k.vertex(pts[(c + 1) % 4], Vector3.UP, Color(0, 0, 0, 1))
-		k.tri(a, b, e, Vector3.UP)
+		k.tri(k.vertex(pts[(c + 3) % 4], Vector3.UP, col), k.vertex(pts[c], Vector3.UP, col),
+			k.vertex(pts[(c + 1) % 4], Vector3.UP, col), Vector3.UP)
 	return k.commit()
+
+
+## Foam ribbons where rivers and ponds lap against their banks, straight edges and
+## diagonals alike. Vertex alpha is 1 at the bank and fades out into the water.
+static func build_bank_foam(d: IslandData) -> ArrayMesh:
+	var k := MeshKit.new()
+	var edges := [
+		[Vector2i(1, 0), IslandData.NE, IslandData.SE, IslandData.NW, IslandData.SW],
+		[Vector2i(-1, 0), IslandData.NW, IslandData.SW, IslandData.NE, IslandData.SE],
+		[Vector2i(0, 1), IslandData.SW, IslandData.SE, IslandData.NW, IslandData.NE],
+		[Vector2i(0, -1), IslandData.NW, IslandData.NE, IslandData.SW, IslandData.SE],
+	]
+	for z in d.height:
+		for x in d.width:
+			var i := d.idx(x, z)
+			var split: Dictionary = d.splits.get(i, {})
+			if d.tile(x, z) == T.WATER:
+				var y := d.water_surface(x, z)
+				var pts := _tile_points(x, z, y)
+				for e in edges:
+					var dir: Vector2i = e[0]
+					# Edges belonging to a raised (filled) half are land, not water.
+					if not split.is_empty() and split["corner"] in [e[1], e[2]]:
+						continue
+					if not d.in_bounds(x + dir.x, z + dir.y):
+						continue
+					var mine := d.edge_heights(x, z, e[1], e[2])
+					var theirs := d.edge_heights(x + dir.x, z + dir.y, e[3], e[4])
+					if theirs.x > mine.x + 0.2 and theirs.y > mine.y + 0.2:
+						_foam_strip(k, pts[e[1]], pts[e[2]], -Vector3(dir.x, 0, dir.y))
+				if not split.is_empty():
+					var c: int = split["corner"]
+					var inward := (pts[(c + 2) % 4] - pts[c]).normalized()
+					_foam_strip(k, pts[(c + 3) % 4], pts[(c + 1) % 4], inward)
+			elif not split.is_empty() and split["tile"] == T.WATER:
+				var pts := _tile_points(x, z, _split_water_level(split))
+				var c: int = split["corner"]
+				var inward := (pts[c] - pts[(c + 2) % 4]).normalized()
+				_foam_strip(k, pts[(c + 3) % 4], pts[(c + 1) % 4], inward)
+	return k.commit()
+
+
+static func _foam_strip(k: MeshKit, a: Vector3, b: Vector3, inward: Vector3) -> void:
+	var width := 0.24
+	var lift := Vector3(0, 0.015, 0)
+	var length := a.distance_to(b)
+	var u0 := a.x + a.z
+	var ids := [
+		k.vertex(a + lift, Vector3.UP, Color(1, 1, 1, 1), Vector2(u0, 0)),
+		k.vertex(b + lift, Vector3.UP, Color(1, 1, 1, 1), Vector2(u0 + length, 0)),
+		k.vertex(b + lift + inward * width, Vector3.UP, Color(1, 1, 1, 0), Vector2(u0 + length, 1)),
+		k.vertex(a + lift + inward * width, Vector3.UP, Color(1, 1, 1, 0), Vector2(u0, 1)),
+	]
+	k.quad(ids[0], ids[1], ids[2], ids[3], Vector3.UP)
+
+
+static func _split_water_level(split: Dictionary) -> float:
+	return maxf(IslandData.tier_height(split["tier"]) - IslandData.WATER_DROP, IslandData.SEA_LEVEL)
+
+
+static func _tile_points(x: int, z: int, y: float) -> Array[Vector3]:
+	return [Vector3(x, y, z), Vector3(x + 1, y, z), Vector3(x + 1, y, z + 1), Vector3(x, y, z + 1)]
 
 
 ## The sea: a fine grid around the island (shore distance in vertex red) plus a coarse

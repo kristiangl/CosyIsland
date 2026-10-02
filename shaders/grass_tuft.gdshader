@@ -15,7 +15,7 @@ varying float tip;
 void vertex() {
 	vec3 root = MODEL_MATRIX[3].xyz;
 	tip = COLOR.r;
-	VERTEX += wind_offset(root, VERTEX.y - root.y, 4.0, TIME);
+	VERTEX += wind_offset(root, VERTEX.y - root.y, 2.5, TIME);
 	world_pos = VERTEX;
 	VERTEX = curve_world(VERTEX);
 	NORMAL = vec3(0.0, 1.0, 0.0);
@@ -23,7 +23,7 @@ void vertex() {
 
 void fragment() {
 	vec3 col = grass_colour(world_pos.xz);
-	col = mix(col * 0.9, col * 1.12 + vec3(0.02, 0.03, 0.0), tip);
+	col = mix(col * 0.88, col * 1.14 + vec3(0.03, 0.04, 0.0), tip);
 	ALBEDO = col;
 	ROUGHNESS = 1.0;
 	EMISSION = cel_ambient(ALBEDO);

@@ -3,7 +3,9 @@ extends MultiMeshInstance3D
 ## Little grass clumps scattered over every grass tile, swaying in the wind.
 ## Tiles can be cleared (when something is built on them) and restored.
 
-const PER_TILE := 4
+## Chance of a clump of tall blades on a grass tile.
+const CLUMP_CHANCE := 0.4
+const PER_TILE := 1
 
 ## Tile index -> first instance index for that tile.
 var _first_instance: Dictionary = {}
@@ -23,10 +25,12 @@ func build(d: IslandData, density: float = 1.0) -> void:
 				continue
 			_first_instance[d.idx(x, z)] = _transforms.size()
 			for i in _per_tile:
-				var px := x + rng.randf_range(0.1, 0.9)
-				var pz := z + rng.randf_range(0.1, 0.9)
-				var s := rng.randf_range(0.7, 1.3)
-				if d.surface_at(px, pz) != IslandData.Tile.GRASS:
+				var px := x + rng.randf_range(0.15, 0.85)
+				var pz := z + rng.randf_range(0.15, 0.85)
+				var s := rng.randf_range(0.75, 1.25)
+				# Grass grows thicker at the foot of cliffs and banks.
+				var chance := CLUMP_CHANCE * (2.2 if _beside_higher(d, x, z) else 1.0)
+				if d.surface_at(px, pz) != IslandData.Tile.GRASS or rng.randf() > chance * density:
 					s = 0.0
 				var b := Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3(s, s * rng.randf_range(0.8, 1.2), s))
 				_transforms.append(Transform3D(b, Vector3(px, d.height_at(px, pz), pz)))
@@ -57,18 +61,33 @@ func set_tile_visible(d: IslandData, x: int, z: int, show: bool) -> void:
 		multimesh.set_instance_transform(i, t)
 
 
+static func _beside_higher(d: IslandData, x: int, z: int) -> bool:
+	var here := d.height_at(x + 0.5, z + 0.5)
+	for dir in IslandGenerator.DIRS:
+		if d.in_bounds(x + dir.x, z + dir.y) and d.height_at(x + dir.x + 0.5, z + dir.y + 0.5) > here + 0.5:
+			return true
+	return false
+
+
+## A clump of curved grass blades, each two segments so it bends outwards.
 static func _tuft_mesh() -> ArrayMesh:
 	var k := MeshKit.new()
 	var blades := 7
 	for i in blades:
-		var a := TAU * i / blades + 0.3
-		var lean := Vector3(cos(a), 0, sin(a)) * 0.08
-		var side := Vector3(-sin(a), 0, cos(a)) * 0.05
-		var base := lean * 0.5
-		var height := 0.12 + 0.04 * (i % 3)
+		var a := TAU * i / blades + 0.4 * sin(i * 2.3)
+		var out := Vector3(cos(a), 0, sin(a))
+		var side := Vector3(-sin(a), 0, cos(a))
+		var height := 0.24 + 0.1 * ((i * 37) % 5) / 4.0
+		var base := out * 0.04
+		var mid := base + out * 0.05 + Vector3(0, height * 0.55, 0)
+		var tip := base + out * 0.14 + Vector3(0, height, 0)
+		var w := 0.035
 		var n := Vector3.UP
-		var p0 := k.vertex(base - side, n, Color(0, 0, 0, 1))
-		var p1 := k.vertex(base + side, n, Color(0, 0, 0, 1))
-		var p2 := k.vertex(base + lean + Vector3(0, height, 0), n, Color(1, 0, 0, 1))
-		k.tri(p0, p1, p2, Vector3(cos(a), 0, sin(a)))
+		var p0 := k.vertex(base - side * w, n, Color(0, 0, 0, 1))
+		var p1 := k.vertex(base + side * w, n, Color(0, 0, 0, 1))
+		var p2 := k.vertex(mid + side * w * 0.7, n, Color(0.55, 0, 0, 1))
+		var p3 := k.vertex(mid - side * w * 0.7, n, Color(0.55, 0, 0, 1))
+		var p4 := k.vertex(tip, n, Color(1, 0, 0, 1))
+		k.quad(p0, p1, p2, p3, out)
+		k.tri(p3, p2, p4, out)
 	return k.commit()

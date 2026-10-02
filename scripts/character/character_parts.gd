@@ -21,6 +21,9 @@ const HEAD_RADIUS := Vector3(0.38, 0.35, 0.36)
 const TORSO_CENTRE := Vector3(0, 0.56, 0)
 const TORSO_RADIUS := Vector3(0.19, 0.2, 0.16)
 
+## Set while building hair under a hat (see hair()).
+static var _hat_on := false
+
 const PLAIN := Color(1, 1, 1, 0)
 const SHADED := Color(0.9, 1, 1, 0)
 const TRIM := Color(1, 0, 1, 0)
@@ -140,7 +143,9 @@ static func _long_sleeve(k: MeshKit, r: float, cuff_shaded: bool) -> void:
 static func bottom(style: String) -> Dictionary:
 	var k := MeshKit.new()
 	var leg := MeshKit.new()
-	k.sphere(Vector3(0, 0.42, 0), Vector3(0.2, 0.12, 0.17), PLAIN, 6, 16)
+	if style != "overalls":
+		# Tucked just inside the top's hem so nothing pokes out below it.
+		k.sphere(Vector3(0, 0.41, 0), Vector3(0.185, 0.1, 0.155), PLAIN, 6, 16)
 	match style:
 		"shorts":
 			leg.cylinder(Vector3(0, 0.03, 0), Vector3(0, -0.1, 0), 0.08, 0.078, PLAIN, 10, true)
@@ -155,11 +160,17 @@ static func bottom(style: String) -> Dictionary:
 			k.cylinder(Vector3(0, 0.48, 0), Vector3(0, 0.12, 0), 0.2, 0.3, PLAIN, 18, true)
 			leg = null
 		"overalls":
-			k.rounded_box(Vector3(0, 0.56, 0.12), Vector3(0.22, 0.2, 0.07), PLAIN, 0.2)
+			# Worn over the top: a waistband wider than any hem, a bib and straps.
+			k.cylinder(Vector3(0, 0.5, 0), Vector3(0, 0.35, 0), 0.222, 0.215, PLAIN, 20, true)
+			k.sphere(Vector3(0, 0.36, 0), Vector3(0.215, 0.07, 0.185), PLAIN, 5, 20)
+			var front := TORSO_RADIUS.z + 0.03
+			k.box(Vector3(0, 0.58, front - 0.01), Vector3(0.22, 0.2, 0.035), PLAIN)
+			k.box(Vector3(0, 0.6, front + 0.012), Vector3(0.1, 0.07, 0.01), SHADED)
 			for s: float in [-1.0, 1.0]:
-				k.cylinder(Vector3(s * 0.08, 0.64, 0.15), Vector3(s * 0.11, 0.77, -0.02), 0.018, 0.018, PLAIN, 6, false)
-				k.sphere(Vector3(s * 0.08, 0.63, 0.16), Vector3.ONE * 0.015, TRIM, 3, 6)
-			leg.cylinder(Vector3(0, 0.03, 0), Vector3(0, -LEG_LENGTH + 0.04, 0), 0.078, 0.074, PLAIN, 10, true)
+				k.cylinder(Vector3(s * 0.085, 0.67, front - 0.005), Vector3(s * 0.11, 0.775, 0.02), 0.022, 0.022, PLAIN, 6, true)
+				k.cylinder(Vector3(s * 0.11, 0.775, 0.02), Vector3(s * 0.09, 0.56, -TORSO_RADIUS.z - 0.025), 0.022, 0.022, PLAIN, 6, true)
+				k.sphere(Vector3(s * 0.085, 0.66, front + 0.012), Vector3.ONE * 0.017, TRIM, 3, 6)
+			leg.cylinder(Vector3(0, 0.03, 0), Vector3(0, -LEG_LENGTH + 0.04, 0), 0.08, 0.076, PLAIN, 10, true)
 	return {"hips": k.commit(), "leg": leg.commit() if leg else null}
 
 
@@ -187,14 +198,19 @@ static func shoe(style: String) -> ArrayMesh:
 
 # --- Hair --------------------------------------------------------------------------
 
-## Hair around the head centre. With a hat on, anything sitting on top of the head is
-## left off so it doesn't poke through.
-static func hair(style: String, hat_on: bool) -> ArrayMesh:
+## Hair around the head centre. Under a hat (`hat_on`) the hair is pulled in and the
+## fringe sits low; with anything on top of the head (`hat_on` or `topped`), tufts and
+## buns up there are left off so they don't poke through.
+static func hair(style: String, hat_on: bool, topped: bool = false) -> ArrayMesh:
 	var k := MeshKit.new()
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(style)
-	var cap_radius := Vector3(0.405, 0.31, 0.39) * (0.97 if hat_on else 1.0)
-	var cap_centre := Vector3(0, 0.075, -0.035)
+	# Under a hat the hair is pulled in tight and the fringe sits low, so the hat
+	# covers everything above its band.
+	_hat_on = hat_on
+	var covered := hat_on or topped
+	var cap_radius := Vector3(0.405, 0.31, 0.39) * (0.93 if hat_on else 1.0)
+	var cap_centre := Vector3(0, 0.06 if hat_on else 0.075, -0.035)
 	if style == "buzz":
 		k.sphere(Vector3(0, 0.06, -0.03), Vector3(0.388, 0.29, 0.372), PLAIN, 12, 20)
 		k.sphere(Vector3(0, -0.03, -0.09), Vector3(0.37, 0.27, 0.29), PLAIN, 10, 18)
@@ -208,19 +224,21 @@ static func hair(style: String, hat_on: bool) -> ArrayMesh:
 			_bangs(k, 4, 0.085)
 		"messy":
 			_bangs(k, 5, 0.09)
-			if not hat_on:
+			if not covered:
 				for i in 7:
 					var a := rng.randf() * TAU
 					var base := Vector3(cos(a) * 0.18, 0.3, sin(a) * 0.15 - 0.06)
 					k.cone(base, base + Vector3(cos(a) * 0.12, 0.14, sin(a) * 0.1), 0.07, PLAIN, 6)
 		"side_part":
 			_bangs(k, 3, 0.08, -0.12)
+			if covered:
+				return k.commit()
 			k.xform = Transform3D(Basis(Vector3.FORWARD, 0.5), Vector3(0.12, 0.2, 0.25))
 			k.sphere(Vector3.ZERO, Vector3(0.2, 0.08, 0.12), PLAIN, 6, 12)
 			k.xform = Transform3D.IDENTITY
 		"spiky":
 			_bangs(k, 4, 0.07)
-			if not hat_on:
+			if not covered:
 				for i in 9:
 					var a := TAU * i / 9.0
 					var base := Vector3(cos(a) * 0.2, 0.22, sin(a) * 0.2 - 0.05)
@@ -244,11 +262,11 @@ static func hair(style: String, hat_on: bool) -> ArrayMesh:
 				_tail(k, Vector3(s * 0.42, 0.0, -0.13), Vector3(s * 0.04, -0.11, -0.01), 4, 0.085)
 		"bun":
 			_bangs(k, 4, 0.09)
-			if not hat_on:
+			if not covered:
 				k.sphere(Vector3(0, 0.36, -0.12), Vector3(0.15, 0.13, 0.15), PLAIN, 8, 12)
 		"space_buns":
 			_bangs(k, 4, 0.09)
-			if not hat_on:
+			if not covered:
 				for s: float in [-1.0, 1.0]:
 					k.sphere(Vector3(s * 0.24, 0.3, -0.06), Vector3.ONE * 0.12, PLAIN, 8, 12)
 		"braid":
@@ -256,19 +274,21 @@ static func hair(style: String, hat_on: bool) -> ArrayMesh:
 			_tail(k, Vector3(0, -0.08, -0.38), Vector3(0, -0.085, -0.015), 6, 0.075)
 		"curly":
 			_bangs(k, 5, 0.1)
-			_lumps(k, rng, 26, 0.42, 0.1, hat_on)
+			_lumps(k, rng, 26, 0.42, 0.1, covered)
 		"afro":
-			k.sphere(Vector3(0, 0.12, -0.06), Vector3(0.5, 0.42, 0.48) if not hat_on else Vector3(0.44, 0.32, 0.43), PLAIN, 12, 20, 0.0, 0.06, 3)
-			_lumps(k, rng, 40, 0.5 if not hat_on else 0.44, 0.12, hat_on)
+			k.sphere(Vector3(0, 0.12, -0.06) if not hat_on else Vector3(0, 0.04, -0.06), Vector3(0.5, 0.42, 0.48) if not hat_on else Vector3(0.43, 0.28, 0.42), PLAIN, 12, 20, 0.0, 0.06, 3)
+			_lumps(k, rng, 40, 0.5 if not hat_on else 0.44, 0.12, covered)
 	return k.commit()
 
 
 ## A row of fringe lumps across the forehead, hugging the head.
 static func _bangs(k: MeshKit, count: int, size: float, shift: float = 0.0) -> void:
+	if _hat_on:
+		size *= 0.75
 	for i in count:
 		var t := (i + 0.5) / count
 		var x := lerpf(-0.25, 0.25, t) + shift
-		var y := 0.15 + 0.03 * sin(t * PI)
+		var y := (0.085 if _hat_on else 0.15) + 0.03 * sin(t * PI)
 		var z := _head_front(x, y) + 0.015
 		k.sphere(Vector3(x, y, z - 0.03), Vector3(size, size * 0.85, size * 0.7), PLAIN, 5, 8)
 

@@ -106,14 +106,20 @@ func rebuild() -> void:
 	var head_mesh := _mesh(P.head(), _face, _head)
 	head_mesh.position = P.HEAD_CENTRE
 	var hat_style: String = look["hat"]
-	var hair_mesh := _mesh(P.hair(look["hair"], hat_style in ["cap", "beanie", "bucket", "straw", "beret"]), hair_mat, _head)
+	var hair_mesh := _mesh(P.hair(look["hair"], hat_style in ["cap", "beanie", "bucket", "straw"], hat_style == "beret"), hair_mat, _head)
 	hair_mesh.position = P.HEAD_CENTRE
+	# Hair, hats and glasses don't cast shadows, so faces stay bright under a brim.
+	hair_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	if hat_style != "none":
 		var hat_mat := _cloth(Appearance.color(look, "hat_color"), Color("fff4e0") if hat_style != "flower_crown" else Color("f6d36b"))
-		_mesh(P.hat(hat_style), hat_mat, _head).position = P.HEAD_CENTRE
+		var hat_mesh := _mesh(P.hat(hat_style), hat_mat, _head)
+		hat_mesh.position = P.HEAD_CENTRE
+		hat_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	if look["glasses"] != "none":
 		var frame := _cloth(Color("4a4550"), Color("3a3a4a") if look["glasses"] == "sunnies" else Color("4a4550"))
-		_mesh(P.glasses(look["glasses"]), frame, _head).position = P.HEAD_CENTRE
+		var glasses_mesh := _mesh(P.glasses(look["glasses"]), frame, _head)
+		glasses_mesh.position = P.HEAD_CENTRE
+		glasses_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 
 func set_look(appearance: Dictionary) -> void:

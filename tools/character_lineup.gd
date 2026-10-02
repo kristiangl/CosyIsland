@@ -1,7 +1,9 @@
 extends Node3D
 ## Renders a row of characters for checking the character art:
 ##   tools/screenshot_scene.sh out.png res://tools/character_lineup.tscn [--seed=N] [--angle=DEG]
-## The first character is the default look; the rest are random.
+##     [--vary=KEY] [--base=key:id,key:id]
+## Without --vary: the --base look (default look if none) and five random ones.
+## With --vary: one character per option of KEY, all on the --base look.
 
 
 func _ready() -> void:
@@ -23,12 +25,27 @@ func _ready() -> void:
 	sun.shadow_enabled = true
 	sun.rotation_degrees = Vector3(-50, 25, 0)
 	add_child(sun)
-	var count := 6
+	var looks: Array[Dictionary] = []
+	var base := Appearance.DEFAULT.duplicate()
+	for pair in Game.args.get("base", "").split(",", false):
+		var kv: PackedStringArray = pair.split(":")
+		base[kv[0]] = kv[1]
+	if Game.args.has("vary"):
+		# One character per option of the given key, on the --base look.
+		for opt in Appearance.options(Game.args["vary"]):
+			var look := base.duplicate()
+			look[Game.args["vary"]] = opt["id"]
+			looks.append(look)
+	else:
+		looks.append(base)
+		for i in 5:
+			looks.append(Appearance.random(rng))
+	var count := looks.size()
+	var spacing := 1.1 if count <= 6 else 6.6 / count
 	var angle := deg_to_rad(float(Game.args.get("angle", "0")))
 	for i in count:
-		var look := Appearance.DEFAULT.duplicate() if i == 0 else Appearance.random(rng)
-		var c := CharacterModel.new(look)
-		c.position = Vector3((i - (count - 1) * 0.5) * 1.1, 0, 0)
+		var c := CharacterModel.new(looks[i])
+		c.position = Vector3((i - (count - 1) * 0.5) * spacing, 0, 0)
 		c.rotation.y = angle
 		add_child(c)
 	var cam := CameraRig.new()

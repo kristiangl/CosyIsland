@@ -88,6 +88,8 @@ func _build_terrain() -> void:
 	ground.name = "Ground"
 	ground.mesh = TerrainBuilder.build_ground(data)
 	ground.material_override = TerrainBuilder.terrain_material()
+	var plaza := Rect2(data.plaza)
+	ground.material_override.set_shader_parameter("plaza", Vector4(plaza.position.x, plaza.position.y, plaza.size.x, plaza.size.y))
 	add_child(ground)
 	var sea := MeshInstance3D.new()
 	sea.name = "Sea"
@@ -476,10 +478,13 @@ func _keep_clear(x: int, z: int) -> bool:
 
 # --- Homes ---------------------------------------------------------------------------
 
-## The door of a home: {"tile": the footprint tile with the door, "out": Vector2i
-## pointing out of the door}. Empty if the object has no room inside.
+## The door of a home or building: {"tile": the footprint tile with the door, "out":
+## Vector2i pointing out of the door}. Empty if it has no door.
 func door_of(obj: Dictionary) -> Dictionary:
-	if obj.get("kind", "") != "placed" or not ItemDB.placeable(obj["item"]).has("room"):
+	if obj.get("kind", "") != "placed":
+		return {}
+	var def := ItemDB.placeable(obj["item"])
+	if not def.has("room") and not def.get("door", false):
 		return {}
 	var facing := Basis(Vector3.UP, -PI * 0.5 * obj.get("rot", 0)) * Vector3.BACK
 	var out := Vector2i(roundi(facing.x), roundi(facing.z))
@@ -503,7 +508,7 @@ func home_entrance(pos: Vector3, dir: Vector3) -> Dictionary:
 	var ahead := pos + dir.normalized() * 0.45
 	var obj := object_at(floori(ahead.x), floori(ahead.z))
 	var door := door_of(obj)
-	if door.is_empty() or door["tile"] != Vector2i(floori(ahead.x), floori(ahead.z)):
+	if door.is_empty() or door["tile"] != Vector2i(floori(ahead.x), floori(ahead.z)) or not ItemDB.placeable(obj["item"]).has("room"):
 		return {}
 	if Vector2(dir.x, dir.z).normalized().dot(Vector2(door["out"])) > -0.7:
 		return {}
@@ -650,19 +655,45 @@ func wash_up_bottle() -> void:
 			return
 
 
+## Islands saved before the plaza update get the island office. The old workbench spot
+## is where the office goes, so the workbench moves aside first.
+func _add_office() -> void:
+	for obj in data.objects:
+		if obj["kind"] == "placed" and obj["item"] == "island_office":
+			return
+	var office_rect := Rect2i(data.plaza.position + IslandGenerator.OFFICE_AT, Vector2i(4, 3))
+	for obj in data.objects.duplicate():
+		if obj["kind"] == "placed" and obj["item"] == "workbench" and obj.get("fixed", false) \
+				and office_rect.intersects(Rect2i(obj["x"], obj["z"], obj["w"], obj["d"])):
+			remove_object(obj["uid"])
+			var bench_rect := Rect2i(data.plaza.position + IslandGenerator.WORKBENCH_AT, Vector2i(2, 1))
+			if can_place(bench_rect, Vector3(-10, 0, -10)):
+				place_item("workbench", bench_rect, 0)["fixed"] = true
+	var spots: Array[Rect2i] = [office_rect]
+	for dz in range(-1, data.plaza.size.y - 1):
+		for dx in range(-1, data.plaza.size.x - 2):
+			spots.append(Rect2i(data.plaza.position + Vector2i(dx, dz), Vector2i(4, 3)))
+	for rect in spots:
+		if can_place(rect, Vector3(-10, 0, -10)) and door_clear("island_office", rect, 0):
+			place_item("island_office", rect, 0)["fixed"] = true
+			return
+
+
 ## Islands saved before the DIY update get a plaza workbench and a first bottle.
 func _upgrade_old_save() -> void:
+	_add_office()
 	for obj in data.objects:
 		if obj["kind"] == "placed" and obj["item"] == "workbench" and obj.get("fixed", false):
 			return
-	for dz in range(0, data.plaza.size.y - 1):
+	var spots: Array[Rect2i] = [Rect2i(data.plaza.position + IslandGenerator.WORKBENCH_AT, Vector2i(2, 1))]
+	for dz in range(0, data.plaza.size.y):
 		for dx in range(0, data.plaza.size.x - 1):
-			var rect := Rect2i(data.plaza.position + Vector2i(dx + 3, dz + 2), Vector2i(2, 1))
-			if can_place(rect, Vector3(-10, 0, -10)):
-				var obj := place_item("workbench", rect, 0)
-				obj["fixed"] = true
-				wash_up_bottle()
-				return
+			spots.append(Rect2i(data.plaza.position + Vector2i(dx, dz), Vector2i(2, 1)))
+	for rect in spots:
+		if can_place(rect, Vector3(-10, 0, -10)):
+			place_item("workbench", rect, 0)["fixed"] = true
+			wash_up_bottle()
+			return
 
 
 func _pick_money_rock() -> void:

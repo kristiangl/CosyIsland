@@ -15,7 +15,9 @@ const GRASS: Array[Color] = [Color("a6d585"), Color("93c873"), Color("80b963"), 
 const CLIFF := Color("5d8a4b")
 const BANK := Color("6f9f86")
 const BRIDGE := Color("b98a5c")
+const PAVING := Color("e8d8c4")
 const HOME := Color("6cbfb0")
+const OFFICE := Color("ef9a8a")
 
 ## Full map: furniture dots and a grid.
 var detailed := false
@@ -31,6 +33,7 @@ static var _painted: Image
 static var _land: Rect2i
 
 var _homes: Array[Rect2] = []
+var _offices: Array[Rect2] = []
 var _benches: Array[Rect2] = []
 var _furniture: Array[Vector2] = []
 var _bridges: Array[Rect2] = []
@@ -136,6 +139,7 @@ static func paint(data: IslandData) -> Image:
 
 	var rgb := PackedByteArray()
 	rgb.resize(w * h * 3)
+	var plaza := Rect2(data.plaza).grow(0.25)
 	var grass_top := GRASS.size()
 	for y in h:
 		for x in w:
@@ -151,6 +155,8 @@ static func paint(data: IslandData) -> Image:
 				2:
 					var tier := clampi(int(round((here - IslandData.GRASS_HEIGHT) / IslandData.TIER_HEIGHT)) + 1, 1, grass_top)
 					colour = BANK if _next_to(cls, w, h, x, y, 3) else GRASS[tier - 1]
+					if _in_rounded(plaza, Vector2(x + 0.5, y + 0.5) / PX, 1.8):
+						colour = PAVING
 					# Outline the top edge of every cliff.
 					if _drop_beside(heights, w, h, x, y) > 0.6:
 						colour = CLIFF
@@ -160,6 +166,13 @@ static func paint(data: IslandData) -> Image:
 			rgb[i * 3 + 1] = colour.g8
 			rgb[i * 3 + 2] = colour.b8
 	return Image.create_from_data(w, h, false, Image.FORMAT_RGB8, rgb)
+
+
+static func _in_rounded(rect: Rect2, p: Vector2, radius: float) -> bool:
+	if not rect.has_area():
+		return false
+	var q := (p - rect.get_center()).abs() - (rect.size * 0.5 - Vector2(radius, radius))
+	return Vector2(maxf(q.x, 0.0), maxf(q.y, 0.0)).length() + minf(maxf(q.x, q.y), 0.0) < radius
 
 
 ## True if a pixel beside (x, y) is of this class.
@@ -186,6 +199,7 @@ static func _drop_beside(heights: PackedFloat32Array, w: int, h: int, x: int, y:
 
 func _collect_markers() -> void:
 	_homes.clear()
+	_offices.clear()
 	_benches.clear()
 	_furniture.clear()
 	_bridges.clear()
@@ -204,7 +218,9 @@ func _collect_markers() -> void:
 					continue
 				var rect := Rect2(obj["x"], obj["z"], obj["w"], obj["d"])
 				var def := ItemDB.placeable(obj["item"])
-				if def.get("structure", false):
+				if obj["item"] == "island_office":
+					_offices.append(rect)
+				elif def.get("structure", false):
 					_homes.append(rect)
 				elif def.get("workbench", false):
 					_benches.append(rect)
@@ -249,15 +265,17 @@ func _draw() -> void:
 		var c := o + r.get_center() * s
 		draw_rect(Rect2(c - Vector2(icon, icon * 0.6) * 0.5, Vector2(icon, icon * 0.6)), UIStyle.BROWN)
 	for r in _homes:
-		_draw_home(o + r.get_center() * s, icon)
+		_draw_home(o + r.get_center() * s, icon, HOME)
+	for r in _offices:
+		_draw_home(o + r.get_center() * s, icon * 1.3, OFFICE)
 	var player := Game.player
 	if player and player.world == Game.island:
 		_draw_player(o + Vector2(player.position.x, player.position.z) * s, Vector2(player.facing.x, player.facing.z), icon)
 
 
-func _draw_home(c: Vector2, sz: float) -> void:
+func _draw_home(c: Vector2, sz: float, colour: Color) -> void:
 	var pts := PackedVector2Array([c + Vector2(0, -sz * 0.75), c + Vector2(sz * 0.7, sz * 0.5), c + Vector2(-sz * 0.7, sz * 0.5)])
-	draw_colored_polygon(pts, HOME)
+	draw_colored_polygon(pts, colour)
 	pts.append(pts[0])
 	draw_polyline(pts, UIStyle.CREAM, maxf(1.0, sz * 0.12))
 

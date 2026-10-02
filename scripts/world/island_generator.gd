@@ -9,6 +9,9 @@ const WIDTH := 96
 const HEIGHT := 80
 const OCEAN_MARGIN := 9
 const PLAZA_SIZE := 8
+## Where the office and workbench sit in the plaza (top-left tile, plaza coordinates).
+const OFFICE_AT := Vector2i(2, 0)
+const WORKBENCH_AT := Vector2i(5, 4)
 const ROCK_COUNT := 6
 const FRUIT_TREE_COUNT := 8
 
@@ -752,9 +755,12 @@ func _place_flowers() -> void:
 			clusters -= 1
 
 
-## The plaza starts with a DIY workbench everyone can use.
+## The plaza starts with the island office and a DIY workbench everyone can use.
 func _place_plaza() -> void:
-	var p := d.plaza.position + Vector2i(3, 2)
+	var o := d.plaza.position + OFFICE_AT
+	d.objects.append({"uid": d.new_uid(), "kind": "placed", "item": "island_office", "x": o.x, "z": o.y,
+		"w": 4, "d": 3, "rot": 0, "fixed": true})
+	var p := d.plaza.position + WORKBENCH_AT
 	d.objects.append({"uid": d.new_uid(), "kind": "placed", "item": "workbench", "x": p.x, "z": p.y,
 		"w": 2, "d": 1, "rot": 0, "fixed": true})
 

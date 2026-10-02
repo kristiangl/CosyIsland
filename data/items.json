@@ -100,6 +100,24 @@
 				}
 			}
 		},
+		"island_office": {
+			"name": "Island Office",
+			"category": "building",
+			"stack": 1,
+			"price": 0,
+			"color": "#f2a091",
+			"desc": "Poppy's office, where island life gets organised.",
+			"placeable": {
+				"footprint": [
+					4,
+					3
+				],
+				"model": "office",
+				"structure": true,
+				"rotatable": false,
+				"door": true
+			}
+		},
 		"stone_axe": {
 			"name": "Stone Axe",
 			"category": "tool",

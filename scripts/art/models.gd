@@ -52,6 +52,8 @@ static func get_mesh(key: String) -> ArrayMesh:
 			_flower_clump(k, p[1], p[2])
 		"tent":
 			_tent(k)
+		"office":
+			_office(k)
 		"bridge":
 			_bridge(k, int(p[1]))
 		"drop":
@@ -270,6 +272,80 @@ static func _tent(k: MeshKit) -> void:
 	for s: float in [-1.0, 1.0]:
 		for z in [d * 0.8, -d * 0.8]:
 			k.cylinder(Vector3(s * (w + 0.25), 0, z), Vector3(s * (w + 0.25), 0.15, z), 0.03, 0.03, pole, 4)
+
+
+## The island office: a striped marquee with a leaf sign over the entrance.
+static func _office(k: MeshKit) -> void:
+	var w := 1.75
+	var d := 1.2
+	var eave := 1.35
+	var top := 2.75
+	var ridge := 0.55
+	var coral := MeshKit.lin(Color("f2a091"))
+	var cream := MeshKit.lin(CREAM)
+	var canvas := MeshKit.lin(Color("fbefd6"))
+	var dark := MeshKit.lin(Color("8d6f66"))
+	var pole := MeshKit.lin(PLANK_DARK)
+	# Canvas walls.
+	k.box(Vector3(0, eave * 0.5, 0), Vector3(w * 2.0, eave, d * 2.0), canvas)
+	# Striped hip roof: front and back trapezoids, triangular ends.
+	var strips := 8
+	for side: float in [1.0, -1.0]:
+		var n := Vector3(0, d, side * (top - eave)).normalized()
+		for i in strips:
+			var t0 := float(i) / strips
+			var t1 := float(i + 1) / strips
+			var a := Vector3(lerpf(-w, w, t0), eave, side * d) + Vector3(0, 0, side * 0.12)
+			var b := Vector3(lerpf(-w, w, t1), eave, side * d) + Vector3(0, 0, side * 0.12)
+			var c := Vector3(lerpf(-ridge, ridge, t1), top, 0)
+			var e := Vector3(lerpf(-ridge, ridge, t0), top, 0)
+			k.flat_quad(a, b, c, e, n, coral if i % 2 == 0 else cream)
+	for side: float in [1.0, -1.0]:
+		var n := Vector3(side * (top - eave), w - ridge, 0).normalized()
+		for i in 4:
+			var t0 := float(i) / 4
+			var t1 := float(i + 1) / 4
+			var a := Vector3(side * (w + 0.12), eave, lerpf(-d - 0.12, d + 0.12, t0))
+			var b := Vector3(side * (w + 0.12), eave, lerpf(-d - 0.12, d + 0.12, t1))
+			var c := Vector3(side * ridge, top, 0)
+			var ia := k.vertex(a, n, cream if i % 2 == 0 else coral)
+			var ib := k.vertex(b, n, cream if i % 2 == 0 else coral)
+			var ic := k.vertex(c, n, cream if i % 2 == 0 else coral)
+			k.tri(ia, ib, ic, n)
+	# Scalloped valance round the eaves.
+	var scallops := 9
+	for i in scallops:
+		var x := lerpf(-w, w, (i + 0.5) / scallops)
+		k.sphere(Vector3(x, eave - 0.02, d + 0.13), Vector3(w / scallops, 0.13, 0.03), coral if i % 2 == 0 else cream, 3, 8)
+	# Entrance: dark doorway, tied-back flaps, a little step.
+	var dz := d + 0.01
+	k.flat_quad(Vector3(-0.42, 0, dz), Vector3(0.42, 0, dz), Vector3(0.42, 1.05, dz), Vector3(-0.42, 1.05, dz), Vector3.BACK, dark)
+	for s: float in [-1.0, 1.0]:
+		var f0 := k.vertex(Vector3(s * 0.42, 0, dz + 0.01), Vector3.BACK, coral)
+		var f1 := k.vertex(Vector3(s * 0.6, 0, dz + 0.01), Vector3.BACK, coral)
+		var f2 := k.vertex(Vector3(s * 0.6, 1.2, dz + 0.01), Vector3.BACK, coral)
+		var f3 := k.vertex(Vector3(s * 0.2, 1.2, dz + 0.01), Vector3.BACK, coral)
+		k.quad(f0, f1, f2, f3, Vector3.BACK)
+		k.sphere(Vector3(s * 0.52, 0.55, dz + 0.04), Vector3(0.06, 0.05, 0.04), cream, 3, 6)
+	k.box(Vector3(0, 0.03, d + 0.25), Vector3(1.0, 0.06, 0.4), MeshKit.lin(PLANK))
+	# Leaf sign on two posts above the door.
+	for s: float in [-1.0, 1.0]:
+		k.cylinder(Vector3(s * 0.55, eave - 0.1, d + 0.2), Vector3(s * 0.55, top - 0.25, d + 0.2), 0.035, 0.035, pole, 5)
+	k.rounded_box(Vector3(0, eave + 0.55, d + 0.26), Vector3(1.25, 0.5, 0.08), cream, 0.15)
+	var leaf := MeshKit.lin(Color("7cbf6a"))
+	k.leaf(Vector3(-0.1, eave + 0.36, d + 0.32), Vector3(0.75, 1.0, 0.0), 0.44, 0.3, leaf)
+	k.leaf(Vector3(-0.1, eave + 0.36, d + 0.32), Vector3(-0.7, 0.8, 0.0), 0.3, 0.2, MeshKit.lin(Color("9ad68a")))
+	# Corner poles, a pennant on top and guy pegs.
+	for sx: float in [-1.0, 1.0]:
+		for sz: float in [-1.0, 1.0]:
+			k.cylinder(Vector3(sx * (w + 0.06), 0, sz * (d + 0.06)), Vector3(sx * (w + 0.06), eave + 0.05, sz * (d + 0.06)), 0.045, 0.04, pole, 5)
+	k.cylinder(Vector3(0, top - 0.1, 0), Vector3(0, top + 0.45, 0), 0.04, 0.035, pole, 5)
+	var flag := MeshKit.lin(Color("9fd3c7"), 0.8)
+	var fa := k.vertex(Vector3(0, top + 0.45, 0), Vector3.BACK, flag)
+	var fb := k.vertex(Vector3(0.38, top + 0.36, 0), Vector3.BACK, flag)
+	var fc := k.vertex(Vector3(0, top + 0.27, 0), Vector3.BACK, flag)
+	k.tri(fa, fb, fc, Vector3.BACK)
+	k.tri(fa, fc, fb, Vector3.FORWARD)
 
 
 static func _bridge(k: MeshKit, length: int) -> void:

@@ -30,7 +30,8 @@ func build(d: IslandData, density: float = 1.0) -> void:
 				var s := rng.randf_range(0.75, 1.25)
 				# Grass grows thicker at the foot of cliffs and banks.
 				var chance := CLUMP_CHANCE * (2.2 if _beside_higher(d, x, z) else 1.0)
-				if d.surface_at(px, pz) != IslandData.Tile.GRASS or rng.randf() > chance * density:
+				var paved := d.plaza.grow(1).has_point(Vector2i(x, z))
+				if paved or d.surface_at(px, pz) != IslandData.Tile.GRASS or rng.randf() > chance * density:
 					s = 0.0
 				var b := Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3(s, s * rng.randf_range(0.8, 1.2), s))
 				_transforms.append(Transform3D(b, Vector3(px, d.height_at(px, pz), pz)))

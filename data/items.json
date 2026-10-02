@@ -1,35 +1,589 @@
 {
 	"items": {
-		"wood": {"name": "Wood", "category": "material", "stack": 30, "price": 60, "color": "#a8743f", "desc": "A sturdy bundle of wood. Good for crafting."},
-		"tree_branch": {"name": "Tree Branch", "category": "material", "stack": 30, "price": 5, "color": "#8b6a45", "desc": "A slender branch that fell from a tree."},
-		"stone": {"name": "Stone", "category": "material", "stack": 30, "price": 75, "color": "#9a9a92", "desc": "A smooth stone chipped off a rock."},
-		"clay": {"name": "Clay", "category": "material", "stack": 30, "price": 100, "color": "#c98a5c", "desc": "Soft, damp clay. It holds its shape well."},
-		"iron_nugget": {"name": "Iron Nugget", "category": "material", "stack": 30, "price": 375, "color": "#6d7480", "desc": "A heavy lump of iron."},
-		"acorn_pouch": {"name": "Acorn Pouch", "category": "currency", "stack": 1, "price": 0, "color": "#b7864f", "desc": "A little pouch of acorns."},
-		"gold_nugget": {"name": "Gold Nugget", "category": "material", "stack": 30, "price": 10000, "color": "#e8b53a", "desc": "It's shiny! Very rare."},
-
-		"flimsy_axe": {"name": "Flimsy Axe", "category": "tool", "tool": "axe", "durability": 40, "stack": 1, "price": 200, "color": "#b08a5a", "desc": "Chops wood from trees. It won't fell them."},
-		"flimsy_shovel": {"name": "Flimsy Shovel", "category": "tool", "tool": "shovel", "durability": 40, "stack": 1, "price": 200, "color": "#8aa0b0", "desc": "Good for hitting rocks. Digging comes later."},
-
-		"tent_kit": {"name": "Tent Kit", "category": "kit", "stack": 1, "price": 0, "color": "#5f9fd6", "desc": "Your first home. Find a nice spot and pitch it!",
-			"placeable": {"footprint": [3, 3], "model": "tent", "structure": true, "rotatable": false}}
+		"wood": {
+			"name": "Wood",
+			"category": "material",
+			"stack": 30,
+			"price": 60,
+			"color": "#a8743f",
+			"desc": "A sturdy bundle of wood. Good for crafting."
+		},
+		"tree_branch": {
+			"name": "Tree Branch",
+			"category": "material",
+			"stack": 30,
+			"price": 5,
+			"color": "#8b6a45",
+			"desc": "A slender branch that fell from a tree."
+		},
+		"stone": {
+			"name": "Stone",
+			"category": "material",
+			"stack": 30,
+			"price": 75,
+			"color": "#9a9a92",
+			"desc": "A smooth stone chipped off a rock."
+		},
+		"clay": {
+			"name": "Clay",
+			"category": "material",
+			"stack": 30,
+			"price": 100,
+			"color": "#c98a5c",
+			"desc": "Soft, damp clay. It holds its shape well."
+		},
+		"iron_nugget": {
+			"name": "Iron Nugget",
+			"category": "material",
+			"stack": 30,
+			"price": 375,
+			"color": "#6d7480",
+			"desc": "A heavy lump of iron."
+		},
+		"acorn_pouch": {
+			"name": "Acorn Pouch",
+			"category": "currency",
+			"stack": 1,
+			"price": 0,
+			"color": "#b7864f",
+			"desc": "A little pouch of acorns."
+		},
+		"gold_nugget": {
+			"name": "Gold Nugget",
+			"category": "material",
+			"stack": 30,
+			"price": 10000,
+			"color": "#e8b53a",
+			"desc": "It's shiny! Very rare."
+		},
+		"flimsy_axe": {
+			"name": "Flimsy Axe",
+			"category": "tool",
+			"tool": "axe",
+			"durability": 40,
+			"stack": 1,
+			"price": 200,
+			"color": "#b08a5a",
+			"desc": "Chops wood from trees. It won't fell them."
+		},
+		"flimsy_shovel": {
+			"name": "Flimsy Shovel",
+			"category": "tool",
+			"tool": "shovel",
+			"durability": 40,
+			"stack": 1,
+			"price": 200,
+			"color": "#8aa0b0",
+			"desc": "Good for hitting rocks. Digging comes later."
+		},
+		"tent_kit": {
+			"name": "Tent Kit",
+			"category": "kit",
+			"stack": 1,
+			"price": 0,
+			"color": "#5f9fd6",
+			"desc": "Your first home. Find a nice spot and pitch it!",
+			"placeable": {
+				"footprint": [
+					3,
+					3
+				],
+				"model": "tent",
+				"structure": true,
+				"rotatable": false
+			}
+		},
+		"stone_axe": {
+			"name": "Stone Axe",
+			"category": "tool",
+			"tool": "axe",
+			"durability": 100,
+			"stack": 1,
+			"price": 620,
+			"color": "#9a9a92",
+			"desc": "A tougher axe that lasts much longer."
+		},
+		"sturdy_shovel": {
+			"name": "Sturdy Shovel",
+			"category": "tool",
+			"tool": "shovel",
+			"durability": 100,
+			"stack": 1,
+			"price": 600,
+			"color": "#7d8790",
+			"desc": "An iron shovel built to last."
+		},
+		"message_bottle": {
+			"name": "Message Bottle",
+			"category": "bottle",
+			"stack": 1,
+			"price": 0,
+			"color": "#a6dce6",
+			"desc": "A bottle with a note inside."
+		},
+		"workbench": {
+			"name": "DIY Workbench",
+			"category": "furniture",
+			"stack": 1,
+			"price": 1600,
+			"color": "#c79a6e",
+			"desc": "A sturdy bench for making things.",
+			"placeable": {
+				"footprint": [
+					2,
+					1
+				],
+				"model": "furniture:workbench",
+				"rotatable": true,
+				"workbench": true
+			}
+		},
+		"wooden_stool": {
+			"name": "Wooden Stool",
+			"category": "furniture",
+			"stack": 1,
+			"price": 240,
+			"color": "#d4a77e",
+			"desc": "A simple stool. Sit a while.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "furniture:wooden_stool",
+				"rotatable": true
+			}
+		},
+		"wooden_chair": {
+			"name": "Wooden Chair",
+			"category": "furniture",
+			"stack": 1,
+			"price": 300,
+			"color": "#d4a77e",
+			"desc": "A chair with a little heart cut into the back.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "furniture:wooden_chair",
+				"rotatable": true
+			}
+		},
+		"wooden_table": {
+			"name": "Wooden Table",
+			"category": "furniture",
+			"stack": 1,
+			"price": 420,
+			"color": "#d4a77e",
+			"desc": "A long table for picnics or projects.",
+			"placeable": {
+				"footprint": [
+					2,
+					1
+				],
+				"model": "furniture:wooden_table",
+				"rotatable": true
+			}
+		},
+		"log_bench": {
+			"name": "Log Bench",
+			"category": "furniture",
+			"stack": 1,
+			"price": 480,
+			"color": "#b08463",
+			"desc": "Half a log, smoothed into a bench.",
+			"placeable": {
+				"footprint": [
+					2,
+					1
+				],
+				"model": "furniture:log_bench",
+				"rotatable": true
+			}
+		},
+		"stump_table": {
+			"name": "Stump Table",
+			"category": "furniture",
+			"stack": 1,
+			"price": 360,
+			"color": "#b08463",
+			"desc": "A tree stump that makes a fine table.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "furniture:stump_table",
+				"rotatable": true
+			}
+		},
+		"wooden_box": {
+			"name": "Wooden Box",
+			"category": "furniture",
+			"stack": 1,
+			"price": 300,
+			"color": "#d4a77e",
+			"desc": "A handy crate for odds and ends.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "furniture:wooden_box",
+				"rotatable": true
+			}
+		},
+		"wooden_shelf": {
+			"name": "Wooden Shelf",
+			"category": "furniture",
+			"stack": 1,
+			"price": 360,
+			"color": "#d4a77e",
+			"desc": "A little shelf with room for treasures.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "furniture:wooden_shelf",
+				"rotatable": true
+			}
+		},
+		"simple_bed": {
+			"name": "Simple Bed",
+			"category": "furniture",
+			"stack": 1,
+			"price": 800,
+			"color": "#d4a77e",
+			"desc": "A cosy wooden bed with a patchwork quilt.",
+			"placeable": {
+				"footprint": [
+					2,
+					2
+				],
+				"model": "furniture:simple_bed",
+				"rotatable": true
+			}
+		},
+		"barrel": {
+			"name": "Barrel",
+			"category": "furniture",
+			"stack": 1,
+			"price": 675,
+			"color": "#b08463",
+			"desc": "A barrel bound with iron hoops.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "furniture:barrel",
+				"rotatable": true
+			}
+		},
+		"firewood_pile": {
+			"name": "Firewood Pile",
+			"category": "furniture",
+			"stack": 1,
+			"price": 360,
+			"color": "#b08463",
+			"desc": "Neatly stacked logs, ready for winter.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "furniture:firewood_pile",
+				"rotatable": true
+			}
+		},
+		"campfire": {
+			"name": "Campfire",
+			"category": "furniture",
+			"stack": 1,
+			"price": 315,
+			"color": "#e8a25a",
+			"desc": "A ring of stones around crackling branches.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "furniture:campfire",
+				"rotatable": true,
+				"light": true
+			}
+		},
+		"stone_lantern": {
+			"name": "Stone Lantern",
+			"category": "furniture",
+			"stack": 1,
+			"price": 450,
+			"color": "#bdb8cc",
+			"desc": "A garden lantern carved from stone.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "furniture:stone_lantern",
+				"rotatable": true,
+				"light": true
+			}
+		},
+		"stone_stool": {
+			"name": "Stone Stool",
+			"category": "furniture",
+			"stack": 1,
+			"price": 300,
+			"color": "#bdb8cc",
+			"desc": "A smooth stone, just the right height.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "furniture:stone_stool",
+				"rotatable": true
+			}
+		},
+		"flower_pot": {
+			"name": "Flower Pot",
+			"category": "furniture",
+			"stack": 1,
+			"price": 300,
+			"color": "#e09a72",
+			"desc": "A terracotta pot. Something should grow here.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "furniture:flower_pot",
+				"rotatable": true
+			}
+		},
+		"clay_vase": {
+			"name": "Clay Vase",
+			"category": "furniture",
+			"stack": 1,
+			"price": 400,
+			"color": "#e09a72",
+			"desc": "A round vase with a pretty glaze.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "furniture:clay_vase",
+				"rotatable": true
+			}
+		},
+		"garden_lantern": {
+			"name": "Garden Lantern",
+			"category": "furniture",
+			"stack": 1,
+			"price": 555,
+			"color": "#c9a87e",
+			"desc": "A lantern on a post that glows at night.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "furniture:garden_lantern",
+				"rotatable": true,
+				"light": true
+			}
+		},
+		"wooden_fence": {
+			"name": "Wooden Fence",
+			"category": "furniture",
+			"stack": 1,
+			"price": 60,
+			"color": "#d4a77e",
+			"desc": "A picket fence section. Makes a lovely border.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "furniture:wooden_fence",
+				"rotatable": true
+			}
+		},
+		"signpost": {
+			"name": "Signpost",
+			"category": "furniture",
+			"stack": 1,
+			"price": 180,
+			"color": "#d4a77e",
+			"desc": "Points the way to somewhere nice.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "furniture:signpost",
+				"rotatable": true
+			}
+		},
+		"mailbox": {
+			"name": "Mailbox",
+			"category": "furniture",
+			"stack": 1,
+			"price": 555,
+			"color": "#7fbcd8",
+			"desc": "Letters from friends will arrive here one day.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "furniture:mailbox",
+				"rotatable": true
+			}
+		},
+		"birdhouse": {
+			"name": "Birdhouse",
+			"category": "furniture",
+			"stack": 1,
+			"price": 250,
+			"color": "#f2a6a0",
+			"desc": "A tiny house on a pole for feathered friends.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "furniture:birdhouse",
+				"rotatable": true
+			}
+		},
+		"iron_bench": {
+			"name": "Garden Bench",
+			"category": "furniture",
+			"stack": 1,
+			"price": 1620,
+			"color": "#7d8790",
+			"desc": "An iron bench with wooden slats.",
+			"placeable": {
+				"footprint": [
+					2,
+					1
+				],
+				"model": "furniture:iron_bench",
+				"rotatable": true
+			}
+		},
+		"garden_well": {
+			"name": "Garden Well",
+			"category": "furniture",
+			"stack": 1,
+			"price": 1350,
+			"color": "#bdb8cc",
+			"desc": "A stone well with a little roof.",
+			"placeable": {
+				"footprint": [
+					2,
+					2
+				],
+				"model": "furniture:garden_well",
+				"rotatable": true
+			}
+		}
 	},
 	"fruits": {
-		"apple": {"name": "Apple", "color": "#e0453a"},
-		"orange": {"name": "Orange", "color": "#f2922b"},
-		"pear": {"name": "Pear", "color": "#c9d64a"},
-		"cherry": {"name": "Cherry", "color": "#c41e3a"},
-		"peach": {"name": "Peach", "color": "#f7a98f"},
-		"plum": {"name": "Plum", "color": "#7b3f8c"}
+		"apple": {
+			"name": "Apple",
+			"color": "#e0453a"
+		},
+		"orange": {
+			"name": "Orange",
+			"color": "#f2922b"
+		},
+		"pear": {
+			"name": "Pear",
+			"color": "#c9d64a"
+		},
+		"cherry": {
+			"name": "Cherry",
+			"color": "#c41e3a"
+		},
+		"peach": {
+			"name": "Peach",
+			"color": "#f7a98f"
+		},
+		"plum": {
+			"name": "Plum",
+			"color": "#7b3f8c"
+		}
 	},
 	"flowers": {
-		"tulip": {"name": "Tulip", "colors": {"red": "#e5484d", "white": "#f7f3ea", "yellow": "#f5c842"}},
-		"pansy": {"name": "Pansy", "colors": {"red": "#d9435a", "white": "#f4f1f7", "yellow": "#f2cf3c"}},
-		"cosmos": {"name": "Cosmos", "colors": {"red": "#e0607e", "white": "#faf5f2", "yellow": "#f6d34a"}},
-		"rose": {"name": "Rose", "colors": {"red": "#c8233a", "white": "#fbf6f0", "yellow": "#f4c430"}},
-		"lily": {"name": "Lily", "colors": {"red": "#e4573d", "white": "#fdfbf4", "yellow": "#f8d24c"}},
-		"hyacinth": {"name": "Hyacinth", "colors": {"red": "#d64f6a", "white": "#f6f2f8", "yellow": "#f3d65a"}},
-		"windflower": {"name": "Windflower", "colors": {"red": "#d93a46", "white": "#f8f5ef", "yellow": "#f2c94c"}},
-		"mum": {"name": "Mum", "colors": {"red": "#c9364a", "white": "#f7f4ea", "yellow": "#f0c53a"}}
+		"tulip": {
+			"name": "Tulip",
+			"colors": {
+				"red": "#e5484d",
+				"white": "#f7f3ea",
+				"yellow": "#f5c842"
+			}
+		},
+		"pansy": {
+			"name": "Pansy",
+			"colors": {
+				"red": "#d9435a",
+				"white": "#f4f1f7",
+				"yellow": "#f2cf3c"
+			}
+		},
+		"cosmos": {
+			"name": "Cosmos",
+			"colors": {
+				"red": "#e0607e",
+				"white": "#faf5f2",
+				"yellow": "#f6d34a"
+			}
+		},
+		"rose": {
+			"name": "Rose",
+			"colors": {
+				"red": "#c8233a",
+				"white": "#fbf6f0",
+				"yellow": "#f4c430"
+			}
+		},
+		"lily": {
+			"name": "Lily",
+			"colors": {
+				"red": "#e4573d",
+				"white": "#fdfbf4",
+				"yellow": "#f8d24c"
+			}
+		},
+		"hyacinth": {
+			"name": "Hyacinth",
+			"colors": {
+				"red": "#d64f6a",
+				"white": "#f6f2f8",
+				"yellow": "#f3d65a"
+			}
+		},
+		"windflower": {
+			"name": "Windflower",
+			"colors": {
+				"red": "#d93a46",
+				"white": "#f8f5ef",
+				"yellow": "#f2c94c"
+			}
+		},
+		"mum": {
+			"name": "Mum",
+			"colors": {
+				"red": "#c9364a",
+				"white": "#f7f4ea",
+				"yellow": "#f0c53a"
+			}
+		}
 	}
 }

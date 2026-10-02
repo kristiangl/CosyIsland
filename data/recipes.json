@@ -1,0 +1,162 @@
+{
+	"_note": "Each recipe makes `count` of the item with the same id. `known` recipes are available from the start; the rest are learned from message bottles.",
+	"recipes": {
+		"flimsy_axe": {
+			"materials": {
+				"tree_branch": 5,
+				"stone": 1
+			},
+			"known": true
+		},
+		"flimsy_shovel": {
+			"materials": {
+				"wood": 5
+			},
+			"known": true
+		},
+		"stone_axe": {
+			"materials": {
+				"flimsy_axe": 1,
+				"wood": 3
+			}
+		},
+		"sturdy_shovel": {
+			"materials": {
+				"flimsy_shovel": 1,
+				"iron_nugget": 1
+			}
+		},
+		"workbench": {
+			"materials": {
+				"wood": 10,
+				"iron_nugget": 1
+			}
+		},
+		"wooden_stool": {
+			"materials": {
+				"wood": 4
+			},
+			"known": true
+		},
+		"wooden_chair": {
+			"materials": {
+				"wood": 4
+			}
+		},
+		"wooden_table": {
+			"materials": {
+				"wood": 6
+			}
+		},
+		"log_bench": {
+			"materials": {
+				"wood": 8
+			}
+		},
+		"stump_table": {
+			"materials": {
+				"wood": 6
+			}
+		},
+		"wooden_box": {
+			"materials": {
+				"wood": 5
+			},
+			"known": true
+		},
+		"wooden_shelf": {
+			"materials": {
+				"wood": 6
+			}
+		},
+		"simple_bed": {
+			"materials": {
+				"wood": 10
+			}
+		},
+		"barrel": {
+			"materials": {
+				"wood": 5,
+				"iron_nugget": 1
+			}
+		},
+		"firewood_pile": {
+			"materials": {
+				"wood": 6
+			},
+			"known": true
+		},
+		"campfire": {
+			"materials": {
+				"tree_branch": 3,
+				"stone": 4
+			},
+			"known": true
+		},
+		"stone_lantern": {
+			"materials": {
+				"stone": 6
+			}
+		},
+		"stone_stool": {
+			"materials": {
+				"stone": 4
+			},
+			"known": true
+		},
+		"flower_pot": {
+			"materials": {
+				"clay": 3
+			},
+			"known": true
+		},
+		"clay_vase": {
+			"materials": {
+				"clay": 4
+			}
+		},
+		"garden_lantern": {
+			"materials": {
+				"wood": 3,
+				"iron_nugget": 1
+			}
+		},
+		"wooden_fence": {
+			"materials": {
+				"wood": 2
+			},
+			"count": 4,
+			"known": true
+		},
+		"signpost": {
+			"materials": {
+				"wood": 3
+			},
+			"known": true
+		},
+		"mailbox": {
+			"materials": {
+				"wood": 3,
+				"iron_nugget": 1
+			}
+		},
+		"birdhouse": {
+			"materials": {
+				"wood": 4,
+				"tree_branch": 2
+			}
+		},
+		"iron_bench": {
+			"materials": {
+				"iron_nugget": 4,
+				"wood": 2
+			}
+		},
+		"garden_well": {
+			"materials": {
+				"stone": 10,
+				"wood": 4
+			}
+		}
+	}
+}

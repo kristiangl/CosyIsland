@@ -17,6 +17,7 @@ func _run() -> void:
 	_test_generation()
 	_test_world_rules()
 	_test_appearance()
+	_test_crafting()
 	print("\n%d checks, %d failures" % [_checks, _failures])
 	get_tree().quit(1 if _failures > 0 else 0)
 
@@ -133,7 +134,7 @@ func _test_world_rules() -> void:
 	add_child(w2)
 	w2.setup(IslandGenerator.generate(42), saved)
 	check(w2.objects().size() == w.objects().size(), "objects survive a save round trip")
-	check(w2.objects().filter(func(o): return o["kind"] == "placed").size() == 1, "tent survives a save round trip")
+	check(w2.objects().filter(func(o): return o["kind"] == "placed" and o["item"] == "tent_kit").size() == 1, "tent survives a save round trip")
 	w.free()
 	w2.free()
 	Inventory.reset()
@@ -163,3 +164,42 @@ func _test_appearance() -> void:
 			add_child(model)
 			check(model.get_child_count() > 0, "character builds with %s = %s" % [key, opt["id"]])
 			model.free()
+
+
+func _test_crafting() -> void:
+	Inventory.reset()
+	Recipes.reset()
+	for id in Recipes.recipes:
+		check(ItemDB.has_item(id), "recipe result is an item: " + id)
+		for mat in Recipes.materials(id):
+			check(ItemDB.has_item(mat), "recipe material is an item: %s for %s" % [mat, id])
+		var def := ItemDB.get_item(id)
+		if def.get("category", "") == "furniture":
+			check(Models.get_mesh(def["placeable"]["model"]).get_surface_count() > 0, "furniture has a model: " + id)
+	check(not Recipes.can_craft("wooden_stool"), "can't craft without materials")
+	Inventory.add_item("wood", 5)
+	check(Recipes.craft("wooden_stool"), "crafting a stool works")
+	check(Inventory.count_of("wood") == 1 and Inventory.count_of("wooden_stool") == 1, "crafting uses materials and gives the item")
+	Inventory.add_item("wood", 1)
+	check(Recipes.craft("wooden_fence") and Inventory.count_of("wooden_fence") == 4, "fences come in fours")
+
+	var d := IslandGenerator.generate(42)
+	var w := World.new()
+	add_child(w)
+	w.setup(d)
+	var bench: Array = w.objects().filter(func(o): return o["kind"] == "placed" and o["item"] == "workbench")
+	check(bench.size() == 1, "the plaza has a workbench")
+	check(not w.pack_up(bench[0]), "the plaza workbench can't be packed up")
+	var bottles: Array = w.objects().filter(func(o): return o["kind"] == "drop" and o["item"] == "message_bottle")
+	check(bottles.size() == 1, "a message bottle washes up on a new island")
+	var known_before := Recipes.known.size()
+	if not bottles.is_empty():
+		w.pick_up(bottles[0]["x"], bottles[0]["z"])
+	check(Recipes.known.size() == known_before + 1, "message bottles teach a recipe")
+	var spot := _find_tent_spot(w, d)
+	var stool := w.place_item("wooden_stool", Rect2i(spot, Vector2i.ONE), 1)
+	Inventory.remove_item("wooden_stool", 1)
+	check(w.pack_up(stool) and Inventory.count_of("wooden_stool") == 1, "furniture packs back into the pockets")
+	w.free()
+	Inventory.reset()
+	Recipes.reset()

@@ -10,8 +10,9 @@ extends Node3D
 ##   --frames=N         frames to wait before the screenshot (default 45)
 ##   --grass=F          grass density multiplier (0 disables)
 ##   --at=X,Z           start the player at a world position
-##   --demo             pitch the tent and chop a tree before the screenshot
-##   --ui=pockets|pause|creator   open a menu (for screenshots)
+##   --demo             pitch the tent, place furniture and chop a tree before the screenshot
+##   --demo=decor       same, but stay by the furniture instead of chopping
+##   --ui=pockets|pause|creator|crafting   open a menu (for screenshots)
 
 const AUTOSAVE_SECONDS := 60.0
 
@@ -45,6 +46,7 @@ func _ready() -> void:
 		Inventory.from_save(saved["inventory"])
 	else:
 		_new_game_pockets()
+	Recipes.from_save(saved.get("recipes", []))
 
 	player = Player.new()
 	player.name = "Player"
@@ -90,11 +92,17 @@ func _ready() -> void:
 		await _run_demo()
 	match Game.args.get("ui", ""):
 		"pockets":
+			for id in ["wood", "stone", "clay", "iron_nugget", "tree_branch", "wooden_chair", "campfire", "apple", "tulip_red"]:
+				Inventory.add_item(id, 3)
 			hud._pockets.open()
 		"pause":
 			hud._open_pause()
 		"creator":
 			hud.creator.open(Appearance.DEFAULT, true)
+		"crafting":
+			Inventory.add_item("wood", 12)
+			Inventory.add_item("stone", 5)
+			hud.crafting.open()
 	if Game.args.has("screenshot"):
 		_take_screenshot(Game.args["screenshot"], int(Game.args.get("frames", "45")))
 	else:
@@ -138,6 +146,7 @@ func save_game() -> void:
 		"world": world.to_save(),
 		"inventory": Inventory.to_save(),
 		"player": player.to_save(),
+		"recipes": Recipes.to_save(),
 		"player_name": Game.player_name,
 		"island_name": Game.island_name,
 	})
@@ -160,6 +169,22 @@ func _run_demo() -> void:
 			world.place_item("tent_kit", rect, 0)
 			Inventory.remove_from_slot(2)
 			break
+	# Some furniture around the spawn.
+	var decor := ["campfire", "log_bench", "stone_lantern", "wooden_table", "wooden_chair", "barrel", "flower_pot", "garden_lantern", "birdhouse"]
+	var spot := 0
+	for dz in range(-1, 6):
+		for dx in range(-6, 7):
+			if spot >= decor.size():
+				break
+			var size: Array = ItemDB.placeable(decor[spot])["footprint"]
+			var rect := Rect2i(spawn + Vector2i(dx * 2, dz * 2), Vector2i(size[0], size[1]))
+			if world.can_place(rect, player.position):
+				world.place_item(decor[spot], rect, 0)
+				spot += 1
+	if Game.args["demo"] == "decor":
+		player.position = Vector3(spawn.x + 0.5, world.ground_height(spawn.x + 0.5, spawn.y + 4.5), spawn.y + 4.5)
+		camera_rig.focus = player.position
+		return
 	var trees := world.objects().filter(func(o): return o["kind"] == "tree")
 	trees.sort_custom(func(a, b): return Vector2(a["x"], a["z"]).distance_to(Vector2(spawn)) < Vector2(b["x"], b["z"]).distance_to(Vector2(spawn)))
 	var tree: Dictionary = trees[0]

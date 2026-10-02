@@ -4,9 +4,8 @@ Godot 4.7 game (GDScript, Compatibility renderer). Design and roadmap: `docs/DES
 
 ## Getting Godot in a cloud session
 
-Official download hosts are blocked by the network policy here, so `tools/setup_godot.sh`
-tries the official binary first and falls back to building from source (about 50 minutes
-on 4 cores). It installs to `/opt/godot/godot`.
+`tools/setup_godot.sh` installs Godot to `/opt/godot/godot`: the official binary when
+the network allows it, otherwise a build from source (about 30 minutes on 4 cores).
 
 ## Commands
 
@@ -15,6 +14,13 @@ on 4 cores). It installs to `/opt/godot/godot`.
   `tools/screenshot.sh shots/day.png --seed=7 --hour=10` or `--view=overview`
   (runs under xvfb with Mesa software GL; first run imports the project).
 - Run the game with a window: `/opt/godot/godot --path .` (add `-- --new` for a new island).
+- Check every script parses: `tools/check_scripts.sh` (run this first; GDScript treats
+  inferred-Variant types as errors, so type loop variables over literal arrays).
+- Art check scenes (render with `tools/screenshot_scene.sh out.png res://tools/<scene>`):
+  `character_lineup.tscn` (`--seed`, `--angle`), `model_gallery.tscn` (`--drops`,
+  `--only=id,id`), `calibrate.tscn` (`-- --shadows`, checks the cel lighting maths).
+- Game screenshot options are listed at the top of `scripts/main.gd` (`--demo`,
+  `--demo=decor`, `--ui=pockets|pause|creator|crafting`, `--at=X,Z`, `--hour`).
 
 ## Layout
 
@@ -23,10 +29,12 @@ on 4 cores). It installs to `/opt/godot/godot`.
 - `scripts/world/`: island generation (`island_generator.gd`, pure data), meshes
   (`terrain_builder.gd`, `grass_field.gd`), the live `world.gd` (objects, walkability,
   island rules), `day_night.gd`, `placement.gd`.
-- `scripts/player/`, `scripts/ui/`, `scripts/art/` (procedural models and `MeshKit`).
+- `scripts/player/`, `scripts/ui/`, `scripts/art/` (procedural models, `MeshKit`,
+  `FurnitureModels`), `scripts/character/` (appearance, parts, the character model).
 - `shaders/`: every world shader includes `include/world.gdshaderinc` and runs vertices
   through `curve_world()`; lit ones include `include/toon_light.gdshaderinc`.
 - `data/items.json`: item definitions. Fruit and flower items are generated in `ItemDB`.
+  `data/recipes.json`: DIY recipes. `data/appearance.json`: character options.
 
 ## Conventions
 
@@ -35,8 +43,11 @@ on 4 cores). It installs to `/opt/godot/godot`.
 - One tile = one world unit. Tile (x, z) spans x..x+1, z..z+1; north is -z.
 - Island objects are plain dictionaries in `IslandData.objects` (saved as JSON). Visuals
   are rebuilt from them, so never keep state only on nodes.
-- Colours in `Models`/`MeshKit` are sRGB and converted with `MeshKit.lin()`; vertex alpha
-  is the wind sway weight.
+- Colours are sRGB everywhere (vertex colours and `source_color` uniforms): the
+  Compatibility renderer treats ALBEDO as sRGB. Vertex alpha on props is wind sway.
+- Lit shaders end with `EMISSION = cel_ambient(ALBEDO);` and include
+  `toon_light.gdshaderinc`. The sun must cast shadows (the maths relies on it).
+- Things shown outside the island (icons, menus) set the material's `curved` to false.
 - Controller first: every action must be reachable with a gamepad.
 - Keep it cheap enough for Switch 1 and phones: few draw calls, no per-frame allocations
   in hot paths, Compatibility-renderer features only.

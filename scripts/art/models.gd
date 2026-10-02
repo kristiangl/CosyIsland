@@ -58,6 +58,8 @@ static func get_mesh(key: String) -> ArrayMesh:
 			_drop(k, p[1])
 		"tool":
 			_tool(k, p[1])
+		"furniture":
+			FurnitureModels.build(k, p[1])
 		_:
 			push_warning("Unknown model key %s" % key)
 			k.sphere(Vector3(0, 0.3, 0), Vector3.ONE * 0.3, MeshKit.lin(Color.MAGENTA))
@@ -302,6 +304,13 @@ static func _drop(k: MeshKit, item: String) -> void:
 			k.cylinder(Vector3(0.05, 0.04, 0.0), Vector3(0.15, 0.06, 0.12), 0.015, 0.01, col, 4)
 		"stone", "clay":
 			k.sphere(Vector3(0, 0.1, 0), Vector3(0.17, 0.11, 0.15), col, 4, 7, 0.4, 0.3, item.length())
+		"message_bottle":
+			k.xform = Transform3D(Basis(Vector3.BACK, PI * 0.5), Vector3(0, 0.1, 0))
+			k.cylinder(Vector3(0, -0.16, 0), Vector3(0, 0.08, 0), 0.09, 0.09, MeshKit.lin(Color("bfe6ec")), 10, true)
+			k.cylinder(Vector3(0, 0.08, 0), Vector3(0, 0.17, 0), 0.06, 0.035, MeshKit.lin(Color("bfe6ec")), 8, false)
+			k.cylinder(Vector3(0, 0.16, 0), Vector3(0, 0.22, 0), 0.04, 0.04, MeshKit.lin(Color("c19a6e")), 6, true)
+			k.box(Vector3(0, -0.04, 0), Vector3(0.1, 0.16, 0.02), MeshKit.lin(Color("fff4e0")))
+			k.xform = Transform3D.IDENTITY
 		"acorn_pouch":
 			k.sphere(Vector3(0, 0.15, 0), Vector3(0.17, 0.16, 0.17), col, 5, 8, 0.35)
 			k.sphere(Vector3(0, 0.31, 0), Vector3(0.07, 0.05, 0.07), MeshKit.lin(Color("8a5e34")), 3, 6)
@@ -314,13 +323,14 @@ static func _drop(k: MeshKit, item: String) -> void:
 
 
 static func _tool(k: MeshKit, item: String) -> void:
-	var handle := MeshKit.lin(Color("a07a4d"))
+	var handle := MeshKit.lin(Color("c19a6e"))
+	var head := MeshKit.lin(ItemDB.color_of(item).lightened(0.15))
 	match ItemDB.tool_type(item):
 		"axe":
 			k.cylinder(Vector3(0, -0.1, 0), Vector3(0, 0.55, 0), 0.03, 0.028, handle, 5)
-			k.box(Vector3(0.09, 0.47, 0), Vector3(0.16, 0.14, 0.04), MeshKit.lin(Color("9aa3a8")))
+			k.box(Vector3(0.09, 0.47, 0), Vector3(0.16, 0.14, 0.04), head)
 		"shovel":
 			k.cylinder(Vector3(0, -0.1, 0), Vector3(0, 0.6, 0), 0.028, 0.028, handle, 5)
-			k.box(Vector3(0, 0.72, 0), Vector3(0.18, 0.22, 0.03), MeshKit.lin(Color("8aa0b0")))
+			k.box(Vector3(0, 0.72, 0), Vector3(0.18, 0.22, 0.03), head)
 		_:
 			k.cylinder(Vector3(0, -0.1, 0), Vector3(0, 0.5, 0), 0.03, 0.03, handle, 5)

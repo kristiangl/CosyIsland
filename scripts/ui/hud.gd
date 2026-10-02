@@ -16,6 +16,7 @@ var _toast_queue: Array[String] = []
 var _toast_timer := 0.0
 var _pockets: Pockets
 var creator: CharacterCreator
+var crafting: CraftingMenu
 var _pause: PanelContainer
 var _pause_title: Label
 var _pause_time: Label
@@ -84,6 +85,14 @@ func _ready() -> void:
 
 	creator = CharacterCreator.new()
 	root.add_child(creator)
+
+	var centre := CenterContainer.new()
+	centre.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	centre.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(centre)
+	crafting = CraftingMenu.new()
+	centre.add_child(crafting)
+	Events.workbench_opened.connect(crafting.open)
 
 	Events.toast.connect(_on_toast)
 	Events.equipped_changed.connect(_on_equipped)

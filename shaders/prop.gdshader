@@ -9,11 +9,15 @@ render_mode world_vertex_coords, specular_disabled;
 
 uniform vec4 tint : source_color = vec4(1.0);
 uniform float tint_mix = 0.0;
+// Off for things shown outside the island (icons, menus).
+uniform bool curved = true;
 
 void vertex() {
 	vec3 root = MODEL_MATRIX[3].xyz;
 	VERTEX += wind_offset(root, VERTEX.y - root.y, COLOR.a, TIME);
-	VERTEX = curve_world(VERTEX);
+	if (curved) {
+		VERTEX = curve_world(VERTEX);
+	}
 }
 
 void fragment() {

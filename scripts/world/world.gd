@@ -21,6 +21,8 @@ var _nodes: Dictionary = {}     # uid -> Node3D
 var _occupant: Dictionary = {}  # tile index -> uid
 var _deck: Dictionary = {}      # tile index -> bridge deck height
 var _rng := RandomNumberGenerator.new()
+var _is_night := false
+var _light_check := 0.0
 
 
 func setup(island: IslandData, saved: Dictionary = {}) -> void:
@@ -42,6 +44,20 @@ func setup(island: IslandData, saved: Dictionary = {}) -> void:
 		_on_day_changed(GameClock.day_key())
 	elif money_rock_uid < 0:
 		_pick_money_rock()
+	if not saved.has("objects"):
+		wash_up_bottle()
+
+
+func _process(delta: float) -> void:
+	_light_check -= delta
+	if _light_check > 0.0:
+		return
+	_light_check = 1.0
+	var hour := GameClock.hour_float()
+	var night := hour < 6.0 or hour >= 18.5
+	if night != _is_night:
+		_is_night = night
+		get_tree().call_group("night_lights", "set_visible", night)
 
 
 func to_save() -> Dictionary:
@@ -173,6 +189,16 @@ func _spawn_node(obj: Dictionary) -> void:
 			if obj["kind"] == "flower":
 				node.scale = Vector3.ONE * 1.4
 	node.position = Vector3(centre.x, y, centre.y)
+	if obj["kind"] == "placed" and ItemDB.placeable(obj["item"]).get("light", false):
+		var lamp := OmniLight3D.new()
+		lamp.light_color = Color("ffcf8a")
+		lamp.light_energy = 0.7
+		lamp.omni_range = 3.0
+		lamp.omni_attenuation = 1.5
+		lamp.position = Vector3(0, 1.0, 0)
+		lamp.visible = _is_night
+		lamp.add_to_group("night_lights")
+		node.add_child(lamp)
 	add_child(node)
 	_nodes[obj["uid"]] = node
 
@@ -259,6 +285,18 @@ func shake(obj: Dictionary, player_pos: Vector3) -> void:
 			_drop_near(obj, player_pos, {"item": "tree_branch", "count": 1})
 
 
+## Puts placed furniture back in the pockets. Fixed things and homes stay put.
+func pack_up(obj: Dictionary) -> bool:
+	if obj.get("fixed", false) or ItemDB.placeable(obj["item"]).get("structure", false):
+		Events.toast.emit("That's staying right where it is.")
+		return false
+	if Inventory.add_item(obj["item"]) > 0:
+		Events.toast.emit("Your pockets are full!")
+		return false
+	remove_object(obj["uid"])
+	return true
+
+
 ## Picks up whatever is on the tile. Returns true if something was taken.
 func pick_up(x: int, z: int) -> bool:
 	var obj := object_at(x, z)
@@ -269,6 +307,12 @@ func pick_up(x: int, z: int) -> bool:
 			if obj["item"] == "acorn_pouch":
 				Inventory.add_currency(obj.get("amount", 100))
 				Events.toast.emit("You got %d %s!" % [obj.get("amount", 100), Game.CURRENCY_NAME.to_lower()])
+			elif obj["item"] == "message_bottle":
+				var learned := Recipes.learn_random(_rng)
+				if learned == "":
+					Events.toast.emit("A note inside says: \"Hello from across the sea!\"")
+				else:
+					Events.toast.emit("There's a recipe inside! You learned to make: %s." % ItemDB.display_name(learned))
 			else:
 				if Inventory.add_item(obj["item"], obj.get("count", 1)) > 0:
 					Events.toast.emit("Your pockets are full!")
@@ -395,6 +439,26 @@ func _on_day_changed(key: int) -> void:
 	if rocks < ROCK_COUNT:
 		_respawn_rock()
 	_pick_money_rock()
+	wash_up_bottle()
+
+
+## A message bottle washes up on the beach (one at a time).
+func wash_up_bottle() -> void:
+	for obj in data.objects:
+		if obj["kind"] == "drop" and obj["item"] == "message_bottle":
+			return
+	for attempt in 400:
+		var x := _rng.randi_range(0, data.width - 1)
+		var z := _rng.randi_range(0, data.height - 1)
+		if data.tile(x, z) != T.SAND or not _can_hold_drop(x, z):
+			continue
+		# Right by the water's edge.
+		var by_sea := false
+		for dir in IslandGenerator.DIRS:
+			by_sea = by_sea or data.tile(x + dir.x, z + dir.y) == T.OCEAN
+		if by_sea:
+			add_object({"kind": "drop", "item": "message_bottle", "count": 1, "x": x, "z": z})
+			return
 
 
 func _pick_money_rock() -> void:

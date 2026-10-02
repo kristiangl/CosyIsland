@@ -67,6 +67,7 @@ func _run(seed_value: int, w: int, h: int) -> IslandData:
 	_place_palms()
 	_place_rocks()
 	_place_flowers()
+	_place_plaza()
 	return d
 
 
@@ -749,6 +750,13 @@ func _place_flowers() -> void:
 				planted += 1
 		if planted > 0:
 			clusters -= 1
+
+
+## The plaza starts with a DIY workbench everyone can use.
+func _place_plaza() -> void:
+	var p := d.plaza.position + Vector2i(3, 2)
+	d.objects.append({"uid": d.new_uid(), "kind": "placed", "item": "workbench", "x": p.x, "z": p.y,
+		"w": 2, "d": 1, "rot": 0, "fixed": true})
 
 
 # --- Helpers -------------------------------------------------------------------------

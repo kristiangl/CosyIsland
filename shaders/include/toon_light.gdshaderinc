@@ -18,9 +18,13 @@ uniform float light_softness = 0.04;
 // Moves the light/shadow line round towards the dark side (characters use this so
 // faces stay mostly lit).
 uniform float light_wrap = 0.0;
+// Icons are lit with these fixed daytime tints instead of the time-of-day globals.
+uniform bool fixed_tints = false;
+uniform vec3 fixed_lit = vec3(1.0, 0.99, 0.96);
+uniform vec3 fixed_shadow = vec3(0.8, 0.77, 0.93);
 
 vec3 cel_ambient(vec3 albedo) {
-	return albedo * cel_shadow;
+	return albedo * (fixed_tints ? fixed_shadow : cel_shadow);
 }
 
 void light() {
@@ -28,7 +32,9 @@ void light() {
 	float lit = smoothstep(-light_wrap, -light_wrap + light_softness, ndl);
 	if (LIGHT_IS_DIRECTIONAL) {
 		lit *= smoothstep(0.35, 0.65, ATTENUATION);
-		DIFFUSE_LIGHT += pow(max(cel_lit - cel_shadow, vec3(0.0)), vec3(2.2)) * lit;
+		vec3 lit_tint = fixed_tints ? fixed_lit : cel_lit;
+		vec3 shadow_tint = fixed_tints ? fixed_shadow : cel_shadow;
+		DIFFUSE_LIGHT += pow(max(lit_tint - shadow_tint, vec3(0.0)), vec3(2.2)) * lit;
 	} else {
 		DIFFUSE_LIGHT += LIGHT_COLOR / PI * lit * ATTENUATION;
 	}

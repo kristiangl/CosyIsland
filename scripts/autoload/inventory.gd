@@ -68,6 +68,20 @@ func count_of(id: String) -> int:
 	return total
 
 
+## Removes items by id from wherever they are, last slots first. Returns how many
+## couldn't be found.
+func remove_item(id: String, count: int) -> int:
+	var remaining := count
+	for i in range(slots.size() - 1, -1, -1):
+		if remaining <= 0:
+			break
+		if slots[i].get("id", "") == id:
+			var take: int = mini(slots[i]["count"], remaining)
+			remaining -= take
+			remove_from_slot(i, take)
+	return remaining
+
+
 func remove_from_slot(index: int, count: int = 1) -> void:
 	var slot := slots[index]
 	if slot.is_empty():

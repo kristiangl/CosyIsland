@@ -106,6 +106,9 @@ func _use() -> void:
 	var kind: String = obj.get("kind", "")
 	if obj.has("x"):
 		_turn_towards(obj)
+	if kind == "placed":
+		_interact(obj)
+		return
 	match tool_kind:
 		"axe", "shovel":
 			_busy = SWING_TIME
@@ -126,8 +129,16 @@ func _use() -> void:
 				_busy = SWING_TIME
 				model.swing("shake")
 				world.shake(obj, position)
-			elif kind == "placed":
-				Events.toast.emit("Home sweet home! (You'll be able to go inside soon.)")
+
+
+func _interact(obj: Dictionary) -> void:
+	var def := ItemDB.placeable(obj["item"])
+	if def.get("workbench", false):
+		Events.workbench_opened.emit()
+	elif obj["item"] == "tent_kit":
+		Events.toast.emit("Home sweet home! (You'll be able to go inside soon.)")
+	else:
+		Events.toast.emit("What a lovely %s." % ItemDB.display_name(obj["item"]).to_lower())
 
 
 func _pick_up() -> void:
@@ -136,6 +147,13 @@ func _pick_up() -> void:
 			_busy = 0.25
 			model.swing("shake")
 			return
+	# Furniture can be packed back into the pockets.
+	var obj := _facing_object()
+	if obj.get("kind", "") == "placed":
+		_turn_towards(obj)
+		if world.pack_up(obj):
+			_busy = 0.25
+			model.swing("shake")
 
 
 func _turn_towards(obj: Dictionary) -> void:

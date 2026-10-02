@@ -60,6 +60,7 @@ func _ready() -> void:
 	Events.inventory_changed.connect(_refresh)
 	Events.equipped_changed.connect(func(_id): _refresh())
 	Events.currency_changed.connect(func(_c): _refresh())
+	Icons.icon_ready.connect(func(_id): if visible: _refresh())
 
 
 func open() -> void:
@@ -156,12 +157,12 @@ class SlotButton:
 		if slot.is_empty():
 			draw_circle(c, 6, UIStyle.BROWN_LIGHT * Color(1, 1, 1, 0.35))
 			return
-		var col := ItemDB.color_of(slot["id"])
-		draw_circle(c + Vector2(0, 2), 22, col.darkened(0.25))
-		draw_circle(c, 22, col)
-		draw_circle(c + Vector2(-7, -8), 6, col.lightened(0.35))
 		var font := get_theme_default_font()
-		var initials := ItemDB.display_name(slot["id"]).substr(0, 2)
-		draw_string(font, c + Vector2(-12, 7), initials, HORIZONTAL_ALIGNMENT_CENTER, 24, 18, Color.WHITE)
+		var tex := Icons.get_icon(slot["id"])
+		if tex:
+			draw_texture_rect(tex, Rect2(c - Vector2(27, 27), Vector2(54, 54)), false)
+		else:
+			var col := ItemDB.color_of(slot["id"])
+			draw_circle(c, 20, col)
 		if slot["count"] > 1:
 			draw_string(font, Vector2(size.x - 24, size.y - 6), str(slot["count"]), HORIZONTAL_ALIGNMENT_RIGHT, 22, 16, UIStyle.BROWN)

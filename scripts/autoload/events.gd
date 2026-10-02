@@ -7,3 +7,4 @@ signal currency_changed(amount: int)
 signal equipped_changed(item_id: String)
 signal day_changed(day_key: int)
 signal mode_changed(mode: int)
+signal workbench_opened

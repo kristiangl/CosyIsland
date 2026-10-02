@@ -28,16 +28,26 @@ PC first (Windows/macOS/Linux), then Nintendo Switch 1, iOS and Android.
 
 ## Art direction
 
-Everything is made in code: models are built from simple shapes (`scripts/art/models.gd`)
-and coloured with vertex colours, and the look comes from shaders:
+Pastel and cel-shaded with ink lines (reference: Organized Inside), with Animal Crossing
+proportions and camera.
 
-- Soft two-band toon lighting with cool, sky-tinted shadows and a warm rim.
-- Painted noise patches on grass, sand strata on cliffs, foam bands on the shore.
+Everything is made in code: models are built from simple shapes (`scripts/art/`) and
+coloured with vertex colours or material colours, and the look comes from shaders:
+
+- Cel lighting with one crisp step. Two global tints set by the time of day decide the
+  lit and shadow colours exactly (`shaders/include/toon_light.gdshaderinc`), so palette
+  colours show as designed and shadows are soft lavender.
+- A full-screen outline pass from the depth buffer draws silhouettes and creases.
+- Gentle noise in grass and sand, strata on cliffs, foam on the waterline.
 - A "rolling log" world curve so the horizon bends away like Animal Crossing.
-- Day/night colour grading keyed to the clock (dawn pinks, golden hour, blue nights).
 
-Detailed textures (fabric, wood grain, wallpapers) may come later from free sources or
-ChatGPT-generated images. Keep everything working with plain vertex colours first.
+Characters are modular chibi models (`scripts/character/`): parts on pivots, faces
+drawn in a shader, fabrics with procedural patterns. Free character packs were checked
+(Quaternius Universal Base Characters and outfits, CC0) but are realistic-proportioned
+with fantasy outfits, so the chibi system is our own.
+
+Detailed textures (fabric prints, wood grain, wallpapers) may come later from free
+sources or ChatGPT-generated images.
 
 Fixed camera, angled down over the player, looking north.
 
@@ -82,9 +92,17 @@ Milestone 1 (this branch):
 - [x] Real-time clock, day/night lighting, time travel menu
 - [x] Save and load
 
+Milestone 2:
+- [x] Pastel cel shading, ink outlines, rounded UI font (Fredoka, OFL)
+- [x] Rounded coastlines, cliff corners and riverbanks
+- [x] Modular characters, character creator and wardrobe
+- [x] DIY workbench, 27 recipes, 23 furniture pieces, daily message bottles
+- [x] Item icons rendered from the 3D models
+- [x] Picking furniture back up; lanterns that glow at night
+
 Next milestones (suggested order):
-2. DIY workbench and recipes; first furniture set; item icons rendered from the models.
-3. Tent interior and indoor decorating grid; house upgrade path.
+3. Tent interior and indoor decorating grid (walls, floors); house upgrade path.
+   Clothes as items (bought or crafted) instead of everything unlocked.
 4. Daily visitors and the first animal neighbours (dialogue, homes, schedules).
 5. Fishing, bug catching, the museum.
 6. Island tours to random islands (reusing the generator with different seeds).

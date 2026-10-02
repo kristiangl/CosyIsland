@@ -18,6 +18,8 @@ Game="*res://scripts/autoload/game.gd"
 ItemDB="*res://scripts/autoload/item_db.gd"
 GameClock="*res://scripts/autoload/game_clock.gd"
 Inventory="*res://scripts/autoload/inventory.gd"
+Recipes="*res://scripts/autoload/recipes.gd"
+Icons="*res://scripts/autoload/icons.gd"
 SaveGame="*res://scripts/autoload/save_game.gd"
 
 [display]

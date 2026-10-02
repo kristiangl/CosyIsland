@@ -46,7 +46,7 @@ func _ready() -> void:
 	_desc_label.custom_minimum_size = Vector2(700, 52)
 	box.add_child(_desc_label)
 	var hint := Label.new()
-	hint.text = "A use   Y drop   X close"
+	Prompts.bind_label(hint, "{ui_accept} use   {pickup} drop   {pockets} close")
 	hint.add_theme_font_size_override("font_size", 16)
 	hint.add_theme_color_override("font_color", UIStyle.BROWN_LIGHT)
 	box.add_child(hint)

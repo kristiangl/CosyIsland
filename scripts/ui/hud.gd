@@ -54,16 +54,22 @@ func _ready() -> void:
 	tool_panel.add_child(_tool_label)
 
 	# Control hints, bottom right.
+	var hint_panel := PanelContainer.new()
+	var hint_style := UIStyle.panel(Color(UIStyle.CREAM, 0.8), 16)
+	hint_style.content_margin_top = 6
+	hint_style.content_margin_bottom = 6
+	hint_style.shadow_size = 0
+	hint_panel.add_theme_stylebox_override("panel", hint_style)
+	hint_panel.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+	hint_panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	hint_panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	hint_panel.position += Vector2(-20, -16)
+	root.add_child(hint_panel)
 	var hints := Label.new()
-	hints.text = "A use   Y pick up   X pockets   D-pad tools   + menu"
-	hints.add_theme_color_override("font_color", Color(1, 1, 1, 0.85))
-	hints.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.4))
+	Prompts.bind_label(hints, "{use} use   {pickup} pick up   {pockets} pockets   {tools} tools   {map} map   {pause} menu")
+	hints.add_theme_color_override("font_color", UIStyle.BROWN_LIGHT)
 	hints.add_theme_font_size_override("font_size", 16)
-	hints.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
-	hints.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	hints.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	hints.position += Vector2(-24, -16)
-	root.add_child(hints)
+	hint_panel.add_child(hints)
 
 	# Toast, bottom centre.
 	_toast_panel = PanelContainer.new()

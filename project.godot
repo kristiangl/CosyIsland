@@ -20,6 +20,7 @@ GameClock="*res://scripts/autoload/game_clock.gd"
 Inventory="*res://scripts/autoload/inventory.gd"
 Recipes="*res://scripts/autoload/recipes.gd"
 Icons="*res://scripts/autoload/icons.gd"
+Prompts="*res://scripts/autoload/prompts.gd"
 SaveGame="*res://scripts/autoload/save_game.gd"
 
 [display]

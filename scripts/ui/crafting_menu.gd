@@ -61,7 +61,7 @@ func _ready() -> void:
 	_materials.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	right.add_child(_materials)
 	var hint := Label.new()
-	hint.text = "A craft   B close"
+	Prompts.bind_label(hint, "{ui_accept} craft   {ui_cancel} close")
 	hint.add_theme_font_size_override("font_size", 16)
 	hint.add_theme_color_override("font_color", UIStyle.BROWN_LIGHT)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

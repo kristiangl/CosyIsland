@@ -8,6 +8,8 @@ const WOOD_PER_DAY := 3
 const ROCK_HITS := 8
 const ROCK_COUNT := 6
 const FRUIT_REGROW_DAYS := 3
+const BRANCHES_PER_TREE := 2
+const GIFT_TREES := 2
 const BLOCKING_KINDS := ["tree", "fruit_tree", "palm", "rock", "placed"]
 const ROCK_TABLE := [["stone", 60], ["clay", 25], ["iron_nugget", 14], ["gold_nugget", 1]]
 
@@ -46,6 +48,7 @@ func setup(island: IslandData, saved: Dictionary = {}) -> void:
 		_pick_money_rock()
 	if not saved.has("objects"):
 		wash_up_bottle()
+		_hide_tree_gifts()
 	else:
 		_upgrade_old_save()
 
@@ -281,9 +284,18 @@ func shake(obj: Dictionary, player_pos: Vector3) -> void:
 		obj["fruit_count"] = 0
 		obj["picked_day"] = day_key
 		refresh_node(obj)
-	elif obj["kind"] == "tree" and obj.get("shaken_day", -1) != day_key:
-		obj["shaken_day"] = day_key
-		if _rng.randf() < 0.6:
+	if obj["kind"] in ["tree", "fruit_tree"]:
+		if obj.has("gift"):
+			# A piece of furniture tumbles out (two trees a day hide one).
+			_drop_near(obj, player_pos, {"item": obj["gift"], "count": 1})
+			Events.toast.emit("Something fell out of the tree!")
+			obj.erase("gift")
+			return
+		if obj.get("shaken_day", -1) != day_key:
+			obj["shaken_day"] = day_key
+			obj["branches"] = 0
+		if obj.get("branches", 0) < BRANCHES_PER_TREE and _rng.randf() < 0.75:
+			obj["branches"] = obj.get("branches", 0) + 1
 			_drop_near(obj, player_pos, {"item": "tree_branch", "count": 1})
 
 
@@ -442,6 +454,24 @@ func _on_day_changed(key: int) -> void:
 		_respawn_rock()
 	_pick_money_rock()
 	wash_up_bottle()
+	_hide_tree_gifts()
+
+
+## Hides a random piece of furniture in a couple of trees, to be shaken out.
+func _hide_tree_gifts() -> void:
+	var trees: Array = []
+	for obj in data.objects:
+		obj.erase("gift")
+		if obj["kind"] == "tree":
+			trees.append(obj)
+	var furniture: Array[String] = []
+	for id in ItemDB.items:
+		var def := ItemDB.get_item(id)
+		if def.get("category", "") == "furniture" and id != "workbench" and not def.get("placeable", {}).get("structure", false):
+			furniture.append(id)
+	for i in mini(GIFT_TREES, trees.size()):
+		var tree: Dictionary = trees.pop_at(_rng.randi() % trees.size())
+		tree["gift"] = furniture[_rng.randi() % furniture.size()]
 
 
 ## A message bottle washes up on the beach (one at a time).

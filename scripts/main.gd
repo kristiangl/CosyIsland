@@ -12,7 +12,7 @@ extends Node3D
 ##   --at=X,Z           start the player at a world position
 ##   --demo             pitch the tent, place furniture and chop a tree before the screenshot
 ##   --demo=decor       same, but stay by the furniture instead of chopping
-##   --ui=pockets|pause|creator|crafting   open a menu (for screenshots)
+##   --ui=pockets|pause|creator|crafting|placing   open a menu or mode (for screenshots)
 
 const AUTOSAVE_SECONDS := 60.0
 
@@ -103,6 +103,9 @@ func _ready() -> void:
 			Inventory.add_item("wood", 12)
 			Inventory.add_item("stone", 5)
 			hud.crafting.open()
+		"placing":
+			Inventory.add_item("wooden_table")
+			placement.begin(Inventory.slots.find_custom(func(s): return s.get("id", "") == "wooden_table"))
 	if Game.args.has("screenshot"):
 		_take_screenshot(Game.args["screenshot"], int(Game.args.get("frames", "45")))
 	else:
@@ -137,7 +140,7 @@ func _on_creator_finished(look: Dictionary, player_name: String, island_name: St
 		var island := world.data
 		Events.toast.emit("Welcome to %s Island, %s!" % [island_name, player_name])
 		Events.toast.emit("This island's fruit is the %s, and %ss grow wild here." % [island.native_fruit, island.native_flower])
-		Events.toast.emit("Open your pockets (X) to pitch your tent.")
+		Events.toast.emit(Prompts.fill("Open your pockets ({pockets}) to pitch your tent."))
 	save_game()
 
 

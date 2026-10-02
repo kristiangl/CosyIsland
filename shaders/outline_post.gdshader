@@ -47,6 +47,9 @@ void fragment() {
 	// Fade lines out in the far distance so the horizon stays soft.
 	line *= 1.0 - smoothstep(60.0, 110.0, c);
 
+	// Only the lines are drawn, so see-through things rendered earlier (the placement
+	// preview, effects) aren't painted over.
 	vec3 col = texture(screen_tex, SCREEN_UV).rgb;
-	ALBEDO = mix(col, col * line_tint, line * line_strength);
+	ALBEDO = col * line_tint;
+	ALPHA = line * line_strength;
 }

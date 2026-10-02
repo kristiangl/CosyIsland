@@ -18,6 +18,7 @@ var _valid := false
 var _ghost: MeshInstance3D
 var _footprint: MeshInstance3D
 var _material: ShaderMaterial
+var _footprint_material: ShaderMaterial
 
 
 func _ready() -> void:
@@ -28,7 +29,9 @@ func _ready() -> void:
 	_ghost.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(_ghost)
 	_footprint = MeshInstance3D.new()
-	_footprint.material_override = _material
+	_footprint_material = ShaderMaterial.new()
+	_footprint_material.shader = load("res://shaders/footprint.gdshader")
+	_footprint.material_override = _footprint_material
 	_footprint.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	var plane := PlaneMesh.new()
 	plane.size = Vector2.ONE
@@ -50,7 +53,7 @@ func begin(slot: int) -> void:
 	_ghost.mesh = Models.get_mesh(def.get("model", "drop:" + item))
 	visible = true
 	Game.mode = Game.Mode.PLACING
-	Events.toast.emit("Where should it go? A to place, B to put it away.")
+	Events.toast.emit(Prompts.fill("Where should it go? {use} to place, {rotate} to turn, {cancel} to put it away."))
 
 
 func _process(_delta: float) -> void:
@@ -67,6 +70,10 @@ func _process(_delta: float) -> void:
 	_footprint.position = Vector3(centre.x, y + 0.03, centre.y)
 	_footprint.scale = Vector3(_rect.size.x, 1, _rect.size.y)
 	_material.set_shader_parameter("colour", VALID if _valid else INVALID)
+	_footprint_material.set_shader_parameter("colour", VALID if _valid else INVALID)
+	_footprint_material.set_shader_parameter("tiles", Vector2(_rect.size))
+	# A little hop so it reads as "held, not yet placed".
+	_ghost.position.y += 0.06 + 0.04 * sin(Time.get_ticks_msec() / 160.0)
 
 
 func _unhandled_input(event: InputEvent) -> void:

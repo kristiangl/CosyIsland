@@ -84,7 +84,7 @@ func _ready() -> void:
 	done.pressed.connect(_done)
 	buttons.add_child(done)
 	var hint := Label.new()
-	hint.text = "Up/down to choose   Left/right to change"
+	Prompts.bind_label(hint, "Up/down to choose   Left/right to change   {ui_accept} next")
 	hint.add_theme_font_size_override("font_size", 16)
 	hint.add_theme_color_override("font_color", UIStyle.BROWN_LIGHT)
 	right.add_child(hint)

@@ -115,6 +115,15 @@ func _test_world_rules() -> void:
 	check(w.pick_up(wood[0]["x"], wood[0]["z"]), "can pick up wood")
 	check(Inventory.count_of("wood") == 1, "wood went into the pockets")
 
+	var gift_trees: Array = w.objects().filter(func(o): return o.has("gift"))
+	check(gift_trees.size() == World.GIFT_TREES, "two trees hide furniture each day")
+	var shaken: Dictionary = w.objects().filter(func(o): return o["kind"] == "tree" and not o.has("gift"))[0]
+	for i in 12:
+		w.shake(shaken, Vector3(shaken["x"] + 0.5, 0, shaken["z"] + 1.5))
+	check(shaken.get("branches", 0) == World.BRANCHES_PER_TREE, "shaking a tree gives up to two branches a day")
+	var gift_id: String = gift_trees[0]["gift"]
+	w.shake(gift_trees[0], Vector3(gift_trees[0]["x"] + 0.5, 0, gift_trees[0]["z"] + 1.5))
+	check(w.objects().any(func(o): return o["kind"] == "drop" and o["item"] == gift_id), "shaking a gift tree drops furniture")
 	var rock: Dictionary = w.objects().filter(func(o): return o["kind"] == "rock")[0]
 	var hits := 0
 	while w.strike_rock(rock, Vector3(rock["x"] + 0.5, 0, rock["z"] + 1.5)):

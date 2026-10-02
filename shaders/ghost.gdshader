@@ -1,7 +1,8 @@
 shader_type spatial;
 render_mode world_vertex_coords, unshaded, blend_mix, depth_draw_never, cull_back;
 
-// Translucent preview shown while placing something on the grid.
+// The item being placed: its own colours, lightly tinted green (fits) or red (doesn't),
+// slightly see-through and gently pulsing.
 
 #include "res://shaders/include/world.gdshaderinc"
 
@@ -12,7 +13,7 @@ void vertex() {
 }
 
 void fragment() {
-	float pulse = 0.85 + 0.15 * sin(TIME * 5.0);
-	ALBEDO = mix(COLOR.rgb, colour.rgb, 0.65);
-	ALPHA = colour.a * pulse;
+	float pulse = 0.5 + 0.5 * sin(TIME * 4.0);
+	ALBEDO = mix(COLOR.rgb, colour.rgb, 0.25 + 0.1 * pulse);
+	ALPHA = 0.78;
 }

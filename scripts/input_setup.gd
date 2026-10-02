@@ -26,6 +26,7 @@ static func register() -> void:
 	_action("tool_next", [KEY_C], [JOY_BUTTON_DPAD_RIGHT])
 	_action("rotate", [KEY_R], [JOY_BUTTON_RIGHT_SHOULDER])
 	_action("cancel", [KEY_ESCAPE, KEY_BACKSPACE], [NINTENDO_B])
+	_action("map", [KEY_M], [JOY_BUTTON_BACK])
 
 	# Menus use Nintendo confirm/back positions too.
 	_replace_joy_button("ui_accept", JOY_BUTTON_A, NINTENDO_A)

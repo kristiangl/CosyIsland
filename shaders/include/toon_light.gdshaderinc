@@ -15,6 +15,9 @@ global uniform vec3 cel_lit;
 global uniform vec3 cel_shadow;
 
 uniform float light_softness = 0.04;
+// Moves the light/shadow line round towards the dark side (characters use this so
+// faces stay mostly lit).
+uniform float light_wrap = 0.0;
 
 vec3 cel_ambient(vec3 albedo) {
 	return albedo * cel_shadow;
@@ -22,7 +25,7 @@ vec3 cel_ambient(vec3 albedo) {
 
 void light() {
 	float ndl = dot(NORMAL, LIGHT);
-	float lit = smoothstep(0.0, light_softness, ndl);
+	float lit = smoothstep(-light_wrap, -light_wrap + light_softness, ndl);
 	if (LIGHT_IS_DIRECTIONAL) {
 		lit *= smoothstep(0.35, 0.65, ATTENUATION);
 		DIFFUSE_LIGHT += pow(max(cel_lit - cel_shadow, vec3(0.0)), vec3(2.2)) * lit;

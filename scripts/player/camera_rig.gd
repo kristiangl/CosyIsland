@@ -22,7 +22,7 @@ func _ready() -> void:
 	camera.far = 600.0
 	add_child(camera)
 	camera.make_current()
-	_add_outline_pass()
+	add_outline_pass(camera)
 	if target:
 		focus = target.global_position
 
@@ -40,8 +40,8 @@ func _process(delta: float) -> void:
 	RenderingServer.global_shader_parameter_set("curve_origin", focus)
 
 
-## Full-screen ink outline pass (see shaders/outline_post.gdshader).
-func _add_outline_pass() -> void:
+## Adds the full-screen ink outline pass (see shaders/outline_post.gdshader) to a camera.
+static func add_outline_pass(camera: Camera3D) -> void:
 	var quad := MeshInstance3D.new()
 	quad.name = "OutlinePass"
 	var mesh := QuadMesh.new()

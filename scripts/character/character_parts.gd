@@ -1,0 +1,385 @@
+class_name CharacterParts
+extends RefCounted
+## Meshes for the modular chibi character, built from simple shapes.
+##
+## Layout (metres, character faces +Z, feet at y = 0):
+##   legs pivot at the hips (y = HIP_Y), arms pivot at the shoulders, the head pivots at
+##   the neck and its mesh is centred HEAD_CENTRE above that.
+## Parts that belong to a pivot (sleeves, trouser legs, shoes) are built in that pivot's
+## local space. Head-mounted parts (hair, hats, glasses) are built around the head centre.
+##
+## Vertex colour: red = brightness, green = 0 for trim (which takes the second colour).
+
+const HIP_Y := 0.4
+const LEG_X := 0.085
+const LEG_LENGTH := 0.3
+const SHOULDER := Vector3(0.19, 0.67, 0.0)
+const ARM_LENGTH := 0.24
+const NECK_Y := 0.74
+const HEAD_CENTRE := Vector3(0, 0.32, 0)
+const HEAD_RADIUS := Vector3(0.38, 0.35, 0.36)
+const TORSO_CENTRE := Vector3(0, 0.56, 0)
+const TORSO_RADIUS := Vector3(0.19, 0.2, 0.16)
+
+const PLAIN := Color(1, 1, 1, 0)
+const SHADED := Color(0.9, 1, 1, 0)
+const TRIM := Color(1, 0, 1, 0)
+
+
+# --- Skin --------------------------------------------------------------------------
+
+static func head() -> ArrayMesh:
+	var k := MeshKit.new()
+	k.sphere(Vector3.ZERO, HEAD_RADIUS, PLAIN, 18, 28)
+	for s: float in [-1.0, 1.0]:
+		k.sphere(Vector3(s * 0.37, -0.03, -0.01), Vector3(0.05, 0.07, 0.045), PLAIN, 5, 8)
+	return k.commit()
+
+
+static func torso_skin() -> ArrayMesh:
+	var k := MeshKit.new()
+	k.sphere(TORSO_CENTRE, TORSO_RADIUS, PLAIN, 10, 16)
+	k.cylinder(Vector3(0, 0.7, 0), Vector3(0, 0.8, 0), 0.07, 0.07, PLAIN, 10, false)
+	return k.commit()
+
+
+static func arm_skin() -> ArrayMesh:
+	var k := MeshKit.new()
+	k.sphere(Vector3.ZERO, Vector3.ONE * 0.058, PLAIN, 6, 10)
+	k.cylinder(Vector3.ZERO, Vector3(0, -ARM_LENGTH + 0.03, 0), 0.056, 0.05, PLAIN, 10, false)
+	k.sphere(Vector3(0, -ARM_LENGTH, 0), Vector3(0.062, 0.066, 0.06), PLAIN, 6, 10)
+	return k.commit()
+
+
+static func leg_skin(barefoot: bool) -> ArrayMesh:
+	var k := MeshKit.new()
+	k.cylinder(Vector3(0, 0.02, 0), Vector3(0, -LEG_LENGTH + 0.02, 0), 0.066, 0.058, PLAIN, 10, false)
+	if barefoot:
+		k.sphere(Vector3(0, -LEG_LENGTH - 0.005, 0.025), Vector3(0.065, 0.05, 0.095), PLAIN, 6, 10)
+	return k.commit()
+
+
+# --- Tops --------------------------------------------------------------------------
+
+## Returns {"torso": ArrayMesh, "sleeve": ArrayMesh or null}.
+static func top(style: String) -> Dictionary:
+	var k := MeshKit.new()
+	var sleeve := MeshKit.new()
+	var shell := TORSO_RADIUS + Vector3(0.016, 0.014, 0.016)
+	k.sphere(TORSO_CENTRE, shell, PLAIN, 10, 18)
+	match style:
+		"tee":
+			_hem(k, 0.4, 0.205)
+			_short_sleeve(sleeve)
+		"long_tee":
+			_hem(k, 0.4, 0.205)
+			_long_sleeve(sleeve, 0.064, false)
+		"tank":
+			_hem(k, 0.4, 0.205)
+			for s: float in [-1.0, 1.0]:
+				k.cylinder(Vector3(s * 0.1, 0.62, 0.12), Vector3(s * 0.12, 0.76, 0.0), 0.022, 0.022, PLAIN, 6, false)
+			sleeve = null
+		"collared":
+			_hem(k, 0.4, 0.205)
+			_collar(k)
+			for i in 3:
+				k.sphere(Vector3(0, 0.66 - i * 0.07, 0.17), Vector3.ONE * 0.013, TRIM, 3, 6)
+			_short_sleeve(sleeve)
+		"hoodie":
+			_hem(k, 0.39, 0.212, SHADED)
+			k.sphere(Vector3(0, 0.75, -0.11), Vector3(0.17, 0.09, 0.1), SHADED, 6, 12)
+			k.sphere(Vector3(0, 0.47, 0.14), Vector3(0.12, 0.05, 0.035), SHADED, 4, 10)
+			for s: float in [-1.0, 1.0]:
+				k.cylinder(Vector3(s * 0.045, 0.72, 0.15), Vector3(s * 0.05, 0.6, 0.175), 0.008, 0.008, TRIM, 4, true)
+			_long_sleeve(sleeve, 0.07, true)
+		"sweater":
+			_hem(k, 0.39, 0.212, SHADED)
+			k.cylinder(Vector3(0, 0.72, 0), Vector3(0, 0.78, 0), 0.085, 0.08, SHADED, 14, false)
+			_long_sleeve(sleeve, 0.072, true)
+		"coat":
+			k.cylinder(Vector3(0, 0.46, 0), Vector3(0, 0.22, 0), 0.205, 0.25, PLAIN, 16, true)
+			_collar(k)
+			for i in 4:
+				k.sphere(Vector3(0.05, 0.64 - i * 0.1, 0.18 if i < 2 else 0.2), Vector3.ONE * 0.016, TRIM, 3, 6)
+			_long_sleeve(sleeve, 0.072, true)
+		"dress":
+			k.cylinder(Vector3(0, 0.47, 0), Vector3(0, 0.17, 0), 0.2, 0.3, PLAIN, 18, true)
+			_hem(k, 0.18, 0.3, TRIM)
+			sleeve.sphere(Vector3(0, -0.02, 0), Vector3(0.085, 0.08, 0.085), PLAIN, 6, 10)
+		"sundress":
+			k.cylinder(Vector3(0, 0.47, 0), Vector3(0, 0.17, 0), 0.2, 0.3, PLAIN, 18, true)
+			for s: float in [-1.0, 1.0]:
+				k.cylinder(Vector3(s * 0.1, 0.62, 0.12), Vector3(s * 0.12, 0.76, 0.0), 0.02, 0.02, TRIM, 6, false)
+			sleeve = null
+	return {"torso": k.commit(), "sleeve": sleeve.commit() if sleeve else null}
+
+
+static func _hem(k: MeshKit, y: float, r: float, c: Color = PLAIN) -> void:
+	k.cylinder(Vector3(0, y + 0.05, 0), Vector3(0, y, 0), r - 0.01, r, c, 18, false)
+
+
+static func _collar(k: MeshKit) -> void:
+	for s: float in [-1.0, 1.0]:
+		k.leaf(Vector3(s * 0.02, 0.76, 0.12), Vector3(s * 0.8, -0.6, 0.5), 0.12, 0.08, TRIM, 0.0)
+
+
+static func _short_sleeve(k: MeshKit) -> void:
+	k.sphere(Vector3(0, 0.0, 0), Vector3.ONE * 0.074, PLAIN, 6, 10)
+	k.cylinder(Vector3(0, 0.0, 0), Vector3(0, -0.11, 0), 0.074, 0.07, PLAIN, 10, true)
+
+
+static func _long_sleeve(k: MeshKit, r: float, cuff_shaded: bool) -> void:
+	k.sphere(Vector3(0, 0.0, 0), Vector3.ONE * (r + 0.005), PLAIN, 6, 10)
+	k.cylinder(Vector3(0, 0.0, 0), Vector3(0, -ARM_LENGTH + 0.05, 0), r, r - 0.006, PLAIN, 10, false)
+	k.cylinder(Vector3(0, -ARM_LENGTH + 0.07, 0), Vector3(0, -ARM_LENGTH + 0.035, 0), r + 0.004, r + 0.004, SHADED if cuff_shaded else PLAIN, 10, true)
+
+
+# --- Bottoms -----------------------------------------------------------------------
+
+## Returns {"hips": ArrayMesh, "leg": ArrayMesh or null}.
+static func bottom(style: String) -> Dictionary:
+	var k := MeshKit.new()
+	var leg := MeshKit.new()
+	k.sphere(Vector3(0, 0.42, 0), Vector3(0.2, 0.12, 0.17), PLAIN, 6, 16)
+	match style:
+		"shorts":
+			leg.cylinder(Vector3(0, 0.03, 0), Vector3(0, -0.1, 0), 0.08, 0.078, PLAIN, 10, true)
+		"trousers":
+			leg.cylinder(Vector3(0, 0.03, 0), Vector3(0, -LEG_LENGTH + 0.04, 0), 0.078, 0.072, PLAIN, 10, true)
+		"leggings":
+			leg.cylinder(Vector3(0, 0.03, 0), Vector3(0, -LEG_LENGTH + 0.05, 0), 0.07, 0.064, PLAIN, 10, true)
+		"skirt":
+			k.cylinder(Vector3(0, 0.48, 0), Vector3(0, 0.28, 0), 0.2, 0.27, PLAIN, 18, true)
+			leg = null
+		"long_skirt":
+			k.cylinder(Vector3(0, 0.48, 0), Vector3(0, 0.12, 0), 0.2, 0.3, PLAIN, 18, true)
+			leg = null
+		"overalls":
+			k.rounded_box(Vector3(0, 0.56, 0.12), Vector3(0.22, 0.2, 0.07), PLAIN, 0.2)
+			for s: float in [-1.0, 1.0]:
+				k.cylinder(Vector3(s * 0.08, 0.64, 0.15), Vector3(s * 0.11, 0.77, -0.02), 0.018, 0.018, PLAIN, 6, false)
+				k.sphere(Vector3(s * 0.08, 0.63, 0.16), Vector3.ONE * 0.015, TRIM, 3, 6)
+			leg.cylinder(Vector3(0, 0.03, 0), Vector3(0, -LEG_LENGTH + 0.04, 0), 0.078, 0.074, PLAIN, 10, true)
+	return {"hips": k.commit(), "leg": leg.commit() if leg else null}
+
+
+# --- Shoes -------------------------------------------------------------------------
+
+static func shoe(style: String) -> ArrayMesh:
+	var k := MeshKit.new()
+	var y := -LEG_LENGTH
+	match style:
+		"sneakers":
+			k.sphere(Vector3(0, y + 0.01, 0.03), Vector3(0.078, 0.06, 0.115), PLAIN, 6, 12)
+			k.sphere(Vector3(0, y - 0.03, 0.03), Vector3(0.082, 0.025, 0.12), TRIM, 4, 12)
+		"boots":
+			k.cylinder(Vector3(0, y + 0.13, 0), Vector3(0, y, 0), 0.074, 0.078, PLAIN, 10, true)
+			k.sphere(Vector3(0, y, 0.035), Vector3(0.078, 0.055, 0.11), PLAIN, 6, 12)
+			k.sphere(Vector3(0, y - 0.035, 0.03), Vector3(0.08, 0.022, 0.115), SHADED, 4, 12)
+		"flats":
+			k.sphere(Vector3(0, y - 0.005, 0.03), Vector3(0.07, 0.045, 0.105), PLAIN, 6, 12)
+			k.sphere(Vector3(0, y + 0.02, 0.1), Vector3(0.03, 0.015, 0.012), TRIM, 3, 6)
+		"wellies":
+			k.cylinder(Vector3(0, y + 0.22, 0), Vector3(0, y, 0), 0.082, 0.08, PLAIN, 10, true)
+			k.sphere(Vector3(0, y, 0.035), Vector3(0.08, 0.058, 0.115), PLAIN, 6, 12)
+	return k.commit()
+
+
+# --- Hair --------------------------------------------------------------------------
+
+## Hair around the head centre. With a hat on, anything sitting on top of the head is
+## left off so it doesn't poke through.
+static func hair(style: String, hat_on: bool) -> ArrayMesh:
+	var k := MeshKit.new()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(style)
+	var cap_radius := Vector3(0.405, 0.31, 0.39) * (0.97 if hat_on else 1.0)
+	var cap_centre := Vector3(0, 0.075, -0.035)
+	if style == "buzz":
+		k.sphere(Vector3(0, 0.06, -0.03), Vector3(0.388, 0.29, 0.372), PLAIN, 12, 20)
+		k.sphere(Vector3(0, -0.03, -0.09), Vector3(0.37, 0.27, 0.29), PLAIN, 10, 18)
+		return k.commit()
+	if style != "afro":
+		k.sphere(cap_centre, cap_radius, PLAIN, 12, 22)
+		# Covers the back of the head down to the nape.
+		k.sphere(Vector3(0, -0.04, -0.1), Vector3(0.375, 0.28, 0.29), PLAIN, 10, 18)
+	match style:
+		"short":
+			_bangs(k, 4, 0.085)
+		"messy":
+			_bangs(k, 5, 0.09)
+			if not hat_on:
+				for i in 7:
+					var a := rng.randf() * TAU
+					var base := Vector3(cos(a) * 0.18, 0.3, sin(a) * 0.15 - 0.06)
+					k.cone(base, base + Vector3(cos(a) * 0.12, 0.14, sin(a) * 0.1), 0.07, PLAIN, 6)
+		"side_part":
+			_bangs(k, 3, 0.08, -0.12)
+			k.xform = Transform3D(Basis(Vector3.FORWARD, 0.5), Vector3(0.12, 0.2, 0.25))
+			k.sphere(Vector3.ZERO, Vector3(0.2, 0.08, 0.12), PLAIN, 6, 12)
+			k.xform = Transform3D.IDENTITY
+		"spiky":
+			_bangs(k, 4, 0.07)
+			if not hat_on:
+				for i in 9:
+					var a := TAU * i / 9.0
+					var base := Vector3(cos(a) * 0.2, 0.22, sin(a) * 0.2 - 0.05)
+					var tip := base + Vector3(cos(a) * 0.14, 0.2, sin(a) * 0.14 - 0.06)
+					k.cone(base, tip, 0.085, PLAIN, 6)
+		"bob":
+			_bangs(k, 5, 0.1)
+			_side_volume(k, -0.16, 0.13)
+		"long":
+			_bangs(k, 5, 0.1)
+			_side_volume(k, -0.42, 0.12)
+			k.sphere(Vector3(0, -0.2, -0.2), Vector3(0.33, 0.4, 0.16), PLAIN, 8, 14)
+		"ponytail":
+			_bangs(k, 4, 0.09)
+			k.sphere(Vector3(0, 0.08, -0.4), Vector3.ONE * 0.05, TRIM, 4, 8)
+			_tail(k, Vector3(0, 0.08, -0.44), Vector3(0, -0.12, -0.06), 4, 0.1)
+		"pigtails":
+			_bangs(k, 4, 0.09)
+			for s: float in [-1.0, 1.0]:
+				k.sphere(Vector3(s * 0.38, 0.02, -0.12), Vector3.ONE * 0.045, TRIM, 4, 8)
+				_tail(k, Vector3(s * 0.42, 0.0, -0.13), Vector3(s * 0.04, -0.11, -0.01), 4, 0.085)
+		"bun":
+			_bangs(k, 4, 0.09)
+			if not hat_on:
+				k.sphere(Vector3(0, 0.36, -0.12), Vector3(0.15, 0.13, 0.15), PLAIN, 8, 12)
+		"space_buns":
+			_bangs(k, 4, 0.09)
+			if not hat_on:
+				for s: float in [-1.0, 1.0]:
+					k.sphere(Vector3(s * 0.24, 0.3, -0.06), Vector3.ONE * 0.12, PLAIN, 8, 12)
+		"braid":
+			_bangs(k, 4, 0.09)
+			_tail(k, Vector3(0, -0.08, -0.38), Vector3(0, -0.085, -0.015), 6, 0.075)
+		"curly":
+			_bangs(k, 5, 0.1)
+			_lumps(k, rng, 26, 0.42, 0.1, hat_on)
+		"afro":
+			k.sphere(Vector3(0, 0.12, -0.06), Vector3(0.5, 0.42, 0.48) if not hat_on else Vector3(0.44, 0.32, 0.43), PLAIN, 12, 20, 0.0, 0.06, 3)
+			_lumps(k, rng, 40, 0.5 if not hat_on else 0.44, 0.12, hat_on)
+	return k.commit()
+
+
+## A row of fringe lumps across the forehead, hugging the head.
+static func _bangs(k: MeshKit, count: int, size: float, shift: float = 0.0) -> void:
+	for i in count:
+		var t := (i + 0.5) / count
+		var x := lerpf(-0.25, 0.25, t) + shift
+		var y := 0.15 + 0.03 * sin(t * PI)
+		var z := _head_front(x, y) + 0.015
+		k.sphere(Vector3(x, y, z - 0.03), Vector3(size, size * 0.85, size * 0.7), PLAIN, 5, 8)
+
+
+## Hair falling at the sides of the face down to `bottom`.
+static func _side_volume(k: MeshKit, bottom: float, thickness: float) -> void:
+	for s: float in [-1.0, 1.0]:
+		var top := 0.1
+		var centre := Vector3(s * 0.33, (top + bottom) * 0.5, -0.04)
+		k.sphere(centre, Vector3(thickness, (top - bottom) * 0.5 + 0.06, 0.27), PLAIN, 8, 12)
+
+
+## A chain of shrinking lumps (ponytails, pigtails, braids).
+static func _tail(k: MeshKit, start: Vector3, step: Vector3, count: int, size: float) -> void:
+	for i in count:
+		var r := size * lerpf(1.0, 0.65, float(i) / count)
+		k.sphere(start + step * i, Vector3(r, r * 1.1, r), PLAIN, 6, 10)
+
+
+## Curly lumps over the top and back of the head, avoiding the face.
+static func _lumps(k: MeshKit, rng: RandomNumberGenerator, count: int, radius: float, size: float, hat_on: bool) -> void:
+	for i in count:
+		# Fibonacci sphere for even spacing.
+		var y := 1.0 - (i + 0.5) / count * 1.6
+		var r := sqrt(maxf(0.0, 1.0 - y * y))
+		var a := i * 2.39996
+		var dir := Vector3(cos(a) * r, y, sin(a) * r)
+		if dir.z > 0.45 and dir.y < 0.55:
+			continue
+		if hat_on and dir.y > 0.35:
+			continue
+		var pos := Vector3(0, 0.08, -0.05) + dir * radius * Vector3(1.0, 0.85, 0.95)
+		k.sphere(pos, Vector3.ONE * size * rng.randf_range(0.85, 1.15), PLAIN, 5, 8)
+
+
+## Z of the front of the head at (x, y), relative to the head centre.
+static func _head_front(x: float, y: float) -> float:
+	var q := 1.0 - pow(x / HEAD_RADIUS.x, 2) - pow(y / HEAD_RADIUS.y, 2)
+	return HEAD_RADIUS.z * sqrt(maxf(q, 0.0))
+
+
+# --- Hats and glasses --------------------------------------------------------------
+
+static func hat(style: String) -> ArrayMesh:
+	var k := MeshKit.new()
+	match style:
+		"cap":
+			k.sphere(Vector3(0, 0.16, -0.02), Vector3(0.405, 0.25, 0.4), PLAIN, 8, 18)
+			k.sphere(Vector3(0, 0.15, 0.36), Vector3(0.22, 0.025, 0.2), PLAIN, 4, 14)
+			k.sphere(Vector3(0, 0.41, -0.02), Vector3.ONE * 0.03, TRIM, 3, 6)
+		"beanie":
+			k.sphere(Vector3(0, 0.15, -0.03), Vector3(0.41, 0.3, 0.4), PLAIN, 8, 18)
+			k.cylinder(Vector3(0, 0.06, -0.03), Vector3(0, 0.15, -0.03), 0.415, 0.41, SHADED, 20, false)
+			k.sphere(Vector3(0, 0.46, -0.03), Vector3.ONE * 0.07, TRIM, 5, 8)
+		"bucket":
+			k.sphere(Vector3(0, 0.2, -0.02), Vector3(0.39, 0.22, 0.39), PLAIN, 8, 18)
+			k.cylinder(Vector3(0, 0.15, -0.02), Vector3(0, 0.1, -0.02), 0.41, 0.53, PLAIN, 22, true)
+		"straw":
+			k.sphere(Vector3(0, 0.22, -0.02), Vector3(0.37, 0.2, 0.37), PLAIN, 8, 18)
+			k.cylinder(Vector3(0, 0.16, -0.02), Vector3(0, 0.12, -0.02), 0.4, 0.66, PLAIN, 24, true)
+			k.cylinder(Vector3(0, 0.15, -0.02), Vector3(0, 0.22, -0.02), 0.385, 0.375, TRIM, 20, false)
+		"beret":
+			k.xform = Transform3D(Basis(Vector3.FORWARD, -0.2), Vector3(0.05, 0.31, -0.02))
+			k.sphere(Vector3.ZERO, Vector3(0.44, 0.13, 0.42), PLAIN, 6, 18)
+			k.sphere(Vector3(0, 0.13, 0), Vector3.ONE * 0.03, PLAIN, 3, 6)
+			k.xform = Transform3D.IDENTITY
+		"bow":
+			for s: float in [-1.0, 1.0]:
+				k.sphere(Vector3(0.18 + s * 0.08, 0.32, 0.02), Vector3(0.08, 0.06, 0.04), PLAIN, 5, 8)
+			k.sphere(Vector3(0.18, 0.32, 0.03), Vector3.ONE * 0.035, TRIM, 4, 6)
+		"flower_crown":
+			for i in 11:
+				var a := TAU * i / 11.0
+				var centre := Vector3(cos(a) * 0.37, 0.2 + 0.02 * sin(a * 3.0), sin(a) * 0.36 - 0.02)
+				for p in 5:
+					var pa := TAU * p / 5.0
+					k.sphere(centre + Vector3(cos(pa), sin(pa), 0.3).normalized() * 0.03, Vector3.ONE * 0.026, PLAIN, 3, 6)
+				k.sphere(centre + Vector3(0, 0, 0.01), Vector3.ONE * 0.018, TRIM, 3, 6)
+		"cat_ears":
+			k.cylinder(Vector3(-0.36, 0.12, 0), Vector3(0.36, 0.12, 0), 0.015, 0.015, PLAIN, 6, false)
+			for s: float in [-1.0, 1.0]:
+				k.cone(Vector3(s * 0.2, 0.26, -0.03), Vector3(s * 0.26, 0.46, -0.04), 0.1, PLAIN, 8)
+				k.cone(Vector3(s * 0.2, 0.27, 0.0), Vector3(s * 0.25, 0.42, -0.01), 0.055, TRIM, 6)
+	return k.commit()
+
+
+static func glasses(style: String) -> ArrayMesh:
+	var k := MeshKit.new()
+	var y := -0.035
+	for s: float in [-1.0, 1.0]:
+		var x := s * 0.125
+		var z := _head_front(x, y) + 0.02
+		var centre := Vector3(x, y, z)
+		match style:
+			"round", "sunnies":
+				_ring(k, centre, 0.062, 0.062, 0.009)
+				if style == "sunnies":
+					k.sphere(centre - Vector3(0, 0, 0.005), Vector3(0.06, 0.06, 0.008), TRIM, 4, 12)
+			"square":
+				_ring(k, centre, 0.07, 0.052, 0.009)
+		k.cylinder(Vector3(s * 0.19, y + 0.01, z - 0.01), Vector3(s * 0.37, y + 0.02, -0.05), 0.008, 0.008, PLAIN, 4, false)
+	var bz := _head_front(0.0, y) + 0.02
+	k.cylinder(Vector3(-0.065, y + 0.01, bz), Vector3(0.065, y + 0.01, bz), 0.008, 0.008, PLAIN, 4, false)
+	return k.commit()
+
+
+static func _ring(k: MeshKit, centre: Vector3, rx: float, ry: float, thick: float) -> void:
+	var segments := 14
+	for i in segments:
+		var a0 := TAU * i / segments
+		var a1 := TAU * (i + 1) / segments
+		var p0 := centre + Vector3(cos(a0) * rx, sin(a0) * ry, 0)
+		var p1 := centre + Vector3(cos(a1) * rx, sin(a1) * ry, 0)
+		k.cylinder(p0, p1, thick, thick, PLAIN, 4, false)

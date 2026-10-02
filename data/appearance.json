@@ -1,0 +1,165 @@
+{
+	"_note": "Character options. Order matters for eyes, brows, mouth, cheeks and patterns: the index is what the shaders use.",
+	"skin": [
+		{"id": "porcelain", "color": "#fde6d6"},
+		{"id": "peach", "color": "#f8d2b8"},
+		{"id": "rosy", "color": "#f5c4b2"},
+		{"id": "honey", "color": "#ebba90"},
+		{"id": "caramel", "color": "#d49a68"},
+		{"id": "bronze", "color": "#b67a4a"},
+		{"id": "cocoa", "color": "#8d5a3c"},
+		{"id": "deep", "color": "#64402e"}
+	],
+	"eyes": [
+		{"id": "classic", "name": "Classic"},
+		{"id": "sparkle", "name": "Sparkly"},
+		{"id": "happy", "name": "Happy"},
+		{"id": "sleepy", "name": "Sleepy"},
+		{"id": "lashes", "name": "Lashes"},
+		{"id": "almond", "name": "Almond"},
+		{"id": "dots", "name": "Dots"},
+		{"id": "wide", "name": "Wide"}
+	],
+	"eye_color": [
+		{"id": "brown", "color": "#6a4430"},
+		{"id": "black", "color": "#3a3040"},
+		{"id": "blue", "color": "#4f86c8"},
+		{"id": "green", "color": "#4f9a6a"},
+		{"id": "hazel", "color": "#a07a3a"},
+		{"id": "violet", "color": "#8a62c4"},
+		{"id": "pink", "color": "#e07aa8"},
+		{"id": "grey", "color": "#7d8790"}
+	],
+	"brows": [
+		{"id": "none", "name": "None"},
+		{"id": "soft", "name": "Soft"},
+		{"id": "bold", "name": "Bold"},
+		{"id": "worried", "name": "Worried"},
+		{"id": "thin", "name": "Thin"}
+	],
+	"mouth": [
+		{"id": "smile", "name": "Smile"},
+		{"id": "grin", "name": "Grin"},
+		{"id": "cat", "name": "Cat"},
+		{"id": "o", "name": "Ooh"},
+		{"id": "flat", "name": "Calm"},
+		{"id": "tongue", "name": "Cheeky"}
+	],
+	"cheeks": [
+		{"id": "none", "name": "None"},
+		{"id": "blush", "name": "Blush"},
+		{"id": "freckles", "name": "Freckles"},
+		{"id": "blush_freckles", "name": "Blush and freckles"}
+	],
+	"hair": [
+		{"id": "buzz", "name": "Buzz"},
+		{"id": "short", "name": "Short"},
+		{"id": "messy", "name": "Messy"},
+		{"id": "side_part", "name": "Side part"},
+		{"id": "spiky", "name": "Spiky"},
+		{"id": "bob", "name": "Bob"},
+		{"id": "long", "name": "Long"},
+		{"id": "ponytail", "name": "Ponytail"},
+		{"id": "pigtails", "name": "Pigtails"},
+		{"id": "bun", "name": "Bun"},
+		{"id": "space_buns", "name": "Space buns"},
+		{"id": "braid", "name": "Braid"},
+		{"id": "curly", "name": "Curly"},
+		{"id": "afro", "name": "Afro"}
+	],
+	"hair_color": [
+		{"id": "black", "color": "#3a3038"},
+		{"id": "dark_brown", "color": "#5e4030"},
+		{"id": "brown", "color": "#8c5e40"},
+		{"id": "chestnut", "color": "#a8663e"},
+		{"id": "auburn", "color": "#b5503a"},
+		{"id": "ginger", "color": "#e08a4a"},
+		{"id": "blonde", "color": "#ecc870"},
+		{"id": "platinum", "color": "#f3e8cc"},
+		{"id": "grey", "color": "#aeaab2"},
+		{"id": "white", "color": "#f6f3ee"},
+		{"id": "pink", "color": "#f4a6c4"},
+		{"id": "lavender", "color": "#bea8ea"},
+		{"id": "mint", "color": "#94d8c2"},
+		{"id": "blue", "color": "#84b4ec"},
+		{"id": "teal", "color": "#4fa8aa"},
+		{"id": "red", "color": "#d9585a"}
+	],
+	"top": [
+		{"id": "tee", "name": "Tee"},
+		{"id": "long_tee", "name": "Long-sleeve tee"},
+		{"id": "tank", "name": "Tank top"},
+		{"id": "collared", "name": "Collared shirt"},
+		{"id": "hoodie", "name": "Hoodie"},
+		{"id": "sweater", "name": "Sweater"},
+		{"id": "coat", "name": "Coat"},
+		{"id": "dress", "name": "Dress", "full_body": true},
+		{"id": "sundress", "name": "Sundress", "full_body": true}
+	],
+	"bottom": [
+		{"id": "shorts", "name": "Shorts"},
+		{"id": "trousers", "name": "Trousers"},
+		{"id": "skirt", "name": "Skirt"},
+		{"id": "long_skirt", "name": "Long skirt"},
+		{"id": "leggings", "name": "Leggings"},
+		{"id": "overalls", "name": "Overalls"}
+	],
+	"pattern": [
+		{"id": "plain", "name": "Plain"},
+		{"id": "stripes", "name": "Stripes"},
+		{"id": "wide_stripes", "name": "Wide stripes"},
+		{"id": "dots", "name": "Polka dots"},
+		{"id": "checks", "name": "Checks"},
+		{"id": "hearts", "name": "Hearts"},
+		{"id": "stars", "name": "Stars"},
+		{"id": "flowers", "name": "Flowers"},
+		{"id": "two_tone", "name": "Two-tone"}
+	],
+	"colors": [
+		{"id": "white", "color": "#f7f4ee"},
+		{"id": "cream", "color": "#f3e4c4"},
+		{"id": "charcoal", "color": "#4a4550"},
+		{"id": "grey", "color": "#a4a0ab"},
+		{"id": "navy", "color": "#4a5c88"},
+		{"id": "blue", "color": "#78a6dc"},
+		{"id": "sky", "color": "#aed4f2"},
+		{"id": "teal", "color": "#56aaa6"},
+		{"id": "mint", "color": "#aadfc8"},
+		{"id": "green", "color": "#78b471"},
+		{"id": "olive", "color": "#98a25c"},
+		{"id": "yellow", "color": "#f4d672"},
+		{"id": "orange", "color": "#f2a660"},
+		{"id": "coral", "color": "#f28e7e"},
+		{"id": "red", "color": "#dc5c58"},
+		{"id": "pink", "color": "#f6aac4"},
+		{"id": "rose", "color": "#cc6c86"},
+		{"id": "lavender", "color": "#c6b2ea"},
+		{"id": "purple", "color": "#8e70c2"},
+		{"id": "brown", "color": "#9e7050"},
+		{"id": "tan", "color": "#d6b892"}
+	],
+	"shoes": [
+		{"id": "none", "name": "Barefoot"},
+		{"id": "sneakers", "name": "Sneakers"},
+		{"id": "boots", "name": "Boots"},
+		{"id": "flats", "name": "Flats"},
+		{"id": "wellies", "name": "Wellies"}
+	],
+	"hat": [
+		{"id": "none", "name": "None"},
+		{"id": "cap", "name": "Cap"},
+		{"id": "beanie", "name": "Beanie"},
+		{"id": "bucket", "name": "Bucket hat"},
+		{"id": "straw", "name": "Straw hat"},
+		{"id": "beret", "name": "Beret"},
+		{"id": "bow", "name": "Bow"},
+		{"id": "flower_crown", "name": "Flower crown"},
+		{"id": "cat_ears", "name": "Cat ears"}
+	],
+	"glasses": [
+		{"id": "none", "name": "None"},
+		{"id": "round", "name": "Round"},
+		{"id": "square", "name": "Square"},
+		{"id": "sunnies", "name": "Sunglasses"}
+	]
+}

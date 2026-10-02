@@ -11,7 +11,7 @@ extends Node3D
 ##   --grass=F          grass density multiplier (0 disables)
 ##   --at=X,Z           start the player at a world position
 ##   --demo             pitch the tent and chop a tree before the screenshot
-##   --ui=pockets|pause open a menu (for screenshots)
+##   --ui=pockets|pause|creator   open a menu (for screenshots)
 
 const AUTOSAVE_SECONDS := 60.0
 
@@ -22,6 +22,7 @@ var day_night: DayNight
 var hud: Hud
 var placement: Placement
 var _seed := 0
+var _welcome_pending := false
 
 
 func _ready() -> void:
@@ -55,7 +56,8 @@ func _ready() -> void:
 	elif saved.has("player"):
 		start = Vector3(saved["player"]["x"], 0, saved["player"]["z"])
 		player.facing = Vector3(saved["player"].get("fx", 0.0), 0, saved["player"].get("fz", 1.0))
-	player.setup(world, start)
+	var look: Dictionary = saved.get("player", {}).get("look", Appearance.DEFAULT)
+	player.setup(world, start, look)
 	Game.player = player
 
 	camera_rig = CameraRig.new()
@@ -78,7 +80,11 @@ func _ready() -> void:
 	hud.quit_requested.connect(func():
 		save_game()
 		get_tree().quit())
+	hud.wardrobe_requested.connect(func(): hud.creator.open(player.model.look, false))
 	add_child(hud)
+	hud.creator.finished.connect(_on_creator_finished)
+	Game.player_name = saved.get("player_name", "")
+	Game.island_name = saved.get("island_name", "")
 
 	if Game.args.has("demo"):
 		await _run_demo()
@@ -87,6 +93,8 @@ func _ready() -> void:
 			hud._pockets.open()
 		"pause":
 			hud._open_pause()
+		"creator":
+			hud.creator.open(Appearance.DEFAULT, true)
 	if Game.args.has("screenshot"):
 		_take_screenshot(Game.args["screenshot"], int(Game.args.get("frames", "45")))
 	else:
@@ -96,9 +104,8 @@ func _ready() -> void:
 		timer.timeout.connect(save_game)
 		add_child(timer)
 		if saved.is_empty():
-			Events.toast.emit("Welcome to your new island!")
-			Events.toast.emit("This island's fruit is the %s, and %ss grow wild here." % [island.native_fruit, island.native_flower])
-			Events.toast.emit("Open your pockets (X) to pitch your tent.")
+			_welcome_pending = true
+			hud.creator.open(Appearance.DEFAULT, true)
 
 
 func _new_game_pockets() -> void:
@@ -107,6 +114,19 @@ func _new_game_pockets() -> void:
 	Inventory.add_item("flimsy_shovel")
 	Inventory.add_item("tent_kit")
 	Inventory.equip(0)
+
+
+func _on_creator_finished(look: Dictionary, player_name: String, island_name: String) -> void:
+	player.model.set_look(look)
+	if _welcome_pending:
+		_welcome_pending = false
+		Game.player_name = player_name
+		Game.island_name = island_name
+		var island := world.data
+		Events.toast.emit("Welcome to %s Island, %s!" % [island_name, player_name])
+		Events.toast.emit("This island's fruit is the %s, and %ss grow wild here." % [island.native_fruit, island.native_flower])
+		Events.toast.emit("Open your pockets (X) to pitch your tent.")
+	save_game()
 
 
 func save_game() -> void:
@@ -118,6 +138,8 @@ func save_game() -> void:
 		"world": world.to_save(),
 		"inventory": Inventory.to_save(),
 		"player": player.to_save(),
+		"player_name": Game.player_name,
+		"island_name": Game.island_name,
 	})
 
 

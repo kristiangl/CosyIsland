@@ -217,7 +217,7 @@ static func _tent(k: MeshKit) -> void:
 	k.flat_quad(Vector3(-w, 0, -d), Vector3(-w, 0, d), Vector3(0, h, d), Vector3(0, h, -d), left_n, fabric)
 	k.flat_quad(Vector3(w, 0, -d), Vector3(w, 0, d), Vector3(0, h, d), Vector3(0, h, -d), right_n, fabric)
 	# Cream hem along the bottom edges.
-	for s in [-1.0, 1.0]:
+	for s: float in [-1.0, 1.0]:
 		var n := right_n if s > 0 else left_n
 		var out := Vector3(s * 0.02, 0, 0)
 		k.flat_quad(Vector3(s * w, 0.0, -d) + out, Vector3(s * w, 0.0, d) + out,
@@ -236,7 +236,7 @@ static func _tent(k: MeshKit) -> void:
 	var b := k.vertex(Vector3(0.45, 0, dz), door_n, fabric_dark)
 	var c := k.vertex(Vector3(0, 1.25, dz), door_n, fabric_dark)
 	k.tri(a, b, c, door_n)
-	for s in [-1.0, 1.0]:
+	for s: float in [-1.0, 1.0]:
 		var f0 := k.vertex(Vector3(s * 0.45, 0, dz + 0.01), door_n, cream)
 		var f1 := k.vertex(Vector3(s * 0.62, 0, dz + 0.01), door_n, cream)
 		var f2 := k.vertex(Vector3(s * 0.05, 1.2, dz + 0.01), door_n, cream)
@@ -251,7 +251,7 @@ static func _tent(k: MeshKit) -> void:
 	var fc := k.vertex(Vector3(0, h + 0.09, d + 0.05), Vector3.BACK, flag)
 	k.tri(fa, fb, fc, Vector3.BACK)
 	k.tri(fa, fc, fb, Vector3.FORWARD)
-	for s in [-1.0, 1.0]:
+	for s: float in [-1.0, 1.0]:
 		for z in [d * 0.8, -d * 0.8]:
 			k.cylinder(Vector3(s * (w + 0.25), 0, z), Vector3(s * (w + 0.25), 0.15, z), 0.03, 0.03, pole, 4)
 
@@ -265,7 +265,7 @@ static func _bridge(k: MeshKit, length: int) -> void:
 		var x := -half + 0.125 + i * 0.25
 		var col := plank if i % 2 == 0 else MeshKit.lin(_shade(PLANK, 0.92))
 		k.box(Vector3(x, -0.05, 0), Vector3(0.23, 0.1, 1.3), col)
-	for s in [-1.0, 1.0]:
+	for s: float in [-1.0, 1.0]:
 		k.box(Vector3(0, -0.1, s * 0.55), Vector3(half * 2.0, 0.12, 0.12), plank_dark)
 		for i in length + 2:
 			var x := -half + i * (half * 2.0 / (length + 1))

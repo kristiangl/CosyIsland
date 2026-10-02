@@ -9,6 +9,9 @@ extends RefCounted
 var verts := PackedVector3Array()
 var normals := PackedVector3Array()
 var colours := PackedColorArray()
+## Texture coordinates in metres (around, up) for spheres and tubes, used by patterned
+## fabrics. Other shapes leave them at zero.
+var uvs := PackedVector2Array()
 var indices := PackedInt32Array()
 
 const SHADE_SCALE := 0.35
@@ -23,10 +26,11 @@ static func lin(c: Color, sway: float = 0.0) -> Color:
 	return Color(c.r, c.g, c.b, sway)
 
 
-func vertex(p: Vector3, n: Vector3, c: Color) -> int:
+func vertex(p: Vector3, n: Vector3, c: Color, uv: Vector2 = Vector2.ZERO) -> int:
 	verts.append(xform * p)
 	normals.append((xform.basis * n).normalized())
 	colours.append(c)
+	uvs.append(uv)
 	return verts.size() - 1
 
 
@@ -73,7 +77,8 @@ func sphere(centre: Vector3, radius: Vector3, c: Color, rings: int = 6, segments
 				# Kept subtle: the cel lighting does the real shading.
 				var f := 1.0 - shade * SHADE_SCALE * (0.5 - unit.y * 0.5)
 				col = Color(c.r * f, c.g * f, c.b * f, c.a)
-			vertex(centre + unit * r, n, col)
+			var pos := centre + unit * r
+			vertex(pos, n, col, Vector2(theta * (radius.x + radius.z) * 0.5, pos.y))
 	var row := segments + 1
 	for i in rings:
 		for j in segments:
@@ -101,8 +106,9 @@ func cylinder(base: Vector3, top: Vector3, r_base: float, r_top: float, c: Color
 		var a := TAU * j / segments
 		var dir := side * cos(a) + fwd * sin(a)
 		var n := (dir + axis * slope).normalized()
-		vertex(base + dir * r_base, n, c)
-		vertex(top + dir * r_top, n, top_col)
+		var around := a * (r_base + r_top) * 0.5
+		vertex(base + dir * r_base, n, c, Vector2(around, base.y))
+		vertex(top + dir * r_top, n, top_col, Vector2(around, top.y))
 	for j in segments:
 		var i := start + j * 2
 		var dir := (verts[i] + verts[i + 2]) * 0.5 - xform * base
@@ -181,6 +187,7 @@ func commit(existing: ArrayMesh = null) -> ArrayMesh:
 	arrays[Mesh.ARRAY_VERTEX] = verts
 	arrays[Mesh.ARRAY_NORMAL] = normals
 	arrays[Mesh.ARRAY_COLOR] = colours
+	arrays[Mesh.ARRAY_TEX_UV] = uvs
 	arrays[Mesh.ARRAY_INDEX] = indices
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 	return mesh

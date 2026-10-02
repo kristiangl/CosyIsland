@@ -17,10 +17,10 @@ var _speed := 0.0
 var _busy := 0.0
 
 
-func setup(w: World, start: Vector3) -> void:
+func setup(w: World, start: Vector3, look: Dictionary) -> void:
 	world = w
 	position = Vector3(start.x, world.ground_height(start.x, start.z), start.z)
-	model = CharacterModel.new()
+	model = CharacterModel.new(look)
 	add_child(model)
 	model.set_tool(Inventory.equipped_id())
 	Events.equipped_changed.connect(model.set_tool)
@@ -156,4 +156,4 @@ func _recoil() -> void:
 
 
 func to_save() -> Dictionary:
-	return {"x": position.x, "z": position.z, "fx": facing.x, "fz": facing.z}
+	return {"x": position.x, "z": position.z, "fx": facing.x, "fz": facing.z, "look": model.look}

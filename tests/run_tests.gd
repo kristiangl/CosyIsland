@@ -16,6 +16,7 @@ func _run() -> void:
 	_test_inventory()
 	_test_generation()
 	_test_world_rules()
+	_test_appearance()
 	print("\n%d checks, %d failures" % [_checks, _failures])
 	get_tree().quit(1 if _failures > 0 else 0)
 
@@ -144,3 +145,21 @@ func _find_tent_spot(w: World, d: IslandData) -> Vector2i:
 			if w.can_place(Rect2i(x, z, 3, 3), Vector3(-10, 0, -10)):
 				return Vector2i(x, z)
 	return Vector2i(-1, -1)
+
+
+func _test_appearance() -> void:
+	var look := Appearance.sanitise({"hair": "bob", "skin": "nonsense"})
+	check(look["hair"] == "bob" and look["skin"] == Appearance.DEFAULT["skin"], "appearance keeps valid values and drops unknown ones")
+	Appearance.step(look, "hair", -1)
+	check(look["hair"] == "spiky", "stepping an option moves through the catalogue")
+	for key in Appearance.SOURCES:
+		check(Appearance.options(key).size() > 1, "appearance has options for " + key)
+	# Every part option should build a mesh without errors.
+	for key in ["hair", "top", "bottom", "shoes", "hat", "glasses"]:
+		for opt in Appearance.options(key):
+			var test_look := Appearance.DEFAULT.duplicate()
+			test_look[key] = opt["id"]
+			var model := CharacterModel.new(test_look)
+			add_child(model)
+			check(model.get_child_count() > 0, "character builds with %s = %s" % [key, opt["id"]])
+			model.free()

@@ -12,6 +12,8 @@ var mode: Mode = Mode.PLAY:
 
 var world: World
 var player: Player
+var player_name := ""
+var island_name := ""
 
 ## Command-line arguments passed after `--`, as {"key": "value"}. Flags map to "".
 var args: Dictionary = {}
@@ -22,3 +24,23 @@ func _enter_tree() -> void:
 		var parts := arg.trim_prefix("--").split("=", true, 1)
 		args[parts[0]] = parts[1] if parts.size() > 1 else ""
 	InputSetup.register()
+
+
+func _ready() -> void:
+	_tool_screenshot.call_deferred()
+
+
+## Tool scenes (not the main game) take their --screenshot here.
+func _tool_screenshot() -> void:
+	var scene := get_tree().current_scene
+	if args.has("screenshot") and scene and scene.scene_file_path.begins_with("res://tools/"):
+		screenshot(args["screenshot"], int(args.get("frames", "20")))
+
+
+## Renders a few frames, saves the viewport as a PNG and quits.
+func screenshot(path: String, frames: int) -> void:
+	for i in frames:
+		await get_tree().process_frame
+	get_viewport().get_texture().get_image().save_png(path)
+	print("Saved screenshot to ", path)
+	get_tree().quit()

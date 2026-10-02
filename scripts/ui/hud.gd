@@ -5,6 +5,7 @@ extends CanvasLayer
 signal place_requested(slot: int)
 signal save_requested
 signal quit_requested
+signal wardrobe_requested
 
 var _time_label: Label
 var _date_label: Label
@@ -14,7 +15,9 @@ var _toast_label: Label
 var _toast_queue: Array[String] = []
 var _toast_timer := 0.0
 var _pockets: Pockets
+var creator: CharacterCreator
 var _pause: PanelContainer
+var _pause_title: Label
 var _pause_time: Label
 var _pause_first: Button
 
@@ -78,6 +81,9 @@ func _ready() -> void:
 	root.add_child(_pockets)
 
 	_build_pause(root)
+
+	creator = CharacterCreator.new()
+	root.add_child(creator)
 
 	Events.toast.connect(_on_toast)
 	Events.equipped_changed.connect(_on_equipped)
@@ -148,6 +154,7 @@ func _build_pause(root: Control) -> void:
 	box.add_theme_constant_override("separation", 10)
 	_pause.add_child(box)
 	var title := Label.new()
+	_pause_title = title
 	title.text = "Island Phone"
 	title.add_theme_font_size_override("font_size", 30)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -185,7 +192,7 @@ func _build_pause(root: Control) -> void:
 		speed.text = "Clock speed: x%d" % int(GameClock.time_scale))
 	row2.add_child(speed)
 
-	for entry in [["Resume", _close_pause], ["Save", func(): save_requested.emit(); Events.toast.emit("Game saved.")],
+	for entry in [["Resume", _close_pause], ["Wardrobe", func(): _close_pause(); wardrobe_requested.emit()], ["Save", func(): save_requested.emit(); Events.toast.emit("Game saved.")],
 			["Save and quit", func(): quit_requested.emit()]]:
 		var b := Button.new()
 		b.text = entry[0]
@@ -195,6 +202,7 @@ func _build_pause(root: Control) -> void:
 
 func _open_pause() -> void:
 	Game.mode = Game.Mode.MENU
+	_pause_title.text = "%s Island" % Game.island_name if Game.island_name != "" else "Island Phone"
 	_pause.visible = true
 	_pause.reset_size()
 	_pause.position = (_pause.get_parent_area_size() - _pause.size) * 0.5

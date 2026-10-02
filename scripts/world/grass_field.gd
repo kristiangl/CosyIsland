@@ -26,6 +26,8 @@ func build(d: IslandData, density: float = 1.0) -> void:
 				var px := x + rng.randf_range(0.1, 0.9)
 				var pz := z + rng.randf_range(0.1, 0.9)
 				var s := rng.randf_range(0.7, 1.3)
+				if d.surface_at(px, pz) != IslandData.Tile.GRASS:
+					s = 0.0
 				var b := Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3(s, s * rng.randf_range(0.8, 1.2), s))
 				_transforms.append(Transform3D(b, Vector3(px, d.height_at(px, pz), pz)))
 

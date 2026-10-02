@@ -206,7 +206,11 @@ func is_walkable(px: float, pz: float) -> bool:
 	var i := data.idx(x, z)
 	if _deck.has(i):
 		return true
-	if not data.is_land(x, z):
+	var surface := data.surface_at(px, pz)
+	if surface != T.GRASS and surface != T.SAND:
+		return false
+	# Don't wade out past the waterline on sloping beaches.
+	if surface == T.SAND and data.height_at(px, pz) < IslandData.SEA_LEVEL - 0.06:
 		return false
 	var uid: int = _occupant.get(i, -1)
 	return uid < 0 or not _objects[uid]["kind"] in BLOCKING_KINDS
@@ -324,7 +328,8 @@ func drop_from_pockets(here: Vector2i, front: Vector2i, item: String, count: int
 
 
 func _can_hold_drop(x: int, z: int) -> bool:
-	return data.is_land(x, z) and not _occupant.has(data.idx(x, z)) and not _deck.has(data.idx(x, z))
+	return data.is_land(x, z) and not _occupant.has(data.idx(x, z)) and not _deck.has(data.idx(x, z)) \
+		and not data.splits.has(data.idx(x, z)) and data.height_at(x + 0.5, z + 0.5) > IslandData.SEA_LEVEL
 
 
 # --- Placement -----------------------------------------------------------------------

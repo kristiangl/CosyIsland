@@ -3,8 +3,10 @@ extends RefCounted
 ## Turns IslandData into meshes: the ground (tops plus cliff walls), the sea, and the
 ## river and pond surfaces.
 
-const GRASS_KIND := 1.0
-const SAND_KIND := 0.75
+## Vertex colour alpha tells the terrain shader what it is drawing. Surfaces (grass and
+## sand) carry the grass weight in red; walls with the grass kind are cliff-top lips.
+const SURFACE_KIND := 1.0
+const GRASS_KIND := 0.75
 const CLIFF_KIND := 0.5
 const BED_KIND := 0.25
 const LIP := 0.14
@@ -35,7 +37,7 @@ static func fresh_material() -> ShaderMaterial:
 		_fresh_material = ShaderMaterial.new()
 		_fresh_material.shader = load("res://shaders/water.gdshader")
 		_fresh_material.set_shader_parameter("shallow", Color("a6e6dc"))
-		_fresh_material.set_shader_parameter("deep", Color("7cc8d8"))
+		_fresh_material.set_shader_parameter("deep", Color("95d8dc"))
 		_fresh_material.set_shader_parameter("ripple_scale", 1.6)
 		_fresh_material.set_shader_parameter("flow", Vector2(0.0, -0.4))
 		_fresh_material.set_shader_parameter("shore_waves", 0.0)
@@ -45,6 +47,7 @@ static func fresh_material() -> ShaderMaterial:
 
 static func build_ground(d: IslandData) -> ArrayMesh:
 	var k := MeshKit.new()
+	var weights := _grass_weights(d)
 	# Edge checks: direction, my two corners on that edge, the neighbour's matching corners.
 	var edges := [
 		[Vector2i(1, 0), IslandData.NE, IslandData.SE, IslandData.NW, IslandData.SW],
@@ -57,50 +60,110 @@ static func build_ground(d: IslandData) -> ArrayMesh:
 			var t := d.tile(x, z)
 			if t == T.OCEAN:
 				continue
-			var kind := GRASS_KIND
-			if t == T.SAND:
-				kind = SAND_KIND
-			elif t == T.WATER:
-				kind = BED_KIND
-			var c := Color(1, 1, 1, kind)
-			var p := [
+			var p: Array[Vector3] = [
 				Vector3(x, d.corner(x, z, IslandData.NW), z),
 				Vector3(x + 1, d.corner(x, z, IslandData.NE), z),
 				Vector3(x + 1, d.corner(x, z, IslandData.SE), z + 1),
 				Vector3(x, d.corner(x, z, IslandData.SW), z + 1),
 			]
-			_top(k, p[0], p[1], p[2], c)
-			_top(k, p[0], p[2], p[3], c)
+			var split: Dictionary = d.splits.get(d.idx(x, z), {})
+			if split.is_empty():
+				_top(k, p[0], p[1], p[2], t, weights, d.width)
+				_top(k, p[0], p[2], p[3], t, weights, d.width)
+			else:
+				_split_top(k, d, p, split, t, weights)
 			for e in edges:
 				var dir: Vector2i = e[0]
-				var nx := x + dir.x
-				var nz := z + dir.y
-				var ha: float = p[e[1]].y
-				var hb: float = p[e[2]].y
-				var na := IslandData.OCEAN_FLOOR
-				var nb := IslandData.OCEAN_FLOOR
-				if d.in_bounds(nx, nz):
-					na = d.corner(nx, nz, e[3])
-					nb = d.corner(nx, nz, e[4])
-				if ha > na + 0.01 or hb > nb + 0.01:
-					var out := Vector3(dir.x, 0, dir.y)
-					var low_a := minf(na, ha)
-					var low_b := minf(nb, hb)
-					if t == T.GRASS and ha - low_a > 0.3 and hb - low_b > 0.3:
-						# A lip of grass hanging over the top of the cliff.
-						var lip := Vector3(0, LIP, 0)
-						_wall(k, p[e[1]], p[e[2]], ha - LIP, hb - LIP, out, GRASS_KIND)
-						_wall(k, p[e[1]] - lip, p[e[2]] - lip, low_a, low_b, out, CLIFF_KIND)
-					else:
-						_wall(k, p[e[1]], p[e[2]], low_a, low_b, out, CLIFF_KIND)
+				var mine := d.edge_heights(x, z, e[1], e[2])
+				var theirs := Vector2(IslandData.OCEAN_FLOOR, IslandData.OCEAN_FLOOR)
+				if d.in_bounds(x + dir.x, z + dir.y):
+					theirs = d.edge_heights(x + dir.x, z + dir.y, e[3], e[4])
+				if mine.x > theirs.x + 0.01 or mine.y > theirs.y + 0.01:
+					var owner := t
+					if not split.is_empty() and split["corner"] in [e[1], e[2]]:
+						owner = split["tile"]
+					var a := Vector3(p[e[1]].x, mine.x, p[e[1]].z)
+					var b := Vector3(p[e[2]].x, mine.y, p[e[2]].z)
+					_cliff(k, a, b, minf(theirs.x, mine.x), minf(theirs.y, mine.y), Vector3(dir.x, 0, dir.y), owner == T.GRASS)
 	return k.commit()
 
 
-static func _top(k: MeshKit, a: Vector3, b: Vector3, c: Vector3, col: Color) -> void:
+## A tile cut along its diagonal: the corner half at the split height, the rest at the
+## tile's own height, and a cliff along the diagonal between them.
+static func _split_top(k: MeshKit, d: IslandData, p: Array[Vector3], split: Dictionary, t: int, weights: PackedFloat32Array) -> void:
+	var c: int = split["corner"]
+	var prev := (c + 3) % 4
+	var next := (c + 1) % 4
+	var opp := (c + 2) % 4
+	var h: float = split["h"]
+	var lifted := func(v: Vector3) -> Vector3: return Vector3(v.x, h, v.z)
+	_top(k, lifted.call(p[prev]), lifted.call(p[c]), lifted.call(p[next]), split["tile"], weights, d.width)
+	_top(k, p[prev], p[next], p[opp], t, weights, d.width)
+	var rest := p[prev].y
+	if absf(rest - h) < 0.01:
+		return
+	# Wall faces towards whichever half is lower.
+	var towards_corner := (p[c] - p[opp]) * Vector3(1, 0, 1)
+	var out := towards_corner.normalized() if rest > h else -towards_corner.normalized()
+	var top := maxf(rest, h)
+	var low := minf(rest, h)
+	var upper_tile: int = t if rest > h else split["tile"]
+	_cliff(k, Vector3(p[prev].x, top, p[prev].z), Vector3(p[next].x, top, p[next].z), low, low, out, upper_tile == T.GRASS)
+
+
+static func _cliff(k: MeshKit, a: Vector3, b: Vector3, low_a: float, low_b: float, out: Vector3, grass_lip: bool) -> void:
+	if grass_lip and a.y - low_a > 0.3 and b.y - low_b > 0.3:
+		# A lip of grass hanging over the top of the cliff.
+		var lip := Vector3(0, LIP, 0)
+		_wall(k, a, b, a.y - LIP, b.y - LIP, out, GRASS_KIND)
+		_wall(k, a - lip, b - lip, low_a, low_b, out, CLIFF_KIND)
+	else:
+		_wall(k, a, b, low_a, low_b, out, CLIFF_KIND)
+
+
+## Two values per tile corner: the fraction of grass among the land tiles around it (for
+## blending grass into sand along wobbly, rounded lines), and 0 if a tile around it rises
+## above the lowest one (contact shade at the foot of cliffs), else 1.
+static func _grass_weights(d: IslandData) -> PackedFloat32Array:
+	var w := d.width + 1
+	var out := PackedFloat32Array()
+	out.resize(w * (d.height + 1) * 2)
+	for cz in d.height + 1:
+		for cx in w:
+			var grass := 0
+			var sandy := 0
+			var lowest := INF
+			var highest := -INF
+			for off: Vector2i in [Vector2i(-1, -1), Vector2i(0, -1), Vector2i(-1, 0), Vector2i(0, 0)]:
+				var tx := cx + off.x
+				var tz := cz + off.y
+				var tt := d.tile(tx, tz)
+				if tt == T.GRASS:
+					grass += 1
+				elif tt == T.SAND or tt == T.OCEAN:
+					sandy += 1
+				if tt == T.GRASS and not d.is_ramp(tx, tz):
+					var h := IslandData.tier_height(d.tier(tx, tz))
+					lowest = minf(lowest, h)
+					highest = maxf(highest, h)
+			var i := (cz * w + cx) * 2
+			out[i] = 1.0 if grass + sandy == 0 else float(grass) / (grass + sandy)
+			out[i + 1] = 0.0 if highest - lowest > 0.3 else 1.0
+	return out
+
+
+static func _top(k: MeshKit, a: Vector3, b: Vector3, c: Vector3, t: int, weights: PackedFloat32Array, width: int) -> void:
 	var n := (c - a).cross(b - a).normalized()
 	if n.y < 0.0:
 		n = -n
-	k.tri(k.vertex(a, n, col), k.vertex(b, n, col), k.vertex(c, n, col), n)
+	var ids: Array[int] = []
+	for v in [a, b, c]:
+		var col := Color(1, 1, 1, BED_KIND)
+		if t != T.WATER:
+			var wi := int(round(v.z)) * (width + 1) + int(round(v.x))
+			col = Color(weights[wi * 2], weights[wi * 2 + 1], 1, SURFACE_KIND)
+		ids.append(k.vertex(v, n, col))
+	k.tri(ids[0], ids[1], ids[2], n)
 
 
 static func _wall(k: MeshKit, top_a: Vector3, top_b: Vector3, low_a: float, low_b: float, outward: Vector3, kind: float) -> void:
@@ -129,6 +192,20 @@ static func build_fresh_water(d: IslandData) -> ArrayMesh:
 					bank = bank or (tt != T.WATER and tt != T.OCEAN)
 				ids.append(k.vertex(Vector3(cxz.x, y, cxz.y), Vector3.UP, Color(0.0 if bank else 0.4, 0, 0, 1)))
 			k.quad(ids[0], ids[1], ids[2], ids[3], Vector3.UP)
+	# Land tiles whose corner was cut down to a river bed need water over that half.
+	for i in d.splits:
+		var split: Dictionary = d.splits[i]
+		if split["tile"] != T.WATER:
+			continue
+		var x: int = i % d.width
+		var z: int = i / d.width
+		var y := maxf(IslandData.tier_height(split["tier"]) - IslandData.WATER_DROP, IslandData.SEA_LEVEL)
+		var pts := [Vector3(x, y, z), Vector3(x + 1, y, z), Vector3(x + 1, y, z + 1), Vector3(x, y, z + 1)]
+		var c: int = split["corner"]
+		var a := k.vertex(pts[(c + 3) % 4], Vector3.UP, Color(0, 0, 0, 1))
+		var b := k.vertex(pts[c], Vector3.UP, Color(0.4, 0, 0, 1))
+		var e := k.vertex(pts[(c + 1) % 4], Vector3.UP, Color(0, 0, 0, 1))
+		k.tri(a, b, e, Vector3.UP)
 	return k.commit()
 
 

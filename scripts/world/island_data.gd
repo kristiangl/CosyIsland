@@ -33,6 +33,11 @@ var tiers: PackedByteArray
 var corners: PackedFloat32Array
 ## Ramp tiles: tile index -> {"up": Vector2i uphill direction, "high": float, "low": float}.
 var ramps: Dictionary = {}
+## Tiles split along a diagonal to round off cliff and bank corners:
+## tile index -> {"corner": int, "h": float, "tile": Tile}. The half containing `corner`
+## (bounded by the diagonal joining its two neighbouring corners) is flat at height `h`
+## and looks like `tile`; the other half keeps the tile's own corner heights and type.
+var splits: Dictionary = {}
 
 var native_fruit: String
 var native_flower: String
@@ -112,13 +117,52 @@ func height_at(px: float, pz: float) -> float:
 		return OCEAN_FLOOR
 	var fx := px - x
 	var fz := pz - z
+	var i := idx(x, z)
+	if splits.has(i) and in_split_half(splits[i]["corner"], fx, fz):
+		return splits[i]["h"]
 	var north := lerpf(corner(x, z, NW), corner(x, z, NE), fx)
 	var south := lerpf(corner(x, z, SW), corner(x, z, SE), fx)
 	return lerpf(north, south, fz)
 
 
+## True if a point (fractions within its tile) lies in the half containing `c`.
+static func in_split_half(c: int, fx: float, fz: float) -> bool:
+	match c:
+		NW:
+			return fx + fz < 1.0
+		NE:
+			return fz < fx
+		SE:
+			return fx + fz > 1.0
+		_:
+			return fx < fz
+
+
+## Tile type of the surface at a world position (accounts for split tiles).
+func surface_at(px: float, pz: float) -> int:
+	var x := floori(px)
+	var z := floori(pz)
+	if not in_bounds(x, z):
+		return Tile.OCEAN
+	var i := idx(x, z)
+	if splits.has(i) and in_split_half(splits[i]["corner"], px - x, pz - z):
+		return splits[i]["tile"]
+	return tiles[i]
+
+
+## Heights at both ends of a tile edge running from corner a to corner b, taking the
+## split half into account when the edge belongs to it.
+func edge_heights(x: int, z: int, a: int, b: int) -> Vector2:
+	var i := idx(x, z)
+	if splits.has(i) and (splits[i]["corner"] == a or splits[i]["corner"] == b):
+		return Vector2(splits[i]["h"], splits[i]["h"])
+	return Vector2(corner(x, z, a), corner(x, z, b))
+
+
 ## True if the tile's four corners are level, so buildings and furniture can sit on it.
 func is_flat(x: int, z: int) -> bool:
+	if splits.has(idx(x, z)):
+		return false
 	var a := corner(x, z, NW)
 	return is_equal_approx(a, corner(x, z, NE)) and is_equal_approx(a, corner(x, z, SE)) \
 		and is_equal_approx(a, corner(x, z, SW))

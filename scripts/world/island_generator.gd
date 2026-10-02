@@ -18,6 +18,15 @@ const FLOWERS := ["tulip", "pansy", "cosmos", "rose", "lily", "hyacinth", "windf
 const FLOWER_COLOURS := ["red", "red", "white", "yellow", "yellow"]
 
 const DIRS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
+## Corner height on the beach by number of sea tiles touching that corner (0-4).
+const SHORE_PROFILE: Array[float] = [IslandData.SAND_HEIGHT, 0.05, IslandData.SHORE_HEIGHT, -0.4, IslandData.OCEAN_FLOOR]
+## For each corner (NW, NE, SE, SW): the two edge neighbours and the diagonal neighbour.
+const CORNER_NEIGHBOURS := [
+	[Vector2i(-1, 0), Vector2i(0, -1), Vector2i(-1, -1)],
+	[Vector2i(1, 0), Vector2i(0, -1), Vector2i(1, -1)],
+	[Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)],
+	[Vector2i(-1, 0), Vector2i(0, 1), Vector2i(-1, 1)],
+]
 const T := IslandData.Tile
 
 var d: IslandData
@@ -51,6 +60,7 @@ func _run(seed_value: int, w: int, h: int) -> IslandData:
 	_make_ponds()
 	_make_ramps()
 	_compute_corners()
+	_compute_splits()
 	d.native_fruit = FRUITS[rng.randi() % FRUITS.size()]
 	d.native_flower = FLOWERS[rng.randi() % FLOWERS.size()]
 	_place_trees()
@@ -521,21 +531,96 @@ func _compute_corners() -> void:
 				var bed := IslandData.tier_height(d.tiers[i]) - IslandData.RIVER_DEPTH
 				d.set_corners(x, z, bed, bed, bed, bed)
 			else:
+				# Beach and sea: each corner's height depends on how many of the four tiles
+				# around it are sea, so the waterline cuts diagonally across tiles.
 				var hs: Array[float] = []
 				for c in 4:
 					var near_grass := false
-					var near_ocean := false
-					var near_land := false
+					var oceans := 0
 					for off in corner_tiles[c]:
 						var nt := d.tile(x + off.x, z + off.y)
 						near_grass = near_grass or (nt == T.GRASS and d.tier(x + off.x, z + off.y) == 1)
-						near_ocean = near_ocean or nt == T.OCEAN
-						near_land = near_land or nt != T.OCEAN
-					if t == T.SAND:
-						hs.append(IslandData.GRASS_HEIGHT if near_grass else (IslandData.SHORE_HEIGHT if near_ocean else IslandData.SAND_HEIGHT))
-					else:
-						hs.append(IslandData.SHORE_HEIGHT if near_land else IslandData.OCEAN_FLOOR)
+						if nt == T.OCEAN:
+							oceans += 1
+					hs.append(IslandData.GRASS_HEIGHT if near_grass else SHORE_PROFILE[oceans])
 				d.set_corners(x, z, hs[0], hs[1], hs[2], hs[3])
+
+## Rounds off cliff and riverbank corners. A convex corner of higher ground loses a
+## diagonal half to the level below; an inside corner of lower ground gains a half from
+## the level above. Inside corners next to a cut are skipped, so diagonal staircases turn
+## into one straight diagonal rather than a zigzag.
+func _compute_splits() -> void:
+	var no_split := {}
+	for o in d.objects:
+		if o["kind"] == "bridge":
+			var axis := Vector2i(1, 0) if o["axis"] == "x" else Vector2i(0, 1)
+			for k in range(-1, o["length"] + 1):
+				var q := Vector2i(o["x"], o["z"]) + axis * k
+				no_split[d.idx(q.x, q.y)] = true
+	var cuts := {}
+	for z in d.height:
+		for x in d.width:
+			var i := d.idx(x, z)
+			if d.tiles[i] != T.GRASS or no_split.has(i):
+				continue
+			var h := _flat_height(x, z)
+			if is_nan(h):
+				continue
+			var options := []
+			for c in 4:
+				var n: Array = CORNER_NEIGHBOURS[c]
+				var low := _common_level(x, z, n, [T.GRASS, T.WATER])
+				if not low.is_empty() and low["h"] < h - 0.3:
+					options.append({"corner": c, "h": low["h"], "tile": low["tile"], "tier": low["tier"]})
+			if options.size() == 1:
+				cuts[i] = options[0]
+	var fills := {}
+	for z in d.height:
+		for x in d.width:
+			var i := d.idx(x, z)
+			if not d.tiles[i] in [T.GRASS, T.WATER] or no_split.has(i) or cuts.has(i):
+				continue
+			var h := _flat_height(x, z)
+			if is_nan(h):
+				continue
+			var options := []
+			for c in 4:
+				var n: Array = CORNER_NEIGHBOURS[c]
+				var high := _common_level(x, z, n, [T.GRASS])
+				var a: Vector2i = Vector2i(x, z) + n[0]
+				var b: Vector2i = Vector2i(x, z) + n[1]
+				if not high.is_empty() and high["h"] > h + 0.3 \
+						and not cuts.has(d.idx(a.x, a.y)) and not cuts.has(d.idx(b.x, b.y)):
+					options.append({"corner": c, "h": high["h"], "tile": T.GRASS, "tier": high["tier"]})
+			if options.size() == 1:
+				fills[i] = options[0]
+	d.splits = cuts
+	d.splits.merge(fills)
+	for i in d.splits:
+		reserved[i] = 1
+
+
+## Height of a flat, plain (not ramp, not sloped) tile, or NAN.
+func _flat_height(x: int, z: int) -> float:
+	if not d.in_bounds(x, z) or d.is_ramp(x, z) or not d.is_flat(x, z):
+		return NAN
+	return d.corner(x, z, IslandData.NW)
+
+
+## If the three neighbours around a corner are flat, of one allowed type and at one
+## height, returns {"h", "tile", "tier"}; otherwise {}.
+func _common_level(x: int, z: int, offsets: Array, allowed: Array) -> Dictionary:
+	var first: Vector2i = Vector2i(x, z) + offsets[0]
+	var t := d.tile(first.x, first.y)
+	var h := _flat_height(first.x, first.y)
+	if is_nan(h) or not t in allowed:
+		return {}
+	for off in offsets:
+		var q: Vector2i = Vector2i(x, z) + off
+		if d.tile(q.x, q.y) != t or not is_equal_approx(_flat_height(q.x, q.y), h):
+			return {}
+	return {"h": h, "tile": t, "tier": d.tier(first.x, first.y)}
+
 
 func _set_ramp_corners(x: int, z: int, ramp: Dictionary) -> void:
 	var up: Vector2i = ramp["up"]

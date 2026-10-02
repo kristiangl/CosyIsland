@@ -40,7 +40,7 @@ void fragment() {
 	float waves = smoothstep(0.75, 0.95, band) * (1.0 - smoothstep(0.03, 0.12, shore)) * shore_waves;
 	float depth = 0.5 - COLOR.g;
 	float edge = 1.0 - smoothstep(0.02, 0.09, depth);
-	edge = max(edge, (1.0 - smoothstep(0.0, 0.08, shore)) * bank_foam);
+	edge = max(edge, (1.0 - smoothstep(0.0, 0.03, shore)) * bank_foam);
 	col = mix(col, foam, clamp(waves * 0.8 + edge, 0.0, 1.0));
 
 	ALBEDO = col;

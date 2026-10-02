@@ -120,6 +120,8 @@ func add_object(obj: Dictionary) -> Dictionary:
 	obj["uid"] = data.new_uid()
 	data.objects.append(obj)
 	_register(obj)
+	if obj["kind"] == "placed":
+		Events.placed_changed.emit()
 	return obj
 
 
@@ -141,6 +143,8 @@ func remove_object(uid: int) -> void:
 	if _nodes.has(uid):
 		_nodes[uid].queue_free()
 		_nodes.erase(uid)
+	if obj["kind"] == "placed":
+		Events.placed_changed.emit()
 
 
 func footprint(obj: Dictionary) -> Array[Vector2i]:

@@ -21,6 +21,9 @@ var _pause: PanelContainer
 var _pause_title: Label
 var _pause_time: Label
 var _pause_first: Button
+var _minimap: PanelContainer
+var _map: PanelContainer
+var _map_title: Label
 
 
 func _ready() -> void:
@@ -83,6 +86,8 @@ func _ready() -> void:
 	_toast_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_toast_panel.add_child(_toast_label)
 
+	_build_maps(root)
+
 	_pockets = Pockets.new()
 	_pockets.place_requested.connect(func(slot): place_requested.emit(slot))
 	root.add_child(_pockets)
@@ -122,6 +127,16 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif _pockets.visible:
 			_pockets.close()
 			get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("map"):
+		if Game.mode == Game.Mode.PLAY:
+			open_map()
+			get_viewport().set_input_as_handled()
+		elif _map.visible:
+			_close_map()
+			get_viewport().set_input_as_handled()
+	elif _map.visible and (event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause")):
+		_close_map()
+		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("pause"):
 		if Game.mode == Game.Mode.PLAY:
 			_open_pause()
@@ -132,6 +147,60 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("ui_cancel") and _pause.visible:
 		_close_pause()
 		get_viewport().set_input_as_handled()
+
+
+# --- Maps --------------------------------------------------------------------------
+
+func _build_maps(root: Control) -> void:
+	# Corner minimap, top right. Shown while walking about and placing things.
+	_minimap = PanelContainer.new()
+	var frame := UIStyle.panel(UIStyle.CREAM, 18)
+	frame.set_content_margin_all(7)
+	_minimap.add_theme_stylebox_override("panel", frame)
+	_minimap.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	_minimap.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_minimap.position += Vector2(-24, 20)
+	root.add_child(_minimap)
+	var mini := IslandMap.new()
+	mini.custom_minimum_size = Vector2(204, 170)
+	mini.margin = 1.5
+	_minimap.add_child(mini)
+	Events.mode_changed.connect(func(mode: int): _minimap.visible = mode != Game.Mode.MENU)
+
+	# Full map, opened with the map button.
+	_map = PanelContainer.new()
+	_map.visible = false
+	root.add_child(_map)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 8)
+	_map.add_child(box)
+	_map_title = Label.new()
+	_map_title.add_theme_font_size_override("font_size", 28)
+	_map_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(_map_title)
+	var big := IslandMap.new()
+	big.detailed = true
+	big.custom_minimum_size = Vector2(576, 480)
+	box.add_child(big)
+	var hint := Label.new()
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint.add_theme_color_override("font_color", UIStyle.BROWN_LIGHT)
+	hint.add_theme_font_size_override("font_size", 16)
+	Prompts.bind_label(hint, "{map} close")
+	box.add_child(hint)
+
+
+func open_map() -> void:
+	Game.mode = Game.Mode.MENU
+	_map_title.text = "%s Island" % Game.island_name if Game.island_name != "" else "Island Map"
+	_map.visible = true
+	_map.reset_size()
+	_map.position = (_map.get_parent_area_size() - _map.size) * 0.5
+
+
+func _close_map() -> void:
+	_map.visible = false
+	Game.mode = Game.Mode.PLAY
 
 
 # --- Toasts --------------------------------------------------------------------------

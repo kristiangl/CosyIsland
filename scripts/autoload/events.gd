@@ -8,3 +8,5 @@ signal equipped_changed(item_id: String)
 signal day_changed(day_key: int)
 signal mode_changed(mode: int)
 signal workbench_opened
+## Furniture or a building was placed or packed away.
+signal placed_changed

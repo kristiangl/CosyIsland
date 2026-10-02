@@ -13,7 +13,7 @@ extends Node3D
 ##   --demo             pitch the tent, place furniture and chop a tree before the screenshot
 ##   --demo=decor       same, but stay by the furniture instead of chopping
 ##   --demo=sit         same, and sit on the chair
-##   --ui=pockets|pause|creator|crafting|placing   open a menu or mode (for screenshots)
+##   --ui=pockets|pause|map|creator|crafting|placing  open a menu or mode (for screenshots)
 
 const AUTOSAVE_SECONDS := 60.0
 
@@ -42,6 +42,7 @@ func _ready() -> void:
 	add_child(world)
 	world.setup(island, saved.get("world", {}))
 	Game.world = world
+	IslandMap.terrain_texture(island) # starts painting the map in the background
 
 	if saved.has("inventory"):
 		Inventory.from_save(saved["inventory"])
@@ -98,6 +99,8 @@ func _ready() -> void:
 			hud._pockets.open()
 		"pause":
 			hud._open_pause()
+		"map":
+			hud.open_map()
 		"creator":
 			hud.creator.open(Appearance.DEFAULT, true)
 		"crafting":

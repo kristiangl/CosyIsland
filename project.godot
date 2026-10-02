@@ -22,6 +22,7 @@ Recipes="*res://scripts/autoload/recipes.gd"
 Icons="*res://scripts/autoload/icons.gd"
 Prompts="*res://scripts/autoload/prompts.gd"
 SaveGame="*res://scripts/autoload/save_game.gd"
+Story="*res://scripts/autoload/story.gd"
 
 [display]
 

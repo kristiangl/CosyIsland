@@ -14,7 +14,7 @@ extends Node3D
 ##   --demo=decor       same, but stay by the furniture instead of chopping
 ##   --demo=sit         same, and sit on the chair
 ##   --demo=home        pitch the tent, go inside and furnish it
-##   --ui=pockets|pause|map|creator|crafting|placing  open a menu or mode (for screenshots)
+##   --ui=pockets|pause|map|creator|crafting|placing|intro|ask|lucy  open a menu or mode (for screenshots)
 
 const AUTOSAVE_SECONDS := 60.0
 
@@ -58,6 +58,11 @@ func _ready() -> void:
 	else:
 		_new_game_pockets()
 	Recipes.from_save(saved.get("recipes", []))
+	Story.from_save(saved.get("story", {}))
+	if not saved.is_empty() and not saved.has("story"):
+		# Saved before the story began: they've already got going.
+		Story.flags["intro_done"] = true
+		Story.flags["got_tent"] = true
 
 	player = Player.new()
 	player.name = "Player"
@@ -78,6 +83,8 @@ func _ready() -> void:
 	camera_rig.island_size = Vector2(island.width, island.height)
 	camera_rig.overview = Game.args.get("view", "") == "overview"
 	add_child(camera_rig)
+	Game.camera = camera_rig
+	_spawn_npcs()
 
 	day_night = DayNight.new()
 	add_child(day_night)
@@ -118,6 +125,23 @@ func _ready() -> void:
 			hud._open_pause()
 		"map":
 			hud.open_map()
+		"intro", "ask", "lucy":
+			# Poppy's welcome (or Lucy's first chat) part-way through, for screenshots.
+			Game.player_name = "Sam"
+			Game.island_name = "Driftwood"
+			if Game.args["ui"] == "lucy":
+				player.position = Vector3(world.data.plaza.position.x + 6.6, player.position.y, world.data.plaza.position.y + 5.4)
+				player.facing = Vector3(1, 0, -0.6).normalized()
+				Story.talk_to(Story.npc("lucy"))
+			else:
+				Story.intro()
+			if Game.args["ui"] == "ask":
+				for i in 24:
+					await get_tree().create_timer(0.16).timeout
+					var ev := InputEventAction.new()
+					ev.action = "ui_accept"
+					ev.pressed = true
+					Input.parse_input_event(ev)
 		"creator":
 			hud.creator.open(Appearance.DEFAULT, true)
 		"crafting":
@@ -148,7 +172,6 @@ func _new_game_pockets() -> void:
 	Inventory.reset()
 	Inventory.add_item("flimsy_axe")
 	Inventory.add_item("flimsy_shovel")
-	Inventory.add_item("tent_kit")
 	Inventory.equip(0)
 
 
@@ -158,10 +181,9 @@ func _on_creator_finished(look: Dictionary, player_name: String, island_name: St
 		_welcome_pending = false
 		Game.player_name = player_name
 		Game.island_name = island_name
-		var island := world.data
-		Events.toast.emit("Welcome to %s Island, %s!" % [island_name, player_name])
-		Events.toast.emit("This island's fruit is the %s, and %ss grow wild here." % [island.native_fruit, island.native_flower])
-		Events.toast.emit(Prompts.fill("Open your pockets ({pockets}) to pitch your tent."))
+		if not Story.flags.get("intro_done", false):
+			save_game()
+			await Story.intro()
 	save_game()
 
 
@@ -179,14 +201,40 @@ func save_game() -> void:
 		"inventory": Inventory.to_save(),
 		"player": player.to_save(),
 		"recipes": Recipes.to_save(),
+		"story": Story.to_save(),
 		"player_name": Game.player_name,
 		"island_name": Game.island_name,
 	})
 
 
+func _exit_tree() -> void:
+	IslandMap.finish()
+
+
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST and world != null:
 		save_game()
+
+
+# --- Characters ---------------------------------------------------------------------
+
+## Where the island's characters stand, in plaza tiles, and which way they face.
+const NPC_SPOTS := {
+	"poppy": [Vector2(3.5, 3.55), Vector3(0.2, 0, 1)],
+	"lucy": [Vector2(7.55, 4.5), Vector3(-0.6, 0, 1)],
+}
+
+
+func _spawn_npcs() -> void:
+	Game.npcs.clear()
+	var plaza := world.data.plaza
+	for id: String in NPC_SPOTS:
+		var spot: Vector2 = NPC_SPOTS[id][0] + Vector2(plaza.position)
+		var npc := Npc.new()
+		world.add_child(npc)
+		npc.setup(id, world, Vector3(spot.x, 0, spot.y), NPC_SPOTS[id][1].normalized())
+		world.reserve(Vector2i(floori(spot.x), floori(spot.y)))
+		Game.npcs.append(npc)
 
 
 # --- Homes --------------------------------------------------------------------------
@@ -266,7 +314,6 @@ func _run_demo() -> void:
 		var rect := Rect2i(spawn + Vector2i(-1, -r - 2), Vector2i(3, 3))
 		if world.can_place(rect, player.position) and world.door_clear("tent_kit", rect, 0):
 			tent = world.place_item("tent_kit", rect, 0)
-			Inventory.remove_from_slot(2)
 			break
 	if Game.args["demo"] == "home" and not tent.is_empty():
 		await _enter_home(tent["uid"], true)

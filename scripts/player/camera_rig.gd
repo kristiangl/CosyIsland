@@ -16,6 +16,9 @@ var island_size := Vector2(96, 80)
 ## Indoors: the room's floor in tiles. The camera leans in closer and only drifts a
 ## little with the player so the room stays framed.
 var room := Rect2()
+## While talking, the camera leans in on the player and this character.
+var talk_with: Node3D
+var _zoom := 1.0
 
 
 func _ready() -> void:
@@ -37,14 +40,17 @@ func _process(delta: float) -> void:
 	if target:
 		focus = focus.lerp(_goal(), 1.0 - exp(-delta * 6.0))
 	var indoors := room.has_area()
+	_zoom = lerpf(_zoom, 0.7 if talk_with else 1.0, 1.0 - exp(-delta * 4.0))
 	var pitch := deg_to_rad(52.0 if indoors else pitch_degrees)
-	camera.position = focus + Vector3(0, sin(pitch), cos(pitch)) * (13.5 if indoors else distance)
+	camera.position = focus + Vector3(0, sin(pitch), cos(pitch)) * (13.5 if indoors else distance) * _zoom
 	camera.look_at(focus)
 	RenderingServer.global_shader_parameter_set("curve_origin", focus)
 
 
 func _goal() -> Vector3:
 	var goal := target.global_position + Vector3(0, 0.6, 0)
+	if talk_with:
+		goal = (goal + talk_with.global_position + Vector3(0, 0.6, 0)) * 0.5
 	if room.has_area():
 		var centre := room.get_center()
 		goal.x = lerpf(centre.x, goal.x, 0.3)

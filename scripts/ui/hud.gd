@@ -10,6 +10,8 @@ signal wardrobe_requested
 var _time_label: Label
 var _date_label: Label
 var _tool_label: Label
+var _tool_panel: PanelContainer
+var _hint_panel: PanelContainer
 var _toast_panel: PanelContainer
 var _toast_label: Label
 var _toast_queue: Array[String] = []
@@ -25,6 +27,7 @@ var _minimap: PanelContainer
 var _map: PanelContainer
 var _map_title: Label
 var _fade: ColorRect
+var dialogue: DialogueBox
 ## Indoors there's no minimap.
 var indoors := false:
 	set(value):
@@ -55,6 +58,7 @@ func _ready() -> void:
 
 	# Equipped tool, bottom left.
 	var tool_panel := PanelContainer.new()
+	_tool_panel = tool_panel
 	tool_panel.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
 	tool_panel.position = Vector2(24, -80)
 	tool_panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
@@ -64,6 +68,7 @@ func _ready() -> void:
 
 	# Control hints, bottom right.
 	var hint_panel := PanelContainer.new()
+	_hint_panel = hint_panel
 	var hint_style := UIStyle.panel(Color(UIStyle.CREAM, 0.8), 16)
 	hint_style.content_margin_top = 6
 	hint_style.content_margin_bottom = 6
@@ -111,6 +116,10 @@ func _ready() -> void:
 	centre.add_child(crafting)
 	Events.workbench_opened.connect(crafting.open)
 
+	dialogue = DialogueBox.new()
+	root.add_child(dialogue)
+	Game.dialogue = dialogue
+
 	# Fades to and from black when going through doors.
 	_fade = ColorRect.new()
 	_fade.color = Color("2e2530")
@@ -125,6 +134,12 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	if Game.island:
+		# Collects the map painting as soon as it's ready, even with the minimap hidden.
+		IslandMap.terrain_texture(Game.island.data)
+	# Conversations get the bottom of the screen to themselves.
+	_tool_panel.visible = not dialogue.visible
+	_hint_panel.visible = not dialogue.visible
 	_time_label.text = GameClock.time_string()
 	_date_label.text = GameClock.date_string()
 	_update_toast(delta)

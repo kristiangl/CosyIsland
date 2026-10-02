@@ -19,6 +19,7 @@ func _run() -> void:
 	_test_appearance()
 	_test_crafting()
 	_test_rooms()
+	_test_story()
 	print("\n%d checks, %d failures" % [_checks, _failures])
 	get_tree().quit(1 if _failures > 0 else 0)
 
@@ -251,6 +252,21 @@ func _test_crafting() -> void:
 	w3.setup(IslandGenerator.generate(42), JSON.parse_string(JSON.stringify({"objects": old_objects, "next_uid": old.next_uid, "day_key": 0})))
 	check(w3.objects().filter(func(o): return o["kind"] == "placed" and o["item"] == "workbench").size() == 1, "old saves get a plaza workbench")
 	w3.free()
+
+	# Saves from before the office had the workbench where the office now goes.
+	var before := IslandGenerator.generate(42)
+	var before_objects: Array = before.objects.filter(func(o): return o["item"] != "island_office" if o.has("item") else true)
+	for o in before_objects:
+		if o.get("item", "") == "workbench":
+			o["x"] = before.plaza.position.x + 3
+			o["z"] = before.plaza.position.y + 2
+	var w4 := World.new()
+	add_child(w4)
+	w4.setup(IslandGenerator.generate(42), JSON.parse_string(JSON.stringify({"objects": before_objects, "next_uid": before.next_uid, "day_key": 0})))
+	var placed := w4.objects().filter(func(o): return o["kind"] == "placed")
+	check(placed.filter(func(o): return o["item"] == "island_office").size() == 1, "old saves get the island office")
+	check(placed.filter(func(o): return o["item"] == "workbench").size() == 1, "and keep one workbench")
+	w4.free()
 	Inventory.reset()
 	Recipes.reset()
 
@@ -297,4 +313,64 @@ func _test_rooms() -> void:
 	check(not bed.is_empty() and not table.is_empty(), "furniture placed indoors")
 	r.free()
 	r2.free()
+	Inventory.reset()
+
+
+func _test_story() -> void:
+	Inventory.reset()
+	Story.reset()
+	var d := IslandGenerator.generate(42)
+	var w := World.new()
+	add_child(w)
+	w.setup(d)
+	Game.island = w
+	Game.player_name = "Sam"
+	Game.island_name = "Driftwood"
+	check(Story.fill("{player} of {island}") == "Sam of Driftwood", "story lines fill in names")
+	check(Story.fill("the {fruit}") == "the " + d.native_fruit, "story lines fill in the native fruit")
+	var offices := w.objects().filter(func(o): return o["kind"] == "placed" and o["item"] == "island_office")
+	check(offices.size() == 1, "the plaza has the island office")
+	if offices.size() == 1:
+		check(not w.pack_up(offices[0]), "the office can't be packed up")
+		var door := w.door_of(offices[0])
+		check(not w.can_place(Rect2i(door["tile"] + door["out"], Vector2i.ONE), Vector3(-10, 0, -10)), "the office door stays clear")
+	check(not Story._has_home(), "no home before the tent goes up")
+	w.place_item("tent_kit", Rect2i(_find_tent_spot(w, d), Vector2i(3, 3)), 0)
+	check(Story._has_home(), "the tent counts as a home")
+	var first := Story._small_talk("lucy", ["a", "b", "c"])
+	check(Story._small_talk("lucy", ["a", "b", "c"]) != first, "small talk moves on each chat")
+
+	for id in ["poppy", "lucy"]:
+		var m := NpcData.model(id)
+		add_child(m)
+		check(m.species.has("kind") and m.find_child("Tail", true, false) != null, "%s builds with fur and a tail" % id)
+		m.free()
+
+	var box := DialogueBox.new()
+	add_child(box)
+	var done := [false]
+	box.finished.connect(func(): done[0] = true)
+	box.say("poppy", ["One.", "Two."])
+	box._opened_at = -1000
+	var accept := InputEventAction.new()
+	accept.action = "ui_accept"
+	accept.pressed = true
+	for i in 3:
+		box._unhandled_input(accept)
+	check(box.visible and not done[0], "dialogue waits for the last line to be read")
+	box._unhandled_input(accept)
+	check(done[0] and not box.visible, "dialogue finishes after the last line")
+	var picked := [-1]
+	box.picked.connect(func(i): picked[0] = i)
+	box.ask("poppy", "Yes?", ["Yes", "No"])
+	box._text.visible_characters = -1
+	box._typing = false
+	box._process(0.0)
+	check(box._choices.get_child_count() == 2, "questions show their options")
+	box._choose(1)
+	check(picked[0] == 1, "picking an option reports it")
+	box.free()
+	w.free()
+	Game.island = null
+	Story.reset()
 	Inventory.reset()

@@ -17,10 +17,12 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
 - Check every script parses: `tools/check_scripts.sh` (run this first; GDScript treats
   inferred-Variant types as errors, so type loop variables over literal arrays).
 - Art check scenes (render with `tools/screenshot_scene.sh out.png res://tools/<scene>`):
-  `character_lineup.tscn` (`--seed`, `--angle`), `model_gallery.tscn` (`--drops`,
-  `--only=id,id`), `calibrate.tscn` (`-- --shadows`, checks the cel lighting maths).
+  `character_lineup.tscn` (`--seed`, `--angle`, `--vary=KEY`, `--poses`, `--npcs`),
+  `model_gallery.tscn` (`--drops`, `--keys`, `--only=id,id`), `calibrate.tscn`
+  (`-- --shadows`, checks the cel lighting maths).
 - Game screenshot options are listed at the top of `scripts/main.gd` (`--demo`,
-  `--demo=decor`, `--ui=pockets|pause|creator|crafting`, `--at=X,Z`, `--hour`).
+  `--demo=decor|sit|home`, `--ui=pockets|pause|map|creator|crafting|placing|intro|ask|lucy`,
+  `--at=X,Z`, `--hour`).
 
 ## Layout
 
@@ -30,7 +32,14 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   (`terrain_builder.gd`, `grass_field.gd`), the live `world.gd` (objects, walkability,
   island rules), `day_night.gd`, `placement.gd`.
 - `scripts/player/`, `scripts/ui/`, `scripts/art/` (procedural models, `MeshKit`,
-  `FurnitureModels`), `scripts/character/` (appearance, parts, the character model).
+  `FurnitureModels`), `scripts/character/` (appearance, parts, animal parts, the
+  character model), `scripts/npc/` (island characters).
+- Rooms inside homes are a second `World` with `interior = true` on a small
+  `IslandData.room()`; `main.gd` swaps between the island and the room.
+- `Story` (autoload) holds conversation progress and every character's lines;
+  `DialogueBox` shows them. Await its `finished`/`picked` signals, not coroutines.
+- Worker-thread tasks must always be collected (`IslandMap.finish()`), or Godot
+  crashes on quit.
 - `shaders/`: every world shader includes `include/world.gdshaderinc` and runs vertices
   through `curve_world()`; lit ones include `include/toon_light.gdshaderinc`.
 - `data/items.json`: item definitions. Fruit and flower items are generated in `ItemDB`.

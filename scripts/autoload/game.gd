@@ -15,6 +15,10 @@ var world: World
 ## The island itself, even while indoors.
 var island: World
 var player: Player
+var camera: CameraRig
+var dialogue: DialogueBox
+## The characters standing about on the island.
+var npcs: Array[Npc] = []
 var player_name := ""
 var island_name := ""
 

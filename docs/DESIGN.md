@@ -100,15 +100,35 @@ Milestone 2:
 - [x] Item icons rendered from the 3D models
 - [x] Picking furniture back up; lanterns that glow at night
 
+Milestone 3:
+- [x] Rigged, animated player (hips, waist, knees, elbows; idle, walk, run, sit, actions)
+- [x] Sitting on seats, small things on table tops, placement preview
+- [x] Keyboard/controller prompt detection
+- [x] Layered trees, textured grass, water ripples, bank foam, stone cliffs
+- [x] Minimap and full map
+- [x] Tent interior with floor, walls and indoor decorating; rooms saved per home
+- [x] Paved plaza with the Island Office; Poppy and Lucy with dialogue and an intro
+
 Next milestones (suggested order):
-3. Tent interior and indoor decorating grid (walls, floors); house upgrade path.
-   Clothes as items (bought or crafted) instead of everything unlocked.
-4. Daily visitors and the first animal neighbours (dialogue, homes, schedules).
+3b. Wallpaper and flooring items; house upgrade path (tent, house, bigger house) with
+   Poppy. Clothes as items instead of everything unlocked. Lucy's shop.
+4. Daily visitors and the first animal neighbours (homes, schedules).
 5. Fishing, bug catching, the museum.
 6. Island tours to random islands (reusing the generator with different seeds).
 7. Path tool, terraforming, waterscaping, rock moving.
 8. Weather and seasons; audio.
 9. Platform work: touch controls, performance passes, Switch porting.
+
+## Characters
+
+- **Poppy**: a domestic long-haired cat, black with grey-brown markings. Runs the
+  Island Office in the plaza, welcomes new arrivals, hands over the tent and will
+  look after house upgrades and new neighbours.
+- **Lucy**: a Jack Russell terrier. Does odd jobs, knows all about DIY, and wants to
+  open the island's first shop.
+
+Characters are defined in `data/characters.json` (species, fur colours, outfit) and
+their lines live in `scripts/autoload/story.gd`, with progress flags saved in the game.
 
 ## Naming
 

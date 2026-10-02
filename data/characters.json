@@ -1,0 +1,21 @@
+{
+	"_note": "Main island characters. look uses ids from appearance.json; species colours are hex.",
+	"poppy": {
+		"name": "Poppy",
+		"title": "Island Office",
+		"tag": "#9fd3c7",
+		"voice": 1.15,
+		"species": {"kind": "cat", "fur": "#3e3a40", "fur2": "#9b8a7b", "eyes": "#b9c25a", "inner_ear": "#d79aa1", "nose": "#d48f99"},
+		"look": {"eyes": "wide", "mouth": "cat", "cheeks": "blush", "top": "sweater", "top_color": "cream", "top_color2": "coral",
+			"top_pattern": "plain", "bottom": "long_skirt", "bottom_color": "teal", "shoes": "none", "hat": "none", "glasses": "round"}
+	},
+	"lucy": {
+		"name": "Lucy",
+		"title": "Odd jobs",
+		"tag": "#f4d672",
+		"voice": 1.35,
+		"species": {"kind": "dog", "fur": "#f6f1e8", "fur2": "#c98a52", "eyes": "#5a3826", "inner_ear": "#b97a45", "nose": "#3a3236"},
+		"look": {"eyes": "classic", "mouth": "grin", "cheeks": "blush", "top": "tee", "top_color": "red", "top_color2": "white",
+			"top_pattern": "stripes", "bottom": "overalls", "bottom_color": "blue", "shoes": "none", "hat": "none", "glasses": "none"}
+	}
+}

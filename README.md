@@ -4,6 +4,10 @@ A cosy island life game about crafting and decorating, made with Godot 4.
 
 ![Island overview](docs/screenshots/overview.png)
 
+| Meeting Poppy | Inside the tent | Island map |
+| --- | --- | --- |
+| ![](docs/screenshots/intro.png) | ![](docs/screenshots/home.png) | ![](docs/screenshots/map.png) |
+
 | Decorating | Dusk | Riverside |
 | --- | --- | --- |
 | ![](docs/screenshots/furniture.png) | ![](docs/screenshots/dusk.png) | ![](docs/screenshots/river.png) |
@@ -13,6 +17,8 @@ A cosy island life game about crafting and decorating, made with Godot 4.
 | ![](docs/screenshots/creator.png) | ![](docs/screenshots/crafting.png) | ![](docs/screenshots/pockets.png) |
 
 ![Characters](docs/screenshots/characters.png)
+
+![Poppy and Lucy](docs/screenshots/npcs.png)
 
 ## Playing
 
@@ -26,13 +32,16 @@ Add `-- --new` to start a fresh island, or `-- --seed=123` for a specific one.
 | Action | Controller (Switch layout) | Keyboard |
 | --- | --- | --- |
 | Move | Left stick | WASD / arrows |
-| Use tool, shake tree, talk to things, place | A | E / Space |
+| Use tool, shake tree, talk, sit, go inside, place | A | E / Space |
 | Run, cancel | B | Shift / Esc |
 | Pick up (including furniture) | Y | F |
 | Pockets | X | Tab / I |
 | Switch tool | D-pad left/right | Z / C |
 | Rotate while placing | R | R |
+| Map | - | M |
 | Island Phone (time travel, wardrobe, save) | + | Esc / P |
+
+On-screen hints follow whatever you last touched, keyboard or controller.
 
 ## What's in so far
 
@@ -42,12 +51,20 @@ Add `-- --new` to start a fresh island, or `-- --seed=123` for a specific one.
 - Character creator and wardrobe: 14 hairstyles, 16 hair colours, 8 eye styles,
   mouths, brows, cheeks, 8 skin tones, 9 tops with 9 patterns, bottoms, shoes,
   hats and glasses.
-- Chop wood, shake trees for fruit and branches, hit rocks for stone, clay and iron
-  (one rock a day gives acorns).
-- DIY workbench in the plaza with 27 recipes: tools and furniture. Message bottles
-  wash up each day with new recipes.
-- 23 pieces of furniture to place anywhere on the grid, rotate and pick back up.
+- Poppy (a long-haired cat who runs the Island Office) welcomes you and hands over
+  your tent; Lucy (a Jack Russell who does odd jobs) explains the workbench. Both
+  have things to say every day.
+- A paved plaza with the office marquee and the DIY workbench.
+- Go inside your tent and decorate it: furniture, seats and table tops work indoors.
+- Chop wood, shake trees for fruit and branches (and the odd piece of furniture), hit
+  rocks for stone, clay and iron (one rock a day gives acorns).
+- DIY workbench with 32 recipes: tools and furniture. Message bottles wash up each day
+  with new recipes.
+- 28 pieces of furniture to place anywhere on the grid with a preview, rotate and pick
+  back up. Sit on chairs and benches; put teapots, candles and plants on tables.
   Lanterns and campfires glow at night.
+- An animated player with knees and elbows: walking, running, chopping, sitting.
+- Minimap and a full island map.
 - Pockets with item icons, stacking and tools that wear out.
 - Real-time clock with time travel from the Island Phone. Autosave.
 

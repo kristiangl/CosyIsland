@@ -11,6 +11,9 @@ const FACE_WRAP := 0.5
 const BODY_WRAP := 0.25
 
 var look: Dictionary = Appearance.DEFAULT.duplicate()
+## Animal characters: {"kind": "cat" or "dog", "fur": Color, "fur2": Color (markings),
+## "eyes": Color, "inner_ear": Color, "nose": Color}. Empty for people.
+var species: Dictionary = {}
 ## False for characters shown in menus, away from the island's world curvature.
 var curved := true
 
@@ -27,6 +30,7 @@ var _leg_r: Node3D
 var _knee_l: Node3D
 var _knee_r: Node3D
 var _hand_r: Node3D
+var _tail: Node3D
 var _tool: MeshInstance3D
 var _face: ShaderMaterial
 var _tool_id := ""
@@ -85,7 +89,9 @@ func rebuild() -> void:
 	_hand_r.add_child(_tool)
 	set_tool(_tool_id)
 
-	var skin := _cloth(Appearance.color(look, "skin"))
+	var animal := not species.is_empty()
+	var skin_colour: Color = species["fur"] if animal else Appearance.color(look, "skin")
+	var skin := _cloth(skin_colour)
 	var top_mat := _cloth(Appearance.color(look, "top_color"), Appearance.color(look, "top_color2"),
 		Appearance.index_of(look, "top_pattern"))
 	var bottom_mat := _cloth(Appearance.color(look, "bottom_color"), Appearance.color(look, "bottom_color").lightened(0.5))
@@ -127,7 +133,7 @@ func rebuild() -> void:
 	# Head, face and everything on it.
 	_face = ShaderMaterial.new()
 	_face.shader = _shader("face")
-	_face.set_shader_parameter("skin", Appearance.color(look, "skin"))
+	_face.set_shader_parameter("skin", skin_colour)
 	_face.set_shader_parameter("light_wrap", FACE_WRAP)
 	_face.set_shader_parameter("curved", curved)
 	_face.set_shader_parameter("eye_colour", Appearance.color(look, "eye_color"))
@@ -136,13 +142,18 @@ func rebuild() -> void:
 	_face.set_shader_parameter("brow_style", Appearance.index_of(look, "brows"))
 	_face.set_shader_parameter("mouth_style", Appearance.index_of(look, "mouth"))
 	_face.set_shader_parameter("cheek_style", Appearance.index_of(look, "cheeks"))
-	var head_mesh := _mesh(P.head(), _face, _head)
+	var head_mesh := _mesh(AnimalParts.head() if animal else P.head(), _face, _head)
 	head_mesh.position = P.HEAD_CENTRE
-	var hat_style: String = look["hat"]
-	var hair_mesh := _mesh(P.hair(look["hair"], hat_style in ["cap", "beanie", "bucket", "straw"], hat_style == "beret"), hair_mat, _head)
-	hair_mesh.position = P.HEAD_CENTRE
-	# Hair, hats and glasses don't cast shadows, so faces stay bright under a brim.
-	hair_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_tail = null
+	# Animals have fur instead of hair, and their ears get in the way of hats.
+	var hat_style: String = "none" if animal else look["hat"]
+	if animal:
+		_build_animal()
+	else:
+		var hair_mesh := _mesh(P.hair(look["hair"], hat_style in ["cap", "beanie", "bucket", "straw"], hat_style == "beret"), hair_mat, _head)
+		hair_mesh.position = P.HEAD_CENTRE
+		# Hair, hats and glasses don't cast shadows, so faces stay bright under a brim.
+		hair_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	if hat_style != "none":
 		var hat_mat := _cloth(Appearance.color(look, "hat_color"), Color("fff4e0") if hat_style != "flower_crown" else Color("f6d36b"))
 		var hat_mesh := _mesh(P.hat(hat_style), hat_mat, _head)
@@ -153,6 +164,34 @@ func rebuild() -> void:
 		var glasses_mesh := _mesh(P.glasses(look["glasses"]), frame, _head)
 		glasses_mesh.position = P.HEAD_CENTRE
 		glasses_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
+
+## Ears, tail, snout or ruff, and the face shader's fur markings.
+func _build_animal() -> void:
+	var kind: String = species["kind"]
+	var fur: Color = species["fur"]
+	var fur2: Color = species.get("fur2", fur)
+	_face.set_shader_parameter("species", 1 if kind == "cat" else 2)
+	_face.set_shader_parameter("fur_b", fur2)
+	_face.set_shader_parameter("eye_colour", species.get("eyes", Color("6a4430")))
+	_face.set_shader_parameter("brow_style", 0)
+	_face.set_shader_parameter("nose_colour", species.get("nose", Color("d98f98")))
+	_face.set_shader_parameter("whisker_colour", fur2.lightened(0.45) if fur.get_luminance() < 0.4 else fur.darkened(0.45))
+	var ear_colour: Color = fur2 if kind == "dog" else fur
+	var ears := _mesh(AnimalParts.ears(kind), _cloth(ear_colour, species.get("inner_ear", Color("e3a5aa"))), _head)
+	ears.position = P.HEAD_CENTRE
+	if kind == "cat":
+		_face.set_shader_parameter("eye_y", -0.02)
+		_face.set_shader_parameter("mouth_y", -0.145)
+		var ruff := _mesh(AnimalParts.ruff(), _cloth(fur, fur2), _head)
+		ruff.position = P.HEAD_CENTRE
+	else:
+		_face.set_shader_parameter("eye_y", 0.0)
+		_face.set_shader_parameter("mouth_y", -0.2)
+		var snout := _mesh(AnimalParts.snout(), _cloth(fur, species.get("nose", Color("3a3236"))), _head)
+		snout.position = P.HEAD_CENTRE
+	_tail = _pivot("Tail", Vector3(0, P.HIP_Y - 0.02, -0.14), _hips)
+	_mesh(AnimalParts.tail(kind), _cloth(fur, fur2 if kind == "cat" else fur2), _tail)
 
 
 func set_look(appearance: Dictionary) -> void:
@@ -345,6 +384,10 @@ func _apply(t: Dictionary, delta: float) -> void:
 	_leg_r.rotation.x = _pose["leg_r"]
 	_knee_l.rotation.x = _pose["knee_l"]
 	_knee_r.rotation.x = _pose["knee_r"]
+	if _tail:
+		# Dogs wag quickly, cats swish slowly.
+		var dog: bool = species["kind"] == "dog"
+		_tail.rotation = Vector3(-_pose["body_pitch"] * 0.5, 0.0, sin(_time * (10.0 if dog else 1.7)) * (0.35 if dog else 0.2))
 
 
 ## A little dust cloud left behind at the feet.

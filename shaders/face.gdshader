@@ -23,6 +23,13 @@ uniform float blink = 0.0;
 uniform float eye_x = 0.125;
 uniform float eye_y = -0.035;
 uniform float mouth_y = -0.13;
+// Animal heads: 0 person, 1 cat (tabby forehead, pale muzzle, pink nose, whiskers),
+// 2 dog (patches over the eyes and ears with a pale blaze, pale muzzle).
+uniform int species = 0;
+// Second fur colour for markings.
+uniform vec3 fur_b : source_color = vec3(1.0);
+uniform vec3 whisker_colour : source_color = vec3(0.85, 0.82, 0.8);
+uniform vec3 nose_colour : source_color = vec3(0.9, 0.55, 0.6);
 
 varying vec3 local_pos;
 
@@ -163,8 +170,58 @@ vec3 draw_mouth(vec3 base, vec2 p, float aa) {
 	return paint(base, line, sd_segment(q, vec2(-0.018, 0.0), vec2(0.018, 0.0)) - 0.005, aa);
 }
 
+// Fur markings over the whole head, before the face is drawn on top.
+vec3 markings(vec3 col, vec3 p) {
+	if (species == 1) {
+		// Cat: a pale muzzle and chin, and tabby stripes on the forehead and cheeks.
+		if (p.z > 0.1) {
+			float muzzle = sd_ellipse(p.xy - vec2(0.0, -0.13), vec2(0.15, 0.085));
+			col = mix(col, fur_b, 1.0 - smoothstep(-0.012, 0.012, muzzle));
+		}
+		float stripes = 0.0;
+		for (int i = -1; i <= 1; i++) {
+			float x = float(i) * 0.065;
+			stripes = max(stripes, 1.0 - smoothstep(0.008, 0.016, sd_segment(p.xy, vec2(x, 0.12), vec2(x * 1.25, 0.3)) - (i == 0 ? 0.004 : 0.0)));
+		}
+		stripes *= smoothstep(0.0, 0.15, p.z);
+		for (int i = 0; i < 2; i++) {
+			float y = -0.02 - float(i) * 0.045;
+			float d = sd_segment(vec2(abs(p.x), p.y), vec2(0.27, y), vec2(0.36, y + 0.02));
+			stripes = max(stripes, (1.0 - smoothstep(0.007, 0.014, d)) * step(0.05, p.z));
+		}
+		col = mix(col, fur_b, stripes * 0.75);
+	} else if (species == 2) {
+		// Dog: coloured patches over the eyes and ears either side of a pale blaze.
+		float blaze = 0.045 + clamp(-p.y, 0.0, 0.2) * 0.35;
+		float patch = smoothstep(-0.11, -0.09, p.y + sin(p.x * 18.0) * 0.012);
+		if (p.z > -0.05) {
+			patch *= smoothstep(blaze - 0.008, blaze + 0.008, abs(p.x));
+		}
+		col = mix(col, fur_b, patch);
+	}
+	return col;
+}
+
+vec3 animal_nose(vec3 base, vec2 p, float aa) {
+	vec2 q = p - vec2(0.0, mouth_y + 0.045);
+	// A small rounded triangle pointing down.
+	float d = max(abs(q.x) * 0.87 - q.y * 0.5, q.y - 0.01) - 0.016;
+	base = paint(base, nose_colour, d, aa);
+	return paint(base, vec3(1.0), length(q - vec2(-0.008, 0.008)) - 0.005, aa);
+}
+
+vec3 whiskers(vec3 base, vec2 p, float aa) {
+	vec2 q = vec2(abs(p.x), p.y);
+	for (int i = 0; i < 3; i++) {
+		float y = mouth_y + 0.035 - float(i) * 0.02;
+		float d = sd_segment(q, vec2(0.13, y), vec2(0.27, y + 0.03 - float(i) * 0.028));
+		base = paint(base, whisker_colour, d - 0.003, aa);
+	}
+	return base;
+}
+
 void fragment() {
-	vec3 col = skin;
+	vec3 col = markings(skin, local_pos);
 	if (local_pos.z > 0.12) {
 		vec2 p = local_pos.xy;
 		float aa = max(fwidth(p.x), fwidth(p.y)) * 0.8;
@@ -184,6 +241,10 @@ void fragment() {
 		col = draw_brow(col, e, aa, side);
 		col = draw_eye(col, e, aa, side);
 		col = draw_mouth(col, p, aa);
+		if (species == 1) {
+			col = whiskers(col, p, aa);
+			col = animal_nose(col, p, aa);
+		}
 	}
 	ALBEDO = col;
 	ROUGHNESS = 1.0;

@@ -99,7 +99,30 @@ func _clear(px: float, pz: float) -> bool:
 	for off in [Vector2.ZERO, Vector2(RADIUS, 0), Vector2(-RADIUS, 0), Vector2(0, RADIUS), Vector2(0, -RADIUS)]:
 		if not world.can_step(position, px + off.x, pz + off.y):
 			return false
+	for npc in Game.npcs:
+		if npc.world == world and npc.blocks(px, pz) and not npc.blocks(position.x, position.z):
+			return false
 	return true
+
+
+## The character the player is facing and close enough to talk to, if any.
+func _facing_npc() -> Npc:
+	for npc in Game.npcs:
+		if npc.world != world:
+			continue
+		var to := npc.position - position
+		to.y = 0.0
+		if to.length() < 1.4 and facing.dot(to.normalized()) > 0.35:
+			return npc
+	return null
+
+
+func face_towards(point: Vector3) -> void:
+	var to := point - position
+	to.y = 0.0
+	if to.length() > 0.05:
+		facing = to.normalized()
+		model.rotation.y = atan2(facing.x, facing.z)
 
 
 func tile() -> Vector2i:
@@ -130,6 +153,10 @@ func _facing_object() -> Dictionary:
 
 
 func _use() -> void:
+	var npc := _facing_npc()
+	if npc:
+		Story.talk_to(npc)
+		return
 	var tool_kind := ItemDB.tool_type(Inventory.equipped_id())
 	var obj := _facing_object()
 	var kind: String = obj.get("kind", "")

@@ -1,7 +1,7 @@
 extends Node3D
 ## Renders a row of characters for checking the character art:
 ##   tools/screenshot_scene.sh out.png res://tools/character_lineup.tscn [--seed=N] [--angle=DEG]
-##     [--vary=KEY] [--base=key:id,key:id]
+##     [--vary=KEY] [--base=key:id,key:id] [--npcs]
 ## Without --vary: the --base look (default look if none) and five random ones.
 ## With --vary: one character per option of KEY, all on the --base look.
 
@@ -32,6 +32,16 @@ func _ready() -> void:
 		base[kv[0]] = kv[1]
 	if Game.args.has("poses"):
 		_pose_sheet(base)
+		return
+	if Game.args.has("npcs"):
+		# The island's characters from the front, three-quarters and behind.
+		var spots := [[-2.6, 0.0], [-1.5, 35.0], [-0.5, 180.0], [0.6, 0.0], [1.7, -35.0], [2.7, 180.0]]
+		for i in spots.size():
+			var m := NpcData.model("poppy" if i < 3 else "lucy")
+			m.position.x = spots[i][0]
+			m.rotation.y = deg_to_rad(spots[i][1])
+			add_child(m)
+		_add_camera()
 		return
 	if Game.args.has("vary"):
 		# One character per option of the given key, on the --base look.

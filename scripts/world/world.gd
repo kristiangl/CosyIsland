@@ -28,6 +28,7 @@ var _occupant: Dictionary = {}  # tile index -> uid
 var _deck: Dictionary = {}      # tile index -> bridge deck height
 var _on_surface: Dictionary = {} # tile index -> uid of a small thing sitting on furniture
 var _door_fronts: Dictionary = {} # tile index -> uid of the home whose door it's in front of
+var _reserved: Dictionary = {}    # tile index -> true where characters stand
 var _rng := RandomNumberGenerator.new()
 var _is_night := false
 var _light_check := 0.0
@@ -470,10 +471,17 @@ func can_place(rect: Rect2i, player_pos: Vector3) -> bool:
 
 ## Indoors, the doormat and the tile inside it stay free so there's always a way out.
 func _keep_clear(x: int, z: int) -> bool:
+	if _reserved.has(data.idx(x, z)):
+		return true
 	if not interior:
 		return false
 	var door := data.room_door()
 	return x == door.x and z >= door.y - 1
+
+
+## Keeps a tile free of furniture and drops (where a character stands).
+func reserve(tile: Vector2i) -> void:
+	_reserved[data.idx(tile.x, tile.y)] = true
 
 
 # --- Homes ---------------------------------------------------------------------------

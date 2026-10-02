@@ -51,6 +51,14 @@ func _process(_delta: float) -> void:
 		queue_redraw()
 
 
+## Waits for any painting still going on (call before quitting: every worker task
+## has to be collected).
+static func finish() -> void:
+	if _task >= 0:
+		WorkerThreadPool.wait_for_task_completion(_task)
+		_task = -1
+
+
 ## Forget the painted terrain, e.g. after landscaping or loading another island.
 static func invalidate() -> void:
 	_texture_for = null

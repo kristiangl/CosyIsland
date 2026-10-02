@@ -1,0 +1,93 @@
+class_name Placement
+extends Node3D
+## Grid placement mode: shows a ghost of the item in front of the player, snapped to
+## the grid. A places it, B cancels, R / right bumper rotates.
+
+const VALID := Color(0.55, 1.0, 0.6, 0.55)
+const INVALID := Color(1.0, 0.45, 0.4, 0.55)
+
+var player: Player
+var world: World
+var _slot := -1
+var _item := ""
+var _size := Vector2i.ONE
+var _rot := 0
+var _rotatable := true
+var _rect := Rect2i()
+var _valid := false
+var _ghost: MeshInstance3D
+var _footprint: MeshInstance3D
+var _material: ShaderMaterial
+
+
+func _ready() -> void:
+	_material = ShaderMaterial.new()
+	_material.shader = load("res://shaders/ghost.gdshader")
+	_ghost = MeshInstance3D.new()
+	_ghost.material_override = _material
+	_ghost.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(_ghost)
+	_footprint = MeshInstance3D.new()
+	_footprint.material_override = _material
+	_footprint.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var plane := PlaneMesh.new()
+	plane.size = Vector2.ONE
+	_footprint.mesh = plane
+	add_child(_footprint)
+	visible = false
+
+
+func begin(slot: int) -> void:
+	var item: String = Inventory.slots[slot].get("id", "")
+	var def := ItemDB.placeable(item)
+	if def.is_empty():
+		return
+	_slot = slot
+	_item = item
+	_size = Vector2i(def["footprint"][0], def["footprint"][1])
+	_rotatable = def.get("rotatable", true)
+	_rot = 0
+	_ghost.mesh = Models.get_mesh(def.get("model", "drop:" + item))
+	visible = true
+	Game.mode = Game.Mode.PLACING
+	Events.toast.emit("Where should it go? A to place, B to put it away.")
+
+
+func _process(_delta: float) -> void:
+	if Game.mode != Game.Mode.PLACING:
+		return
+	var dir := player.cardinal()
+	var size := _size if _rot % 2 == 0 else Vector2i(_size.y, _size.x)
+	_rect = world.placement_rect(player.tile() + dir, dir, size)
+	_valid = world.can_place(_rect, player.position)
+	var centre := Vector2(_rect.position) + Vector2(_rect.size) * 0.5
+	var y := world.ground_height(centre.x, centre.y)
+	_ghost.position = Vector3(centre.x, y + 0.02, centre.y)
+	_ghost.rotation.y = -PI * 0.5 * _rot
+	_footprint.position = Vector3(centre.x, y + 0.03, centre.y)
+	_footprint.scale = Vector3(_rect.size.x, 1, _rect.size.y)
+	_material.set_shader_parameter("colour", VALID if _valid else INVALID)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if Game.mode != Game.Mode.PLACING:
+		return
+	if event.is_action_pressed("use"):
+		get_viewport().set_input_as_handled()
+		if _valid:
+			world.place_item(_item, _rect, _rot)
+			Inventory.remove_from_slot(_slot)
+			Events.toast.emit("Perfect spot!" if _item != "tent_kit" else "Your tent is up! Welcome home.")
+			_end()
+		else:
+			Events.toast.emit("It won't fit there. Try a flat, clear spot.")
+	elif event.is_action_pressed("cancel"):
+		get_viewport().set_input_as_handled()
+		_end()
+	elif event.is_action_pressed("rotate") and _rotatable:
+		_rot = (_rot + 1) % 4
+
+
+func _end() -> void:
+	visible = false
+	Game.mode = Game.Mode.PLAY

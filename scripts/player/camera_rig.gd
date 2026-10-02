@@ -1,0 +1,48 @@
+class_name CameraRig
+extends Node3D
+## Fixed-angle follow camera, looking north over the player like a diorama.
+## Also feeds the focus point to the world-curvature shaders.
+
+@export var pitch_degrees := 42.0
+@export var distance := 18.0
+@export var fov := 30.0
+
+var target: Node3D
+var camera: Camera3D
+var focus := Vector3.ZERO
+## When true the camera frames the whole island from high up (used for screenshots).
+var overview := false
+var island_size := Vector2(96, 80)
+
+
+func _ready() -> void:
+	camera = Camera3D.new()
+	camera.fov = fov
+	camera.near = 0.3
+	camera.far = 600.0
+	add_child(camera)
+	camera.make_current()
+	if target:
+		focus = target.global_position
+
+
+func _process(delta: float) -> void:
+	if overview:
+		_frame_island()
+		return
+	if target:
+		var goal := target.global_position + Vector3(0, 0.6, 0)
+		focus = focus.lerp(goal, 1.0 - exp(-delta * 6.0))
+	var pitch := deg_to_rad(pitch_degrees)
+	camera.position = focus + Vector3(0, sin(pitch), cos(pitch)) * distance
+	camera.look_at(focus)
+	RenderingServer.global_shader_parameter_set("curve_origin", focus)
+
+
+func _frame_island() -> void:
+	var centre := Vector3(island_size.x * 0.5, 0, island_size.y * 0.52)
+	camera.fov = 40.0
+	camera.position = centre + Vector3(0, 95, 62)
+	camera.look_at(centre)
+	RenderingServer.global_shader_parameter_set("curve_origin", centre)
+	RenderingServer.global_shader_parameter_set("curve_amount", 0.0)

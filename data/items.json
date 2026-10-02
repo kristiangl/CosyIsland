@@ -1,0 +1,35 @@
+{
+	"items": {
+		"wood": {"name": "Wood", "category": "material", "stack": 30, "price": 60, "color": "#a8743f", "desc": "A sturdy bundle of wood. Good for crafting."},
+		"tree_branch": {"name": "Tree Branch", "category": "material", "stack": 30, "price": 5, "color": "#8b6a45", "desc": "A slender branch that fell from a tree."},
+		"stone": {"name": "Stone", "category": "material", "stack": 30, "price": 75, "color": "#9a9a92", "desc": "A smooth stone chipped off a rock."},
+		"clay": {"name": "Clay", "category": "material", "stack": 30, "price": 100, "color": "#c98a5c", "desc": "Soft, damp clay. It holds its shape well."},
+		"iron_nugget": {"name": "Iron Nugget", "category": "material", "stack": 30, "price": 375, "color": "#6d7480", "desc": "A heavy lump of iron."},
+		"acorn_pouch": {"name": "Acorn Pouch", "category": "currency", "stack": 1, "price": 0, "color": "#b7864f", "desc": "A little pouch of acorns."},
+		"gold_nugget": {"name": "Gold Nugget", "category": "material", "stack": 30, "price": 10000, "color": "#e8b53a", "desc": "It's shiny! Very rare."},
+
+		"flimsy_axe": {"name": "Flimsy Axe", "category": "tool", "tool": "axe", "durability": 40, "stack": 1, "price": 200, "color": "#b08a5a", "desc": "Chops wood from trees. It won't fell them."},
+		"flimsy_shovel": {"name": "Flimsy Shovel", "category": "tool", "tool": "shovel", "durability": 40, "stack": 1, "price": 200, "color": "#8aa0b0", "desc": "Good for hitting rocks. Digging comes later."},
+
+		"tent_kit": {"name": "Tent Kit", "category": "kit", "stack": 1, "price": 0, "color": "#5f9fd6", "desc": "Your first home. Find a nice spot and pitch it!",
+			"placeable": {"footprint": [3, 3], "model": "tent", "structure": true, "rotatable": false}}
+	},
+	"fruits": {
+		"apple": {"name": "Apple", "color": "#e0453a"},
+		"orange": {"name": "Orange", "color": "#f2922b"},
+		"pear": {"name": "Pear", "color": "#c9d64a"},
+		"cherry": {"name": "Cherry", "color": "#c41e3a"},
+		"peach": {"name": "Peach", "color": "#f7a98f"},
+		"plum": {"name": "Plum", "color": "#7b3f8c"}
+	},
+	"flowers": {
+		"tulip": {"name": "Tulip", "colors": {"red": "#e5484d", "white": "#f7f3ea", "yellow": "#f5c842"}},
+		"pansy": {"name": "Pansy", "colors": {"red": "#d9435a", "white": "#f4f1f7", "yellow": "#f2cf3c"}},
+		"cosmos": {"name": "Cosmos", "colors": {"red": "#e0607e", "white": "#faf5f2", "yellow": "#f6d34a"}},
+		"rose": {"name": "Rose", "colors": {"red": "#c8233a", "white": "#fbf6f0", "yellow": "#f4c430"}},
+		"lily": {"name": "Lily", "colors": {"red": "#e4573d", "white": "#fdfbf4", "yellow": "#f8d24c"}},
+		"hyacinth": {"name": "Hyacinth", "colors": {"red": "#d64f6a", "white": "#f6f2f8", "yellow": "#f3d65a"}},
+		"windflower": {"name": "Windflower", "colors": {"red": "#d93a46", "white": "#f8f5ef", "yellow": "#f2c94c"}},
+		"mum": {"name": "Mum", "colors": {"red": "#c9364a", "white": "#f7f4ea", "yellow": "#f0c53a"}}
+	}
+}

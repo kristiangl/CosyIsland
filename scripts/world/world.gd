@@ -46,6 +46,8 @@ func setup(island: IslandData, saved: Dictionary = {}) -> void:
 		_pick_money_rock()
 	if not saved.has("objects"):
 		wash_up_bottle()
+	else:
+		_upgrade_old_save()
 
 
 func _process(delta: float) -> void:
@@ -459,6 +461,21 @@ func wash_up_bottle() -> void:
 		if by_sea:
 			add_object({"kind": "drop", "item": "message_bottle", "count": 1, "x": x, "z": z})
 			return
+
+
+## Islands saved before the DIY update get a plaza workbench and a first bottle.
+func _upgrade_old_save() -> void:
+	for obj in data.objects:
+		if obj["kind"] == "placed" and obj["item"] == "workbench" and obj.get("fixed", false):
+			return
+	for dz in range(0, data.plaza.size.y - 1):
+		for dx in range(0, data.plaza.size.x - 1):
+			var rect := Rect2i(data.plaza.position + Vector2i(dx + 3, dz + 2), Vector2i(2, 1))
+			if can_place(rect, Vector3(-10, 0, -10)):
+				var obj := place_item("workbench", rect, 0)
+				obj["fixed"] = true
+				wash_up_bottle()
+				return
 
 
 func _pick_money_rock() -> void:

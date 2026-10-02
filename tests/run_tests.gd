@@ -201,5 +201,14 @@ func _test_crafting() -> void:
 	Inventory.remove_item("wooden_stool", 1)
 	check(w.pack_up(stool) and Inventory.count_of("wooden_stool") == 1, "furniture packs back into the pockets")
 	w.free()
+
+	# Islands saved before the DIY update get a workbench added on load.
+	var old := IslandGenerator.generate(42)
+	var old_objects: Array = old.objects.filter(func(o): return o["kind"] != "placed")
+	var w3 := World.new()
+	add_child(w3)
+	w3.setup(IslandGenerator.generate(42), JSON.parse_string(JSON.stringify({"objects": old_objects, "next_uid": old.next_uid, "day_key": 0})))
+	check(w3.objects().filter(func(o): return o["kind"] == "placed" and o["item"] == "workbench").size() == 1, "old saves get a plaza workbench")
+	w3.free()
 	Inventory.reset()
 	Recipes.reset()

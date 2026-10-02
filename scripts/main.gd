@@ -114,6 +114,10 @@ func _ready() -> void:
 		if saved.is_empty():
 			_welcome_pending = true
 			hud.creator.open(Appearance.DEFAULT, true)
+		elif not saved.has("player_name"):
+			# A save from before characters existed: make one now.
+			_welcome_pending = true
+			hud.creator.open(player.model.look, true)
 
 
 func _new_game_pockets() -> void:

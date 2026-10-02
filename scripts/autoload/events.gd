@@ -10,3 +10,6 @@ signal mode_changed(mode: int)
 signal workbench_opened
 ## Furniture or a building was placed or packed away.
 signal placed_changed
+## The player walked into a home's door (uid of the home), or out of a room.
+signal home_entered(uid: int)
+signal home_left

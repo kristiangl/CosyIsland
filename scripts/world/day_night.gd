@@ -23,6 +23,12 @@ var env: Environment
 var sky_material: ShaderMaterial
 ## Overrides the clock when >= 0 (used for screenshots).
 var fixed_hour := -1.0
+## Inside a home the light is warm and steady whatever the time.
+var indoors := false:
+	set(value):
+		indoors = value
+		env.background_mode = Environment.BG_COLOR if value else Environment.BG_SKY
+		_apply(_hour())
 
 
 func _ready() -> void:
@@ -53,6 +59,7 @@ func _ready() -> void:
 	env.fog_depth_begin = 60.0
 	env.fog_depth_end = 260.0
 	env.fog_sky_affect = 0.0
+	env.background_color = Color("2e2530")
 	var we := WorldEnvironment.new()
 	we.environment = env
 	add_child(we)
@@ -68,6 +75,11 @@ func _hour() -> float:
 
 
 func _apply(hour: float) -> void:
+	if indoors:
+		RenderingServer.global_shader_parameter_set("cel_lit", Vector3(1.0, 0.96, 0.9))
+		RenderingServer.global_shader_parameter_set("cel_shadow", Vector3(0.8, 0.73, 0.82))
+		sun.rotation_degrees = Vector3(-60, -24, 0)
+		return
 	var a: Array = KEYS[0]
 	var b: Array = KEYS[1]
 	for i in KEYS.size() - 1:

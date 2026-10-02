@@ -171,3 +171,25 @@ func is_flat(x: int, z: int) -> bool:
 func new_uid() -> int:
 	next_uid += 1
 	return next_uid - 1
+
+
+## A room inside a home: a flat w x d floor (grass-type tiles, so the usual walking and
+## placing rules apply) plus one doormat tile just past the middle of the front edge.
+## Stepping onto the doormat leads back outside.
+static func room(w: int, d: int) -> IslandData:
+	var r := IslandData.new()
+	r.setup(w, d + 1)
+	for z in d + 1:
+		for x in w:
+			var i := r.idx(x, z)
+			var floor := z < d or x == w / 2
+			r.tiles[i] = Tile.GRASS if floor else Tile.OCEAN
+			r.tiers[i] = 1
+			r.set_corners(x, z, GRASS_HEIGHT, GRASS_HEIGHT, GRASS_HEIGHT, GRASS_HEIGHT)
+	r.spawn = Vector2i(w / 2, d - 1)
+	return r
+
+
+## The doormat tile of a room.
+func room_door() -> Vector2i:
+	return Vector2i(width / 2, height - 1)

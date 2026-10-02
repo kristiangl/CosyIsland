@@ -90,7 +90,14 @@
 				],
 				"model": "tent",
 				"structure": true,
-				"rotatable": false
+				"rotatable": false,
+				"room": {
+					"size": [
+						6,
+						6
+					],
+					"style": "tent"
+				}
 			}
 		},
 		"stone_axe": {

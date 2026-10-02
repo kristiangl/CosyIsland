@@ -10,7 +10,10 @@ var mode: Mode = Mode.PLAY:
 		mode = value
 		Events.mode_changed.emit(value)
 
+## The world the player is in: the island, or a room inside a home.
 var world: World
+## The island itself, even while indoors.
+var island: World
 var player: Player
 var player_name := ""
 var island_name := ""

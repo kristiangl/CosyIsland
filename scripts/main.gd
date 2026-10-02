@@ -13,6 +13,7 @@ extends Node3D
 ##   --demo             pitch the tent, place furniture and chop a tree before the screenshot
 ##   --demo=decor       same, but stay by the furniture instead of chopping
 ##   --demo=sit         same, and sit on the chair
+##   --demo=home        pitch the tent, go inside and furnish it
 ##   --ui=pockets|pause|map|creator|crafting|placing  open a menu or mode (for screenshots)
 
 const AUTOSAVE_SECONDS := 60.0
@@ -25,6 +26,12 @@ var hud: Hud
 var placement: Placement
 var _seed := 0
 var _welcome_pending := false
+## The room the player is in, or null outdoors.
+var room: World
+var _home_uid := -1
+## Saved rooms by home uid (as a string, for JSON).
+var _rooms: Dictionary = {}
+var _going_through_door := false
 
 
 func _ready() -> void:
@@ -42,7 +49,9 @@ func _ready() -> void:
 	add_child(world)
 	world.setup(island, saved.get("world", {}))
 	Game.world = world
+	Game.island = world
 	IslandMap.terrain_texture(island) # starts painting the map in the background
+	_rooms = saved.get("rooms", {})
 
 	if saved.has("inventory"):
 		Inventory.from_save(saved["inventory"])
@@ -89,6 +98,14 @@ func _ready() -> void:
 	hud.creator.finished.connect(_on_creator_finished)
 	Game.player_name = saved.get("player_name", "")
 	Game.island_name = saved.get("island_name", "")
+	Events.home_entered.connect(_enter_home)
+	Events.home_left.connect(_leave_home)
+	# Back inside if that's where we saved.
+	var inside := int(saved.get("inside", -1))
+	if inside >= 0 and not world.get_object(inside).is_empty():
+		await _enter_home(inside, true)
+		player.position = Vector3(saved["player"]["x"], room.ground_height(saved["player"]["x"], saved["player"]["z"]), saved["player"]["z"])
+		camera_rig.snap()
 
 	if Game.args.has("demo"):
 		await _run_demo()
@@ -151,10 +168,14 @@ func _on_creator_finished(look: Dictionary, player_name: String, island_name: St
 func save_game() -> void:
 	if Game.args.has("screenshot"):
 		return
+	if room:
+		_rooms[str(_home_uid)] = room.to_save()
 	SaveGame.write({
 		"seed": _seed,
 		"clock_offset": GameClock.offset_seconds,
 		"world": world.to_save(),
+		"rooms": _rooms,
+		"inside": _home_uid if room else -1,
 		"inventory": Inventory.to_save(),
 		"player": player.to_save(),
 		"recipes": Recipes.to_save(),
@@ -168,18 +189,99 @@ func _notification(what: int) -> void:
 		save_game()
 
 
+# --- Homes --------------------------------------------------------------------------
+
+func _enter_home(uid: int, instant := false) -> void:
+	var home := world.get_object(uid)
+	var def := ItemDB.placeable(home.get("item", ""))
+	if _going_through_door or room != null or not def.has("room"):
+		return
+	_going_through_door = true
+	Game.mode = Game.Mode.MENU
+	if not instant:
+		await hud.fade_out()
+	var size: Array = def["room"]["size"]
+	room = World.new()
+	room.name = "Room"
+	room.interior = true
+	room.room_style = def["room"]["style"]
+	add_child(room)
+	room.setup(IslandData.room(size[0], size[1]), _rooms.get(str(uid), {}))
+	_home_uid = uid
+	_switch_world(room)
+	var spawn := room.data.spawn
+	player.position = Vector3(spawn.x + 0.5, room.ground_height(spawn.x + 0.5, spawn.y + 0.5), spawn.y + 0.5)
+	player.facing = Vector3(0, 0, -1)
+	camera_rig.room = Rect2(0, 0, size[0], size[1])
+	camera_rig.snap()
+	Game.mode = Game.Mode.PLAY
+	if not instant:
+		await hud.fade_in()
+	_going_through_door = false
+
+
+func _leave_home() -> void:
+	if _going_through_door or room == null:
+		return
+	_going_through_door = true
+	Game.mode = Game.Mode.MENU
+	await hud.fade_out()
+	_rooms[str(_home_uid)] = room.to_save()
+	room.queue_free()
+	room = null
+	_switch_world(world)
+	var out := world.outside_door(world.get_object(_home_uid))
+	player.position = out["position"]
+	player.facing = out["facing"]
+	camera_rig.room = Rect2()
+	camera_rig.snap()
+	Game.mode = Game.Mode.PLAY
+	await hud.fade_in()
+	_going_through_door = false
+
+
+## Points the player, placement and UI at the island or a room, and swaps the
+## outdoor-only bits (curvature, wind, sky) on or off.
+func _switch_world(to: World) -> void:
+	var outside := to == world
+	world.visible = outside
+	world.process_mode = Node.PROCESS_MODE_INHERIT if outside else Node.PROCESS_MODE_DISABLED
+	Game.world = to
+	player.world = to
+	placement.world = to
+	day_night.indoors = not outside
+	hud.indoors = not outside
+	RenderingServer.global_shader_parameter_set("curve_amount", ProjectSettings.get_setting("shader_globals/curve_amount")["value"] if outside else 0.0)
+	RenderingServer.global_shader_parameter_set("wind_strength", ProjectSettings.get_setting("shader_globals/wind_strength")["value"] if outside else 0.0)
+
+
 ## Scripted actions for checking gameplay visuals in screenshots: pitch the tent near
 ## the spawn, then chop the nearest tree.
 func _run_demo() -> void:
 	for i in 5:
 		await get_tree().process_frame
 	var spawn := world.data.spawn
+	var tent := {}
 	for r in range(2, 12):
 		var rect := Rect2i(spawn + Vector2i(-1, -r - 2), Vector2i(3, 3))
-		if world.can_place(rect, player.position):
-			world.place_item("tent_kit", rect, 0)
+		if world.can_place(rect, player.position) and world.door_clear("tent_kit", rect, 0):
+			tent = world.place_item("tent_kit", rect, 0)
 			Inventory.remove_from_slot(2)
 			break
+	if Game.args["demo"] == "home" and not tent.is_empty():
+		await _enter_home(tent["uid"], true)
+		for entry in [["simple_bed", Vector2i(0, 0), 0], ["wooden_table", Vector2i(3, 1), 0], ["wooden_chair", Vector2i(3, 2), 2],
+				["stone_lantern", Vector2i(5, 0), 0], ["potted_plant", Vector2i(5, 5), 0], ["barrel", Vector2i(5, 3), 0], ["log_bench", Vector2i(0, 3), 1]]:
+			var size: Array = ItemDB.placeable(entry[0])["footprint"]
+			var dims := Vector2i(size[0], size[1]) if entry[2] % 2 == 0 else Vector2i(size[1], size[0])
+			room.place_item(entry[0], Rect2i(entry[1], dims), entry[2])
+		room.place_on_surface("teapot", Vector2i(3, 1), 0)
+		room.place_on_surface("fruit_bowl", Vector2i(4, 1), 0)
+		room.place_on_surface("candle_set", Vector2i(5, 3), 0)
+		player.position.x += 0.6
+		player.facing = Vector3(0, 0, 1)
+		camera_rig.snap()
+		return
 	# Some furniture around the spawn.
 	var decor := ["campfire", "log_bench", "stone_lantern", "wooden_table", "wooden_chair", "barrel", "flower_pot", "garden_lantern", "birdhouse"]
 	var spot := 0

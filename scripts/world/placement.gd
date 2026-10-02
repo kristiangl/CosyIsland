@@ -47,6 +47,9 @@ func begin(slot: int) -> void:
 	var def := ItemDB.placeable(item)
 	if def.is_empty():
 		return
+	if world.interior and def.get("structure", false):
+		Events.toast.emit("That needs to go outside.")
+		return
 	_slot = slot
 	_item = item
 	_size = Vector2i(def["footprint"][0], def["footprint"][1])
@@ -72,7 +75,7 @@ func _process(_delta: float) -> void:
 		_valid = true
 	else:
 		_rect = world.placement_rect(front, dir, size)
-		_valid = world.can_place(_rect, player.position)
+		_valid = world.can_place(_rect, player.position) and world.door_clear(_item, _rect, _rot)
 	var centre := Vector2(_rect.position) + Vector2(_rect.size) * 0.5
 	var y := world.ground_height(centre.x, centre.y)
 	if _on_table:

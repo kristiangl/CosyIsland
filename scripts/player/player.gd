@@ -53,6 +53,8 @@ func _physics_process(delta: float) -> void:
 	if _speed > 0.01:
 		var heading := dir.normalized() if dir.length() > 0.1 else facing
 		_move(heading * _speed * delta)
+	if dir.length() > 0.5 and Game.mode == Game.Mode.PLAY:
+		_check_doors(dir)
 	var yaw := atan2(facing.x, facing.z)
 	model.rotation.y = yaw
 	var turn_rate := wrapf(yaw - old_yaw, -PI, PI) / maxf(delta, 0.0001)
@@ -80,6 +82,17 @@ func _move(step: Vector3) -> void:
 	if _clear(position.x, nz):
 		position.z = nz
 	position.y = world.ground_height(position.x, position.z)
+
+
+## Walking into a home's door goes inside; stepping onto a room's doormat goes out.
+func _check_doors(dir: Vector3) -> void:
+	if world.interior:
+		if tile() == world.data.room_door():
+			Events.home_left.emit()
+		return
+	var home := world.home_entrance(position, dir)
+	if not home.is_empty():
+		Events.home_entered.emit(home["uid"])
 
 
 func _clear(px: float, pz: float) -> bool:
@@ -153,8 +166,8 @@ func _interact(obj: Dictionary) -> void:
 		_sit_on(obj)
 	elif def.get("workbench", false):
 		Events.workbench_opened.emit()
-	elif obj["item"] == "tent_kit":
-		Events.toast.emit("Home sweet home! (You'll be able to go inside soon.)")
+	elif def.has("room"):
+		Events.home_entered.emit(obj["uid"])
 	else:
 		Events.toast.emit("What a lovely %s." % ItemDB.display_name(obj["item"]).to_lower())
 

@@ -24,6 +24,12 @@ var _pause_first: Button
 var _minimap: PanelContainer
 var _map: PanelContainer
 var _map_title: Label
+var _fade: ColorRect
+## Indoors there's no minimap.
+var indoors := false:
+	set(value):
+		indoors = value
+		_update_minimap()
 
 
 func _ready() -> void:
@@ -105,6 +111,14 @@ func _ready() -> void:
 	centre.add_child(crafting)
 	Events.workbench_opened.connect(crafting.open)
 
+	# Fades to and from black when going through doors.
+	_fade = ColorRect.new()
+	_fade.color = Color("2e2530")
+	_fade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_fade.modulate.a = 0.0
+	root.add_child(_fade)
+
 	Events.toast.connect(_on_toast)
 	Events.equipped_changed.connect(_on_equipped)
 	_on_equipped(Inventory.equipped_id())
@@ -165,7 +179,7 @@ func _build_maps(root: Control) -> void:
 	mini.custom_minimum_size = Vector2(204, 170)
 	mini.margin = 1.5
 	_minimap.add_child(mini)
-	Events.mode_changed.connect(func(mode: int): _minimap.visible = mode != Game.Mode.MENU)
+	Events.mode_changed.connect(func(_mode: int): _update_minimap())
 
 	# Full map, opened with the map button.
 	_map = PanelContainer.new()
@@ -190,6 +204,11 @@ func _build_maps(root: Control) -> void:
 	box.add_child(hint)
 
 
+func _update_minimap() -> void:
+	if _minimap:
+		_minimap.visible = Game.mode != Game.Mode.MENU and not indoors
+
+
 func open_map() -> void:
 	Game.mode = Game.Mode.MENU
 	_map_title.text = "%s Island" % Game.island_name if Game.island_name != "" else "Island Map"
@@ -201,6 +220,18 @@ func open_map() -> void:
 func _close_map() -> void:
 	_map.visible = false
 	Game.mode = Game.Mode.PLAY
+
+
+func fade_out() -> void:
+	var tw := create_tween()
+	tw.tween_property(_fade, "modulate:a", 1.0, 0.25)
+	await tw.finished
+
+
+func fade_in() -> void:
+	var tw := create_tween()
+	tw.tween_property(_fade, "modulate:a", 0.0, 0.3)
+	await tw.finished
 
 
 # --- Toasts --------------------------------------------------------------------------

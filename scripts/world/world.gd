@@ -14,6 +14,10 @@ const BLOCKING_KINDS := ["tree", "fruit_tree", "palm", "rock", "placed"]
 const ROCK_TABLE := [["stone", 60], ["clay", 25], ["iron_nugget", 14], ["gold_nugget", 1]]
 
 var data: IslandData
+## True for a room inside a home: no terrain, sea or island rules, lamps always lit.
+var interior := false
+## Look of the room's floor and walls (see RoomBuilder.STYLES).
+var room_style := "tent"
 var day_key: int
 var money_rock_uid: int = -1
 var grass: GrassField
@@ -23,6 +27,7 @@ var _nodes: Dictionary = {}     # uid -> Node3D
 var _occupant: Dictionary = {}  # tile index -> uid
 var _deck: Dictionary = {}      # tile index -> bridge deck height
 var _on_surface: Dictionary = {} # tile index -> uid of a small thing sitting on furniture
+var _door_fronts: Dictionary = {} # tile index -> uid of the home whose door it's in front of
 var _rng := RandomNumberGenerator.new()
 var _is_night := false
 var _light_check := 0.0
@@ -39,6 +44,12 @@ func setup(island: IslandData, saved: Dictionary = {}) -> void:
 	day_key = int(saved.get("day_key", GameClock.day_key()))
 	money_rock_uid = int(saved.get("money_rock_uid", -1))
 
+	if interior:
+		_is_night = true
+		add_child(RoomBuilder.build(data, room_style))
+		for obj in data.objects:
+			_register(obj)
+		return
 	_build_terrain()
 	for obj in data.objects:
 		_register(obj)
@@ -55,6 +66,8 @@ func setup(island: IslandData, saved: Dictionary = {}) -> void:
 
 
 func _process(delta: float) -> void:
+	if interior:
+		return
 	_light_check -= delta
 	if _light_check > 0.0:
 		return
@@ -129,6 +142,7 @@ func remove_object(uid: int) -> void:
 	var obj: Dictionary = _objects.get(uid, {})
 	if obj.is_empty():
 		return
+	_door_fronts.erase(_door_fronts.find_key(uid))
 	for tile in footprint(obj):
 		var i := data.idx(tile.x, tile.y)
 		if obj.has("on"):
@@ -177,6 +191,10 @@ func _register(obj: Dictionary) -> void:
 	elif obj.has("on"):
 		_on_surface[data.idx(obj["x"], obj["z"])] = uid
 	else:
+		var door := door_of(obj)
+		if not door.is_empty():
+			var front: Vector2i = door["tile"] + door["out"]
+			_door_fronts[data.idx(front.x, front.y)] = uid
 		for tile in footprint(obj):
 			_occupant[data.idx(tile.x, tile.y)] = uid
 			if obj["kind"] == "placed" and grass:
@@ -215,7 +233,7 @@ func _spawn_node(obj: Dictionary) -> void:
 	if obj["kind"] == "placed" and ItemDB.placeable(obj["item"]).get("light", false):
 		var lamp := OmniLight3D.new()
 		lamp.light_color = Color("ffcf8a")
-		lamp.light_energy = 0.7
+		lamp.light_energy = 0.4 if interior else 0.7
 		lamp.omni_range = 3.0
 		lamp.omni_attenuation = 1.5
 		lamp.position = Vector3(0, 1.0, 0)
@@ -408,7 +426,7 @@ func drop_from_pockets(here: Vector2i, front: Vector2i, item: String, count: int
 
 
 func _can_hold_drop(x: int, z: int) -> bool:
-	return data.is_land(x, z) and not _occupant.has(data.idx(x, z)) and not _deck.has(data.idx(x, z)) \
+	return data.is_land(x, z) and not _keep_clear(x, z) and not _occupant.has(data.idx(x, z)) and not _deck.has(data.idx(x, z)) \
 		and not data.splits.has(data.idx(x, z)) and data.height_at(x + 0.5, z + 0.5) > IslandData.SEA_LEVEL
 
 
@@ -435,10 +453,10 @@ func can_place(rect: Rect2i, player_pos: Vector3) -> bool:
 	var level := NAN
 	for z in range(rect.position.y, rect.end.y):
 		for x in range(rect.position.x, rect.end.x):
-			if not data.is_land(x, z) or not data.is_flat(x, z):
+			if not data.is_land(x, z) or not data.is_flat(x, z) or _keep_clear(x, z):
 				return false
 			var i := data.idx(x, z)
-			if _occupant.has(i) or _deck.has(i):
+			if _occupant.has(i) or _deck.has(i) or _door_fronts.has(i):
 				return false
 			var h := data.corner(x, z, IslandData.NW)
 			if is_nan(level):
@@ -446,6 +464,79 @@ func can_place(rect: Rect2i, player_pos: Vector3) -> bool:
 			elif not is_equal_approx(level, h):
 				return false
 	return not rect.has_point(Vector2i(floori(player_pos.x), floori(player_pos.z)))
+
+
+## Indoors, the doormat and the tile inside it stay free so there's always a way out.
+func _keep_clear(x: int, z: int) -> bool:
+	if not interior:
+		return false
+	var door := data.room_door()
+	return x == door.x and z >= door.y - 1
+
+
+# --- Homes ---------------------------------------------------------------------------
+
+## The door of a home: {"tile": the footprint tile with the door, "out": Vector2i
+## pointing out of the door}. Empty if the object has no room inside.
+func door_of(obj: Dictionary) -> Dictionary:
+	if obj.get("kind", "") != "placed" or not ItemDB.placeable(obj["item"]).has("room"):
+		return {}
+	var facing := Basis(Vector3.UP, -PI * 0.5 * obj.get("rot", 0)) * Vector3.BACK
+	var out := Vector2i(roundi(facing.x), roundi(facing.z))
+	var w: int = obj["w"]
+	var d: int = obj["d"]
+	var tile := Vector2i(obj["x"] + w / 2, obj["z"] + d - 1)
+	match out:
+		Vector2i(0, -1):
+			tile = Vector2i(obj["x"] + w / 2, obj["z"])
+		Vector2i(1, 0):
+			tile = Vector2i(obj["x"] + w - 1, obj["z"] + d / 2)
+		Vector2i(-1, 0):
+			tile = Vector2i(obj["x"], obj["z"] + d / 2)
+	return {"tile": tile, "out": out}
+
+
+## The home whose door the player is walking into from `pos` heading `dir`, or {}.
+func home_entrance(pos: Vector3, dir: Vector3) -> Dictionary:
+	if interior or dir.length() < 0.5:
+		return {}
+	var ahead := pos + dir.normalized() * 0.45
+	var obj := object_at(floori(ahead.x), floori(ahead.z))
+	var door := door_of(obj)
+	if door.is_empty() or door["tile"] != Vector2i(floori(ahead.x), floori(ahead.z)):
+		return {}
+	if Vector2(dir.x, dir.z).normalized().dot(Vector2(door["out"])) > -0.7:
+		return {}
+	return obj
+
+
+## True if a home placed at `rect` would have open ground in front of its door.
+func door_clear(item_id: String, rect: Rect2i, rot: int) -> bool:
+	var door := door_of({"kind": "placed", "item": item_id, "x": rect.position.x, "z": rect.position.y,
+		"w": rect.size.x, "d": rect.size.y, "rot": rot})
+	if door.is_empty():
+		return true
+	var front: Vector2i = door["tile"] + door["out"]
+	return is_walkable(front.x + 0.5, front.y + 0.5) and data.is_flat(front.x, front.y)
+
+
+## Where to stand just outside a home's door, facing out. If something's in the way
+## (an old save, say), the nearest open spot around the home.
+func outside_door(obj: Dictionary) -> Dictionary:
+	var door := door_of(obj)
+	var out := Vector3(door["out"].x, 0, door["out"].y)
+	var spot := Vector2(door["tile"]) + Vector2(0.5, 0.5) + Vector2(door["out"]) * 1.1
+	if not is_walkable(spot.x, spot.y):
+		var best := INF
+		var rect := Rect2i(obj["x"], obj["z"], obj["w"], obj["d"]).grow(1)
+		for z in range(rect.position.y, rect.end.y):
+			for x in range(rect.position.x, rect.end.x):
+				var c := Vector2(x + 0.5, z + 0.5)
+				var dist := c.distance_to(spot)
+				if dist < best and is_walkable(c.x, c.y) and object_at(x, z).is_empty():
+					best = dist
+					spot = c
+	return {"position": Vector3(spot.x, ground_height(spot.x, spot.y), spot.y), "facing": out}
 
 
 # --- Surfaces and seats --------------------------------------------------------------

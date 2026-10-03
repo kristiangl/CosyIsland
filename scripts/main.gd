@@ -406,7 +406,9 @@ func _run_demo() -> void:
 		for entry in furniture:
 			var size: Array = ItemDB.placeable(entry[0])["footprint"]
 			var dims := Vector2i(size[0], size[1]) if entry[2] % 2 == 0 else Vector2i(size[1], size[0])
-			if room.can_place(Rect2i(entry[1], dims), player.position):
+			var fits := room.can_place_rug(Rect2i(entry[1], dims)) if ItemDB.placeable(entry[0]).get("rug", false) \
+				else room.can_place(Rect2i(entry[1], dims), player.position)
+			if fits:
 				room.place_item(entry[0], Rect2i(entry[1], dims), entry[2])
 		for item in Game.args.get("room", "").split(",", false):
 			room.set_room_look(item)
@@ -489,7 +491,7 @@ func _series_layout(series_id: String, variant: String) -> Array:
 		if not by_kind.has(piece["kind"]):
 			by_kind[piece["kind"]] = "%s_%s" % [piece["id"], variant]
 	var out := []
-	for entry: Array in [["bed", Vector2i(1, 0), 0], ["bookcase", Vector2i(3, 0), 0], ["table", Vector2i(3, 2), 0],
+	for entry: Array in [["rug", Vector2i(2, 2), 0], ["bed", Vector2i(1, 0), 0], ["bookcase", Vector2i(3, 0), 0], ["table", Vector2i(3, 2), 0],
 			["chair", Vector2i(3, 3), 2], ["stool", Vector2i(4, 3), 2], ["floor_lamp", Vector2i(5, 0), 0],
 			["sofa", Vector2i(0, 3), 1], ["bench", Vector2i(0, 3), 1], ["armchair", Vector2i(5, 4), 3],
 			["side_table", Vector2i(5, 2), 0], ["dresser", Vector2i(1, 5), 0], ["crate", Vector2i(5, 0), 0]]:

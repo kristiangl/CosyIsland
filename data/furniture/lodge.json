@@ -18,6 +18,7 @@
 		{"id": "lodge_bed", "name": "Lodge Bed", "kind": "bed", "footprint": [2, 2], "price": 1500, "desc": "A log headboard and a heavy tartan blanket.", "params": {"headboard": "log"}, "seat": 0.45, "bed": true},
 		{"id": "lodge_bookcase", "name": "Lodge Bookcase", "kind": "bookcase", "footprint": [2, 1], "price": 940, "desc": "Chunky shelves for chunky books.", "recipe": {"wood": 12}, "params": {"top": "log"}},
 		{"id": "lodge_lamp", "name": "Lantern Lamp", "kind": "table_lamp", "footprint": [1, 1], "price": 480, "desc": "A little lantern with a warm glow.", "recipe": {"wood": 2, "iron_nugget": 1}, "params": {"shade": "lantern"}, "light": true, "small": true},
-		{"id": "lodge_side_table", "name": "Stump Side Table", "kind": "side_table", "footprint": [1, 1], "price": 360, "desc": "A stump with a smooth top.", "recipe": {"wood": 4}, "params": {"legs": "stump", "drawer": false}, "surface": 0.56}
+		{"id": "lodge_side_table", "name": "Stump Side Table", "kind": "side_table", "footprint": [1, 1], "price": 360, "desc": "A stump with a smooth top.", "recipe": {"wood": 4}, "params": {"legs": "stump", "drawer": false}, "surface": 0.56},
+		{"id": "lodge_rug", "name": "Lodge Rug", "kind": "rug", "footprint": [3, 2], "price": 760, "desc": "Thick plaid wool with a fringe.", "params": {"shape": "rect", "border": true, "fringe": true}, "rug": true}
 	]
 }

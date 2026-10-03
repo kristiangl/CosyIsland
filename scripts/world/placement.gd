@@ -14,6 +14,7 @@ var _size := Vector2i.ONE
 var _rot := 0
 var _rotatable := true
 var _small := false
+var _rug := false
 var _on_table := false
 var _rect := Rect2i()
 var _valid := false
@@ -55,6 +56,7 @@ func begin(slot: int) -> void:
 	_size = Vector2i(def["footprint"][0], def["footprint"][1])
 	_rotatable = def.get("rotatable", true)
 	_small = def.get("small", false)
+	_rug = def.get("rug", false)
 	_rot = 0
 	_ghost.mesh = Models.get_mesh(def.get("model", "drop:" + item))
 	visible = true
@@ -75,7 +77,10 @@ func _process(_delta: float) -> void:
 		_valid = true
 	else:
 		_rect = world.placement_rect(front, dir, size)
-		_valid = world.can_place(_rect, player.position) and world.door_clear(_item, _rect, _rot)
+		if _rug:
+			_valid = world.can_place_rug(_rect)
+		else:
+			_valid = world.can_place(_rect, player.position) and world.door_clear(_item, _rect, _rot)
 	var centre := Vector2(_rect.position) + Vector2(_rect.size) * 0.5
 	var y := world.ground_height(centre.x, centre.y)
 	if _on_table:

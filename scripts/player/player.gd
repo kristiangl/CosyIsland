@@ -303,6 +303,14 @@ func _pick_up() -> void:
 		if world.pack_up(obj):
 			_busy = 0.3
 			model.play("pickup")
+		return
+	# Rugs last: the one in front, or the one underfoot.
+	var rug := world.rug_at(front.x, front.y)
+	if rug.is_empty():
+		rug = world.rug_at(tile().x, tile().y)
+	if not rug.is_empty() and world.pack_up(rug):
+		_busy = 0.3
+		model.play("pickup")
 
 
 func _turn_towards(obj: Dictionary) -> void:

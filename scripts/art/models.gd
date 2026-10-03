@@ -79,8 +79,8 @@ static func get_mesh(key: String) -> ArrayMesh:
 	return mesh
 
 
-## A furniture series piece: wood in surface 0 (the prop material), and fabric, if any, in
-## surface 1 drawn with the cloth shader in the variant's print. Show it with `dress`.
+## A furniture series piece: wood in the prop material, and fabric, if any, in its own
+## surface drawn with the cloth shader in the variant's print. Show it with `dress`.
 static func _series(id: String) -> ArrayMesh:
 	var spec: Dictionary = ItemDB.get_item(id).get("build", {})
 	var k := MeshKit.new()
@@ -88,6 +88,7 @@ static func _series(id: String) -> ArrayMesh:
 	SeriesModels.build(k, fabric, spec)
 	var mesh := k.commit()
 	if not fabric.is_empty():
+		mesh.set_meta("fabric_surface", mesh.get_surface_count())
 		fabric.commit(mesh)
 		mesh.set_meta("fabric", spec["variant"].get("fabric", ["ffffff", "ffffff", "plain"]))
 	return mesh
@@ -98,10 +99,11 @@ static func _series(id: String) -> ArrayMesh:
 ## (no world curve, fixed lighting).
 static func dress(mi: MeshInstance3D, base: Material, icon: bool = false) -> void:
 	var mesh := mi.mesh
-	if mesh and mesh.get_surface_count() > 1 and mesh.has_meta("fabric"):
+	if mesh and mesh.has_meta("fabric"):
 		mi.material_override = null
-		mi.set_surface_override_material(0, base)
-		mi.set_surface_override_material(1, fabric_material(mesh.get_meta("fabric"), icon))
+		var fabric_index: int = mesh.get_meta("fabric_surface", 1)
+		for i in mesh.get_surface_count():
+			mi.set_surface_override_material(i, fabric_material(mesh.get_meta("fabric"), icon) if i == fabric_index else base)
 	else:
 		mi.material_override = base
 
@@ -566,6 +568,12 @@ static func _drop(k: MeshKit, item: String) -> void:
 			return
 		"interior":
 			var look: Dictionary = def["interior"]
+			if look["part"] == "window":
+				# Curtains, folded up with their tie-back.
+				var fab: Array = def["build"]["variant"]["fabric"]
+				k.rounded_box(Vector3(0, 0.06, 0), Vector3(0.4, 0.12, 0.3), MeshKit.lin(Color(fab[0])), 0.4)
+				k.box(Vector3(0, 0.07, 0), Vector3(0.06, 0.14, 0.32), MeshKit.lin(Color(fab[1])))
+				return
 			var a := MeshKit.lin(Color(look["a"]))
 			var b := MeshKit.lin(Color(look["b"]))
 			if look["part"] == "wall":

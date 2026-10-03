@@ -163,7 +163,8 @@ Crossing, to keep characters cheap to draw.
 2. Done: furniture series files and a part library; Meadow Cottage, Driftwood and
    Woodland Lodge (10 bases each, 4 variants).
 3. Done: more prints in the cloth shader, and customising at the workbench (a kit
-   changes a piece or garment to any of its variants). Next: rugs and curtains.
+   changes a piece or garment to any of its variants), rugs (a floor layer furniture
+   stands on) and curtains (a room look, like wallpaper), in `data/furniture/textiles.json`.
 4. Mushroom Grove and Starlight with glowing pieces (uses the particle and glow work).
 5. Seasonal series alongside the seasons and weather milestone.
 6. Icon atlas baking once the item count passes a few hundred.

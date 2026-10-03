@@ -18,7 +18,8 @@ var data: IslandData
 var interior := false
 ## Look of the room's floor and walls (see RoomBuilder.STYLES).
 var room_style := "tent"
-## Wallpaper and flooring put up in this room: {"wall": item id, "floor": item id}.
+## Wallpaper, flooring and curtains put up in this room:
+## {"wall": item id, "floor": item id, "window": item id}.
 var room_look: Dictionary = {}
 var day_key: int
 var money_rock_uid: int = -1
@@ -31,6 +32,7 @@ var _deck: Dictionary = {}      # tile index -> bridge deck height
 var _on_surface: Dictionary = {} # tile index -> uid of a small thing sitting on furniture
 var _door_fronts: Dictionary = {} # tile index -> uid of the home whose door it's in front of
 var _reserved: Dictionary = {}    # tile index -> true where characters stand
+var _rugs: Dictionary = {}        # tile index -> uid of the rug on the floor there
 var _rng := RandomNumberGenerator.new()
 var _is_night := false
 var _light_check := 0.0
@@ -160,6 +162,17 @@ func object_at(x: int, z: int) -> Dictionary:
 	return _objects.get(_occupant.get(data.idx(x, z), -1), {})
 
 
+## Rugs lie on the floor under everything else: walkable, and furniture stands on them.
+static func is_rug(obj: Dictionary) -> bool:
+	return obj.get("kind", "") == "placed" and ItemDB.placeable(obj.get("item", "")).get("rug", false)
+
+
+func rug_at(x: int, z: int) -> Dictionary:
+	if not data.in_bounds(x, z):
+		return {}
+	return _objects.get(_rugs.get(data.idx(x, z), -1), {})
+
+
 func add_object(obj: Dictionary) -> Dictionary:
 	obj["uid"] = data.new_uid()
 	data.objects.append(obj)
@@ -181,8 +194,11 @@ func remove_object(uid: int) -> void:
 			continue
 		if _occupant.get(i, -1) == uid:
 			_occupant.erase(i)
+		if _rugs.get(i, -1) == uid:
+			_rugs.erase(i)
 		if obj["kind"] == "placed" and grass:
-			grass.set_tile_visible(data, tile.x, tile.y, true)
+			var covered: bool = _rugs.has(i) or _objects.get(_occupant.get(i, -1), {}).get("kind", "") == "placed"
+			grass.set_tile_visible(data, tile.x, tile.y, not covered)
 	_objects.erase(uid)
 	data.objects.erase(obj)
 	if _nodes.has(uid):
@@ -221,6 +237,11 @@ func _register(obj: Dictionary) -> void:
 			grass.set_tile_visible(data, end.x, end.y, false)
 	elif obj.has("on"):
 		_on_surface[data.idx(obj["x"], obj["z"])] = uid
+	elif is_rug(obj):
+		for tile in footprint(obj):
+			_rugs[data.idx(tile.x, tile.y)] = uid
+			if grass:
+				grass.set_tile_visible(data, tile.x, tile.y, false)
 	else:
 		var door := door_of(obj)
 		if not door.is_empty():
@@ -238,7 +259,7 @@ func _spawn_node(obj: Dictionary) -> void:
 	var mesh := MeshInstance3D.new()
 	mesh.mesh = Models.get_mesh(Models.key_for(obj))
 	Models.dress(mesh, Models.material())
-	if obj["kind"] in ["flower", "drop"]:
+	if obj["kind"] in ["flower", "drop"] or is_rug(obj):
 		mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	node.add_child(mesh)
 	var tiles := footprint(obj)
@@ -396,7 +417,7 @@ func pack_up(obj: Dictionary) -> bool:
 		Events.toast.emit("That's staying right where it is.")
 		return false
 	for tile in footprint(obj):
-		if not obj.has("on") and _on_surface.has(data.idx(tile.x, tile.y)):
+		if not obj.has("on") and not is_rug(obj) and _on_surface.has(data.idx(tile.x, tile.y)):
 			Events.toast.emit("Clear the things off it first.")
 			return false
 	if Inventory.add_item(obj["item"]) > 0:
@@ -523,6 +544,27 @@ func can_place(rect: Rect2i, player_pos: Vector3) -> bool:
 			elif not is_equal_approx(level, h):
 				return false
 	return not rect.has_point(Vector2i(floori(player_pos.x), floori(player_pos.z)))
+
+
+## Rugs need flat, level floor with no other rug, and can go under furniture (or the
+## player), but not under trees, rocks or drops.
+func can_place_rug(rect: Rect2i) -> bool:
+	var level := NAN
+	for z in range(rect.position.y, rect.end.y):
+		for x in range(rect.position.x, rect.end.x):
+			if not data.is_land(x, z) or not data.is_flat(x, z):
+				return false
+			var i := data.idx(x, z)
+			if _rugs.has(i) or _deck.has(i) or _reserved.has(i):
+				return false
+			if _occupant.has(i) and _objects.get(_occupant[i], {}).get("kind", "") != "placed":
+				return false
+			var h := data.corner(x, z, IslandData.NW)
+			if is_nan(level):
+				level = h
+			elif not is_equal_approx(level, h):
+				return false
+	return true
 
 
 ## Indoors, the doormat and the tile inside it stay free so there's always a way out.

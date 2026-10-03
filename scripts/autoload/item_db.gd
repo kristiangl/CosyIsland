@@ -8,7 +8,7 @@ const DATA_PATH := "res://data/items.json"
 const CLOTHING_PATH := "res://data/clothing.json"
 const FURNITURE_DIR := "res://data/furniture/"
 ## Placeable settings a series piece passes straight through to its items.
-const PIECE_PLACEABLE := ["seat", "surface", "small", "light", "bed", "effects"]
+const PIECE_PLACEABLE := ["seat", "surface", "small", "light", "bed", "effects", "rug"]
 ## Which appearance keys a piece of clothing sets, by slot: style, colour, second colour,
 ## pattern.
 const SLOT_KEYS := {
@@ -95,17 +95,24 @@ func _load_furniture() -> void:
 		for piece: Dictionary in data["pieces"]:
 			for v: Dictionary in data["variants"]:
 				var id := "%s_%s" % [piece["id"], v["id"]]
-				var placeable := {"footprint": piece["footprint"], "model": "series:" + id, "rotatable": true}
-				for key: String in PIECE_PLACEABLE:
-					if piece.has(key):
-						placeable[key] = piece[key]
+				var footprint: Array = piece.get("footprint", [1, 1])
 				items[id] = {
 					"name": "%s (%s)" % [piece["name"], v["name"]], "category": "furniture", "stack": 1,
 					"price": piece["price"], "color": "#" + v["wood"], "desc": piece.get("desc", ""),
-					"series": data["id"], "base": piece["id"], "variant": v["id"], "placeable": placeable,
+					"series": data["id"], "base": piece["id"], "variant": v["id"],
 					"swatch": ["#" + v["wood"], "#" + _bolder(v["fabric"][0], v["fabric"][1])],
-					"build": {"kind": piece["kind"], "params": piece.get("params", {}), "variant": v},
+					"build": {"kind": piece["kind"], "params": piece.get("params", {}), "variant": v, "footprint": footprint},
 				}
+				if piece.has("room"):
+					# Dresses the room, like wallpaper (curtains on the windows).
+					items[id]["category"] = "interior"
+					items[id]["interior"] = {"part": piece["room"]}
+				else:
+					var placeable := {"footprint": footprint, "model": "series:" + id, "rotatable": true}
+					for key: String in PIECE_PLACEABLE:
+						if piece.has(key):
+							placeable[key] = piece[key]
+					items[id]["placeable"] = placeable
 				_add_variant(piece["id"], id)
 			if piece.has("recipe"):
 				series_recipes["%s_%s" % [piece["id"], data["variants"][0]["id"]]] = {"materials": piece["recipe"]}

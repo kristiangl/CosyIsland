@@ -18,6 +18,7 @@
 		{"id": "driftwood_shelf", "name": "Rope Shelf", "kind": "bookcase", "footprint": [2, 1], "price": 760, "desc": "Shelves hung on knotted rope.", "recipe": {"wood": 6, "tree_branch": 4}, "params": {"top": "rope", "open": true}},
 		{"id": "driftwood_crate", "name": "Driftwood Crate", "kind": "crate", "footprint": [1, 1], "price": 360, "desc": "With rope handles. Smells faintly of the sea.", "recipe": {"wood": 4}, "params": {"rope": true}, "surface": 0.56},
 		{"id": "driftwood_lamp", "name": "Glass Float Lamp", "kind": "table_lamp", "footprint": [1, 1], "price": 520, "desc": "A glass fishing float, glowing softly.", "params": {"shade": "float"}, "light": true, "small": true},
-		{"id": "driftwood_side_table", "name": "Barrel Side Table", "kind": "side_table", "footprint": [1, 1], "price": 420, "desc": "A little table made from a barrel lid.", "params": {"legs": "plank", "drawer": false}, "surface": 0.58}
+		{"id": "driftwood_side_table", "name": "Barrel Side Table", "kind": "side_table", "footprint": [1, 1], "price": 420, "desc": "A little table made from a barrel lid.", "params": {"legs": "plank", "drawer": false}, "surface": 0.58},
+		{"id": "driftwood_rug", "name": "Driftwood Deck Rug", "kind": "rug", "footprint": [3, 2], "price": 700, "desc": "A striped rug with knotted ends, like a beach towel.", "params": {"shape": "rect", "border": false, "fringe": true}, "rug": true}
 	]
 }

@@ -26,15 +26,16 @@ var wood_light: Color
 var trim: Color
 var accent: Color
 var log_end: Color
+## Footprint in tiles (width, depth).
+var size := Vector2.ONE
 
 
-## Builds the piece described by an item's "build" entry (see ItemDB._load_furniture).
-static func build(main: MeshKit, fabric: MeshKit, spec: Dictionary) -> void:
+## A builder for one variant's colours, adding to `main` (wood) and `fabric`.
+static func make(main: MeshKit, fabric: MeshKit, v: Dictionary, piece_params: Dictionary = {}) -> SeriesModels:
 	var s := SeriesModels.new()
 	s.k = main
 	s.f = fabric
-	s.params = spec.get("params", {})
-	var v: Dictionary = spec.get("variant", {})
+	s.params = piece_params
 	s.wood = MeshKit.lin(Color(v.get("wood", "d4a77e")))
 	s.wood_light = s.wood.lightened(0.14)
 	s.trim = MeshKit.lin(Color(v.get("trim", "b08463")))
@@ -42,6 +43,14 @@ static func build(main: MeshKit, fabric: MeshKit, spec: Dictionary) -> void:
 	s.accent = MeshKit.lin(Color(v.get("accent", fab[1])))
 	s.log_end = s.wood.lerp(Color("fbe8c8"), 0.55)
 	s.log_end.a = 0.0
+	return s
+
+
+## Builds the piece described by an item's "build" entry (see ItemDB._load_furniture).
+static func build(main: MeshKit, fabric: MeshKit, spec: Dictionary) -> void:
+	var s := make(main, fabric, spec.get("variant", {}), spec.get("params", {}))
+	var footprint: Array = spec.get("footprint", [1, 1])
+	s.size = Vector2(footprint[0], footprint[1])
 	match spec.get("kind", ""):
 		"chair": s._chair()
 		"stool": s._stool()
@@ -56,6 +65,11 @@ static func build(main: MeshKit, fabric: MeshKit, spec: Dictionary) -> void:
 		"table_lamp": s._table_lamp()
 		"bench": s._bench()
 		"crate": s._crate()
+		"rug": s._rug()
+		"curtains":
+			# A window dressed with the curtains, for icons.
+			main.box(Vector3(0, 0.75, -0.06), Vector3(1.3, 1.5, 0.04), MeshKit.lin(Color("fbf0d9")))
+			s.window(Vector3(0, 0.8, -0.04), Vector2(0.8, 0.75), true)
 		_:
 			main.box(Vector3(0, 0.3, 0), Vector3(0.6, 0.6, 0.6), MeshKit.lin(Color.MAGENTA))
 
@@ -510,3 +524,84 @@ func _crate() -> void:
 		for sx: float in [-1.0, 1.0]:
 			k.cylinder(Vector3(sx * 0.3, 0.4, -0.1), Vector3(sx * 0.34, 0.36, 0.0), 0.016, 0.016, MeshKit.lin(ROPE), 5, false)
 			k.cylinder(Vector3(sx * 0.34, 0.36, 0.0), Vector3(sx * 0.3, 0.4, 0.1), 0.016, 0.016, MeshKit.lin(ROPE), 5, false)
+
+
+## A rug lying on the floor, filling most of its footprint. Shapes: rect, round, oval.
+func _rug() -> void:
+	var w := size.x - 0.14
+	var d := size.y - 0.14
+	var shape: String = params.get("shape", "rect")
+	var border: bool = params.get("border", true)
+	if shape == "rect":
+		cushion(Vector3(0, 0.012, 0), Vector3(w, 0.02, d), 0.0, FABRIC_TRIM if border else FABRIC, 1)
+		if border:
+			cushion(Vector3(0, 0.014, 0), Vector3(w - 0.16, 0.02, d - 0.16), 0.0, FABRIC, 1)
+		if params.get("fringe", false):
+			for sz: float in [-1.0, 1.0]:
+				var count := int(w / 0.07)
+				for i in count:
+					var x := lerpf(-w * 0.5 + 0.03, w * 0.5 - 0.03, i / float(count - 1))
+					k.box(Vector3(x, 0.006, sz * (d * 0.5 + 0.035)), Vector3(0.025, 0.01, 0.07), wood)
+		return
+	# Round and oval rugs: a disc, squashed for an oval, with a plain ring round it.
+	var r := minf(w, d) * 0.5
+	f.xform = Transform3D(Basis.from_scale(Vector3(w * 0.5 / r, 1, d * 0.5 / r)), Vector3.ZERO)
+	if border:
+		f.cylinder(Vector3(0, 0.0, 0), Vector3(0, 0.02, 0), r, r, FABRIC_TRIM, 28, true)
+	f.cylinder(Vector3(0, 0.0, 0), Vector3(0, 0.024, 0), r - (0.09 if border else 0.0), r - (0.09 if border else 0.0), FABRIC, 28, true)
+	f.xform = Transform3D.IDENTITY
+
+
+## A window in a wall, centred at `centre` and facing +Z (the room), `size` across and
+## high, with curtains (fabric) on a rod, tied back, and a valance.
+func window(centre: Vector3, opening: Vector2, curtains: bool) -> void:
+	var hw := opening.x * 0.5
+	var hh := opening.y * 0.5
+	var frame := MeshKit.lin(Color("fff8ec"))
+	k.box(centre, Vector3(opening.x, opening.y, 0.02), MeshKit.lin(Color("bfe3ef")), MeshKit.lin(Color("bfe3ef")))
+	# A soft cloud of light on the glass.
+	k.sphere(centre + Vector3(-hw * 0.3, hh * 0.35, 0.012), Vector3(hw * 0.35, hh * 0.18, 0.004), MeshKit.lin(Color("e6f5fa")), 3, 8)
+	for sx: float in [-1.0, 1.0]:
+		k.box(centre + Vector3(sx * (hw + 0.03), 0, 0.02), Vector3(0.06, opening.y + 0.12, 0.05), frame)
+	k.box(centre + Vector3(0, hh + 0.03, 0.02), Vector3(opening.x + 0.12, 0.06, 0.05), frame)
+	k.box(centre + Vector3(0, -hh - 0.04, 0.04), Vector3(opening.x + 0.2, 0.06, 0.1), frame)
+	k.box(centre + Vector3(0, 0, 0.02), Vector3(0.035, opening.y, 0.03), frame)
+	k.box(centre + Vector3(0, 0, 0.02), Vector3(opening.x, 0.035, 0.03), frame)
+	if not curtains:
+		return
+	var top := centre.y + hh + 0.14
+	var bottom := centre.y - hh - 0.12
+	k.cylinder(Vector3(centre.x - hw - 0.3, top, centre.z + 0.1), Vector3(centre.x + hw + 0.3, top, centre.z + 0.1), 0.022, 0.022, trim, 6, true)
+	for sx: float in [-1.0, 1.0]:
+		k.sphere(Vector3(centre.x + sx * (hw + 0.32), top, centre.z + 0.1), Vector3.ONE * 0.04, trim, 3, 6)
+		# Each curtain is gathered into pleats and pinched in by a tie-back.
+		var outer := centre.x + sx * (hw + 0.24)
+		var inner := centre.x + sx * (hw - 0.1)
+		var pleats := 4
+		for i in pleats:
+			var t0 := float(i) / pleats
+			var t1 := float(i + 1) / pleats
+			var depth := 0.03 if i % 2 == 0 else 0.0
+			var x_top := lerpf(outer, inner, (t0 + t1) * 0.5)
+			var x_tie := lerpf(outer, outer + (inner - outer) * 0.35, (t0 + t1) * 0.5)
+			var tie := lerpf(bottom, top, 0.38)
+			var wide := absf(inner - outer) / pleats
+			var narrow := wide * 0.4
+			_panel(Vector3(x_top, top - 0.03, centre.z + 0.08 + depth), Vector3(x_tie, tie, centre.z + 0.1 + depth), wide, narrow)
+			_panel(Vector3(x_tie, tie, centre.z + 0.1 + depth), Vector3(x_tie + (x_top - x_tie) * 0.3, bottom, centre.z + 0.09 + depth), narrow, wide * 0.8)
+		cushion(Vector3(lerpf(outer, outer + (inner - outer) * 0.35, 0.5), lerpf(bottom, top, 0.38), centre.z + 0.13),
+			Vector3(absf(inner - outer) * 0.4, 0.05, 0.05), 0.01, FABRIC_TRIM, 1)
+	# A gathered valance across the top.
+	cushion(Vector3(centre.x, top - 0.08, centre.z + 0.13), Vector3(opening.x + 0.62, 0.16, 0.04), 0.02, FABRIC, 2)
+	cushion(Vector3(centre.x, top - 0.165, centre.z + 0.13), Vector3(opening.x + 0.62, 0.025, 0.045), 0.0, FABRIC_TRIM, 1)
+
+
+## One flat strip of curtain from `a` (top) to `b` (bottom), `wa` and `wb` wide.
+func _panel(a: Vector3, b: Vector3, wa: float, wb: float) -> void:
+	var n := Vector3.BACK
+	var p0 := a + Vector3(-wa * 0.5, 0, 0)
+	var p1 := a + Vector3(wa * 0.5, 0, 0)
+	var p2 := b + Vector3(wb * 0.5, 0, 0)
+	var p3 := b + Vector3(-wb * 0.5, 0, 0)
+	f.flat_quad(p0, p1, p2, p3, n, FABRIC)
+	f.flat_quad(p0, p1, p2, p3, -n, FABRIC)

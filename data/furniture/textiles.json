@@ -1,0 +1,23 @@
+{
+	"id": "textiles",
+	"name": "Soft Furnishings",
+	"desc": "Rugs and curtains in every print.",
+	"variants": [
+		{"id": "strawberry", "name": "Strawberry", "wood": "fff4e0", "trim": "c9a27e", "fabric": ["fff4f0", "f2a7a0", "gingham"]},
+		{"id": "sky", "name": "Sky Stripe", "wood": "f4f8fb", "trim": "9aa7b8", "fabric": ["f4f8fb", "8ab6e0", "wide_stripes"]},
+		{"id": "highland", "name": "Highland", "wood": "f3ecdc", "trim": "8a6b4f", "fabric": ["7a9b5e", "f3ecdc", "tartan"]},
+		{"id": "cherry", "name": "Cherry", "wood": "fff8ee", "trim": "c9a27e", "fabric": ["fff8ee", "e0656b", "cherries"]},
+		{"id": "cloud", "name": "Cloud", "wood": "ffffff", "trim": "b8c4d4", "fabric": ["b9d9f2", "ffffff", "clouds"]},
+		{"id": "fern", "name": "Fern", "wood": "f1f6e8", "trim": "8a6b4f", "fabric": ["e9f3df", "7fb069", "leaves"]},
+		{"id": "argyle", "name": "Lilac Argyle", "wood": "f6eefc", "trim": "9a86b8", "fabric": ["c6b2ea", "f6eefc", "argyle"]},
+		{"id": "seaside", "name": "Seaside", "wood": "f2fbf8", "trim": "9fb8b0", "fabric": ["f2fbf8", "56aaa6", "waves"]},
+		{"id": "daisy", "name": "Daisy", "wood": "fff8e6", "trim": "c9a27e", "fabric": ["f6d58c", "ffffff", "flowers"]},
+		{"id": "starry", "name": "Starry", "wood": "f6d58c", "trim": "6b6f8f", "fabric": ["3d4a7a", "f6d58c", "stars"]}
+	],
+	"pieces": [
+		{"id": "round_rug", "name": "Round Rug", "kind": "rug", "footprint": [2, 2], "price": 560, "desc": "Soft underfoot. Furniture can stand on it.", "params": {"shape": "round", "border": true}, "rug": true},
+		{"id": "large_rug", "name": "Large Rug", "kind": "rug", "footprint": [3, 2], "price": 840, "desc": "Big enough to pull a room together.", "params": {"shape": "rect", "border": true, "fringe": true}, "rug": true},
+		{"id": "runner_rug", "name": "Runner", "kind": "rug", "footprint": [1, 3], "price": 420, "desc": "A long, narrow rug for a hallway or a bedside.", "params": {"shape": "rect", "border": true}, "rug": true},
+		{"id": "curtains", "name": "Curtains", "kind": "curtains", "price": 480, "desc": "Hang them at home: they dress every window.", "room": "window"}
+	]
+}

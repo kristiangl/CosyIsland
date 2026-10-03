@@ -25,6 +25,7 @@ func _run() -> void:
 	_test_clothes()
 	_test_furniture_series()
 	_test_customising()
+	_test_rugs_and_curtains()
 	print("\n%d checks, %d failures" % [_checks, _failures])
 	get_tree().quit(1 if _failures > 0 else 0)
 
@@ -519,12 +520,12 @@ func _test_furniture_series() -> void:
 	check(pieces.size() >= 100, "series pieces come in variants (%d items)" % pieces.size())
 	for id: String in pieces:
 		var def := ItemDB.get_item(id)
-		var mesh := Models.get_mesh(def["placeable"]["model"])
+		var mesh := Models.get_mesh(def["placeable"]["model"] if def.has("placeable") else "series:" + id)
 		var tris := 0
 		for s in mesh.get_surface_count():
 			tris += mesh.surface_get_array_index_len(s) / 3
 		check(tris > 0 and tris < 1500, "%s has a model within budget (%d triangles)" % [id, tris])
-		if mesh.get_surface_count() > 1:
+		if def["build"]["kind"] in ["rug", "curtains", "sofa", "bed", "armchair"]:
 			check(mesh.has_meta("fabric"), "%s knows its fabric" % id)
 	check(ItemDB.placeable("meadow_chair_sage").get("seat", 0.0) > 0.0, "series chairs can be sat on")
 	check(ItemDB.placeable("lodge_table_walnut").get("surface", 0.0) > 0.0, "series tables hold things")
@@ -548,6 +549,39 @@ func _test_furniture_series() -> void:
 	for day in 20:
 		sold = sold or Shop.stock(7, day).any(func(id): return ItemDB.get_item(id).has("series"))
 	check(sold, "Lucy sells series furniture")
+	check(ItemDB.get_item("curtains_cherry").get("category", "") == "interior", "curtains are put up like wallpaper")
+
+
+func _test_rugs_and_curtains() -> void:
+	var w := World.new()
+	w.interior = true
+	add_child(w)
+	w.setup(IslandData.room(8, 7))
+	check(w.can_place_rug(Rect2i(1, 1, 3, 2)), "a rug fits on the floor")
+	var rug := w.place_item("large_rug_cherry", Rect2i(1, 1, 3, 2), 0)
+	check(w.rug_at(2, 2) == rug and w.object_at(2, 2).is_empty(), "rugs lie on the floor layer")
+	check(w.is_walkable(2.5, 2.5), "you can walk on rugs")
+	check(not w.can_place_rug(Rect2i(2, 1, 2, 2)), "rugs don't overlap")
+	check(w.can_place(Rect2i(1, 1, 2, 1), Vector3(6.5, 0, 6.5)), "furniture can stand on a rug")
+	var table := w.place_item("lodge_table_honey", Rect2i(1, 1, 2, 1), 0)
+	check(w.object_at(1, 1) == table and w.rug_at(1, 1) == rug, "the table stands on the rug")
+	check(w.can_place_rug(Rect2i(4, 3, 2, 2)), "a rug can go under furniture that's already there")
+	Inventory.reset()
+	check(w.pack_up(rug) and Inventory.count_of("large_rug_cherry") == 1, "rugs pack up")
+	check(not w.get_object(table["uid"]).is_empty(), "and the table stays put")
+	var saved: Dictionary = JSON.parse_string(JSON.stringify(w.to_save()))
+	check(w.set_room_look("curtains_cherry") == "", "curtains go up")
+	check(w.get_node("Room").get_node_or_null("Curtains") != null, "the windows get curtains")
+	check(w.set_room_look("curtains_starry") == "curtains_cherry", "new curtains replace the old ones")
+	w.free()
+	var w2 := World.new()
+	w2.interior = true
+	add_child(w2)
+	saved["look"] = {"window": "curtains_fern"}
+	w2.setup(IslandData.room(8, 7), saved)
+	check(w2.get_node("Room").get_node_or_null("Curtains") != null, "curtains are saved with the room")
+	w2.free()
+	Inventory.reset()
 
 
 func _test_customising() -> void:

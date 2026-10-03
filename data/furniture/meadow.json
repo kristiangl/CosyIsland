@@ -18,6 +18,7 @@
 		{"id": "meadow_bed", "name": "Meadow Bed", "kind": "bed", "footprint": [2, 2], "price": 1500, "desc": "An arched headboard and a patchwork of gingham.", "params": {"headboard": "arched"}, "seat": 0.45, "bed": true},
 		{"id": "meadow_dresser", "name": "Meadow Dresser", "kind": "dresser", "footprint": [2, 1], "price": 1100, "desc": "Three drawers and heart cut-outs.", "recipe": {"wood": 10}, "params": {"drawers": 3, "hearts": true}, "surface": 0.9},
 		{"id": "meadow_bookcase", "name": "Meadow Bookcase", "kind": "bookcase", "footprint": [2, 1], "price": 980, "desc": "Full of well-loved books.", "params": {"top": "scalloped"}},
-		{"id": "meadow_lamp", "name": "Meadow Lamp", "kind": "floor_lamp", "footprint": [1, 1], "price": 760, "desc": "A frilly shade on a painted stand.", "params": {"shade": "frilly"}, "light": true}
+		{"id": "meadow_lamp", "name": "Meadow Lamp", "kind": "floor_lamp", "footprint": [1, 1], "price": 760, "desc": "A frilly shade on a painted stand.", "params": {"shade": "frilly"}, "light": true},
+		{"id": "meadow_rug", "name": "Meadow Rag Rug", "kind": "rug", "footprint": [2, 2], "price": 640, "desc": "A round rug in the cushions' gingham.", "recipe": {"clay": 1, "tree_branch": 3}, "params": {"shape": "round", "border": true}, "rug": true}
 	]
 }

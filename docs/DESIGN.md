@@ -125,6 +125,7 @@ Milestone 3b:
 - [x] Seven more fabric prints; furniture series Meadow Cottage, Driftwood and Woodland
   Lodge (120 items from a shared part library, sold by Lucy, 19 new recipes)
 - [x] Customising at the workbench: any colourway of a piece or garment, one kit each
+- [x] Rugs on a floor layer under furniture; windows in every room, and curtains
 
 Next milestones (suggested order):
 3c. Bigger house (more rooms) and outdoor house colours. Clothes as items instead of

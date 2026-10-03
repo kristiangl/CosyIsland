@@ -1,7 +1,8 @@
 class_name RoomBuilder
 extends RefCounted
 ## Builds the inside of a home from a room's IslandData (see IslandData.room): a
-## patterned floor, back and side walls with trims, and a doormat at the way out.
+## patterned floor, back and side walls with trims, a window in each side wall (dressed
+## with curtains if some are put up), and a doormat at the way out.
 ## The front is left open so the camera can look in, like a doll's house.
 
 const WALL := 0.18
@@ -23,8 +24,8 @@ const STYLES := {
 const BUNTING: Array[Color] = [Color("f2a7a0"), Color("f6d58c"), Color("9fd3c7"), Color("b9b3e6")]
 
 
-## `look` can swap the wall and floor for wallpaper and flooring items:
-## {"wall": item id, "floor": item id}.
+## `look` can swap the wall and floor for wallpaper and flooring items, and hang
+## curtains: {"wall": item id, "floor": item id, "window": item id}.
 static func build(data: IslandData, style_id: String, look: Dictionary = {}) -> Node3D:
 	var style: Dictionary = STYLES.get(style_id, STYLES["tent"]).duplicate()
 	for part: String in ["wall", "floor"]:
@@ -82,8 +83,31 @@ static func build(data: IslandData, style_id: String, look: Dictionary = {}) -> 
 	kit.rounded_box(Vector3(door.x + 0.5, y + 0.005, d + 0.4), Vector3(0.86, 0.03, 0.62), Color(style["mat"]), 0.4)
 	if style.get("bunting", false):
 		_bunting(kit, Vector3(0.1, y + h - 0.05, 0.06), Vector3(w - 0.1, y + h - 0.05, 0.06))
+	# Windows in the back wall (one, or two in a wide room) and each side wall.
+	var curtains := ItemDB.get_item(look.get("window", ""))
+	var variant: Dictionary = curtains.get("build", {}).get("variant", {})
+	var fabric := MeshKit.new()
+	var maker := SeriesModels.make(kit, fabric, variant)
+	var opening := Vector2(0.9, 0.8) if h > 2.0 else Vector2(0.7, 0.6)
+	var spots: Array[Transform3D] = []
+	for side: float in [-1.0, 1.0]:
+		var x := 0.0 if side < 0.0 else w
+		spots.append(Transform3D(Basis(Vector3.UP, -side * PI * 0.5), Vector3(x, y + h * 0.55, d * 0.5)))
+	var back_y := y + h * (0.62 if h > 2.0 else 0.5)
+	if w >= 7.0:
+		spots.append(Transform3D(Basis(), Vector3(w * 0.25, back_y, 0)))
+		spots.append(Transform3D(Basis(), Vector3(w * 0.75, back_y, 0)))
+	else:
+		spots.append(Transform3D(Basis(), Vector3(w * 0.5, back_y, 0)))
+	for xform in spots:
+		kit.xform = xform
+		fabric.xform = xform
+		maker.window(Vector3(0, 0, 0.004), opening, not curtains.is_empty())
+	kit.xform = Transform3D.IDENTITY
 	var props := _instance("Trim", kit.commit(), Models.material())
 	room.add_child(props)
+	if not fabric.is_empty():
+		room.add_child(_instance("Curtains", fabric.commit(), Models.fabric_material(variant["fabric"])))
 	return room
 
 

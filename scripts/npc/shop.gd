@@ -1,9 +1,10 @@
 class_name Shop
 extends RefCounted
 ## Lucy's shop: a few things for sale each day (furniture, wallpaper and flooring, and
-## clothes; one of each, chosen by the island and the day), and buying back anything
-## with a price. Things sell to Lucy for their
-## listed price and cost four times that to buy.
+## clothes, chosen by the island and the day), and buying back anything with a price.
+## Things sell to Lucy for their listed price and cost four times that to buy. Once her
+## shop is built (Story "shop_done") she stocks twice as much, plus flower plants from
+## other islands.
 
 const BUY_MARKUP := 4
 ## Always in stock, however many you buy.
@@ -11,6 +12,7 @@ const STAPLES := ["flimsy_axe", "flimsy_shovel", "customisation_kit"]
 const FURNITURE_PER_DAY := 4
 const INTERIORS_PER_DAY := 2
 const CLOTHES_PER_DAY := 3
+const PLANTS_PER_DAY := 2
 
 
 static func buy_price(id: String) -> int:
@@ -26,12 +28,18 @@ static func can_sell(id: String) -> bool:
 
 
 ## Today's stock: staples first, then the day's furniture, wallpaper or flooring, and clothes.
-static func stock(island_seed: int, day: int) -> Array[String]:
+## 0 at the counter, 1 once the shop is built.
+static func level() -> int:
+	return 1 if Story.flags.get("shop_done", false) else 0
+
+
+static func stock(island_seed: int, day: int, native_flower: String = "") -> Array[String]:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = island_seed * 7919 + day
 	var furniture: Array[String] = []
 	var interiors: Array[String] = []
 	var clothes: Array[String] = []
+	var plants: Array[String] = []
 	for id in ItemDB.items:
 		var def := ItemDB.get_item(id)
 		match def.get("category", ""):
@@ -42,14 +50,21 @@ static func stock(island_seed: int, day: int) -> Array[String]:
 				interiors.append(id)
 			"clothing":
 				clothes.append(id)
+			"flower_plant":
+				if def.get("species", "") != native_flower:
+					plants.append(id)
 	furniture.sort()
 	interiors.sort()
 	clothes.sort()
+	plants.sort()
+	var more := 1 + level()
 	var out: Array[String] = []
 	out.append_array(STAPLES)
-	out.append_array(_pick(rng, furniture, FURNITURE_PER_DAY))
-	out.append_array(_pick(rng, interiors, INTERIORS_PER_DAY))
-	out.append_array(_pick(rng, clothes, CLOTHES_PER_DAY))
+	out.append_array(_pick(rng, furniture, FURNITURE_PER_DAY * more))
+	out.append_array(_pick(rng, interiors, INTERIORS_PER_DAY * more))
+	out.append_array(_pick(rng, clothes, CLOTHES_PER_DAY * more))
+	if level() > 0:
+		out.append_array(_pick(rng, plants, PLANTS_PER_DAY))
 	return out
 
 

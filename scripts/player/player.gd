@@ -200,6 +200,8 @@ func _interact(obj: Dictionary) -> void:
 		Events.workbench_opened.emit()
 	elif def.has("room"):
 		Events.home_entered.emit(obj["uid"])
+	elif def.get("shopfront", false) and Story.npc("lucy"):
+		Story.talk_to(Story.npc("lucy"))
 	else:
 		Events.toast.emit("What a lovely %s." % ItemDB.display_name(obj["item"]).to_lower())
 

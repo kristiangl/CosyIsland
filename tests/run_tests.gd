@@ -28,6 +28,7 @@ func _run() -> void:
 	_test_rugs_and_curtains()
 	_test_flowers()
 	_test_journal()
+	_test_lucy_shop()
 	print("\n%d checks, %d failures" % [_checks, _failures])
 	get_tree().quit(1 if _failures > 0 else 0)
 
@@ -712,3 +713,27 @@ func _test_journal() -> void:
 	Journal.reset()
 	Inventory.reset()
 	Recipes.reset()
+
+
+func _test_lucy_shop() -> void:
+	var saved_flags := Story.flags.duplicate(true)
+	Story.flags.clear()
+	var small := Shop.stock(7, 3, "tulip")
+	check(not small.any(func(id): return ItemDB.get_item(id).get("category", "") == "flower_plant"), "the counter sells no plants")
+	var d := IslandGenerator.generate(7)
+	var w := World.new()
+	add_child(w)
+	w.setup(d)
+	Story.flags["shop_day"] = GameClock.day_key() - 1
+	check(Story.finish_shop(w), "Lucy builds her shop overnight")
+	var shop := w.shop()
+	check(not shop.is_empty() and shop.get("fixed", false), "it stands on the island and can't be packed away")
+	check(not w.pack_up(shop), "really can't")
+	check(not Story.finish_shop(w), "and only once")
+	var big := Shop.stock(7, 3, d.native_flower)
+	check(big.size() > small.size(), "the shop stocks more than the counter (%d vs %d)" % [big.size(), small.size()])
+	var plants := big.filter(func(id): return ItemDB.get_item(id).get("category", "") == "flower_plant")
+	check(plants.size() == Shop.PLANTS_PER_DAY and plants.all(func(id): return ItemDB.get_item(id)["species"] != d.native_flower), "and flower plants from other islands")
+	check(Story._list_needs({"wood": 3, "stone": 2}) == "3 wood and 2 stone", "Lucy lists what she needs")
+	w.free()
+	Story.flags = saved_flags

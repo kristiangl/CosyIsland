@@ -833,6 +833,66 @@ func _add_office() -> void:
 			return
 
 
+## Lucy's shop goes up just below the plaza (or beside it), facing the camera, on the
+## first spot with nothing built there; she clears away any trees and flowers around it.
+## Returns the shop, or {} if there's nowhere to put it.
+func add_shop() -> Dictionary:
+	for obj in data.objects:
+		if obj["kind"] == "placed" and obj["item"] == "lucy_shop":
+			return obj
+	var plaza := data.plaza
+	var size := Vector2i(4, 3)
+	var spots: Array[Rect2i] = []
+	for ring in range(0, 6):
+		# Below the plaza first (it faces back up into it), then the sides.
+		spots.append(Rect2i(plaza.position + Vector2i(plaza.size.x / 2 - 2, plaza.size.y + ring), size))
+		for dz in range(0, plaza.size.y - 2):
+			spots.append(Rect2i(plaza.position + Vector2i(plaza.size.x + ring, dz), size))
+			spots.append(Rect2i(plaza.position + Vector2i(-size.x - ring, dz), size))
+	for rect in spots:
+		if not _clearable(rect):
+			continue
+		for obj in data.objects.duplicate():
+			if obj["kind"] in NATURAL_KINDS and rect.grow(1).has_point(Vector2i(obj["x"], obj["z"])):
+				remove_object(obj["uid"])
+		if can_place(rect, Vector3(-10, 0, -10)) and door_clear("lucy_shop", rect, 0):
+			var shop := place_item("lucy_shop", rect, 0)
+			shop["fixed"] = true
+			return shop
+	return {}
+
+
+## Things that can be cleared away to make room for a building.
+const NATURAL_KINDS := ["tree", "fruit_tree", "palm", "flower", "drop"]
+
+
+## Whether a rect would be free to build on once trees, flowers and drops are cleared.
+func _clearable(rect: Rect2i) -> bool:
+	var level := NAN
+	for z in range(rect.position.y, rect.end.y):
+		for x in range(rect.position.x, rect.end.x):
+			if not data.is_land(x, z) or not data.is_flat(x, z) or _keep_clear(x, z):
+				return false
+			var i := data.idx(x, z)
+			if _deck.has(i) or _door_fronts.has(i) or _rugs.has(i):
+				return false
+			if _occupant.has(i) and not _objects.get(_occupant[i], {}).get("kind", "") in NATURAL_KINDS:
+				return false
+			var h := data.corner(x, z, IslandData.NW)
+			if is_nan(level):
+				level = h
+			elif not is_equal_approx(level, h):
+				return false
+	return true
+
+
+func shop() -> Dictionary:
+	for obj in data.objects:
+		if obj["kind"] == "placed" and obj["item"] == "lucy_shop":
+			return obj
+	return {}
+
+
 ## Islands saved before the DIY update get a plaza workbench and a first bottle.
 func _upgrade_old_save() -> void:
 	_add_office()

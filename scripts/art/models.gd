@@ -66,6 +66,8 @@ static func get_mesh(key: String) -> ArrayMesh:
 			_tent(k)
 		"office":
 			_office(k)
+		"lucy_shop":
+			_lucy_shop(k)
 		"house":
 			_house(k)
 		"bridge":
@@ -577,6 +579,84 @@ static func _office(k: MeshKit) -> void:
 	var fc := k.vertex(Vector3(0, top + 0.27, 0), Vector3.BACK, flag)
 	k.tri(fa, fb, fc, Vector3.BACK)
 	k.tri(fa, fc, fb, Vector3.FORWARD)
+
+
+## Lucy's shop: a timber shopfront with a striped awning over an open counter, crates
+## of fruit outside and an acorn sign.
+static func _lucy_shop(k: MeshKit) -> void:
+	var w := 1.85
+	var d := 1.3
+	var wall_h := 1.6
+	var plank := MeshKit.lin(PLANK)
+	var plank_dark := MeshKit.lin(PLANK_DARK)
+	var cream := MeshKit.lin(CREAM)
+	var green := MeshKit.lin(Color("8fc58a"))
+	var roof := MeshKit.lin(Color("e0857a"))
+	var roof_dark := MeshKit.lin(Color("c86c64"))
+	k.box(Vector3(0, 0.06, 0), Vector3(w * 2 + 0.1, 0.12, d * 2 + 0.1), MeshKit.lin(Color("c9bfb0")))
+	# Board walls round the back and sides.
+	k.box(Vector3(0, wall_h * 0.5 + 0.12, -d + 0.06), Vector3(w * 2, wall_h, 0.12), plank)
+	for sx: float in [-1.0, 1.0]:
+		k.box(Vector3(sx * (w - 0.06), wall_h * 0.5 + 0.12, 0), Vector3(0.12, wall_h, d * 2), plank)
+	for i in 9:
+		var x := lerpf(-w + 0.2, w - 0.2, i / 8.0)
+		k.box(Vector3(x, wall_h * 0.5 + 0.12, -d + 0.125), Vector3(0.02, wall_h, 0.01), plank_dark)
+	# Shelves of goods behind the counter.
+	for y: float in [0.75, 1.2]:
+		k.box(Vector3(0, y, -d + 0.3), Vector3(w * 2 - 0.4, 0.05, 0.36), plank_dark)
+		for i in 7:
+			var x := lerpf(-w + 0.45, w - 0.45, i / 6.0)
+			var col: Color = [Color("f2a7a0"), Color("9fd3c7"), Color("f6d58c"), Color("c6b2ea")][(i + int(y * 10)) % 4]
+			if i % 2 == 0:
+				k.cylinder(Vector3(x, y + 0.025, -d + 0.3), Vector3(x, y + 0.2, -d + 0.3), 0.07, 0.07, MeshKit.lin(col), 8, true, cream)
+			else:
+				k.box(Vector3(x, y + 0.1, -d + 0.3), Vector3(0.16, 0.16, 0.16), MeshKit.lin(col), MeshKit.lin(col.lightened(0.2)))
+	# The counter across the open front.
+	k.box(Vector3(0, 0.5, d - 0.25), Vector3(w * 2 - 0.3, 0.76, 0.4), green)
+	k.box(Vector3(0, 0.9, d - 0.25), Vector3(w * 2 - 0.2, 0.06, 0.5), plank, MeshKit.lin(Color("eccaa2")))
+	k.box(Vector3(0, 0.5, d - 0.04), Vector3(0.5, 0.4, 0.02), cream)
+	k.sphere(Vector3(-0.9, 0.98, d - 0.2), Vector3(0.1, 0.06, 0.1), MeshKit.lin(Color("f6d58c")), 4, 8)
+	for sx: float in [-1.0, 1.0]:
+		k.box(Vector3(sx * (w - 0.08), (wall_h + 0.4) * 0.5 + 0.12, d - 0.08), Vector3(0.14, wall_h + 0.4, 0.14), plank_dark)
+	# Gable roof.
+	var eave := wall_h + 0.12
+	var top := eave + 0.8
+	var over := 0.2
+	for sx: float in [-1.0, 1.0]:
+		var n := Vector3(sx * (top - eave), w, 0).normalized()
+		for i in 4:
+			var t0 := float(i) / 4
+			var t1 := float(i + 1) / 4
+			var lo := Vector3(sx * (w + over), eave, 0).lerp(Vector3(0, top, 0), t0)
+			var hi := Vector3(sx * (w + over), eave, 0).lerp(Vector3(0, top, 0), t1)
+			var z := d + over
+			k.flat_quad(lo + Vector3(0, 0, -z), lo + Vector3(0, 0, z), hi + Vector3(0, 0, z), hi + Vector3(0, 0, -z), n, roof if i % 2 == 0 else roof_dark)
+	for sz: float in [-1.0, 1.0]:
+		var n := Vector3(0, 0, sz)
+		var a := k.vertex(Vector3(-w, eave, sz * d), n, plank)
+		var b := k.vertex(Vector3(w, eave, sz * d), n, plank)
+		var c := k.vertex(Vector3(0, top, sz * d), n, plank)
+		k.tri(a, b, c, n)
+	# A striped awning sloping out over the counter, with a scalloped edge.
+	var strips := 8
+	var awn_n := Vector3(0, 0.6, 0.35).normalized()
+	for i in strips:
+		var x0 := lerpf(-w, w, float(i) / strips)
+		var x1 := lerpf(-w, w, float(i + 1) / strips)
+		k.flat_quad(Vector3(x0, eave - 0.05, d), Vector3(x1, eave - 0.05, d), Vector3(x1, eave - 0.4, d + 0.6), Vector3(x0, eave - 0.4, d + 0.6),
+			awn_n, green if i % 2 == 0 else cream)
+		k.sphere(Vector3((x0 + x1) * 0.5, eave - 0.42, d + 0.6), Vector3((x1 - x0) * 0.5, 0.09, 0.03), green if i % 2 == 0 else cream, 3, 8)
+	# The acorn sign on the gable.
+	k.cylinder(Vector3(0, top - 0.42, d + 0.02), Vector3(0, top - 0.42, d + 0.06), 0.24, 0.24, cream, 16, true)
+	k.sphere(Vector3(0, top - 0.47, d + 0.08), Vector3(0.1, 0.12, 0.04), MeshKit.lin(Color("b7864f")), 5, 8)
+	k.sphere(Vector3(0, top - 0.36, d + 0.08), Vector3(0.12, 0.05, 0.045), MeshKit.lin(Color("7a5532")), 4, 8)
+	# Crates of fruit either side of the front.
+	for sx: float in [-1.0, 1.0]:
+		var c := Vector3(sx * (w + 0.05), 0.12, d + 0.45)
+		k.box(c + Vector3(0, 0.15, 0), Vector3(0.5, 0.3, 0.4), plank, MeshKit.lin(Color("eccaa2")))
+		var fruit := Color("e0453a") if sx < 0 else Color("f2922b")
+		for i in 4:
+			k.sphere(c + Vector3(-0.12 + (i % 2) * 0.24, 0.34, -0.08 + (i / 2) * 0.16), Vector3.ONE * 0.08, MeshKit.lin(fruit), 4, 7)
 
 
 static func _bridge(k: MeshKit, length: int) -> void:

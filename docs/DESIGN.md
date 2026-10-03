@@ -84,8 +84,9 @@ items donated). Rough order:
   50 wood, the sturdy shovel after 50 rock finds). Systems report with `Journal.add()`.
 - **The stamp exchange** (the journal's third page): bigger pockets (20, 30, 40),
   recipe cards, customisation kits, surprise furniture and clothes.
-- **Projects**: things the islanders build when you bring materials (Lucy's shop next,
-  then the museum and neighbours' plots).
+- **Projects**: things the islanders build when you bring materials. Lucy's shop first
+  (30 wood, 20 stone, 10 clay, delivered bit by bit, built overnight): twice the stock,
+  plus flower plants from other islands. Then the museum and neighbours' plots.
 - Acorns are for buying and building; stamps reward playing and buy conveniences.
 
 Time travel: sleeping in a bed moves the clock on to morning, noon, evening or midnight.
@@ -144,6 +145,7 @@ Milestone 3b:
 - [x] Painted colourways for the original wooden furniture
 - [x] Island Journal: milestones and daily tasks earning stamps; stamp exchange with
   pocket upgrades
+- [x] Lucy's shop project: bring materials and she builds a real shop beside the plaza
 - [x] Flowers: picked blooms regrow overnight, worn in hair or put in vases; plants dug
   up with a shovel and replanted (breeding later)
 

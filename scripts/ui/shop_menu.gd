@@ -143,7 +143,8 @@ func _rebuild(focus_index: int) -> void:
 	_rows.clear()
 	if _mode == "buy":
 		var seed_value: int = Game.island.data.seed_value if Game.island else 0
-		for id in Shop.stock(seed_value, _day()):
+		var native: String = Game.island.data.native_flower if Game.island else ""
+		for id in Shop.stock(seed_value, _day(), native):
 			_add_row(ShopRow.new(id, -1, self))
 	else:
 		for i in Inventory.slots.size():

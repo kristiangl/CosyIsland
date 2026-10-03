@@ -160,6 +160,25 @@
 				"door": true
 			}
 		},
+		"lucy_shop": {
+			"name": "Lucy's Odds & Ends",
+			"category": "building",
+			"stack": 1,
+			"price": 0,
+			"color": "#8fc58a",
+			"desc": "Lucy's very own shop, with a bell on the door.",
+			"placeable": {
+				"footprint": [
+					4,
+					3
+				],
+				"model": "lucy_shop",
+				"structure": true,
+				"rotatable": false,
+				"door": true,
+				"shopfront": true
+			}
+		},
 		"stone_axe": {
 			"name": "Stone Axe",
 			"category": "tool",

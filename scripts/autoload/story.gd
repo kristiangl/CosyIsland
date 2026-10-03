@@ -8,6 +8,8 @@ extends Node
 var flags: Dictionary = {}
 ## What a proper house costs, paid to Poppy, who has it built overnight.
 const HOUSE_COST := 10000
+## What Lucy needs to build her shop.
+const SHOP_MATERIALS := {"wood": 30, "stone": 20, "clay": 10}
 var talking := false
 ## How many times each character has been chatted to today, to cycle their small talk.
 var _chats: Dictionary = {}
@@ -203,6 +205,7 @@ func finish_house(island: World) -> bool:
 func _lucy(lucy: Npc) -> void:
 	if not flags.get("met_lucy", false):
 		flags["met_lucy"] = true
+		flags["lucy_met_day"] = GameClock.day_key()
 		lucy.hop()
 		await say("lucy", [
 			"Hi hi hi! You're new! I'm Lucy! I do odd jobs, fix things and dig holes. Mostly dig holes.",
@@ -214,12 +217,30 @@ func _lucy(lucy: Npc) -> void:
 		])
 		lucy.cheer()
 		return
+	if flags.get("shop_done", false) and not flags.get("shop_thanks", false):
+		flags["shop_thanks"] = true
+		lucy.hop()
+		await say("lucy", ["Look! LOOK! A real shop! With shelves! And an awning! And a bell!",
+			"Thank you thank you thank you, {player}. I'll have twice as much to sell now, every day.",
+			"And flowers! Plants from other islands, for your garden. Come and see!"])
+		lucy.cheer()
+		return
 	var greeting := _small_talk("lucy_hello", [
 		"Welcome to Lucy's Odds & Ends! What'll it be?",
 		"Hi hi! Buying, selling, or just saying hello?",
 		"Customer! A real customer! What can I do for you?",
 	])
-	match await ask("lucy", greeting, ["I'd like to sell", "Let's see what's for sale", "Just chatting", "Bye!"]):
+	var options := ["I'd like to sell", "Let's see what's for sale", "Just chatting", "Bye!"]
+	var project := shop_project_open()
+	if project:
+		options.insert(2, "About your shop..." if flags.has("shop_needs") else "One day this will be a real shop?")
+	var pick := await ask("lucy", greeting, options)
+	if project and pick == 2:
+		await _shop_project()
+		return
+	if project and pick > 2:
+		pick -= 1
+	match pick:
 		0:
 			await _shop("sell")
 		1:
@@ -236,6 +257,76 @@ func _lucy(lucy: Npc) -> void:
 			])])
 		_:
 			await say("lucy", ["Bye bye! Come back soon!"])
+
+
+## Lucy's shop project: open once you've a home and have done a bit of trading (or a
+## day has passed), until the materials are in.
+func shop_project_open() -> bool:
+	if flags.get("shop_done", false) or flags.has("shop_day") or not _has_home():
+		return false
+	return flags.has("shop_needs") or int(Journal.stats.get("sold", 0)) >= 5 \
+		or GameClock.day_key() > int(flags.get("lucy_met_day", GameClock.day_key()))
+
+
+func _shop_project() -> void:
+	if not flags.has("shop_needs"):
+		await say("lucy", ["A real shop! With walls and shelves and a little bell that goes ding!",
+			"I've drawn the plans. I just need the materials. Lots of materials.",
+			"Could you help? I need %s." % _list_needs(SHOP_MATERIALS)])
+		if await ask("lucy", "Will you help me build it?", ["Of course!", "Maybe later"]) != 0:
+			await say("lucy", ["Okay! The plans will be right here. In my head. Next to the stick."])
+			return
+		flags["shop_needs"] = SHOP_MATERIALS.duplicate()
+		lucy_cheer()
+		await say("lucy", ["Yay! Bring them whenever you can, a bit at a time is fine!"])
+		return
+	var needs: Dictionary = flags["shop_needs"]
+	var gave := {}
+	for mat: String in needs:
+		var n := mini(int(needs[mat]), Inventory.count_of(mat))
+		if n > 0:
+			Inventory.remove_item(mat, n)
+			needs[mat] = int(needs[mat]) - n
+			gave[mat] = n
+	for mat: String in needs.keys():
+		if int(needs[mat]) <= 0:
+			needs.erase(mat)
+	if gave.is_empty():
+		await say("lucy", ["I still need %s. No rush! Well, a little rush. I'm very excited." % _list_needs(needs)])
+		return
+	if needs.is_empty():
+		flags.erase("shop_needs")
+		flags["shop_day"] = GameClock.day_key()
+		lucy_cheer()
+		await say("lucy", ["That's everything! I'll build it tonight. Poppy's lending me her hammer!",
+			"Come and see it tomorrow. It's going to be the best shop. The only shop, but the best!"])
+		return
+	await say("lucy", ["Thank you! That's %s. Still need %s." % [_list_needs(gave), _list_needs(needs)]])
+
+
+func lucy_cheer() -> void:
+	_npc_cheer("lucy")
+
+
+static func _list_needs(needs: Dictionary) -> String:
+	var parts: Array = []
+	for mat: String in needs:
+		parts.append("%d %s" % [int(needs[mat]), ItemDB.display_name(mat).to_lower()])
+	if parts.size() > 1:
+		return ", ".join(parts.slice(0, -1)) + " and " + parts[-1]
+	return parts[0] if not parts.is_empty() else "nothing"
+
+
+## Builds Lucy's shop once the night has passed. Returns true if it happened just now.
+func finish_shop(island: World) -> bool:
+	if not flags.has("shop_day") or flags.get("shop_done", false):
+		return false
+	if GameClock.day_key() <= int(flags["shop_day"]):
+		return false
+	if island.add_shop().is_empty():
+		return false
+	flags["shop_done"] = true
+	return true
 
 
 func _shop(mode: String) -> void:

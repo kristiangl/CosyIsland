@@ -16,6 +16,7 @@ extends Node3D
 ##   --demo=sit         same, and sit on the chair
 ##   --demo=home        pitch the tent, go inside and furnish it (--room=wallpaper,flooring)
 ##   --demo=door        pitch the tent and stand outside its door
+##   --demo=shop        Lucy's shop has been built; stand in front of it
 ##   --demo=flowers     stand by some flowers, one picked, with a flower in your hair
 ##   --house            with --demo: the tent has already become a house
 ##   --series=ID        with --demo or --demo=home: furniture from one series (--variant=ID)
@@ -288,12 +289,28 @@ func _spawn_npcs() -> void:
 		npc.setup(id, world, Vector3(spot.x, 0, spot.y), NPC_SPOTS[id][1].normalized())
 		world.reserve(Vector2i(floori(spot.x), floori(spot.y)))
 		Game.npcs.append(npc)
+	_place_lucy()
 
 
 ## The house Poppy promised goes up once a night has passed (not while you're inside).
 func _check_house() -> void:
 	if Story.finish_house(world):
 		Events.toast.emit("Your house is ready! Go and have a look inside.")
+	if Story.finish_shop(world):
+		Events.toast.emit("Lucy's shop is open! Go and say hello.")
+		_place_lucy()
+
+
+## Lucy stands in front of her shop once it's built.
+func _place_lucy() -> void:
+	var lucy := Story.npc("lucy")
+	var shop := world.shop()
+	if lucy == null or shop.is_empty():
+		return
+	var spot := world.outside_door(shop)
+	lucy.position = spot["position"]
+	lucy.rest_facing = spot["facing"]
+	world.reserve(Vector2i(floori(spot["position"].x), floori(spot["position"].z)))
 
 
 ## Fades out, moves the clock on, and wakes up again.
@@ -400,6 +417,16 @@ func _run_demo() -> void:
 		Story.flags["tent_gift"] = true
 		Story.flags["house_day"] = GameClock.day_key() - 1
 		_check_house()
+	if Game.args["demo"] == "shop":
+		# As if Lucy built her shop last night: stand in front of it.
+		Story.flags["shop_day"] = GameClock.day_key() - 1
+		_check_house()
+		var shop := world.shop()
+		if not shop.is_empty():
+			player.position = world.outside_door(shop)["position"] + Vector3(1.4, 0, 2.2)
+			player.facing = Vector3(-0.3, 0, -1).normalized()
+			camera_rig.snap()
+		return
 	if Game.args["demo"] == "flowers":
 		# Stand by the nearest flowers, pick one for your hair and leave it picked.
 		var flowers := world.objects().filter(func(o): return o["kind"] == "flower")

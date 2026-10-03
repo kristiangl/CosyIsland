@@ -67,7 +67,8 @@ On-screen hints follow whatever you last touched, keyboard or controller.
   have things to say every day.
 - A paved plaza with the office marquee and the DIY workbench.
 - Lucy's shop: sell her anything with a price, and buy from a new stock each day,
-  including clothes.
+  including clothes. Bring her wood, stone and clay and she builds a real shop with
+  twice the stock and flower plants from other islands.
 - 107 designed clothes (30 pieces in colourways, six themes: Cosy Knits, Rainy Day,
   Seaside, Garden and Work, Sleepy Time, Folk Festival). Wear them from your pockets and they stay in your
   wardrobe. The plan for scaling to thousands of items is in

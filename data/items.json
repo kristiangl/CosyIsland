@@ -296,7 +296,26 @@
 				],
 				"model": "furniture:simple_bed",
 				"rotatable": true,
-				"seat": 0.45
+				"seat": 0.45,
+				"bed": true
+			}
+		},
+		"sleeping_bag": {
+			"name": "Sleeping Bag",
+			"category": "furniture",
+			"stack": 1,
+			"price": 200,
+			"color": "#78a6dc",
+			"desc": "Snug, if a little lumpy. Every tent comes with one.",
+			"placeable": {
+				"footprint": [
+					1,
+					2
+				],
+				"model": "furniture:sleeping_bag",
+				"rotatable": true,
+				"seat": 0.12,
+				"bed": true
 			}
 		},
 		"barrel": {

@@ -75,6 +75,17 @@ func set_hour(hour: float) -> void:
 	offset_seconds += int(start_of_day + hour * 3600.0) - current
 
 
+## Moves the clock forward to the next time it's `hour` o'clock (sleeping). Returns the
+## hours slept.
+func sleep_until(hour: float) -> float:
+	var now := hour_float()
+	var hours := fposmod(hour - now, 24.0)
+	if hours < 0.25:
+		hours += 24.0
+	offset_seconds += int(hours * 3600.0)
+	return hours
+
+
 func reset_travel() -> void:
 	offset_seconds = 0
 	_scaled_extra = 0.0

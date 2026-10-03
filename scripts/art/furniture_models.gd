@@ -27,6 +27,7 @@ static func build(k: MeshKit, id: String) -> void:
 		"wooden_box": _box(k)
 		"wooden_shelf": _shelf(k)
 		"simple_bed": _bed(k)
+		"sleeping_bag": _sleeping_bag(k)
 		"barrel": _barrel(k)
 		"firewood_pile": _firewood(k)
 		"campfire": _campfire(k)
@@ -138,6 +139,15 @@ static func _shelf(k: MeshKit) -> void:
 	k.sphere(Vector3(0.18, 0.54, -0.1), Vector3(0.1, 0.1, 0.1), c(CLAY), 6, 10)
 	k.sphere(Vector3(-0.12, 0.9, -0.1), Vector3(0.09, 0.08, 0.09), c(Color("8cc67f"), 0.3), 5, 8)
 	k.cylinder(Vector3(-0.12, 0.8, -0.1), Vector3(-0.12, 0.86, -0.1), 0.07, 0.08, c(CLAY), 8)
+
+
+static func _sleeping_bag(k: MeshKit) -> void:
+	var blue := Color("78a6dc")
+	k.rounded_box(Vector3(0, 0.07, 0.1), Vector3(0.78, 0.14, 1.55), c(blue), 0.6)
+	# The top folded back, with a lighter lining, and a little pillow.
+	k.rounded_box(Vector3(0, 0.15, -0.28), Vector3(0.8, 0.07, 0.36), c(Color("f3e4c4")), 0.5)
+	k.rounded_box(Vector3(0, 0.17, -0.62), Vector3(0.6, 0.12, 0.3), c(CREAM), 0.6)
+	k.box(Vector3(0.36, 0.1, 0.2), Vector3(0.03, 0.03, 1.1), c(Color("f4d672")))
 
 
 static func _bed(k: MeshKit) -> void:

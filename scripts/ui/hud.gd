@@ -19,10 +19,7 @@ var _toast_timer := 0.0
 var _pockets: Pockets
 var creator: CharacterCreator
 var crafting: CraftingMenu
-var _pause: PanelContainer
-var _pause_title: Label
-var _pause_time: Label
-var _pause_first: Button
+var phone: IslandPhone
 var _minimap: PanelContainer
 var _map: PanelContainer
 var _map_title: Label
@@ -80,7 +77,7 @@ func _ready() -> void:
 	hint_panel.position += Vector2(-20, -16)
 	root.add_child(hint_panel)
 	var hints := Label.new()
-	Prompts.bind_label(hints, "{use} use   {pickup} pick up   {pockets} pockets   {tools} tools   {map} map   {pause} menu")
+	Prompts.bind_label(hints, "{use} use   {pickup} pick up   {pockets} pockets   {tools} tools   {map} map   {pause} phone")
 	hints.add_theme_color_override("font_color", UIStyle.BROWN_LIGHT)
 	hints.add_theme_font_size_override("font_size", 16)
 	hint_panel.add_child(hints)
@@ -103,7 +100,9 @@ func _ready() -> void:
 	_pockets.place_requested.connect(func(slot): place_requested.emit(slot))
 	root.add_child(_pockets)
 
-	_build_pause(root)
+	phone = IslandPhone.new()
+	root.add_child(phone)
+	phone.app_chosen.connect(_on_phone_app)
 
 	creator = CharacterCreator.new()
 	root.add_child(creator)
@@ -143,9 +142,6 @@ func _process(delta: float) -> void:
 	_time_label.text = GameClock.time_string()
 	_date_label.text = GameClock.date_string()
 	_update_toast(delta)
-	if _pause.visible:
-		_pause_time.text = "%s, %s%s" % [GameClock.date_string(), GameClock.time_string(),
-			"" if GameClock.offset_seconds == 0 else "  (time travelled)"]
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -168,14 +164,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("pause"):
 		if Game.mode == Game.Mode.PLAY:
-			_open_pause()
+			phone.open()
 			get_viewport().set_input_as_handled()
-		elif _pause.visible:
-			_close_pause()
-			get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("ui_cancel") and _pause.visible:
-		_close_pause()
-		get_viewport().set_input_as_handled()
 
 
 # --- Maps --------------------------------------------------------------------------
@@ -271,74 +261,16 @@ func _on_equipped(item_id: String) -> void:
 	_tool_label.text = "Empty hands" if item_id == "" else "Holding: " + ItemDB.display_name(item_id)
 
 
-# --- Pause menu with time travel -----------------------------------------------------
+# --- Phone ---------------------------------------------------------------------------
 
-func _build_pause(root: Control) -> void:
-	_pause = PanelContainer.new()
-	_pause.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	_pause.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	_pause.grow_vertical = Control.GROW_DIRECTION_BOTH
-	_pause.visible = false
-	root.add_child(_pause)
-	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 10)
-	_pause.add_child(box)
-	var title := Label.new()
-	_pause_title = title
-	title.text = "Island Phone"
-	title.add_theme_font_size_override("font_size", 30)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	box.add_child(title)
-	_pause_time = Label.new()
-	_pause_time.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	box.add_child(_pause_time)
-
-	var travel_title := Label.new()
-	travel_title.text = "Time travel"
-	travel_title.add_theme_color_override("font_color", UIStyle.BROWN_LIGHT)
-	box.add_child(travel_title)
-	var row1 := HBoxContainer.new()
-	row1.add_theme_constant_override("separation", 8)
-	box.add_child(row1)
-	for entry in [["-1 day", -86400], ["-1 hour", -3600], ["+1 hour", 3600], ["+1 day", 86400]]:
-		var b := Button.new()
-		b.text = entry[0]
-		var secs: int = entry[1]
-		b.pressed.connect(func(): GameClock.travel(secs))
-		row1.add_child(b)
-		if _pause_first == null:
-			_pause_first = b
-	var row2 := HBoxContainer.new()
-	row2.add_theme_constant_override("separation", 8)
-	box.add_child(row2)
-	var back := Button.new()
-	back.text = "Back to real time"
-	back.pressed.connect(GameClock.reset_travel)
-	row2.add_child(back)
-	var speed := Button.new()
-	speed.text = "Clock speed: x1"
-	speed.pressed.connect(func():
-		GameClock.time_scale = 60.0 if GameClock.time_scale == 1.0 else (600.0 if GameClock.time_scale == 60.0 else 1.0)
-		speed.text = "Clock speed: x%d" % int(GameClock.time_scale))
-	row2.add_child(speed)
-
-	for entry in [["Resume", _close_pause], ["Wardrobe", func(): _close_pause(); wardrobe_requested.emit()], ["Save", func(): save_requested.emit(); Events.toast.emit("Game saved.")],
-			["Save and quit", func(): quit_requested.emit()]]:
-		var b := Button.new()
-		b.text = entry[0]
-		b.pressed.connect(entry[1])
-		box.add_child(b)
-
-
-func _open_pause() -> void:
-	Game.mode = Game.Mode.MENU
-	_pause_title.text = "%s Island" % Game.island_name if Game.island_name != "" else "Island Phone"
-	_pause.visible = true
-	_pause.reset_size()
-	_pause.position = (_pause.get_parent_area_size() - _pause.size) * 0.5
-	_pause_first.grab_focus()
-
-
-func _close_pause() -> void:
-	_pause.visible = false
-	Game.mode = Game.Mode.PLAY
+func _on_phone_app(app: String) -> void:
+	match app:
+		"map":
+			open_map()
+		"wardrobe":
+			wardrobe_requested.emit()
+		"save":
+			save_requested.emit()
+			Events.toast.emit("Game saved.")
+		"quit":
+			quit_requested.emit()

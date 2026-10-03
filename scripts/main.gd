@@ -15,7 +15,7 @@ extends Node3D
 ##   --demo=decor       same, but stay by the furniture instead of chopping
 ##   --demo=sit         same, and sit on the chair
 ##   --demo=home        pitch the tent, go inside and furnish it
-##   --ui=pockets|pause|map|creator|crafting|placing|intro|ask|lucy  (--tab=N picks a creator tab, --try=key:id,... dresses up)  open a menu or mode (for screenshots)
+##   --ui=pockets|pause|map|creator|crafting|placing|intro|ask|lucy|sleep  (--tab=N picks a creator tab, --try=key:id,... dresses up)  open a menu or mode (for screenshots)
 
 const AUTOSAVE_SECONDS := 60.0
 
@@ -111,6 +111,7 @@ func _ready() -> void:
 	Game.island_name = saved.get("island_name", "")
 	Events.home_entered.connect(_enter_home)
 	Events.home_left.connect(_leave_home)
+	Events.sleep_requested.connect(_sleep)
 	# Back inside if that's where we saved.
 	var inside := int(saved.get("inside", -1))
 	if inside >= 0 and not world.get_object(inside).is_empty():
@@ -126,9 +127,14 @@ func _ready() -> void:
 				Inventory.add_item(id, 3)
 			hud._pockets.open()
 		"pause":
-			hud._open_pause()
+			hud.phone.open()
 		"map":
 			hud.open_map()
+		"sleep":
+			# The bed question, in the tent (use with --demo=home).
+			for obj in world_now().objects():
+				if obj.get("item", "") == "sleeping_bag":
+					player._bed(obj)
 		"intro", "ask", "lucy":
 			# Poppy's welcome (or Lucy's first chat) part-way through, for screenshots.
 			Game.player_name = "Sam"
@@ -226,6 +232,10 @@ func _notification(what: int) -> void:
 		save_game()
 
 
+func world_now() -> World:
+	return room if room else world
+
+
 # --- Characters ---------------------------------------------------------------------
 
 ## Where the island's characters stand, in plaza tiles, and which way they face.
@@ -247,6 +257,20 @@ func _spawn_npcs() -> void:
 		Game.npcs.append(npc)
 
 
+## Fades out, moves the clock on, and wakes up again.
+func _sleep(hour: float) -> void:
+	Game.mode = Game.Mode.MENU
+	await hud.fade_out()
+	var hours := GameClock.sleep_until(hour)
+	await get_tree().create_timer(0.6).timeout
+	await hud.fade_in()
+	Game.mode = Game.Mode.PLAY
+	player.model.play("cheer")
+	var greeting := "Good morning!" if hour >= 5.0 and hour < 12.0 else ("Good afternoon!" if hour >= 12.0 and hour < 17.0 else ("Good evening!" if hour >= 17.0 else "It's the middle of the night."))
+	Events.toast.emit("You slept for %d hours. %s" % [roundi(hours), greeting])
+	save_game()
+
+
 # --- Homes --------------------------------------------------------------------------
 
 func _enter_home(uid: int, instant := false) -> void:
@@ -264,7 +288,11 @@ func _enter_home(uid: int, instant := false) -> void:
 	room.interior = true
 	room.room_style = def["room"]["style"]
 	add_child(room)
+	var first_visit := not _rooms.has(str(uid))
 	room.setup(IslandData.room(size[0], size[1]), _rooms.get(str(uid), {}))
+	if first_visit:
+		# Every new home comes with somewhere to sleep, against the back wall.
+		room.place_item("sleeping_bag", Rect2i(0, 0, 1, 2), 0)
 	_home_uid = uid
 	_switch_world(room)
 	var spawn := room.data.spawn
@@ -327,7 +355,7 @@ func _run_demo() -> void:
 			break
 	if Game.args["demo"] == "home" and not tent.is_empty():
 		await _enter_home(tent["uid"], true)
-		for entry in [["simple_bed", Vector2i(0, 0), 0], ["wooden_table", Vector2i(3, 1), 0], ["wooden_chair", Vector2i(3, 2), 2],
+		for entry in [["simple_bed", Vector2i(1, 0), 0], ["wooden_table", Vector2i(3, 1), 0], ["wooden_chair", Vector2i(3, 2), 2],
 				["stone_lantern", Vector2i(5, 0), 0], ["potted_plant", Vector2i(5, 5), 0], ["barrel", Vector2i(5, 3), 0], ["log_bench", Vector2i(0, 3), 1]]:
 			var size: Array = ItemDB.placeable(entry[0])["footprint"]
 			var dims := Vector2i(size[0], size[1]) if entry[2] % 2 == 0 else Vector2i(size[1], size[0])

@@ -20,6 +20,7 @@ func _run() -> void:
 	_test_crafting()
 	_test_rooms()
 	_test_story()
+	_test_phone_and_sleep()
 	print("\n%d checks, %d failures" % [_checks, _failures])
 	get_tree().quit(1 if _failures > 0 else 0)
 
@@ -399,3 +400,28 @@ func _test_story() -> void:
 	Game.island = null
 	Story.reset()
 	Inventory.reset()
+
+
+func _test_phone_and_sleep() -> void:
+	var saved_offset := GameClock.offset_seconds
+	GameClock.set_hour(21.0)
+	var hours := GameClock.sleep_until(7.0)
+	check(is_equal_approx(roundf(hours), 10.0), "sleeping at 9pm until morning is 10 hours (got %.2f)" % hours)
+	check(absf(GameClock.hour_float() - 7.0) < 0.05, "and it's 7am when you wake")
+	check(GameClock.sleep_until(7.0) > 23.0, "sleeping until the hour it already is takes a whole day")
+	GameClock.offset_seconds = saved_offset
+
+	var phone := IslandPhone.new()
+	add_child(phone)
+	phone.open()
+	check(phone.visible and Game.mode == Game.Mode.MENU, "the phone opens")
+	phone._open_app("time")
+	check(phone._page == "time", "apps open a page on the phone")
+	phone.back()
+	check(phone._page == "home" and phone.visible, "back returns to the home screen")
+	var chosen := [""]
+	phone.app_chosen.connect(func(app): chosen[0] = app)
+	phone._open_app("map")
+	check(chosen[0] == "map" and not phone.visible and Game.mode == Game.Mode.PLAY, "the map app leaves the phone for the map")
+	phone.free()
+	check(ItemDB.placeable("sleeping_bag").get("bed", false), "sleeping bags are beds")

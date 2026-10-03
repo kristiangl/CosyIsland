@@ -171,6 +171,8 @@ func _open(speaker: String) -> void:
 	tag_style.content_margin_bottom = 4
 	tag_style.shadow_size = 0
 	_tag.add_theme_stylebox_override("panel", tag_style)
+	# No speaker: a plain question from the game itself.
+	_tag.visible = speaker != ""
 	if not visible:
 		_opened_at = Time.get_ticks_msec()
 	visible = true

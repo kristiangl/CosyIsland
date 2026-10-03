@@ -189,7 +189,9 @@ func _use() -> void:
 
 func _interact(obj: Dictionary) -> void:
 	var def := ItemDB.placeable(obj["item"])
-	if def.has("seat"):
+	if def.get("bed", false):
+		_bed(obj)
+	elif def.has("seat"):
 		_sit_on(obj)
 	elif def.get("workbench", false):
 		Events.workbench_opened.emit()
@@ -197,6 +199,26 @@ func _interact(obj: Dictionary) -> void:
 		Events.home_entered.emit(obj["uid"])
 	else:
 		Events.toast.emit("What a lovely %s." % ItemDB.display_name(obj["item"]).to_lower())
+
+
+## Beds offer a sleep: the clock moves on to the chosen time of day.
+const SLEEPS := [["Until morning", 7.0], ["Until noon", 12.0], ["Until evening", 18.0], ["Until midnight", 0.0]]
+
+
+func _bed(obj: Dictionary) -> void:
+	if Game.dialogue == null:
+		_sit_on(obj)
+		return
+	Game.mode = Game.Mode.MENU
+	var options: Array = SLEEPS.map(func(e): return e[0])
+	options.append_array(["Just sit", "Never mind"])
+	Game.dialogue.ask("", "Have a little sleep?", options)
+	var pick: int = await Game.dialogue.picked
+	Game.mode = Game.Mode.PLAY
+	if pick < SLEEPS.size():
+		Events.sleep_requested.emit(SLEEPS[pick][1])
+	elif pick == SLEEPS.size():
+		_sit_on(obj)
 
 
 func _sit_on(obj: Dictionary) -> void:

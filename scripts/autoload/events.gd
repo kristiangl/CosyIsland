@@ -13,3 +13,5 @@ signal placed_changed
 ## The player walked into a home's door (uid of the home), or out of a room.
 signal home_entered(uid: int)
 signal home_left
+## The player chose to sleep until this hour.
+signal sleep_requested(hour: float)

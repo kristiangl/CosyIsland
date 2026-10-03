@@ -1,7 +1,7 @@
 extends Node3D
 ## Renders a row of characters for checking the character art:
 ##   tools/screenshot_scene.sh out.png res://tools/character_lineup.tscn [--seed=N] [--angle=DEG]
-##     [--vary=KEY] [--base=key:id,key:id] [--npcs]
+##     [--vary=KEY] [--base=key:id,key:id] [--npcs] [--close]
 ## Without --vary: the --base look (default look if none) and five random ones.
 ## With --vary: one character per option of KEY, all on the --base look.
 
@@ -71,6 +71,10 @@ func _add_camera() -> void:
 	cam.camera.fov = 30
 	cam.camera.position = Vector3(0, 2.2, 7.2)
 	cam.camera.look_at(Vector3(0, 0.75, 0))
+	if Game.args.has("close"):
+		# Close and from above, like the character creator, for checking clothes.
+		cam.camera.position = Vector3(0, 2.4, 4.6)
+		cam.camera.look_at(Vector3(0, 0.45, 0))
 
 
 ## One character per pose, frozen part-way through: idle, walk, run, chop, pickup, sit,

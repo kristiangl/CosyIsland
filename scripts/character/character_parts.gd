@@ -136,6 +136,9 @@ static func top(style: String) -> Dictionary:
 
 
 static func _hem(k: MeshKit, y: float, r: float, c: Color = PLAIN) -> void:
+	# A skirt of fabric from inside the body down to the hem, so there's no gap between
+	# the body and the hem for trousers to show through.
+	k.cylinder(Vector3(0, y + 0.15, 0), Vector3(0, y + 0.05, 0), 0.15, r - 0.01, PLAIN, 18, false)
 	k.cylinder(Vector3(0, y + 0.05, 0), Vector3(0, y, 0), r - 0.01, r, c, 18, false)
 
 
@@ -165,8 +168,8 @@ static func bottom(style: String) -> Dictionary:
 	var leg := MeshKit.new()
 	var shin := MeshKit.new()
 	if style != "overalls":
-		# Tucked just inside the top's hem so nothing pokes out below it.
-		k.sphere(Vector3(0, 0.41, 0), Vector3(0.185, 0.1, 0.155), PLAIN, 6, 16)
+		# Tucked inside the top's hem so nothing pokes out above it.
+		k.sphere(Vector3(0, 0.37, 0), Vector3(0.18, 0.085, 0.152), PLAIN, 6, 16)
 	match style:
 		"shorts":
 			leg.cylinder(Vector3(0, 0.03, 0), Vector3(0, -0.1, 0), 0.08, 0.078, PLAIN, 10, true)
@@ -175,10 +178,10 @@ static func bottom(style: String) -> Dictionary:
 		"leggings":
 			_trouser_leg(leg, shin, 0.07, 0.065, 0.05)
 		"skirt":
-			k.cylinder(Vector3(0, 0.48, 0), Vector3(0, 0.28, 0), 0.2, 0.27, PLAIN, 18, true)
+			k.cylinder(Vector3(0, 0.44, 0), Vector3(0, 0.28, 0), 0.185, 0.27, PLAIN, 18, true)
 			leg = null
 		"long_skirt":
-			k.cylinder(Vector3(0, 0.48, 0), Vector3(0, 0.12, 0), 0.2, 0.3, PLAIN, 18, true)
+			k.cylinder(Vector3(0, 0.44, 0), Vector3(0, 0.12, 0), 0.185, 0.3, PLAIN, 18, true)
 			leg = null
 		"overalls":
 			# Worn over the top: a waistband wider than any hem, a bib and straps.

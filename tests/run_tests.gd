@@ -21,6 +21,7 @@ func _run() -> void:
 	_test_rooms()
 	_test_story()
 	_test_phone_and_sleep()
+	_test_shop_and_house()
 	print("\n%d checks, %d failures" % [_checks, _failures])
 	get_tree().quit(1 if _failures > 0 else 0)
 
@@ -430,3 +431,47 @@ func _test_phone_and_sleep() -> void:
 	check(chosen[0] == "map" and not phone.visible and Game.mode == Game.Mode.PLAY, "the map app leaves the phone for the map")
 	phone.free()
 	check(ItemDB.placeable("sleeping_bag").get("bed", false), "sleeping bags are beds")
+
+
+func _test_shop_and_house() -> void:
+	Inventory.reset()
+	Story.reset()
+	var today := Shop.stock(42, 100)
+	check(today == Shop.stock(42, 100), "the shop's stock is the same all day")
+	check(today != Shop.stock(42, 101), "and changes the next day")
+	check(today.size() == Shop.STAPLES.size() + Shop.FURNITURE_PER_DAY + Shop.INTERIORS_PER_DAY, "the shop has a full stock")
+	var thing: String = today[Shop.STAPLES.size()]
+	check(Shop.buy(thing, 100) != "", "can't buy without acorns")
+	Inventory.add_currency(Shop.buy_price(thing) * 2)
+	check(Shop.buy(thing, 100) == "" and Inventory.count_of(thing) == 1, "buying puts it in the pockets")
+	check(Inventory.currency == Shop.buy_price(thing), "and takes the acorns")
+	check(Shop.is_sold_out(thing, 100) and Shop.buy(thing, 100) != "", "one of each a day")
+	check(not Shop.is_sold_out(thing, 101), "new stock tomorrow")
+	check(Shop.buy("flimsy_axe", 100) == "" and not Shop.is_sold_out("flimsy_axe", 100), "staples never sell out")
+	Inventory.add_item("wood", 5)
+	var before := Inventory.currency
+	var slot := Inventory.slots.find_custom(func(sl): return sl.get("id", "") == "wood")
+	check(Shop.sell(slot, 2) == 2 * Shop.sell_price("wood") and Inventory.count_of("wood") == 3, "selling some of a stack")
+	check(Shop.sell(slot, 99) == 3 * Shop.sell_price("wood") and Inventory.count_of("wood") == 0, "selling the rest")
+	check(Inventory.currency == before + 5 * Shop.sell_price("wood"), "selling pays")
+	check(not Shop.can_sell("tent_kit"), "some things can't be sold")
+
+	var d := IslandGenerator.generate(42)
+	var w := World.new()
+	add_child(w)
+	w.setup(d)
+	Game.island = w
+	var tent := w.place_item("tent_kit", Rect2i(_find_tent_spot(w, d), Vector2i(3, 3)), 0)
+	check(not Story.can_offer_house(), "no house offer before Poppy's seen the tent")
+	Story.flags["tent_gift"] = true
+	check(Story.can_offer_house(), "Poppy offers a house once the tent is up")
+	Story.flags["house_day"] = GameClock.day_key()
+	check(not Story.finish_house(w) and tent["item"] == "tent_kit", "the house isn't ready the same day")
+	Story.flags["house_day"] = GameClock.day_key() - 1
+	check(Story.finish_house(w) and tent["item"] == "house", "the tent becomes a house overnight")
+	check(not Story.can_offer_house() and not Story.finish_house(w), "and only once")
+	check(not w.door_of(tent).is_empty() and ItemDB.placeable("house")["room"]["size"][0] > 6, "the house has a door and a bigger room")
+	w.free()
+	Game.island = null
+	Story.reset()
+	Inventory.reset()

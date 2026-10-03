@@ -58,6 +58,9 @@ On-screen hints follow whatever you last touched, keyboard or controller.
   your tent; Lucy (a Jack Russell who does odd jobs) explains the workbench. Both
   have things to say every day.
 - A paved plaza with the office marquee and the DIY workbench.
+- Lucy's shop: sell her anything with a price, and buy from a new stock each day.
+- Save up 10,000 acorns and Poppy builds you a house overnight where your tent was,
+  with a bigger room inside.
 - Go inside your tent and decorate it: furniture, seats and table tops work indoors,
   plus wallpaper and flooring. Sleep in a bed or sleeping bag until morning, noon,
   evening or midnight.

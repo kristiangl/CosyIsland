@@ -42,7 +42,9 @@ func _process(delta: float) -> void:
 	var indoors := room.has_area()
 	_zoom = lerpf(_zoom, 0.7 if talk_with else 1.0, 1.0 - exp(-delta * 4.0))
 	var pitch := deg_to_rad(52.0 if indoors else pitch_degrees)
-	camera.position = focus + Vector3(0, sin(pitch), cos(pitch)) * (13.5 if indoors else distance) * _zoom
+	# Bigger rooms need the camera further back to fit in.
+	var indoor_distance := 13.5 * maxf(1.0, maxf(room.size.x / 6.5, room.size.y / 6.0))
+	camera.position = focus + Vector3(0, sin(pitch), cos(pitch)) * (indoor_distance if indoors else distance) * _zoom
 	camera.look_at(focus)
 	RenderingServer.global_shader_parameter_set("curve_origin", focus)
 

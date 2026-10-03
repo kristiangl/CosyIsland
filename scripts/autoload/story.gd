@@ -6,6 +6,8 @@ extends Node
 ## and button names like {pockets} (see Prompts).
 
 var flags: Dictionary = {}
+## What a proper house costs, paid to Poppy, who has it built overnight.
+const HOUSE_COST := 10000
 var talking := false
 ## How many times each character has been chatted to today, to cycle their small talk.
 var _chats: Dictionary = {}
@@ -108,6 +110,16 @@ func _poppy(poppy: Npc) -> void:
 		_give("potted_plant")
 		await say("poppy", ["A potted plant! Pop it on a table, or on the floor. Plants aren't fussy."])
 		return
+	if flags.has("house_day") and not flags.get("house_done", false):
+		await say("poppy", ["Your house is coming along nicely! Lucy's been hammering since breakfast.",
+			"It'll be ready tomorrow. Sleep well tonight, it's your last night under canvas!"])
+		return
+	if flags.get("house_done", false) and not flags.get("house_thanks", false):
+		flags["house_thanks"] = true
+		poppy.hop()
+		await say("poppy", ["A real house! With a chimney and everything!",
+			"There's much more room inside, so you can really spread out. Happy decorating, {player}!"])
+		return
 	await say("poppy", [_small_talk("poppy", [
 		"The office is always open. Well, the flap is.",
 		"I keep a diary of everything that happens on the island. Today's entry: {player} said hello. Lovely.",
@@ -121,7 +133,16 @@ func _poppy(poppy: Npc) -> void:
 
 func _poppy_questions() -> void:
 	while true:
-		var pick := await ask("poppy", "Anything you'd like to know?", ["How do I make things?", "What is there to do?", "I'm all set!"])
+		var options := ["How do I make things?", "What is there to do?", "I'm all set!"]
+		var house_offer := can_offer_house()
+		if house_offer:
+			options.insert(2, "About a proper house...")
+		var pick := await ask("poppy", "Anything you'd like to know?", options)
+		if house_offer and pick == 2:
+			await _house_talk()
+			continue
+		if house_offer and pick > 2:
+			pick -= 1
 		match pick:
 			0:
 				await say("poppy", ["The workbench here in the plaza is for DIY. Walk up to it and press {use}.",
@@ -134,6 +155,50 @@ func _poppy_questions() -> void:
 				return
 
 
+## The tent can become a house once it's up, until one is under way.
+func can_offer_house() -> bool:
+	return _has_home() and flags.get("tent_gift", false) and not flags.has("house_day")
+
+
+func _house_talk() -> void:
+	await say("poppy", ["A proper house! With walls that don't flap in the wind, and a lot more room inside.",
+		"Lucy and I can build one where your tent is, overnight. It costs %d acorns, all in one go." % HOUSE_COST])
+	if Inventory.currency < HOUSE_COST:
+		await say("poppy", ["You've got %d so far. Selling things to Lucy is a good way to save up!" % Inventory.currency,
+			"Fruit, furniture you don't need, that sort of thing. Come and see me when you're ready."])
+		return
+	if await ask("poppy", "Shall we start building?", ["Yes please!", "Not just yet"]) != 0:
+		await say("poppy", ["No rush at all. The offer stands!"])
+		return
+	Inventory.add_currency(-HOUSE_COST)
+	flags["house_day"] = GameClock.day_key()
+	_npc_cheer("poppy")
+	await say("poppy", ["Wonderful! We'll start tonight. Have one last sleep in your tent,",
+		"and in the morning you'll have a house!"])
+
+
+func _npc_cheer(id: String) -> void:
+	var who := npc(id)
+	if who:
+		who.cheer()
+
+
+## Builds the house once the night has passed: the tent becomes a house in the same
+## spot, keeping everything inside. Returns true if it happened just now.
+func finish_house(island: World) -> bool:
+	if not flags.has("house_day") or flags.get("house_done", false):
+		return false
+	if GameClock.day_key() <= int(flags["house_day"]):
+		return false
+	for obj in island.objects():
+		if obj["kind"] == "placed" and obj["item"] == "tent_kit":
+			obj["item"] = "house"
+			island.refresh_node(obj)
+			flags["house_done"] = true
+			return true
+	return false
+
+
 func _lucy(lucy: Npc) -> void:
 	if not flags.get("met_lucy", false):
 		flags["met_lucy"] = true
@@ -143,18 +208,43 @@ func _lucy(lucy: Npc) -> void:
 			"This is the workbench! Bring wood, stone and clay and you can make all sorts.",
 			"Walk up to it and press {use} to see what you know how to make.",
 			"Oh! And if you find a bottle on the beach, open it! Sometimes there's a recipe inside!",
-			"One day I'm going to open a shop here. A real one. With a bell on the door!",
+			"And guess what? I've opened a shop! Well, a counter. Well, me, standing here.",
+			"I'll buy anything you don't need, and I've got a few bits for sale. New things every day!",
 		])
 		lucy.cheer()
 		return
-	await say("lucy", [_small_talk("lucy", [
-		"I found a stick today. It's a really good stick.",
-		"You can sit on chairs, you know. I sit on everything. Benches, stumps, Poppy's paperwork...",
-		"Small things like teapots and candles can go on tables. Very fancy!",
-		"If you shake a tree and furniture falls out, don't ask me how it got up there.",
-		"My shop will sell everything. Probably. Maybe just sticks at first.",
-		"Rocks give more if you hit them fast. Bonk bonk bonk!",
-	])])
+	var greeting := _small_talk("lucy_hello", [
+		"Welcome to Lucy's Odds & Ends! What'll it be?",
+		"Hi hi! Buying, selling, or just saying hello?",
+		"Customer! A real customer! What can I do for you?",
+	])
+	match await ask("lucy", greeting, ["I'd like to sell", "Let's see what's for sale", "Just chatting", "Bye!"]):
+		0:
+			await _shop("sell")
+		1:
+			await _shop("buy")
+		2:
+			await say("lucy", [_small_talk("lucy", [
+				"I found a stick today. It's a really good stick.",
+				"You can sit on chairs, you know. I sit on everything. Benches, stumps, Poppy's paperwork...",
+				"Small things like teapots and candles can go on tables. Very fancy!",
+				"If you shake a tree and furniture falls out, don't ask me how it got up there.",
+				"Fruit sells for a nice bit. Not that I'd know. I definitely didn't eat any.",
+				"Rocks give more if you hit them fast. Bonk bonk bonk!",
+				"One day this counter will be a real shop. With a bell on the door!",
+			])])
+		_:
+			await say("lucy", ["Bye bye! Come back soon!"])
+
+
+func _shop(mode: String) -> void:
+	if Game.shop == null:
+		return
+	Game.shop.open(mode)
+	await Game.shop.closed
+	Game.mode = Game.Mode.MENU
+	await say("lucy", [_small_talk("lucy_bye", ["Thanks! Pleasure doing business!", "Come back tomorrow, I'll have new things!",
+		"Ka-ching! That's the sound of a happy shopkeeper."])])
 
 
 # --- Helpers -------------------------------------------------------------------------

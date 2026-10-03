@@ -22,7 +22,8 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   `model_gallery.tscn` (`--drops`, `--keys`, `--only=id,id`), `calibrate.tscn`
   (`-- --shadows`, checks the cel lighting maths).
 - Game screenshot options are listed at the top of `scripts/main.gd` (`--demo`,
-  `--demo=decor|sit|home`, `--ui=pockets|pause|map|creator|crafting|placing|intro|ask|lucy|sleep`,
+  `--demo=decor|sit|home|door` (`--house` builds the house first),
+  `--ui=pockets|pause|map|creator|crafting|placing|intro|ask|lucy|sleep|shop|sell`,
   `--tab=N` and `--try=key:id` for the creator, `--room=wallpaper,flooring`, `--gen=N`,
   `--at=X,Z`, `--hour`).
 

@@ -19,6 +19,7 @@ var _toast_timer := 0.0
 var _pockets: Pockets
 var creator: CharacterCreator
 var crafting: CraftingMenu
+var shop: ShopMenu
 var phone: IslandPhone
 var _minimap: PanelContainer
 var _map: PanelContainer
@@ -113,6 +114,9 @@ func _ready() -> void:
 	root.add_child(centre)
 	crafting = CraftingMenu.new()
 	centre.add_child(crafting)
+	shop = ShopMenu.new()
+	centre.add_child(shop)
+	Game.shop = shop
 	Events.workbench_opened.connect(crafting.open)
 
 	dialogue = DialogueBox.new()

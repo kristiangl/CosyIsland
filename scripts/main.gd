@@ -15,7 +15,9 @@ extends Node3D
 ##   --demo=decor       same, but stay by the furniture instead of chopping
 ##   --demo=sit         same, and sit on the chair
 ##   --demo=home        pitch the tent, go inside and furnish it (--room=wallpaper,flooring)
-##   --ui=pockets|pause|map|creator|crafting|placing|intro|ask|lucy|sleep  (--tab=N picks a creator tab, --try=key:id,... dresses up)  open a menu or mode (for screenshots)
+##   --demo=door        pitch the tent and stand outside its door
+##   --house            with --demo: the tent has already become a house
+##   --ui=pockets|pause|map|creator|crafting|placing|intro|ask|lucy|sleep|shop|sell  (--tab=N picks a creator tab, --try=key:id,... dresses up)  open a menu or mode (for screenshots)
 
 const AUTOSAVE_SECONDS := 60.0
 
@@ -112,6 +114,8 @@ func _ready() -> void:
 	Events.home_entered.connect(_enter_home)
 	Events.home_left.connect(_leave_home)
 	Events.sleep_requested.connect(_sleep)
+	Events.day_changed.connect(func(_key): if room == null: _check_house())
+	_check_house()
 	# Back inside if that's where we saved.
 	var inside := int(saved.get("inside", -1))
 	if inside >= 0 and not world.get_object(inside).is_empty():
@@ -130,6 +134,11 @@ func _ready() -> void:
 			hud.phone.open()
 		"map":
 			hud.open_map()
+		"shop", "sell":
+			Inventory.add_currency(2500)
+			for id in ["wood", "stone", "apple", "clay", "wooden_chair"]:
+				Inventory.add_item(id, 4)
+			hud.shop.open("buy" if Game.args["ui"] == "shop" else "sell")
 		"sleep":
 			# The bed question, in the tent (use with --demo=home).
 			for obj in world_now().objects():
@@ -257,6 +266,12 @@ func _spawn_npcs() -> void:
 		Game.npcs.append(npc)
 
 
+## The house Poppy promised goes up once a night has passed (not while you're inside).
+func _check_house() -> void:
+	if Story.finish_house(world):
+		Events.toast.emit("Your house is ready! Go and have a look inside.")
+
+
 ## Fades out, moves the clock on, and wakes up again.
 func _sleep(hour: float) -> void:
 	Game.mode = Game.Mode.MENU
@@ -316,6 +331,7 @@ func _leave_home() -> void:
 	room.queue_free()
 	room = null
 	_switch_world(world)
+	_check_house()
 	var out := world.outside_door(world.get_object(_home_uid))
 	player.position = out["position"]
 	player.facing = out["facing"]
@@ -353,6 +369,17 @@ func _run_demo() -> void:
 		if world.can_place(rect, player.position) and world.door_clear("tent_kit", rect, 0):
 			tent = world.place_item("tent_kit", rect, 0)
 			break
+	if Game.args.has("house") and not tent.is_empty():
+		# As if Poppy built the house last night.
+		Story.flags["tent_gift"] = true
+		Story.flags["house_day"] = GameClock.day_key() - 1
+		_check_house()
+	if Game.args["demo"] == "door" and not tent.is_empty():
+		var out := world.outside_door(tent)
+		player.position = out["position"] + Vector3(0.8, 0, 1.6)
+		player.facing = Vector3(0, 0, -1)
+		camera_rig.snap()
+		return
 	if Game.args["demo"] == "home" and not tent.is_empty():
 		await _enter_home(tent["uid"], true)
 		for entry in [["simple_bed", Vector2i(1, 0), 0], ["wooden_table", Vector2i(3, 1), 0], ["wooden_chair", Vector2i(3, 2), 2],

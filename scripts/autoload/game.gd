@@ -17,6 +17,7 @@ var island: World
 var player: Player
 var camera: CameraRig
 var dialogue: DialogueBox
+var shop: ShopMenu
 ## The characters standing about on the island.
 var npcs: Array[Npc] = []
 var player_name := ""

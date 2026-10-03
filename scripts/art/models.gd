@@ -54,6 +54,8 @@ static func get_mesh(key: String) -> ArrayMesh:
 			_tent(k)
 		"office":
 			_office(k)
+		"house":
+			_house(k)
 		"bridge":
 			_bridge(k, int(p[1]))
 		"drop":
@@ -272,6 +274,72 @@ static func _tent(k: MeshKit) -> void:
 	for s: float in [-1.0, 1.0]:
 		for z in [d * 0.8, -d * 0.8]:
 			k.cylinder(Vector3(s * (w + 0.25), 0, z), Vector3(s * (w + 0.25), 0.15, z), 0.03, 0.03, pole, 4)
+
+
+## A little cottage: cream walls with timber trim, a tiled roof, round windows, a
+## chimney and a front door with a step.
+static func _house(k: MeshKit) -> void:
+	var w := 1.3
+	var d := 1.15
+	var eave := 1.45
+	var top := 2.6
+	var wall := MeshKit.lin(Color("fbf0d9"))
+	var trim := MeshKit.lin(PLANK_DARK)
+	var roof := MeshKit.lin(Color("e0857a"))
+	var roof_dark := MeshKit.lin(Color("c86c64"))
+	var glass := MeshKit.lin(Color("a9d7e6"))
+	k.box(Vector3(0, 0.08, 0), Vector3(w * 2 + 0.12, 0.16, d * 2 + 0.12), MeshKit.lin(Color("c9bfb0")))
+	k.box(Vector3(0, eave * 0.5 + 0.08, 0), Vector3(w * 2, eave, d * 2), wall)
+	# Timber corners and a beam under the roof.
+	for sx: float in [-1.0, 1.0]:
+		for sz: float in [-1.0, 1.0]:
+			k.box(Vector3(sx * w, eave * 0.5 + 0.08, sz * d), Vector3(0.1, eave, 0.1), trim)
+	k.box(Vector3(0, eave + 0.08, d), Vector3(w * 2 + 0.1, 0.1, 0.1), trim)
+	# Gable ends.
+	for sz: float in [-1.0, 1.0]:
+		var n := Vector3(0, 0, sz)
+		var a := k.vertex(Vector3(-w, eave + 0.08, sz * d), n, wall)
+		var b := k.vertex(Vector3(w, eave + 0.08, sz * d), n, wall)
+		var c := k.vertex(Vector3(0, top, sz * d), n, wall)
+		k.tri(a, b, c, n)
+	# Roof: two slopes with rows of tiles, overhanging a little.
+	var over := 0.22
+	for sx: float in [-1.0, 1.0]:
+		var n := Vector3(sx * (top - eave), w, 0).normalized()
+		var rows := 5
+		for i in rows:
+			var t0 := float(i) / rows
+			var t1 := float(i + 1) / rows
+			var lo := Vector3(sx * (w + over), eave - 0.08, 0).lerp(Vector3(0, top + 0.06, 0), t0)
+			var hi := Vector3(sx * (w + over), eave - 0.08, 0).lerp(Vector3(0, top + 0.06, 0), t1)
+			var z := d + over
+			k.flat_quad(lo + Vector3(0, 0, -z), lo + Vector3(0, 0, z), hi + Vector3(0, 0, z), hi + Vector3(0, 0, -z), n,
+				roof if i % 2 == 0 else roof_dark)
+	k.cylinder(Vector3(0, top + 0.04, -d - over), Vector3(0, top + 0.04, d + over), 0.07, 0.07, roof_dark, 6, true)
+	# Chimney.
+	k.box(Vector3(0.65, top - 0.1, -0.35), Vector3(0.28, 0.75, 0.28), MeshKit.lin(Color("c9bfb0")))
+	k.box(Vector3(0.65, top + 0.3, -0.35), Vector3(0.34, 0.08, 0.34), MeshKit.lin(Color("b3a99a")))
+	# Door with a little roof, step and knob.
+	var front := d + 0.01
+	k.box(Vector3(0, 0.6, front), Vector3(0.62, 1.04, 0.05), MeshKit.lin(Color("9fd3c7")))
+	k.box(Vector3(0, 0.6, front + 0.005), Vector3(0.7, 1.12, 0.03), trim)
+	k.sphere(Vector3(0.2, 0.58, front + 0.05), Vector3.ONE * 0.04, MeshKit.lin(Color("f4d672")), 3, 6)
+	k.box(Vector3(0, 0.1, front + 0.22), Vector3(0.9, 0.12, 0.38), MeshKit.lin(Color("c9bfb0")))
+	k.box(Vector3(0, 1.3, front + 0.18), Vector3(0.95, 0.06, 0.4), roof_dark)
+	# Round windows either side of the door, and on the sides.
+	for sx: float in [-1.0, 1.0]:
+		var c := Vector3(sx * 0.78, 0.92, front + 0.01)
+		k.cylinder(c, c + Vector3(0, 0, 0.04), 0.27, 0.27, trim, 14, true)
+		k.cylinder(c + Vector3(0, 0, 0.02), c + Vector3(0, 0, 0.05), 0.21, 0.21, glass, 14, true)
+		k.box(c + Vector3(0, 0, 0.055), Vector3(0.42, 0.035, 0.01), trim)
+		k.box(c + Vector3(0, 0, 0.055), Vector3(0.035, 0.42, 0.01), trim)
+		# Flower box under each front window.
+		k.box(c + Vector3(0, -0.34, 0.08), Vector3(0.5, 0.12, 0.14), MeshKit.lin(PLANK))
+		for f in 3:
+			k.sphere(c + Vector3(-0.15 + f * 0.15, -0.25, 0.1), Vector3.ONE * 0.06, MeshKit.lin([Color("f2a7a0"), Color("f6d58c"), Color("c6b2ea")][f], 0.4), 3, 6)
+		var side := Vector3(sx * (w + 0.01), 0.95, 0)
+		k.box(side, Vector3(0.05, 0.5, 0.5), trim)
+		k.box(side + Vector3(sx * 0.02, 0, 0), Vector3(0.04, 0.4, 0.4), glass)
 
 
 ## The island office: a striped marquee with a leaf sign over the entrance.

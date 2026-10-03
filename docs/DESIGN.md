@@ -116,10 +116,13 @@ Milestone 3b:
 - [x] Island Phone with apps; sleeping in beds moves time on
 - [x] Wallpaper and flooring items
 
+- [x] Lucy's shop: selling for acorns, a daily stock of furniture and wallpaper
+- [x] Tent to house through Poppy (10,000 acorns, built overnight, 8x7 room)
+
 Next milestones (suggested order):
-3c. Lucy's shop (selling things for acorns, a daily stock), then the house upgrade path
-   (tent, house, bigger house) through Poppy. Clothes as items instead of everything
-   unlocked. Time travel moves out of the phone into an options menu.
+3c. Bigger house (more rooms) and outdoor house colours. Clothes as items instead of
+   everything unlocked, sold by Lucy. Time travel moves out of the phone into an
+   options menu.
 4. Daily visitors and the first animal neighbours (homes, schedules).
 5. Fishing, bug catching, the museum.
 6. Island tours to random islands (reusing the generator with different seeds).

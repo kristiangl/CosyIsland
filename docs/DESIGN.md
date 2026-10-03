@@ -129,6 +129,7 @@ Milestone 3b:
 - [x] Mushroom Grove and Starlight series, with parts that glow at night
 - [x] Sleepy Time and Folk Festival clothes (pyjamas, nightgown, nightcap, bunny
   slippers; folk blouse, waistcoat, folk skirt, clogs, festival crown)
+- [x] Painted colourways for the original wooden furniture
 - [x] Flowers: picked blooms regrow overnight, worn in hair or put in vases; plants dug
   up with a shovel and replanted (breeding later)
 

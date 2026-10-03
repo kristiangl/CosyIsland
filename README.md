@@ -86,10 +86,11 @@ On-screen hints follow whatever you last touched, keyboard or controller.
   rocks for stone, clay and iron (one rock a day gives acorns).
 - DIY workbench with 61 recipes: tools and furniture. Message bottles wash up each day
   with new recipes.
-- 254 pieces of furniture to place anywhere on the grid with a preview, rotate and pick
+- 302 pieces of furniture to place anywhere on the grid with a preview, rotate and pick
   back up. Five furniture series (Meadow Cottage, Driftwood, Woodland Lodge, Mushroom
   Grove, Starlight) in four colourways each, with printed cushions, quilts and shades.
-  Mushroom Grove's toadstools and Starlight's moons and stars glow at night. Change a piece's
+  Mushroom Grove's toadstools and Starlight's moons and stars glow at night. The
+  original wooden pieces come painted white, pink, mint or walnut too. Change a piece's
   (or a garment's) colourway at the workbench with a customisation kit from Lucy.
 - Rugs (round, large and runners, in ten prints plus one per series) lie under your
   furniture, and curtains dress your home's windows. Sit on chairs and benches; put teapots, candles and plants on tables.

@@ -76,6 +76,8 @@ static func get_mesh(key: String) -> ArrayMesh:
 			_tool(k, p[1])
 		"furniture":
 			FurnitureModels.build(k, p[1])
+			if p.size() > 2:
+				FurnitureModels.repaint(k, ItemDB.woods.get(p[2], {}))
 		"clothing":
 			_clothing(k, p[1])
 		_:

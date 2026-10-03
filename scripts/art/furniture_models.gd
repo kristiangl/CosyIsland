@@ -51,6 +51,22 @@ static func build(k: MeshKit, id: String) -> void:
 			k.box(Vector3(0, 0.3, 0), Vector3(0.6, 0.6, 0.6), c(Color.MAGENTA))
 
 
+## Repaints a built model's wood in a colourway {wood, dark, light} (see ItemDB.woods),
+## keeping each vertex's sway.
+static func repaint(k: MeshKit, v: Dictionary) -> void:
+	if v.is_empty():
+		return
+	var swaps := [[WOOD, Color(v["wood"])], [WOOD_DARK, Color(v["dark"])], [WOOD_LIGHT, Color(v["light"])]]
+	for i in k.colours.size():
+		var col := k.colours[i]
+		for swap: Array in swaps:
+			var from: Color = swap[0]
+			if absf(col.r - from.r) + absf(col.g - from.g) + absf(col.b - from.b) < 0.01:
+				var to: Color = swap[1]
+				k.colours[i] = Color(to.r, to.g, to.b, col.a)
+				break
+
+
 static func c(col: Color, sway: float = 0.0) -> Color:
 	return MeshKit.lin(col, sway)
 

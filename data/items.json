@@ -985,5 +985,52 @@
 				"yellow": "#f0c53a"
 			}
 		}
+	},
+	"colourways": {
+		"_note": "Painted colourways for the original wooden furniture: each listed item also comes as <id>_<variant>, its wood repainted (main, dark and light tones). The item itself is the natural wood.",
+		"variants": [
+			{
+				"id": "white",
+				"name": "White",
+				"wood": "f1ece3",
+				"dark": "cfc6b8",
+				"light": "fbf8f2"
+			},
+			{
+				"id": "pink",
+				"name": "Pink",
+				"wood": "f0c2c2",
+				"dark": "d39a9a",
+				"light": "f9dcd8"
+			},
+			{
+				"id": "mint",
+				"name": "Mint",
+				"wood": "bfe0cf",
+				"dark": "93bca6",
+				"light": "d8efe2"
+			},
+			{
+				"id": "walnut",
+				"name": "Walnut",
+				"wood": "9a7050",
+				"dark": "6f4c33",
+				"light": "b48b66"
+			}
+		],
+		"items": [
+			"wooden_stool",
+			"wooden_chair",
+			"wooden_table",
+			"log_bench",
+			"stump_table",
+			"wooden_box",
+			"wooden_shelf",
+			"simple_bed",
+			"barrel",
+			"wooden_fence",
+			"signpost",
+			"iron_bench"
+		]
 	}
 }

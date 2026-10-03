@@ -21,6 +21,9 @@ const SLOT_KEYS := {
 var items: Dictionary = {}
 var fruits: Dictionary = {}
 var flowers: Dictionary = {}
+## Painted colourways for the original wooden furniture, by variant id (data/items.json
+## "colourways"): {name, wood, dark, light}.
+var woods: Dictionary = {}
 ## Furniture series by id: {name, desc, variants, pieces} as in data/furniture/<id>.json.
 var series: Dictionary = {}
 ## DIY recipes for series pieces (the first variant of each piece with a recipe), merged
@@ -63,6 +66,7 @@ func _ready() -> void:
 			}
 	_load_clothing()
 	_load_furniture()
+	_load_colourways(data.get("colourways", {}))
 
 
 ## Designed clothes come as bases with colourways (data/clothing.json); each colourway
@@ -131,6 +135,29 @@ func _load_furniture() -> void:
 ## The more colourful of two hex colours (a fabric's print colour rather than its cream).
 static func _bolder(a: String, b: String) -> String:
 	return a if Color(a).s >= Color(b).s else b
+
+
+## The original wooden furniture in painted colourways: "<id>_<variant>", the same
+## model with its wood recoloured. The item itself is the natural-wood variant.
+func _load_colourways(data: Dictionary) -> void:
+	for v: Dictionary in data.get("variants", []):
+		woods[v["id"]] = v
+	for id: String in data.get("items", []):
+		var def: Dictionary = items[id]
+		def["base"] = id
+		def["variant"] = "natural"
+		def["swatch"] = [def["color"], def["color"]]
+		_add_variant(id, id)
+		for v: Dictionary in data.get("variants", []):
+			var painted: Dictionary = def.duplicate(true)
+			painted["name"] = "%s (%s)" % [def["name"], v["name"]]
+			painted["color"] = "#" + v["wood"]
+			painted["variant"] = v["id"]
+			painted["swatch"] = ["#" + v["wood"], "#" + v["dark"]]
+			painted["placeable"]["model"] = "%s:%s" % [def["placeable"]["model"], v["id"]]
+			painted.erase("recipe")
+			items["%s_%s" % [id, v["id"]]] = painted
+			_add_variant(id, "%s_%s" % [id, v["id"]])
 
 
 func _add_variant(base: String, id: String) -> void:

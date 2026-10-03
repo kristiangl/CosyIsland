@@ -17,5 +17,14 @@
 		"species": {"kind": "dog", "fur": "#f6f1e8", "fur2": "#c98a52", "eyes": "#5a3826", "inner_ear": "#b97a45", "nose": "#3a3236"},
 		"look": {"eyes": "classic", "mouth": "grin", "cheeks": "blush", "top": "tee", "top_color": "red", "top_color2": "white",
 			"top_pattern": "stripes", "bottom": "overalls", "bottom_color": "blue", "shoes": "none", "hat": "none", "glasses": "none"}
+	},
+	"bramble": {
+		"name": "Bramble",
+		"title": "Museum",
+		"tag": "#b8cf9a",
+		"voice": 0.9,
+		"species": {"kind": "dog", "fur": "#8f7a64", "fur2": "#e2d6c2", "eyes": "#4a3020", "inner_ear": "#6f5a46", "nose": "#3a3236"},
+		"look": {"eyes": "sleepy", "mouth": "smile", "cheeks": "none", "top": "waistcoat", "top_color": "olive", "top_color2": "cream",
+			"top_pattern": "plain", "bottom": "trousers", "bottom_color": "brown", "shoes": "none", "hat": "none", "glasses": "square"}
 	}
 }

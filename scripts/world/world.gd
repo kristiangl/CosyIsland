@@ -838,18 +838,18 @@ func _add_office() -> void:
 			return
 
 
-## Lucy's shop goes up just below the plaza (or beside it), facing the camera, on the
-## first spot with nothing built there; she clears away any trees and flowers around it.
-## Returns the shop, or {} if there's nowhere to put it.
-func add_shop() -> Dictionary:
-	for obj in data.objects:
-		if obj["kind"] == "placed" and obj["item"] == "lucy_shop":
-			return obj
+## A building the islanders put up beside the plaza (Lucy's shop, the museum): just
+## below it first, else round its sides, facing the camera, on the first spot with
+## nothing built there; trees and flowers there are cleared away. Returns the building,
+## or {} if there's nowhere to put it.
+func add_building(item_id: String) -> Dictionary:
+	var existing := building(item_id)
+	if not existing.is_empty():
+		return existing
 	var plaza := data.plaza
-	var size := Vector2i(4, 3)
+	var size := Vector2i(ItemDB.placeable(item_id)["footprint"][0], ItemDB.placeable(item_id)["footprint"][1])
 	var spots: Array[Rect2i] = []
 	for ring in range(0, 6):
-		# Below the plaza first (it faces back up into it), then the sides.
 		spots.append(Rect2i(plaza.position + Vector2i(plaza.size.x / 2 - 2, plaza.size.y + ring), size))
 		for dz in range(0, plaza.size.y - 2):
 			spots.append(Rect2i(plaza.position + Vector2i(plaza.size.x + ring, dz), size))
@@ -860,11 +860,26 @@ func add_shop() -> Dictionary:
 		for obj in data.objects.duplicate():
 			if obj["kind"] in NATURAL_KINDS and rect.grow(1).has_point(Vector2i(obj["x"], obj["z"])):
 				remove_object(obj["uid"])
-		if can_place(rect, Vector3(-10, 0, -10)) and door_clear("lucy_shop", rect, 0):
-			var shop := place_item("lucy_shop", rect, 0)
-			shop["fixed"] = true
-			return shop
+		if can_place(rect, Vector3(-10, 0, -10)) and door_clear(item_id, rect, 0):
+			var placed := place_item(item_id, rect, 0)
+			placed["fixed"] = true
+			return placed
 	return {}
+
+
+func add_shop() -> Dictionary:
+	return add_building("lucy_shop")
+
+
+func building(item_id: String) -> Dictionary:
+	for obj in data.objects:
+		if obj["kind"] == "placed" and obj["item"] == item_id:
+			return obj
+	return {}
+
+
+func shop() -> Dictionary:
+	return building("lucy_shop")
 
 
 ## Things that can be cleared away to make room for a building.
@@ -889,13 +904,6 @@ func _clearable(rect: Rect2i) -> bool:
 			elif not is_equal_approx(level, h):
 				return false
 	return true
-
-
-func shop() -> Dictionary:
-	for obj in data.objects:
-		if obj["kind"] == "placed" and obj["item"] == "lucy_shop":
-			return obj
-	return {}
 
 
 ## Islands saved before the DIY update get a plaza workbench and a first bottle.

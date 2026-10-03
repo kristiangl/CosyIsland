@@ -253,7 +253,6 @@ func _reel() -> void:
 	if id == "":
 		return
 	_landed(id, "Got it! A %s!", 0.8)
-	Journal.add("fish")
 
 
 func _swing_net() -> void:
@@ -264,7 +263,6 @@ func _swing_net() -> void:
 	if id == "":
 		return
 	_landed(id, "Caught it! A %s!", 2.2)
-	Journal.add("bugs")
 
 
 ## Holds up something just caught, and puts it in the pockets.
@@ -273,6 +271,7 @@ func _landed(id: String, line: String, size: float) -> void:
 		Events.toast.emit("Your pockets are full, so you let it go.")
 		return
 	Inventory.wear_equipped()
+	Journal.catch(id)
 	_busy = 1.2
 	model.play("cheer")
 	model.hold(Models.get_mesh("drop:" + id), 1.4, size)
@@ -292,6 +291,8 @@ func _interact(obj: Dictionary) -> void:
 		Events.home_entered.emit(obj["uid"])
 	elif def.get("shopfront", false) and Story.npc("lucy"):
 		Story.talk_to(Story.npc("lucy"))
+	elif def.get("museum", false) and Story.npc("bramble"):
+		Story.talk_to(Story.npc("bramble"))
 	else:
 		Events.toast.emit("What a lovely %s." % ItemDB.display_name(obj["item"]).to_lower())
 

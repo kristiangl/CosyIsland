@@ -199,6 +199,25 @@
 				"shopfront": true
 			}
 		},
+		"museum_tent": {
+			"name": "Museum",
+			"category": "building",
+			"stack": 1,
+			"price": 0,
+			"color": "#8fa86f",
+			"desc": "Bramble's museum tent, home of the island's collection.",
+			"placeable": {
+				"footprint": [
+					4,
+					3
+				],
+				"model": "museum_tent",
+				"structure": true,
+				"rotatable": false,
+				"door": true,
+				"museum": true
+			}
+		},
 		"stone_axe": {
 			"name": "Stone Axe",
 			"category": "tool",

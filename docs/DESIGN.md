@@ -148,6 +148,8 @@ Milestone 3b:
 - [x] Lucy's shop project: bring materials and she builds a real shop beside the plaza
 - [x] Fishing and bug catching (data/creatures.json): fish shadows by water type, bites
   to time, bugs by habitat and hour that flee from runners
+- [x] The museum: five specimens for Poppy bring Bramble and his museum tent; donations,
+  a critter log in the journal
 - [x] Flowers: picked blooms regrow overnight, worn in hair or put in vases; plants dug
   up with a shovel and replanted (breeding later)
 
@@ -156,7 +158,8 @@ Next milestones (suggested order):
    everything unlocked, sold by Lucy. Time travel moves out of the phone into an
    options menu.
 4. Daily visitors and the first animal neighbours (homes, schedules).
-5. The museum (fishing and bug catching are in).
+5. The museum building: Bramble's tent grows into a real museum with exhibits inside
+   (materials project after enough donations).
 6. Island tours to random islands (reusing the generator with different seeds).
 7. Path tool, terraforming, waterscaping, rock moving.
 8. Weather and seasons; audio.
@@ -169,6 +172,8 @@ Next milestones (suggested order):
   look after house upgrades and new neighbours.
 - **Lucy**: a Jack Russell terrier. Does odd jobs, knows all about DIY, and wants to
   open the island's first shop.
+- **Bramble**: an elderly spaniel-ish naturalist in a waistcoat and glasses, Poppy's
+  old friend. Comes to run the museum.
 
 Characters are defined in `data/characters.json` (species, fur colours, outfit) and
 their lines live in `scripts/autoload/story.gd`, with progress flags saved in the game.

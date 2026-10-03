@@ -25,6 +25,9 @@ var today := -1
 var today_stats: Dictionary = {}
 var today_tasks: Array = []
 var today_done: Array = []
+## Fish and bugs ever caught, and those given to the museum.
+var caught: Array = []
+var donated: Array = []
 
 
 func _ready() -> void:
@@ -43,6 +46,26 @@ func reset() -> void:
 	today_stats.clear()
 	today_tasks.clear()
 	today_done.clear()
+	caught.clear()
+	donated.clear()
+
+
+## A fish or bug was caught: counts it, and notes it in the critter log if it's new.
+func catch(id: String) -> void:
+	add("fish" if ItemDB.fish.has(id) else "bugs")
+	if not id in caught:
+		caught.append(id)
+
+
+## Gives a creature to the museum. Returns false if it already has one.
+func donate(id: String) -> bool:
+	if id in donated or not ItemDB.is_creature(id):
+		return false
+	donated.append(id)
+	if not id in caught:
+		caught.append(id)
+	add("donated")
+	return true
 
 
 ## Records something done: wood chopped, things sold, flowers picked... Pays any
@@ -168,7 +191,7 @@ static func _surprise(id: String, category: String) -> bool:
 
 func to_save() -> Dictionary:
 	return {"stamps": stamps, "stats": stats, "tiers": tiers, "today": today,
-		"today_stats": today_stats, "today_done": today_done}
+		"today_stats": today_stats, "today_done": today_done, "caught": caught, "donated": donated}
 
 
 func from_save(saved: Dictionary) -> void:
@@ -178,6 +201,12 @@ func from_save(saved: Dictionary) -> void:
 		stats[k] = int(saved["stats"][k])
 	for k in saved.get("tiers", {}):
 		tiers[k] = int(saved["tiers"][k])
+	for id in saved.get("caught", []):
+		if ItemDB.is_creature(id):
+			caught.append(id)
+	for id in saved.get("donated", []):
+		if ItemDB.is_creature(id):
+			donated.append(id)
 	var day := int(saved.get("today", -1))
 	if day == GameClock.day_key():
 		_roll_day()

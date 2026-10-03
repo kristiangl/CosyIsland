@@ -89,7 +89,8 @@ On-screen hints follow whatever you last touched, keyboard or controller.
   a vase, or dig the whole plant up with a shovel and replant it.
 - Fishing and bug catching: 21 fish (sea, rivers, ponds) and 17 bugs that come and go
   by time of day. Cast near a fish's shadow and press when it bites; creep up on bugs
-  with a net (running scares them off).
+  with a net (running scares them off). Give Poppy five different ones and her friend
+  Bramble, a naturalist, arrives with a museum tent; the journal keeps a critter log.
 - Chop wood, shake trees for fruit and branches (and the odd piece of furniture), hit
   rocks for stone, clay and iron (one rock a day gives acorns).
 - DIY workbench with 61 recipes: tools and furniture. Message bottles wash up each day

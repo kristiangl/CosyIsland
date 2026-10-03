@@ -74,6 +74,8 @@ static func get_mesh(key: String) -> ArrayMesh:
 			_office(k)
 		"lucy_shop":
 			_lucy_shop(k)
+		"museum_tent":
+			_museum_tent(k)
 		"house":
 			_house(k)
 		"bridge":
@@ -663,6 +665,57 @@ static func _lucy_shop(k: MeshKit) -> void:
 		var fruit := Color("e0453a") if sx < 0 else Color("f2922b")
 		for i in 4:
 			k.sphere(c + Vector3(-0.12 + (i % 2) * 0.24, 0.34, -0.08 + (i / 2) * 0.16), Vector3.ONE * 0.08, MeshKit.lin(fruit), 4, 7)
+
+
+## Bramble's museum: a round canvas tent with a scalloped trim and a pennant, its flap
+## tied open, a fish tank and a bug jar on a stand outside.
+static func _museum_tent(k: MeshKit) -> void:
+	var canvas := MeshKit.lin(Color("e8e0c8"))
+	var green := MeshKit.lin(Color("8fa86f"))
+	var green_dark := MeshKit.lin(Color("6f8a55"))
+	var pole := MeshKit.lin(PLANK_DARK)
+	k.cylinder(Vector3(0, 0, -0.1), Vector3(0, 0.08, -0.1), 1.55, 1.55, MeshKit.lin(Color("c9bfb0")), 20, true)
+	# Round walls, then a cone roof in green and cream panels.
+	k.cylinder(Vector3(0, 0.08, -0.1), Vector3(0, 1.2, -0.1), 1.35, 1.35, canvas, 18, false)
+	var panels := 12
+	for i in panels:
+		var a0 := TAU * i / panels
+		var a1 := TAU * (i + 1) / panels
+		var p0 := Vector3(cos(a0) * 1.5, 1.2, sin(a0) * 1.5 - 0.1)
+		var p1 := Vector3(cos(a1) * 1.5, 1.2, sin(a1) * 1.5 - 0.1)
+		var tip := Vector3(0, 2.45, -0.1)
+		var n := ((p0 + p1) * 0.5 - Vector3(0, 0, -0.1)).normalized() + Vector3(0, 0.9, 0)
+		var col := green if i % 2 == 0 else canvas
+		var ia := k.vertex(p0, n.normalized(), col)
+		var ib := k.vertex(p1, n.normalized(), col)
+		var ic := k.vertex(tip, n.normalized(), col)
+		k.tri(ia, ib, ic, n)
+		k.sphere((p0 + p1) * 0.5 - Vector3(0, 0.04, 0), Vector3(0.38, 0.1, 0.38) * Vector3(1, 1, 1), green_dark if i % 2 == 0 else canvas, 3, 8)
+	k.cylinder(Vector3(0, 2.3, -0.1), Vector3(0, 2.85, -0.1), 0.035, 0.03, pole, 5)
+	var flag := MeshKit.lin(Color("f6d58c"), 0.8)
+	var fa := k.vertex(Vector3(0, 2.85, -0.1), Vector3.BACK, flag)
+	var fb := k.vertex(Vector3(0.36, 2.76, -0.1), Vector3.BACK, flag)
+	var fc := k.vertex(Vector3(0, 2.67, -0.1), Vector3.BACK, flag)
+	k.tri(fa, fb, fc, Vector3.BACK)
+	k.tri(fa, fc, fb, Vector3.FORWARD)
+	# The doorway with its flaps tied back.
+	var dz := 1.26
+	k.flat_quad(Vector3(-0.4, 0.08, dz), Vector3(0.4, 0.08, dz), Vector3(0.3, 1.1, dz), Vector3(-0.3, 1.1, dz), Vector3.BACK, MeshKit.lin(Color("5a4a40")))
+	for s: float in [-1.0, 1.0]:
+		var f0 := k.vertex(Vector3(s * 0.4, 0.08, dz + 0.02), Vector3.BACK, green)
+		var f1 := k.vertex(Vector3(s * 0.62, 0.08, dz - 0.02), Vector3.BACK, green)
+		var f2 := k.vertex(Vector3(s * 0.32, 1.12, dz + 0.02), Vector3.BACK, green)
+		k.tri(f0, f1, f2, Vector3.BACK)
+		k.sphere(Vector3(s * 0.48, 0.55, dz + 0.04), Vector3(0.05, 0.04, 0.03), MeshKit.lin(Color("f6d58c")), 3, 6)
+	# A stand outside with a fish tank and a bug jar.
+	var stand := Vector3(1.25, 0.08, 1.05)
+	k.box(stand + Vector3(0, 0.3, 0), Vector3(0.7, 0.06, 0.4), MeshKit.lin(PLANK), MeshKit.lin(Color("eccaa2")))
+	for sx: float in [-1.0, 1.0]:
+		k.box(stand + Vector3(sx * 0.3, 0.14, 0), Vector3(0.05, 0.28, 0.32), pole)
+	k.box(stand + Vector3(-0.14, 0.47, 0), Vector3(0.3, 0.26, 0.24), MeshKit.lin(Color("a9dce6")), MeshKit.lin(Color("c9edf2")))
+	k.sphere(stand + Vector3(-0.16, 0.47, 0.12), Vector3(0.06, 0.03, 0.01), MeshKit.lin(Color("f2922b")), 3, 6)
+	k.cylinder(stand + Vector3(0.18, 0.33, 0), stand + Vector3(0.18, 0.58, 0), 0.09, 0.08, MeshKit.lin(Color("dff3e8")), 10, true, MeshKit.lin(Color("c19a6e")))
+	k.leaf(stand + Vector3(0.18, 0.38, 0.0), Vector3(0.2, 1, 0.3), 0.14, 0.06, MeshKit.lin(Color("7cbb5c")))
 
 
 static func _bridge(k: MeshKit, length: int) -> void:

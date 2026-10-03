@@ -10,6 +10,8 @@ var flags: Dictionary = {}
 const HOUSE_COST := 10000
 ## What Lucy needs to build her shop.
 const SHOP_MATERIALS := {"wood": 30, "stone": 20, "clay": 10}
+## How many different fish and bugs bring Bramble to the island.
+const MUSEUM_SPECIMENS := 5
 var talking := false
 ## How many times each character has been chatted to today, to cycle their small talk.
 var _chats: Dictionary = {}
@@ -59,6 +61,8 @@ func talk_to(who: Npc) -> void:
 			await _poppy(who)
 		"lucy":
 			await _lucy(who)
+		"bramble":
+			await _bramble(who)
 	_end()
 
 
@@ -140,7 +144,15 @@ func _poppy_questions() -> void:
 		var house_offer := can_offer_house()
 		if house_offer:
 			options.insert(2, "About a proper house...")
+		var museum_offer := museum_project_open()
+		if museum_offer:
+			options.insert(2, "About fish and bugs..." if not flags.has("museum_gifts") else "I've brought specimens")
 		var pick := await ask("poppy", "Anything you'd like to know?", options)
+		if museum_offer and pick == 2:
+			await _museum_project()
+			continue
+		if museum_offer and pick > 2:
+			pick -= 1
 		if house_offer and pick == 2:
 			await _house_talk()
 			continue
@@ -327,6 +339,132 @@ func finish_shop(island: World) -> bool:
 		return false
 	flags["shop_done"] = true
 	return true
+
+
+# --- The museum ----------------------------------------------------------------------
+
+## Poppy's museum project: once you've a home and have caught a fish or bug, until
+## Bramble's on his way.
+func museum_project_open() -> bool:
+	if flags.has("museum_day") or flags.get("museum_done", false) or not _has_home():
+		return false
+	return flags.has("museum_gifts") or int(Journal.stats.get("fish", 0)) + int(Journal.stats.get("bugs", 0)) > 0
+
+
+func _museum_project() -> void:
+	if not flags.has("museum_gifts"):
+		await say("poppy", ["You've been catching things! I knew you would.",
+			"My old friend Bramble is a naturalist. He's always wanted to start a museum somewhere.",
+			"If you bring me %d different fish or bugs, I'll send them to him with a letter." % MUSEUM_SPECIMENS,
+			"Something tells me he won't be able to resist coming to see them."])
+		flags["museum_gifts"] = []
+		return
+	var gifts: Array = flags["museum_gifts"]
+	var given: Array = []
+	for i in Inventory.slots.size():
+		var slot := Inventory.slots[i]
+		var id: String = slot.get("id", "")
+		if gifts.size() < MUSEUM_SPECIMENS and ItemDB.is_creature(id) and not id in gifts:
+			gifts.append(id)
+			given.append(ItemDB.display_name(id).to_lower())
+			Inventory.remove_from_slot(i)
+	if given.is_empty():
+		await say("poppy", ["I've got %d so far. I need %d different ones, so bring me ones I haven't got!" % [gifts.size(), MUSEUM_SPECIMENS]])
+		return
+	if gifts.size() < MUSEUM_SPECIMENS:
+		await say("poppy", ["Ooh, %s! That's %d of %d." % [_and_list(given), gifts.size(), MUSEUM_SPECIMENS]])
+		return
+	flags["museum_day"] = GameClock.day_key()
+	_npc_cheer("poppy")
+	await say("poppy", ["That's all %d! I'll pack them up carefully and post them to Bramble tonight." % MUSEUM_SPECIMENS,
+		"I wouldn't be surprised if he turned up tomorrow with a tent and a magnifying glass."])
+
+
+static func _and_list(names: Array) -> String:
+	if names.size() > 1:
+		return ", ".join(names.slice(0, -1)) + " and " + names[-1]
+	return names[0] if not names.is_empty() else ""
+
+
+## Bramble arrives with his museum tent the day after the specimens were sent, and the
+## first specimens go on display. Returns true if it happened just now.
+func finish_museum(island: World) -> bool:
+	if not flags.has("museum_day") or flags.get("museum_done", false):
+		return false
+	if GameClock.day_key() <= int(flags["museum_day"]):
+		return false
+	if island.add_building("museum_tent").is_empty():
+		return false
+	for id: String in flags.get("museum_gifts", []):
+		Journal.donate(id)
+	flags["museum_done"] = true
+	return true
+
+
+func _bramble(bramble: Npc) -> void:
+	if not flags.get("met_bramble", false):
+		flags["met_bramble"] = true
+		bramble.hop()
+		await say("bramble", [
+			"Ah! You must be {player}. Bramble, naturalist, at your service. Poppy's letter was ever so persuasive.",
+			"And the specimens! Marvellous. I simply had to come and see where they were found.",
+			"This tent will do for a museum to begin with. Bring me any fish or bug I haven't got, and I'll look after it.",
+			"Every creature tells you something about the island. I intend to listen to all of them.",
+		])
+		return
+	var options := ["I'd like to donate", "Tell me about something", "Bye!"]
+	match await ask("bramble", _small_talk("bramble_hello", [
+		"Welcome, welcome! What have you found today?",
+		"Ah, {player}. Come in, mind the jars.",
+		"Hello again! The collection grows, little by little.",
+	]), options):
+		0:
+			await _donate()
+		1:
+			await say("bramble", [_creature_fact()])
+		_:
+			await say("bramble", ["Do come back. Nature never stops surprising."])
+
+
+func _donate() -> void:
+	var lines: Array = []
+	for i in Inventory.slots.size():
+		var id: String = Inventory.slots[i].get("id", "")
+		if ItemDB.is_creature(id) and not id in Journal.donated:
+			Journal.donate(id)
+			Inventory.remove_from_slot(i)
+			lines.append("A %s! %s" % [ItemDB.display_name(id).to_lower(), _thanks(id)])
+	if lines.is_empty():
+		await say("bramble", ["Hmm, nothing new for the collection there, I'm afraid.",
+			"We have %d of %d so far. Keep looking!" % [Journal.donated.size(), ItemDB.fish.size() + ItemDB.bugs.size()]])
+		return
+	_npc_cheer("bramble")
+	lines.append("That's %d of %d in the collection now. Thank you, {player}." % [Journal.donated.size(), ItemDB.fish.size() + ItemDB.bugs.size()])
+	await say("bramble", lines)
+
+
+func _thanks(id: String) -> String:
+	var c: Dictionary = ItemDB.fish.get(id, ItemDB.bugs.get(id, {}))
+	return _small_talk("bramble_thanks", [
+		"What a splendid specimen.",
+		"I'll find it the perfect spot.",
+		"Oh, look at the colour of it!",
+		"The collection wasn't complete without one.",
+	]) if c.is_empty() else "%s %s" % [_small_talk("bramble_thanks", ["Splendid.", "Marvellous.", "Oh, lovely.", "How wonderful."]),
+		ItemDB.WHERE_TEXT.get(c["where"], "")]
+
+
+## Something Bramble knows about one of the creatures in the collection.
+func _creature_fact() -> String:
+	if Journal.donated.is_empty():
+		return "Once you've brought me a few things, I'll have plenty to tell you!"
+	var id: String = Journal.donated[(_chats.get("bramble_fact", 0) + GameClock.day_key()) % Journal.donated.size()]
+	_chats["bramble_fact"] = _chats.get("bramble_fact", 0) + 1
+	var c: Dictionary = ItemDB.fish.get(id, ItemDB.bugs.get(id, {}))
+	var hours: Array = c["hours"]
+	var when := "at any hour" if hours[0] == 0 and hours[1] == 24 else ("by day" if hours[0] < hours[1] and hours[1] <= 20 else "after dark")
+	return "The %s! %s You'll find them %s. Lucy would pay %d acorns for one, but I'd rather you brought them here." % [
+		ItemDB.display_name(id).to_lower(), ItemDB.WHERE_TEXT.get(c["where"], ""), when, int(c["price"])]
 
 
 func _shop(mode: String) -> void:

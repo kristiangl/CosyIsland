@@ -16,12 +16,12 @@ extends Node3D
 ##   --demo=sit         same, and sit on the chair
 ##   --demo=home        pitch the tent, go inside and furnish it (--room=wallpaper,flooring)
 ##   --demo=door        pitch the tent and stand outside its door
-##   --demo=shop        Lucy's shop has been built; stand in front of it
+##   --demo=shop        Lucy's shop has been built; stand in front of it (--demo=museum: Bramble's)
 ##   --demo=fishing     fishing off the beach with fish about (--demo=bugs: bugs nearby)
 ##   --demo=flowers     stand by some flowers, one picked, with a flower in your hair
 ##   --house            with --demo: the tent has already become a house
 ##   --series=ID        with --demo or --demo=home: furniture from one series (--variant=ID)
-##   --ui=pockets|pause|map|creator|crafting|customise|journal|exchange|placing|intro|ask|lucy|sleep|shop|sell  (--tab=N picks a creator tab, --try=key:id,... dresses up, --closet=TEXT opens the wardrobe with clothes whose ids contain TEXT)  open a menu or mode (for screenshots)
+##   --ui=pockets|pause|map|creator|crafting|customise|journal|exchange|critters|placing|intro|ask|lucy|sleep|shop|sell  (--tab=N picks a creator tab, --try=key:id,... dresses up, --closet=TEXT opens the wardrobe with clothes whose ids contain TEXT)  open a menu or mode (for screenshots)
 
 const AUTOSAVE_SECONDS := 60.0
 
@@ -186,6 +186,12 @@ func _ready() -> void:
 			Inventory.add_item("wood", 12)
 			Inventory.add_item("stone", 5)
 			hud.crafting.open()
+		"critters":
+			for id: String in ["sea_bass", "koi", "anchovy", "white_butterfly", "ladybug", "cicada", "frog"]:
+				Journal.catch(id)
+			for id: String in ["sea_bass", "white_butterfly", "ladybug"]:
+				Journal.donate(id)
+			hud.journal.open("critters")
 		"journal", "exchange":
 			Journal.add("wood", 12)
 			Journal.add("crafted", 2)
@@ -291,6 +297,7 @@ func _spawn_npcs() -> void:
 		world.reserve(Vector2i(floori(spot.x), floori(spot.y)))
 		Game.npcs.append(npc)
 	_place_lucy()
+	_place_bramble()
 
 
 ## The house Poppy promised goes up once a night has passed (not while you're inside).
@@ -300,6 +307,28 @@ func _check_house() -> void:
 	if Story.finish_shop(world):
 		Events.toast.emit("Lucy's shop is open! Go and say hello.")
 		_place_lucy()
+	if Story.finish_museum(world):
+		Events.toast.emit("Someone's put up a tent by the plaza. A museum?")
+		_place_bramble()
+
+
+## Bramble comes to the island with his museum and stands at its door.
+func _place_bramble() -> void:
+	var museum := world.building("museum_tent")
+	if museum.is_empty():
+		return
+	var bramble := Story.npc("bramble")
+	if bramble == null:
+		bramble = Npc.new()
+		world.add_child(bramble)
+		var spot := world.outside_door(museum)
+		bramble.setup("bramble", world, spot["position"], spot["facing"])
+		Game.npcs.append(bramble)
+	var at := world.outside_door(museum)
+	bramble.position = at["position"] + Vector3(0.9, 0, -0.2)
+	bramble.position.y = world.ground_height(bramble.position.x, bramble.position.z)
+	bramble.rest_facing = at["facing"]
+	world.reserve(Vector2i(floori(bramble.position.x), floori(bramble.position.z)))
 
 
 ## Lucy stands in front of her shop once it's built.
@@ -418,6 +447,17 @@ func _run_demo() -> void:
 		Story.flags["tent_gift"] = true
 		Story.flags["house_day"] = GameClock.day_key() - 1
 		_check_house()
+	if Game.args["demo"] == "museum":
+		# As if Bramble arrived last night with the first specimens.
+		Story.flags["museum_gifts"] = ["sea_bass", "koi", "white_butterfly", "ladybug", "cicada"]
+		Story.flags["museum_day"] = GameClock.day_key() - 1
+		_check_house()
+		var museum := world.building("museum_tent")
+		if not museum.is_empty():
+			player.position = world.outside_door(museum)["position"] + Vector3(-1.2, 0, 2.0)
+			player.facing = Vector3(0.3, 0, -1).normalized()
+			camera_rig.snap()
+		return
 	if Game.args["demo"] == "shop":
 		# As if Lucy built her shop last night: stand in front of it.
 		Story.flags["shop_day"] = GameClock.day_key() - 1

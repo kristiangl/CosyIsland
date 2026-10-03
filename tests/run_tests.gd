@@ -30,6 +30,7 @@ func _run() -> void:
 	_test_journal()
 	_test_lucy_shop()
 	_test_critters()
+	_test_museum()
 	print("\n%d checks, %d failures" % [_checks, _failures])
 	get_tree().quit(1 if _failures > 0 else 0)
 
@@ -790,3 +791,31 @@ func _test_critters() -> void:
 	check(Models.get_mesh("drop:stag_beetle").get_surface_count() > 0, "bugs have models")
 	player.free()
 	w.free()
+
+
+func _test_museum() -> void:
+	var saved_flags := Story.flags.duplicate(true)
+	Story.flags.clear()
+	Journal.reset()
+	var d := IslandGenerator.generate(7)
+	var w := World.new()
+	add_child(w)
+	w.setup(d)
+	check(not Story.museum_project_open(), "no museum talk before a home and a first catch")
+	Story.flags["museum_gifts"] = ["sea_bass", "koi", "white_butterfly", "ladybug", "cicada"]
+	Story.flags["museum_day"] = GameClock.day_key() - 1
+	check(Story.finish_museum(w), "Bramble arrives the next day")
+	var museum := w.building("museum_tent")
+	check(not museum.is_empty() and museum.get("fixed", false), "with his museum tent")
+	check(Journal.donated.size() == 5 and "koi" in Journal.caught, "the first specimens are on display")
+	check(not Journal.donate("koi"), "the museum keeps one of each")
+	check(Journal.donate("frog") and Journal.stats.get("donated", 0) == 6, "new ones are welcome and counted")
+	check(Story._creature_fact().length() > 20, "Bramble has things to say about them")
+	check(Story._and_list(["a", "b", "c"]) == "a, b and c", "lists read naturally")
+	var saved: Dictionary = JSON.parse_string(JSON.stringify(Journal.to_save()))
+	Journal.from_save(saved)
+	check(Journal.donated.size() == 6, "donations are saved")
+	check(JournalMenu.hours_text([4, 21]) == "About from 4am to 9pm." and JournalMenu.hours_text([0, 24]) == "About all day.", "hours read nicely")
+	w.free()
+	Journal.reset()
+	Story.flags = saved_flags

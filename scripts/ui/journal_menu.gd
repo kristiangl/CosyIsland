@@ -1,9 +1,10 @@
 class_name JournalMenu
 extends PanelContainer
-## Poppy's Island Journal, from the phone. Three tabs (L/R, Q/E or click): Today's five
-## tasks, Milestones, and the stamp Exchange where A buys. B closes.
+## Poppy's Island Journal, from the phone. Four tabs (L/R, Q/E or click): Today's five
+## tasks, Milestones, the stamp Exchange where A buys, and the Critters you've caught
+## (and given to the museum). B closes.
 
-const TABS := ["today", "milestones", "exchange"]
+const TABS := ["today", "milestones", "exchange", "critters"]
 
 var _tab := "today"
 var _tabs: Array[Button] = []
@@ -145,6 +146,9 @@ func _set_tab(tab: String) -> void:
 		"exchange":
 			for offer: Dictionary in Journal.exchange:
 				_add_row(JournalRow.new("exchange", offer))
+		"critters":
+			for c: Dictionary in ItemDB.fish.values() + ItemDB.bugs.values():
+				_add_row(JournalRow.new("critters", c))
 	if not _rows.is_empty():
 		var first: WeakRef = weakref(_rows[0])
 		(func():
@@ -195,8 +199,24 @@ func _show(row: JournalRow) -> void:
 			_desc.text = d["desc"]
 			var why := Journal.can_buy(d)
 			_detail.text = "%d stamps" % int(d["cost"]) + ("" if why == "" else "\n" + why)
+		"critters":
+			var seen: bool = d["id"] in Journal.caught
+			_icon.texture = Icons.get_icon(d["id"]) if seen else null
+			_name.text = d["name"] if seen else "Not caught yet"
+			_desc.text = "%s %s" % [ItemDB.WHERE_TEXT.get(d["where"], ""), hours_text(d["hours"])]
+			_detail.text = ("In the museum" if d["id"] in Journal.donated else ("Sells for %d acorns" % int(d["price"]) if seen else ""))
 	for r in _rows:
 		r.queue_redraw()
+
+
+## "All day", or the hours a creature is about, like "4am to 9pm".
+static func hours_text(hours: Array) -> String:
+	if int(hours[0]) == 0 and int(hours[1]) == 24:
+		return "About all day."
+	var h := func(x: int) -> String:
+		var x12 := x % 12
+		return "%d%s" % [12 if x12 == 0 else x12, "am" if x % 24 < 12 else "pm"]
+	return "About from %s to %s." % [h.call(int(hours[0])), h.call(int(hours[1]))]
 
 
 func _activate(row: JournalRow) -> void:
@@ -228,6 +248,19 @@ class JournalRow:
 	func _draw() -> void:
 		var font := get_theme_default_font()
 		var x := 16.0
+		if kind == "critters":
+			var seen: bool = data["id"] in Journal.caught
+			var tex := Icons.get_icon(data["id"]) if seen else null
+			if tex:
+				draw_texture_rect(tex, Rect2(8, 3, 48, 48), false)
+			else:
+				draw_circle(Vector2(32, 27), 16, UIStyle.BROWN_LIGHT * Color(1, 1, 1, 0.3))
+				draw_string(font, Vector2(24, 34), "?", HORIZONTAL_ALIGNMENT_LEFT, -1, 20, UIStyle.BROWN_LIGHT)
+			draw_string(font, Vector2(66, 34), data["name"] if seen else "???", HORIZONTAL_ALIGNMENT_LEFT, size.x - 190, 20,
+				UIStyle.BROWN if seen else UIStyle.BROWN_LIGHT)
+			if data["id"] in Journal.donated:
+				draw_string(font, Vector2(size.x - 130, 34), "Museum", HORIZONTAL_ALIGNMENT_RIGHT, 110, 16, UIStyle.GREEN)
+			return
 		if kind == "exchange":
 			var tex := Icons.get_icon(data.get("icon", ""))
 			if tex:

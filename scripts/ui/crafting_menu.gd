@@ -141,8 +141,16 @@ func _craft(id: String) -> void:
 		Events.toast.emit("You need more materials for that.")
 		return
 	if Recipes.craft(id):
+		# Step away from the menu to watch the hammering, then come back to it.
+		visible = false
+		if Game.player:
+			await Game.player.craft_animation()
 		Events.toast.emit("You made %s!" % ItemDB.display_name(id).to_lower())
+		visible = true
 		_show(id)
+		for r in _rows:
+			if r.item_id == id:
+				r.grab_focus()
 	else:
 		Events.toast.emit("Your pockets are too full to hold it.")
 

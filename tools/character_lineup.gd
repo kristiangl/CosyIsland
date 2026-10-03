@@ -81,8 +81,8 @@ func _add_camera() -> void:
 ## cheer, shake. Each is stepped with fixed time steps to the interesting moment.
 func _pose_sheet(look: Dictionary) -> void:
 	var poses := [["idle", 0.0, 0.5], ["walk", 3.4, 0.33], ["run", 6.4, 0.3], ["chop", 0.0, 0.17],
-		["pickup", 0.0, 0.17], ["sit", 0.0, 0.5], ["cheer", 0.0, 0.35], ["shake", 0.0, 0.2]]
-	var spacing := 0.85
+		["pickup", 0.0, 0.17], ["sit", 0.0, 0.5], ["cheer", 0.0, 0.35], ["shake", 0.0, 0.2], ["eat", 0.0, 0.55], ["craft", 0.0, 0.42]]
+	var spacing := minf(0.85, 7.0 / poses.size())
 	for i in poses.size():
 		var c := CharacterModel.new(look)
 		c.position = Vector3((i - (poses.size() - 1) * 0.5) * spacing, 0, 0)
@@ -91,7 +91,7 @@ func _pose_sheet(look: Dictionary) -> void:
 		var pose: String = poses[i][0]
 		var speed: float = poses[i][1]
 		var time: float = poses[i][2]
-		if pose in ["chop", "pickup", "cheer", "shake"]:
+		if pose in ["chop", "pickup", "cheer", "shake", "eat", "craft"]:
 			c.play(pose)
 		if pose == "sit":
 			c.set_sitting(true)

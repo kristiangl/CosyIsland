@@ -254,6 +254,31 @@ func _stand_up() -> void:
 	tw.tween_property(model, "position:y", 0.0, 0.2)
 
 
+## Eats something from the pockets: up to the mouth, crumbs, hearts.
+func eat(item_id: String) -> void:
+	_busy = 1.6
+	model.play("eat")
+	model.hold(Models.get_mesh("drop:" + item_id), 1.4)
+	for i in 3:
+		await get_tree().create_timer(0.35 + i * 0.3).timeout
+		Effects.burst("crumbs", position + facing * 0.25 + Vector3(0, 1.0, 0))
+	await get_tree().create_timer(0.35).timeout
+	Effects.burst("hearts", position + Vector3(0, 1.6, 0))
+
+
+## Crafting at the workbench: hammering with sparkles, then a pop of confetti.
+func craft_animation() -> void:
+	_busy = 1.6
+	model.play("craft")
+	var bench := position + facing * 0.8 + Vector3(0, 0.85, 0)
+	for i in 4:
+		await get_tree().create_timer(0.3).timeout
+		Effects.burst("sparks", bench)
+	await get_tree().create_timer(0.3).timeout
+	Effects.burst("confetti", bench + Vector3(0, 0.2, 0))
+	Effects.burst("sparkle", bench + Vector3(0, 0.3, 0))
+
+
 func is_sitting() -> bool:
 	return _seat_uid >= 0
 

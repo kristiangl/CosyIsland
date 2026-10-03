@@ -20,36 +20,44 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	grow_horizontal = Control.GROW_DIRECTION_BOTH
 	grow_vertical = Control.GROW_DIRECTION_BOTH
+	# Compact and at the top of the screen, so you can watch yourself eat and craft.
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 12)
+	box.add_theme_constant_override("separation", 8)
 	add_child(box)
 	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", 16)
 	box.add_child(header)
 	var title := Label.new()
 	title.text = "Pockets"
-	title.add_theme_font_size_override("font_size", 30)
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title.add_theme_font_size_override("font_size", 26)
 	header.add_child(title)
+	_name_label = Label.new()
+	_name_label.add_theme_font_size_override("font_size", 22)
+	_name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	header.add_child(_name_label)
 	_currency_label = Label.new()
 	header.add_child(_currency_label)
 	_grid = GridContainer.new()
 	_grid.columns = COLUMNS
-	_grid.add_theme_constant_override("h_separation", 8)
-	_grid.add_theme_constant_override("v_separation", 8)
+	_grid.add_theme_constant_override("h_separation", 6)
+	_grid.add_theme_constant_override("v_separation", 6)
 	box.add_child(_grid)
-	_name_label = Label.new()
-	_name_label.add_theme_font_size_override("font_size", 24)
-	box.add_child(_name_label)
+	var footer := HBoxContainer.new()
+	footer.add_theme_constant_override("separation", 16)
+	box.add_child(footer)
 	_desc_label = Label.new()
 	_desc_label.add_theme_color_override("font_color", UIStyle.BROWN_LIGHT)
-	_desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_desc_label.custom_minimum_size = Vector2(700, 52)
-	box.add_child(_desc_label)
+	_desc_label.add_theme_font_size_override("font_size", 17)
+	_desc_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	_desc_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_desc_label.custom_minimum_size = Vector2(380, 0)
+	footer.add_child(_desc_label)
 	var hint := Label.new()
 	Prompts.bind_label(hint, "{ui_accept} use   {pickup} drop   {pockets} close")
 	hint.add_theme_font_size_override("font_size", 16)
 	hint.add_theme_color_override("font_color", UIStyle.BROWN_LIGHT)
-	box.add_child(hint)
+	footer.add_child(hint)
 	for i in Inventory.slots.size():
 		var b := SlotButton.new()
 		b.index = i
@@ -68,7 +76,7 @@ func open() -> void:
 	visible = true
 	_refresh()
 	reset_size()
-	position = (get_parent_area_size() - size) * 0.5
+	position = Vector2((get_parent_area_size().x - size.x) * 0.5, 14)
 	_buttons[clampi(_selected, 0, _buttons.size() - 1)].grab_focus()
 
 
@@ -107,7 +115,7 @@ func _on_focus(i: int) -> void:
 	_name_label.text = def.get("name", slot["id"])
 	var extra := ""
 	if slot.has("durability"):
-		extra = "  (Durability %d)" % slot["durability"]
+		_name_label.text += "  (%d uses left)" % slot["durability"]
 	if i == Inventory.equipped_slot:
 		extra += "  - holding"
 	_desc_label.text = def.get("desc", "") + extra
@@ -137,6 +145,8 @@ func _use_slot(i: int) -> void:
 		_refresh()
 	elif def.get("category", "") == "fruit":
 		Inventory.remove_from_slot(i)
+		close()
+		Game.player.eat(id)
 		Events.toast.emit("Mmm, delicious!")
 	else:
 		_drop_slot(i)
@@ -157,21 +167,21 @@ class SlotButton:
 	var index := 0
 
 	func _init() -> void:
-		custom_minimum_size = Vector2(64, 64)
+		custom_minimum_size = Vector2(58, 58)
 		focus_mode = Control.FOCUS_ALL
 
 	func _draw() -> void:
 		var slot := Inventory.slots[index]
 		var c := size * 0.5
 		if index == Inventory.equipped_slot:
-			draw_circle(c, 28, UIStyle.GREEN)
+			draw_circle(c, 26, UIStyle.GREEN)
 		if slot.is_empty():
 			draw_circle(c, 6, UIStyle.BROWN_LIGHT * Color(1, 1, 1, 0.35))
 			return
 		var font := get_theme_default_font()
 		var tex := Icons.get_icon(slot["id"])
 		if tex:
-			draw_texture_rect(tex, Rect2(c - Vector2(27, 27), Vector2(54, 54)), false)
+			draw_texture_rect(tex, Rect2(c - Vector2(25, 25), Vector2(50, 50)), false)
 		else:
 			var col := ItemDB.color_of(slot["id"])
 			draw_circle(c, 20, col)

@@ -243,9 +243,24 @@ func set_tool(item_id: String) -> void:
 func play(action: String) -> void:
 	_action = action
 	_action_t = 0.0
-	_action_length = {"chop": 0.45, "shake": 0.5, "pickup": 0.35, "cheer": 0.9}.get(action, 0.4)
+	_action_length = {"chop": 0.45, "shake": 0.5, "pickup": 0.35, "cheer": 0.9, "eat": 1.6, "craft": 1.5}.get(action, 0.4)
 	if action == "cheer" and _face:
 		_face.set_shader_parameter("eye_style", 2)
+
+
+## Holds something in the right hand for a while (a fruit being eaten, say), then goes
+## back to the tool.
+func hold(mesh: Mesh, seconds: float) -> void:
+	if _tool == null:
+		return
+	_tool.mesh = mesh
+	_tool.rotation_degrees = Vector3.ZERO
+	_tool.scale = Vector3.ONE * 0.55
+	await get_tree().create_timer(seconds).timeout
+	if is_instance_valid(_tool):
+		_tool.rotation_degrees = Vector3(90, 0, 0)
+		_tool.scale = Vector3.ONE
+		set_tool(_tool_id)
 
 
 ## Kept for older callers.
@@ -393,8 +408,35 @@ func _action_pose(t: Dictionary, delta: float) -> void:
 			t["elbow_r"] = -0.2
 			t["body_y"] = maxf(0.0, sin(a * PI * 2.0)) * 0.12
 			t["head_pitch"] = -0.15 * w
+		"eat":
+			# Fruit up to the mouth, a few happy munches, a contented sigh.
+			var up := smoothstep(0.0, 0.15, a) * (1.0 - smoothstep(0.85, 1.0, a))
+			t["arm_r"] = -1.9 * up
+			t["elbow_r"] = -1.7 * up
+			t["arm_l"] = -1.3 * up
+			t["elbow_l"] = -1.6 * up
+			t["arm_l_out"] = -0.15 * up
+			var munch := sin(a * TAU * 5.0) * up * (1.0 if a > 0.2 else 0.0)
+			t["head_pitch"] = 0.12 * munch
+			t["squash"] = 1.0 - 0.03 * absf(munch)
+			if a > 0.8 and _face:
+				_face.set_shader_parameter("eye_style", 2)
+		"craft":
+			# Kneel at the bench and hammer away.
+			var down := smoothstep(0.0, 0.12, a) * (1.0 - smoothstep(0.88, 1.0, a))
+			t["body_y"] = -0.08 * down
+			t["body_pitch"] = 0.3 * down
+			t["leg_l"] = -0.4 * down
+			t["leg_r"] = -0.4 * down
+			t["knee_l"] = 0.8 * down
+			t["knee_r"] = 0.8 * down
+			t["arm_l"] = -1.0 * down
+			t["elbow_l"] = -0.3
+			var hit := maxf(0.0, sin(a * TAU * 4.0))
+			t["arm_r"] = lerpf(-0.9, -2.2, hit) * down
+			t["elbow_r"] = lerpf(-0.2, -0.8, hit) * down
 	if _action_t >= 1.0:
-		if _action == "cheer" and _face:
+		if _action in ["cheer", "eat"] and _face:
 			_face.set_shader_parameter("eye_style", Appearance.index_of(look, "eyes"))
 		_action = ""
 

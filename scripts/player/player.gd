@@ -18,6 +18,9 @@ var _busy := 0.0
 ## The furniture being sat on, or -1.
 var _seat_uid := -1
 var _stand_spot := Vector3.ZERO
+## True while the line is out.
+var fishing := false
+var _line: MeshInstance3D
 
 
 func setup(w: World, start: Vector3, look: Dictionary) -> void:
@@ -27,6 +30,19 @@ func setup(w: World, start: Vector3, look: Dictionary) -> void:
 	add_child(model)
 	model.set_tool(Inventory.equipped_id())
 	Events.equipped_changed.connect(model.set_tool)
+	_line = MeshInstance3D.new()
+	var thread := CylinderMesh.new()
+	thread.top_radius = 0.006
+	thread.bottom_radius = 0.006
+	thread.height = 1.0
+	thread.radial_segments = 4
+	thread.rings = 1
+	_line.mesh = thread
+	_line.material_override = Models.material()
+	_line.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_line.top_level = true
+	_line.visible = false
+	add_child(_line)
 
 
 func _physics_process(delta: float) -> void:
@@ -41,6 +57,13 @@ func _physics_process(delta: float) -> void:
 	if _busy > 0.0:
 		_busy -= delta
 		input = Vector2.ZERO
+	if fishing:
+		# Walking off reels the line in.
+		if input.length() > 0.3:
+			_reel()
+		else:
+			input = Vector2.ZERO
+			_update_line()
 	var dir := Vector3(input.x, 0, input.y)
 	var running := Input.is_action_pressed("run") and Game.mode == Game.Mode.PLAY
 	var target_speed := dir.length() * (RUN_SPEED if running else WALK_SPEED)
@@ -63,6 +86,10 @@ func _physics_process(delta: float) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if Game.mode != Game.Mode.PLAY or _busy > 0.0 or _seat_uid >= 0:
+		return
+	if fishing:
+		if event.is_action_pressed("use"):
+			_reel()
 		return
 	if event.is_action_pressed("use"):
 		_use()
@@ -166,6 +193,10 @@ func _use() -> void:
 		_interact(obj)
 		return
 	match tool_kind:
+		"rod":
+			_cast()
+		"net":
+			_swing_net()
 		"axe", "shovel":
 			_busy = SWING_TIME
 			model.play("chop")
@@ -188,6 +219,65 @@ func _use() -> void:
 				_busy = SWING_TIME
 				model.play("shake")
 				world.shake(obj, position)
+
+
+# --- Fishing and bugs ----------------------------------------------------------------
+
+func _cast() -> void:
+	var spot: Variant = world.critters.cast_spot(position, facing) if world.critters else null
+	if spot == null:
+		Events.toast.emit("Face the water to cast your line.")
+		return
+	_busy = 0.5
+	model.play("chop")
+	await get_tree().create_timer(0.3).timeout
+	world.critters.cast(spot)
+	fishing = true
+	_line.visible = true
+	_update_line()
+
+
+## The line from the rod tip to the bobber.
+func _update_line() -> void:
+	var tip := position + facing * 0.75 + Vector3(0, 1.15, 0)
+	var end := world.critters.bobber.position + Vector3(0, 0.08, 0)
+	var span := end - tip
+	_line.global_transform = Transform3D(Basis(Quaternion(Vector3.UP, span.normalized())).scaled(Vector3(1, span.length(), 1)),
+		(tip + end) * 0.5)
+
+
+func _reel() -> void:
+	fishing = false
+	_line.visible = false
+	var id := world.critters.reel()
+	if id == "":
+		return
+	_landed(id, "Got it! A %s!", 0.8)
+	Journal.add("fish")
+
+
+func _swing_net() -> void:
+	_busy = SWING_TIME
+	model.play("chop")
+	await get_tree().create_timer(IMPACT_TIME).timeout
+	var id := world.critters.net(position + facing * 0.9) if world.critters else ""
+	if id == "":
+		return
+	_landed(id, "Caught it! A %s!", 2.2)
+	Journal.add("bugs")
+
+
+## Holds up something just caught, and puts it in the pockets.
+func _landed(id: String, line: String, size: float) -> void:
+	if Inventory.add_item(id) > 0:
+		Events.toast.emit("Your pockets are full, so you let it go.")
+		return
+	Inventory.wear_equipped()
+	_busy = 1.2
+	model.play("cheer")
+	model.hold(Models.get_mesh("drop:" + id), 1.4, size)
+	Effects.burst("sparkle", position + Vector3(0, 1.3, 0))
+	Events.toast.emit(line % ItemDB.display_name(id).to_lower())
 
 
 func _interact(obj: Dictionary) -> void:

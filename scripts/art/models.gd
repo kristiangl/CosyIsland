@@ -58,6 +58,12 @@ static func get_mesh(key: String) -> ArrayMesh:
 			_rock(k, int(p[1]))
 		"flower":
 			_flower_clump(k, p[1], p[2], p.size() > 3 and p[3] == "picked")
+		"creature":
+			CreatureModels.build(k, p[1])
+		"fishshadow":
+			CreatureModels.shadow(k, p[1])
+		"bobber":
+			CreatureModels.bobber(k)
 		"hairflower":
 			_hair_flower(k, p[1])
 		"vase":
@@ -741,6 +747,9 @@ static func _drop(k: MeshKit, item: String) -> void:
 	var def := ItemDB.get_item(item)
 	var col := MeshKit.lin(ItemDB.color_of(item))
 	match def.get("category", ""):
+		"fish", "bug":
+			CreatureModels.build(k, item)
+			return
 		"clothing":
 			# A neatly folded bundle tied with a ribbon.
 			k.rounded_box(Vector3(0, 0.07, 0), Vector3(0.36, 0.14, 0.28), col, 0.4)
@@ -834,5 +843,15 @@ static func _tool(k: MeshKit, item: String) -> void:
 		"shovel":
 			k.cylinder(Vector3(0, -0.1, 0), Vector3(0, 0.6, 0), 0.028, 0.028, handle, 5)
 			k.box(Vector3(0, 0.72, 0), Vector3(0.18, 0.22, 0.03), head)
+		"rod":
+			k.cylinder(Vector3(0, -0.1, 0), Vector3(0, 0.9, 0), 0.025, 0.012, handle, 5)
+			k.cylinder(Vector3(0.03, 0.05, 0), Vector3(0.03, 0.08, 0), 0.04, 0.04, MeshKit.lin(Color("7d8790")), 8, true)
+			k.sphere(Vector3(0, 0.9, 0), Vector3.ONE * 0.016, MeshKit.lin(Color("e0453a")), 3, 5)
+		"net":
+			k.cylinder(Vector3(0, -0.1, 0), Vector3(0, 0.62, 0), 0.025, 0.025, handle, 5)
+			k.xform = Transform3D(Basis(Vector3.RIGHT, PI * 0.5), Vector3(0, 0.78, 0))
+			k.cylinder(Vector3(0, -0.01, 0), Vector3(0, 0.01, 0), 0.17, 0.17, MeshKit.lin(Color("c8ccd2")), 14, false)
+			k.xform = Transform3D.IDENTITY
+			k.sphere(Vector3(0, 0.78, -0.08), Vector3(0.15, 0.15, 0.12), MeshKit.lin(Color("f4f0e6"), 0.3), 5, 10)
 		_:
 			k.cylinder(Vector3(0, -0.1, 0), Vector3(0, 0.5, 0), 0.03, 0.03, handle, 5)

@@ -7,6 +7,13 @@ extends Node
 const DATA_PATH := "res://data/items.json"
 const CLOTHING_PATH := "res://data/clothing.json"
 const FURNITURE_DIR := "res://data/furniture/"
+const CREATURES_PATH := "res://data/creatures.json"
+const WHERE_TEXT := {
+	"sea": "Caught in the sea.", "river": "Caught in a river.", "pond": "Caught in a pond.",
+	"flowers": "Found among the flowers.", "air": "Found flitting about.", "grass": "Found in the grass.",
+	"trees": "Found on a tree.", "rocks": "Found on a rock.", "beach": "Found on the beach.",
+	"water": "Found by the water.",
+}
 ## Placeable settings a series piece passes straight through to its items.
 const PIECE_PLACEABLE := ["seat", "surface", "small", "light", "bed", "effects", "rug"]
 ## Which appearance keys a piece of clothing sets, by slot: style, colour, second colour,
@@ -24,6 +31,9 @@ var flowers: Dictionary = {}
 ## Painted colourways for the original wooden furniture, by variant id (data/items.json
 ## "colourways"): {name, wood, dark, light}.
 var woods: Dictionary = {}
+## Fish and bugs by id (data/creatures.json), each also an item of the same id.
+var fish: Dictionary = {}
+var bugs: Dictionary = {}
 ## Furniture series by id: {name, desc, variants, pieces} as in data/furniture/<id>.json.
 var series: Dictionary = {}
 ## DIY recipes for series pieces (the first variant of each piece with a recipe), merged
@@ -67,6 +77,7 @@ func _ready() -> void:
 	_load_clothing()
 	_load_furniture()
 	_load_colourways(data.get("colourways", {}))
+	_load_creatures()
 
 
 ## Designed clothes come as bases with colourways (data/clothing.json); each colourway
@@ -158,6 +169,24 @@ func _load_colourways(data: Dictionary) -> void:
 			painted.erase("recipe")
 			items["%s_%s" % [id, v["id"]]] = painted
 			_add_variant(id, "%s_%s" % [id, v["id"]])
+
+
+## Fish and bugs: an item each, worth selling (and, later, donating to the museum).
+func _load_creatures() -> void:
+	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(CREATURES_PATH))
+	for kind: String in ["fish", "bugs"]:
+		for c: Dictionary in data[kind]:
+			(fish if kind == "fish" else bugs)[c["id"]] = c
+			var size := " %s-sized." % String(c["size"]).capitalize() if c.has("size") else ""
+			items[c["id"]] = {
+				"name": c["name"], "category": "fish" if kind == "fish" else "bug", "stack": 1,
+				"price": c["price"], "color": "#" + c["colors"][0],
+				"desc": WHERE_TEXT.get(c["where"], "") + size, "creature": c,
+			}
+
+
+func is_creature(id: String) -> bool:
+	return fish.has(id) or bugs.has(id)
 
 
 func _add_variant(base: String, id: String) -> void:

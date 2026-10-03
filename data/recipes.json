@@ -14,6 +14,18 @@
 			},
 			"known": true
 		},
+		"flimsy_rod": {
+			"materials": {
+				"tree_branch": 5
+			},
+			"known": true
+		},
+		"flimsy_net": {
+			"materials": {
+				"tree_branch": 5
+			},
+			"known": true
+		},
 		"stone_axe": {
 			"materials": {
 				"flimsy_axe": 1,

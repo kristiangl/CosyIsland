@@ -262,12 +262,12 @@ func play(action: String) -> void:
 
 ## Holds something in the right hand for a while (a fruit being eaten, say), then goes
 ## back to the tool.
-func hold(mesh: Mesh, seconds: float) -> void:
+func hold(mesh: Mesh, seconds: float, size: float = 0.55) -> void:
 	if _tool == null:
 		return
 	_tool.mesh = mesh
 	_tool.rotation_degrees = Vector3.ZERO
-	_tool.scale = Vector3.ONE * 0.55
+	_tool.scale = Vector3.ONE * size
 	await get_tree().create_timer(seconds).timeout
 	if is_instance_valid(_tool):
 		_tool.rotation_degrees = Vector3(90, 0, 0)

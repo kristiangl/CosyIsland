@@ -146,6 +146,8 @@ Milestone 3b:
 - [x] Island Journal: milestones and daily tasks earning stamps; stamp exchange with
   pocket upgrades
 - [x] Lucy's shop project: bring materials and she builds a real shop beside the plaza
+- [x] Fishing and bug catching (data/creatures.json): fish shadows by water type, bites
+  to time, bugs by habitat and hour that flee from runners
 - [x] Flowers: picked blooms regrow overnight, worn in hair or put in vases; plants dug
   up with a shovel and replanted (breeding later)
 
@@ -154,7 +156,7 @@ Next milestones (suggested order):
    everything unlocked, sold by Lucy. Time travel moves out of the phone into an
    options menu.
 4. Daily visitors and the first animal neighbours (homes, schedules).
-5. Fishing, bug catching, the museum.
+5. The museum (fishing and bug catching are in).
 6. Island tours to random islands (reusing the generator with different seeds).
 7. Path tool, terraforming, waterscaping, rock moving.
 8. Weather and seasons; audio.

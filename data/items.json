@@ -84,6 +84,26 @@
 			"color": "#8aa0b0",
 			"desc": "Good for hitting rocks. Digging comes later."
 		},
+		"flimsy_rod": {
+			"name": "Flimsy Fishing Rod",
+			"category": "tool",
+			"tool": "rod",
+			"durability": 30,
+			"stack": 1,
+			"price": 200,
+			"color": "#c19a6e",
+			"desc": "Cast it into water near a fish's shadow, and press when it bites."
+		},
+		"flimsy_net": {
+			"name": "Flimsy Net",
+			"category": "tool",
+			"tool": "net",
+			"durability": 30,
+			"stack": 1,
+			"price": 200,
+			"color": "#f4f0e6",
+			"desc": "Creep up on bugs and swing. Running scares them off."
+		},
 		"tent_kit": {
 			"name": "Tent Kit",
 			"category": "kit",

@@ -24,6 +24,8 @@ var room_look: Dictionary = {}
 var day_key: int
 var money_rock_uid: int = -1
 var grass: GrassField
+## Fish and bugs (outdoors only).
+var critters: Critters
 
 var _objects: Dictionary = {}   # uid -> object dictionary
 var _nodes: Dictionary = {}     # uid -> Node3D
@@ -64,6 +66,9 @@ func setup(island: IslandData, saved: Dictionary = {}) -> void:
 	for obj in data.objects:
 		_register(obj)
 	_add_forest_glow()
+	critters = Critters.new()
+	add_child(critters)
+	critters.setup(self)
 	Events.day_changed.connect(_on_day_changed)
 	if day_key != GameClock.day_key():
 		_on_day_changed(GameClock.day_key())

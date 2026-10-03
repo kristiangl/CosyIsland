@@ -17,6 +17,7 @@ extends Node3D
 ##   --demo=home        pitch the tent, go inside and furnish it (--room=wallpaper,flooring)
 ##   --demo=door        pitch the tent and stand outside its door
 ##   --demo=shop        Lucy's shop has been built; stand in front of it
+##   --demo=fishing     fishing off the beach with fish about (--demo=bugs: bugs nearby)
 ##   --demo=flowers     stand by some flowers, one picked, with a flower in your hair
 ##   --house            with --demo: the tent has already become a house
 ##   --series=ID        with --demo or --demo=home: furniture from one series (--variant=ID)
@@ -426,6 +427,37 @@ func _run_demo() -> void:
 			player.position = world.outside_door(shop)["position"] + Vector3(1.4, 0, 2.2)
 			player.facing = Vector3(-0.3, 0, -1).normalized()
 			camera_rig.snap()
+		return
+	if Game.args["demo"] in ["fishing", "bugs"]:
+		var tool := "flimsy_rod" if Game.args["demo"] == "fishing" else "flimsy_net"
+		Inventory.add_item(tool)
+		Inventory.equip(Inventory.slots.find_custom(func(s): return s.get("id", "") == tool))
+		if Game.args["demo"] == "fishing":
+			# The nearest sand by the sea, facing out over the water, with a bite coming.
+			var best := Vector2i(-1, -1)
+			for z in world.data.height:
+				for x in world.data.width:
+					if world.data.tile(x, z) == IslandData.Tile.SAND and world.critters.water_kind(x, z + 2) == "sea" \
+							and world.data.tile(x, z + 1) != IslandData.Tile.GRASS and world.object_at(x, z).is_empty():
+						if best.x < 0 or Vector2(x, z).distance_to(Vector2(spawn)) < Vector2(best).distance_to(Vector2(spawn)):
+							best = Vector2i(x, z)
+			player.position = Vector3(best.x + 0.5, world.ground_height(best.x + 0.5, best.y + 0.5), best.y + 0.5)
+			player.facing = Vector3(0, 0, 1)
+			camera_rig.snap()
+			await get_tree().process_frame
+			player._cast()
+			await get_tree().create_timer(0.5).timeout
+			var at: Vector3 = world.critters.bobber.position
+			world.critters.add_fish("sea_bass", at + Vector3(0.9, 0.03, 0.5))
+			world.critters.add_fish("horse_mackerel", at + Vector3(-1.6, 0.03, 1.2))
+		else:
+			player.facing = Vector3(0, 0, 1)
+			var p := player.position
+			world.critters.add_bug("white_butterfly", p + Vector3(-1.2, 0.9, 1.4), "air")
+			world.critters.add_bug("red_dragonfly", p + Vector3(1.5, 1.0, 1.0), "air")
+			world.critters.add_bug("ladybug", p + Vector3(0.6, 0.05, 1.8), "grass")
+			world.critters.add_bug("grasshopper", p + Vector3(-0.5, 0.05, 2.4), "grass")
+			world.critters.add_bug("honeybee", p + Vector3(0.2, 0.7, 2.6), "air")
 		return
 	if Game.args["demo"] == "flowers":
 		# Stand by the nearest flowers, pick one for your hair and leave it picked.

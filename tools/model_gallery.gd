@@ -3,7 +3,7 @@ extends Node3D
 ## island, for checking the art:
 ##   tools/screenshot_scene.sh out.png res://tools/model_gallery.tscn [--drops] [--only=id,id]
 ##     [--keys=model_key,model_key]  (any Models key, e.g. tree:0,fruit_tree:1:apple:3)
-##     [--series=meadow [--variant=sage]]  (one furniture series)
+##     [--series=meadow [--variant=sage]]  (one furniture series)  [--spacing=0.5]
 
 
 func _ready() -> void:
@@ -46,7 +46,7 @@ func _ready() -> void:
 		for piece: Dictionary in data["pieces"]:
 			keys.append("series:%s_%s" % [piece["id"], variant])
 	var columns := mini(6, keys.size())
-	var spacing := 2.2 if not Game.args.has("drops") else 0.9
+	var spacing := float(Game.args.get("spacing", 2.2 if not Game.args.has("drops") else 0.9))
 	for i in keys.size():
 		var mi := MeshInstance3D.new()
 		mi.mesh = Models.get_mesh(keys[i])

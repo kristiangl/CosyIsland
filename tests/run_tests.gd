@@ -29,6 +29,7 @@ func _run() -> void:
 	_test_flowers()
 	_test_journal()
 	_test_lucy_shop()
+	_test_critters()
 	print("\n%d checks, %d failures" % [_checks, _failures])
 	get_tree().quit(1 if _failures > 0 else 0)
 
@@ -737,3 +738,55 @@ func _test_lucy_shop() -> void:
 	check(Story._list_needs({"wood": 3, "stone": 2}) == "3 wood and 2 stone", "Lucy lists what she needs")
 	w.free()
 	Story.flags = saved_flags
+
+
+func _test_critters() -> void:
+	var d := IslandGenerator.generate(7)
+	var w := World.new()
+	add_child(w)
+	w.setup(d)
+	var c := w.critters
+	var kinds := {}
+	for z in d.height:
+		for x in d.width:
+			kinds[c.water_kind(x, z)] = true
+	check(kinds.has("sea") and kinds.has("river") and kinds.has("pond"), "the island has sea, river and pond fishing (%s)" % str(kinds.keys()))
+	for i in 20:
+		var bug := c.pick(ItemDB.bugs, "trees", 12.0)
+		check(bug.is_empty() or c._in_hours(bug, 12.0), "only bugs that are about at noon turn up (%s)" % bug.get("id", ""))
+	check(c._in_hours(ItemDB.fish["tuna"], 2.0) and not c._in_hours(ItemDB.fish["tuna"], 12.0), "hours can wrap past midnight")
+	# Find deep sea water next to the shore to fish in.
+	var spot := Vector3.ZERO
+	for z in d.height:
+		for x in d.width:
+			if spot == Vector3.ZERO and c.swim_kind(Vector3(x + 0.5, 0, z + 0.5)) == "sea" and c.swim_kind(Vector3(x + 1.5, 0, z + 0.5)) == "sea":
+				spot = Vector3(x + 0.5, IslandData.SEA_LEVEL, z + 0.5)
+	check(spot != Vector3.ZERO, "there's somewhere to cast")
+	var player := Player.new()
+	player.position = spot
+	c.cast(spot)
+	var f := c.add_fish("sea_bass", spot + Vector3(1.0, 0.03, 0))
+	var bit := false
+	for i in 400:
+		c._update_fish(f, 0.05, player)
+		if c.is_biting():
+			bit = true
+			break
+	check(bit, "a fish near the bobber comes and bites")
+	check(c.reel() == "sea_bass" and c.fish.is_empty(), "reeling in during the bite catches it")
+	c.cast(spot)
+	var g := c.add_fish("sea_bass", spot + Vector3(0.6, 0.03, 0))
+	for i in 30:
+		c._update_fish(g, 0.05, player)
+	check(c.reel() == "", "reeling in too soon catches nothing")
+	var bug := c.add_bug("ladybug", spot + Vector3(0, 0, 3), "grass")
+	check(c.net(spot + Vector3(0.3, 0, 3)) == "ladybug" and c.bugs.is_empty(), "a net catches a bug")
+	var shy := c.add_bug("white_butterfly", spot + Vector3(1.5, 1, 0), "air")
+	player._speed = Player.RUN_SPEED
+	c._update_bug(shy, 0.05, player)
+	check(shy["state"] == "flee", "running up scares bugs away")
+	check(c.net(spot + Vector3(1.5, 0, 0)) == "", "and they can't be caught as they fly off")
+	check(ItemDB.get_item("koi").get("category", "") == "fish" and ItemDB.get_item("koi")["price"] > 0, "fish are items worth selling")
+	check(Models.get_mesh("drop:stag_beetle").get_surface_count() > 0, "bugs have models")
+	player.free()
+	w.free()

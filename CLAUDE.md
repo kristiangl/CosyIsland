@@ -23,7 +23,7 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   (`--night`, every particle effect), `calibrate.tscn`
   (`-- --shadows`, checks the cel lighting maths).
 - Game screenshot options are listed at the top of `scripts/main.gd` (`--demo`,
-  `--demo=decor|sit|home|door` (`--house` builds the house first, `--series=id` furnishes
+  `--demo=decor|sit|home|door|shop|flowers|fishing|bugs` (`--house` builds the house first, `--series=id` furnishes
   the home from one series),
   `--ui=pockets|pause|map|creator|crafting|customise|placing|intro|ask|lucy|sleep|shop|sell`,
   `--tab=N` and `--try=key:id` for the creator, `--room=wallpaper,flooring`, `--gen=N`,
@@ -43,6 +43,8 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   `IslandData.room()`; `main.gd` swaps between the island and the room.
 - `Journal` (autoload, `data/journal.json`) counts what the player does (`Journal.add(stat)`)
   and pays stamps for milestones and daily tasks; its exchange sells pocket upgrades etc.
+- `Critters` (a child of the island `World`, `data/creatures.json`): fish shadows and bugs
+  spawned near the player by time of day; fishing (`cast`/`reel`) and `net`.
 - `Story` (autoload) holds conversation progress and every character's lines;
   `DialogueBox` shows them. Await its `finished`/`picked` signals, not coroutines.
 - Island generation is versioned (`IslandGenerator.VERSION`, saved as "gen"): bump it

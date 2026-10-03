@@ -24,6 +24,7 @@ func _run() -> void:
 	_test_shop_and_house()
 	_test_clothes()
 	_test_furniture_series()
+	_test_customising()
 	print("\n%d checks, %d failures" % [_checks, _failures])
 	get_tree().quit(1 if _failures > 0 else 0)
 
@@ -547,3 +548,30 @@ func _test_furniture_series() -> void:
 	for day in 20:
 		sold = sold or Shop.stock(7, day).any(func(id): return ItemDB.get_item(id).has("series"))
 	check(sold, "Lucy sells series furniture")
+
+
+func _test_customising() -> void:
+	Inventory.reset()
+	check(ItemDB.variants_of("meadow_chair_cream").size() == 4, "a series piece has its four colourways")
+	check("raincoat_red" in ItemDB.variants_of("raincoat_yellow"), "clothes have colourways too")
+	check(ItemDB.variants_of("wooden_chair").is_empty(), "one-off furniture has none")
+	check(ItemDB.variant_name("lodge_sofa_walnut") == "Walnut", "variant names come from the item name")
+	Inventory.add_item("meadow_chair_cream")
+	var slot := Inventory.slots.find_custom(func(sl): return sl.get("id", "") == "meadow_chair_cream")
+	check(Recipes.customise(slot, "meadow_chair_sage") != "", "customising needs a kit")
+	Inventory.add_item(Recipes.KIT, 2)
+	check(Recipes.customise(slot, "lodge_chair_honey") != "", "it can't become a different piece")
+	check(Recipes.customise(slot, "meadow_chair_sage") == "", "customising with a kit works")
+	check(Inventory.slots[slot].get("id", "") == "meadow_chair_sage" and Inventory.count_of(Recipes.KIT) == 1, "the piece changes in place and uses one kit")
+	check(Recipes.KIT in Shop.stock(1, 1), "Lucy always sells kits")
+	var menu := CraftingMenu.new()
+	add_child(menu)
+	menu.open("customise")
+	check(menu._rows.size() == 1 and menu._rows[0].item_id == "meadow_chair_sage", "the workbench lists things that can be customised")
+	menu.cycle(menu._rows[0], 1)
+	check(menu._rows[0].choice == "meadow_chair_butter", "left and right look through the colourways")
+	menu._set_mode("make")
+	check(not menu.is_customising(), "the tabs switch back to making")
+	menu.close()
+	menu.free()
+	Inventory.reset()

@@ -5,6 +5,8 @@ extends Node
 signal learned(item_id: String)
 
 const DATA_PATH := "res://data/recipes.json"
+## Used up when customising something at the workbench.
+const KIT := "customisation_kit"
 
 var recipes: Dictionary = {}
 var known: Array[String] = []
@@ -56,6 +58,21 @@ func craft(id: String) -> bool:
 		Inventory.from_save(before)
 		return false
 	return true
+
+
+## Remakes the item in a pocket slot as another variant of itself (a new colourway),
+## using a customisation kit. Returns "" on success, or why not.
+func customise(slot: int, new_id: String) -> String:
+	var entry := Inventory.slots[slot]
+	if entry.is_empty() or entry["id"] == new_id or not new_id in ItemDB.variants_of(entry["id"]):
+		return "That can't be changed into that."
+	if Inventory.count_of(KIT) < 1:
+		return "You need a customisation kit. Lucy sells them."
+	entry["id"] = new_id
+	Inventory.remove_item(KIT, 1)
+	if slot == Inventory.equipped_slot:
+		Events.equipped_changed.emit(new_id)
+	return ""
 
 
 ## Learns a random recipe the player doesn't know yet. Returns its id, or "" if they

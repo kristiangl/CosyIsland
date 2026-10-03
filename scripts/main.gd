@@ -18,7 +18,7 @@ extends Node3D
 ##   --demo=door        pitch the tent and stand outside its door
 ##   --house            with --demo: the tent has already become a house
 ##   --series=ID        with --demo=home: furnish it from one furniture series (--variant=ID)
-##   --ui=pockets|pause|map|creator|crafting|placing|intro|ask|lucy|sleep|shop|sell  (--tab=N picks a creator tab, --try=key:id,... dresses up, --closet=TEXT opens the wardrobe with clothes whose ids contain TEXT)  open a menu or mode (for screenshots)
+##   --ui=pockets|pause|map|creator|crafting|customise|placing|intro|ask|lucy|sleep|shop|sell  (--tab=N picks a creator tab, --try=key:id,... dresses up, --closet=TEXT opens the wardrobe with clothes whose ids contain TEXT)  open a menu or mode (for screenshots)
 
 const AUTOSAVE_SECONDS := 60.0
 
@@ -182,6 +182,12 @@ func _ready() -> void:
 			Inventory.add_item("wood", 12)
 			Inventory.add_item("stone", 5)
 			hud.crafting.open()
+		"customise":
+			for id: String in ["meadow_armchair_cream", "lodge_sofa_honey", "raincoat_yellow", "driftwood_lamp_bleached"]:
+				Inventory.add_item(id)
+			Inventory.add_item("customisation_kit", 3)
+			hud.crafting.open("customise")
+			hud.crafting.cycle(hud.crafting._rows[0], 1)
 		"placing":
 			Inventory.add_item("wooden_table")
 			placement.begin(Inventory.slots.find_custom(func(s): return s.get("id", "") == "wooden_table"))

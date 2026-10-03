@@ -40,6 +40,14 @@
 			"color": "#6d7480",
 			"desc": "A heavy lump of iron."
 		},
+		"customisation_kit": {
+			"name": "Customisation Kit",
+			"category": "material",
+			"stack": 30,
+			"price": 50,
+			"color": "#f2a7a0",
+			"desc": "Paint, fabric and thread. Use one at a workbench to give furniture or clothes a new colourway."
+		},
 		"acorn_pouch": {
 			"name": "Acorn Pouch",
 			"category": "currency",

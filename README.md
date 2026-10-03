@@ -82,7 +82,8 @@ On-screen hints follow whatever you last touched, keyboard or controller.
   with new recipes.
 - 148 pieces of furniture to place anywhere on the grid with a preview, rotate and pick
   back up. Three furniture series (Meadow Cottage, Driftwood, Woodland Lodge), each 10
-  pieces in four colourways with printed cushions, quilts and shades. Sit on chairs and benches; put teapots, candles and plants on tables.
+  pieces in four colourways with printed cushions, quilts and shades. Change a piece's
+  (or a garment's) colourway at the workbench with a customisation kit from Lucy. Sit on chairs and benches; put teapots, candles and plants on tables.
   Lanterns and campfires glow at night.
 - An animated player with knees and elbows: walking, running, chopping, sitting.
 - Minimap and a full island map.

@@ -1,16 +1,21 @@
 class_name CraftingMenu
 extends PanelContainer
-## The DIY workbench: known recipes on the left, the selected one's materials on the
-## right. A crafts, B closes.
+## The DIY workbench, with two tabs (switch with L/R, Q/E or by clicking). Make: known
+## recipes on the left, the selected one's materials on the right; A crafts. Customise:
+## furniture and clothes in your pockets that come in other colourways; left/right picks
+## one and A remakes it with a customisation kit. B closes.
 
+var _mode := "make"
+var _tabs: Array[Button] = []
 var _list: VBoxContainer
 var _icon: TextureRect
 var _name: Label
 var _desc: Label
 var _materials: VBoxContainer
-var _craft_button: Button
+var _hint: Label
+var _hint_template := ""
 var _rows: Array[RecipeRow] = []
-var _selected := ""
+var _selected: RecipeRow
 
 
 func _ready() -> void:
@@ -21,12 +26,25 @@ func _ready() -> void:
 	add_child(columns)
 
 	var left := VBoxContainer.new()
-	left.custom_minimum_size = Vector2(430, 0)
+	left.custom_minimum_size = Vector2(450, 0)
+	left.add_theme_constant_override("separation", 8)
 	columns.add_child(left)
+	var title_row := HBoxContainer.new()
+	title_row.add_theme_constant_override("separation", 8)
+	left.add_child(title_row)
 	var title := Label.new()
-	title.text = "DIY Recipes"
+	title.text = "Workbench"
 	title.add_theme_font_size_override("font_size", 30)
-	left.add_child(title)
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title_row.add_child(title)
+	for mode: String in ["make", "customise"]:
+		var b := Button.new()
+		b.text = mode.capitalize()
+		b.focus_mode = Control.FOCUS_NONE
+		b.toggle_mode = true
+		b.pressed.connect(_set_mode.bind(mode))
+		title_row.add_child(b)
+		_tabs.append(b)
 	var scroll := ScrollContainer.new()
 	scroll.follow_focus = true
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -55,45 +73,26 @@ func _ready() -> void:
 	_desc.add_theme_color_override("font_color", UIStyle.BROWN_LIGHT)
 	_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_desc.custom_minimum_size = Vector2(480, 0)
+	_desc.custom_minimum_size = Vector2(460, 0)
 	right.add_child(_desc)
 	_materials = VBoxContainer.new()
 	_materials.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	right.add_child(_materials)
-	var hint := Label.new()
-	Prompts.bind_label(hint, "{ui_accept} craft   {ui_cancel} close")
-	hint.add_theme_font_size_override("font_size", 16)
-	hint.add_theme_color_override("font_color", UIStyle.BROWN_LIGHT)
-	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	right.add_child(hint)
+	_hint = Label.new()
+	_hint.add_theme_font_size_override("font_size", 16)
+	_hint.add_theme_color_override("font_color", UIStyle.BROWN_LIGHT)
+	_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	right.add_child(_hint)
+	Prompts.method_changed.connect(func(): _hint.text = Prompts.fill(_hint_template))
 
-	Icons.icon_ready.connect(func(_id): _refresh_icons())
-	Events.inventory_changed.connect(func(): if visible: _show(_selected))
+	Icons.icon_ready.connect(func(_id): _refresh())
+	Events.inventory_changed.connect(_refresh)
 
 
-func open() -> void:
-	for r in _rows:
-		r.queue_free()
-	_rows.clear()
-	var ids := Recipes.known.duplicate()
-	# Craftable things first, then alphabetical.
-	ids.sort_custom(func(a, b):
-		var ca := Recipes.can_craft(a)
-		var cb := Recipes.can_craft(b)
-		if ca != cb:
-			return ca
-		return ItemDB.display_name(a) < ItemDB.display_name(b))
-	for id in ids:
-		var row := RecipeRow.new(id)
-		row.focus_entered.connect(_show.bind(id))
-		row.pressed.connect(_craft.bind(id))
-		_list.add_child(row)
-		_rows.append(row)
+func open(mode: String = "make") -> void:
 	visible = true
 	Game.mode = Game.Mode.MENU
-	if not _rows.is_empty():
-		_rows[0].grab_focus()
-		_show(_rows[0].item_id)
+	_set_mode(mode)
 
 
 func close() -> void:
@@ -101,80 +100,245 @@ func close() -> void:
 	Game.mode = Game.Mode.PLAY
 
 
+func is_customising() -> bool:
+	return _mode == "customise"
+
+
 func _unhandled_input(event: InputEvent) -> void:
-	if visible and (event.is_action_pressed("ui_cancel") or event.is_action_pressed("pockets")):
+	if not visible:
+		return
+	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pockets"):
 		close()
-		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("tab_prev") or event.is_action_pressed("tab_next"):
+		_set_mode("customise" if _mode == "make" else "make")
+	else:
+		return
+	get_viewport().set_input_as_handled()
 
 
-func _show(id: String) -> void:
-	_selected = id
+func _set_mode(mode: String) -> void:
+	_mode = mode
+	_tabs[0].button_pressed = mode == "make"
+	_tabs[1].button_pressed = mode == "customise"
+	var hint := "{ui_accept} craft   {tab_prev} {tab_next} customise   {ui_cancel} close" if mode == "make" \
+		else "Left/right colour   {ui_accept} customise   {tab_prev} {tab_next} make   {ui_cancel} close"
+	_hint_template = hint
+	_hint.text = Prompts.fill(hint)
+	_rebuild()
+
+
+func _rebuild() -> void:
+	# Rows go after this frame: one of them may be mid-press.
+	for r in _rows:
+		_list.remove_child(r)
+		r.queue_free()
+	_rows.clear()
+	_selected = null
+	if _mode == "make":
+		var ids := Recipes.known.duplicate()
+		# Craftable things first, then alphabetical.
+		ids.sort_custom(func(a, b):
+			var ca := Recipes.can_craft(a)
+			var cb := Recipes.can_craft(b)
+			if ca != cb:
+				return ca
+			return ItemDB.display_name(a) < ItemDB.display_name(b))
+		for id in ids:
+			_add_row(RecipeRow.new(id, -1, self))
+	else:
+		for i in Inventory.slots.size():
+			var slot := Inventory.slots[i]
+			if not slot.is_empty() and not ItemDB.variants_of(slot["id"]).is_empty():
+				_add_row(RecipeRow.new(slot["id"], i, self))
+	if _rows.is_empty():
+		_icon.texture = null
+		_name.text = "Nothing to customise" if _mode == "customise" else "No recipes yet"
+		_desc.text = "Bring furniture or clothes that come in other colours." if _mode == "customise" \
+			else "Message bottles wash up with recipes."
+		for child in _materials.get_children():
+			child.queue_free()
+		return
+	var first: WeakRef = weakref(_rows[0])
+	(func():
+		var row: RecipeRow = first.get_ref()
+		if row and row.is_inside_tree():
+			row.grab_focus()).call_deferred()
+	_show(_rows[0])
+
+
+func _add_row(row: RecipeRow) -> void:
+	row.focus_entered.connect(_show.bind(row))
+	row.pressed.connect(_activate.bind(row))
+	_list.add_child(row)
+	_rows.append(row)
+
+
+func _refresh() -> void:
+	if visible and _selected and is_instance_valid(_selected):
+		_show(_selected)
+
+
+func _show(row: RecipeRow) -> void:
+	_selected = row
+	var id := row.choice
 	_icon.texture = Icons.get_icon(id)
-	var makes := Recipes.makes(id)
-	_name.text = ItemDB.display_name(id) + (" x%d" % makes if makes > 1 else "")
-	_desc.text = ItemDB.get_item(id).get("desc", "")
 	for child in _materials.get_children():
 		child.queue_free()
-	var mats := Recipes.materials(id)
-	for mat in mats:
-		var have := Inventory.count_of(mat)
-		var need := int(mats[mat])
-		var line := HBoxContainer.new()
-		line.alignment = BoxContainer.ALIGNMENT_CENTER
-		var icon := TextureRect.new()
-		icon.custom_minimum_size = Vector2(40, 40)
-		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		icon.texture = Icons.get_icon(mat)
-		line.add_child(icon)
-		var label := Label.new()
-		label.text = "%s   %d / %d" % [ItemDB.display_name(mat), have, need]
-		label.add_theme_color_override("font_color", UIStyle.BROWN if have >= need else Color("d0706a"))
-		line.add_child(label)
-		_materials.add_child(line)
+	if _mode == "make":
+		var makes := Recipes.makes(id)
+		_name.text = ItemDB.display_name(id) + (" x%d" % makes if makes > 1 else "")
+		_desc.text = ItemDB.get_item(id).get("desc", "")
+		var mats := Recipes.materials(id)
+		for mat in mats:
+			_material_line(mat, int(mats[mat]))
+	else:
+		var options := ItemDB.variants_of(row.item_id)
+		_name.text = ItemDB.display_name(id)
+		_desc.text = "Colourway %d of %d. %s" % [options.find(id) + 1, options.size(),
+			"This is how it is now." if id == row.item_id else "Customise to remake it like this."]
+		_material_line(Recipes.KIT, 1)
 	for r in _rows:
 		r.queue_redraw()
 
 
-func _craft(id: String) -> void:
+func _material_line(mat: String, need: int) -> void:
+	var have := Inventory.count_of(mat)
+	var line := HBoxContainer.new()
+	line.alignment = BoxContainer.ALIGNMENT_CENTER
+	var icon := TextureRect.new()
+	icon.custom_minimum_size = Vector2(40, 40)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.texture = Icons.get_icon(mat)
+	line.add_child(icon)
+	var label := Label.new()
+	label.text = "%s   %d / %d" % [ItemDB.display_name(mat), have, need]
+	label.add_theme_color_override("font_color", UIStyle.BROWN if have >= need else Color("d0706a"))
+	line.add_child(label)
+	_materials.add_child(line)
+
+
+## Left/right on a customise row: look at the next colourway.
+func cycle(row: RecipeRow, direction: int) -> void:
+	var options := ItemDB.variants_of(row.item_id)
+	if options.is_empty():
+		return
+	row.choice = options[posmod(options.find(row.choice) + direction, options.size())]
+	_show(row)
+
+
+func _activate(row: RecipeRow) -> void:
+	if _mode == "make":
+		_craft(row)
+	else:
+		_customise(row)
+
+
+func _craft(row: RecipeRow) -> void:
+	var id := row.item_id
 	if not Recipes.can_craft(id):
 		Events.toast.emit("You need more materials for that.")
 		return
 	if Recipes.craft(id):
-		# Step away from the menu to watch the hammering, then come back to it.
-		visible = false
-		if Game.player:
-			await Game.player.craft_animation()
+		await _hammer()
 		Events.toast.emit("You made %s!" % ItemDB.display_name(id).to_lower())
-		visible = true
-		_show(id)
-		for r in _rows:
-			if r.item_id == id:
-				r.grab_focus()
+		row.grab_focus()
 	else:
 		Events.toast.emit("Your pockets are too full to hold it.")
 
 
-func _refresh_icons() -> void:
-	if visible:
-		_show(_selected)
+func _customise(row: RecipeRow) -> void:
+	if row.choice == row.item_id:
+		Events.toast.emit("Pick a new colourway with left and right first.")
+		return
+	var problem := Recipes.customise(row.slot, row.choice)
+	if problem != "":
+		Events.toast.emit(problem)
+		return
+	var before := ItemDB.display_name(row.item_id)
+	row.item_id = row.choice
+	await _hammer()
+	Events.toast.emit("Your %s is now %s!" % [before.to_lower(), ItemDB.variant_name(row.item_id).to_lower()])
+	_show(row)
+	row.grab_focus()
 
 
+## Steps away from the menu to watch the hammering, then comes back to it.
+func _hammer() -> void:
+	visible = false
+	if Game.player:
+		await Game.player.craft_animation()
+	visible = true
+
+
+## One line: icon and name; in Customise, the colourways as dots on the right.
 class RecipeRow:
 	extends Button
 	var item_id: String
+	## The colourway being looked at (Customise), else the item itself.
+	var choice: String
+	## Pocket slot (Customise), or -1.
+	var slot: int
+	var menu: CraftingMenu
 
-	func _init(id: String) -> void:
+	func _init(id: String, pocket_slot: int, owner_menu: CraftingMenu) -> void:
 		item_id = id
-		custom_minimum_size = Vector2(410, 54)
+		choice = id
+		slot = pocket_slot
+		menu = owner_menu
+		custom_minimum_size = Vector2(430, 54)
 		focus_mode = Control.FOCUS_ALL
 
+	func _gui_input(event: InputEvent) -> void:
+		if slot < 0:
+			return
+		if event.is_action_pressed("ui_left"):
+			menu.cycle(self, -1)
+			accept_event()
+		elif event.is_action_pressed("ui_right"):
+			menu.cycle(self, 1)
+			accept_event()
+		elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			# Clicking a dot picks that colourway.
+			var options := ItemDB.variants_of(item_id)
+			var i := floori((event.position.x - _dots_x(options.size())) / 22.0)
+			if i >= 0 and i < options.size():
+				choice = options[i]
+				menu._show(self)
+				grab_focus()
+				accept_event()
+
+	func _dots_x(count: int) -> float:
+		return size.x - 16 - count * 22
+
 	func _draw() -> void:
-		var tex := Icons.get_icon(item_id)
+		var tex := Icons.get_icon(choice)
 		if tex:
 			draw_texture_rect(tex, Rect2(8, 3, 48, 48), false)
-		var craftable := Recipes.can_craft(item_id)
-		var colour := UIStyle.BROWN if craftable else UIStyle.BROWN_LIGHT
-		draw_string(get_theme_default_font(), Vector2(66, 34), ItemDB.display_name(item_id), HORIZONTAL_ALIGNMENT_LEFT, -1, 20, colour)
-		if craftable:
-			draw_circle(Vector2(size.x - 22, size.y * 0.5), 8, UIStyle.GREEN)
+		var font := get_theme_default_font()
+		if slot < 0:
+			var craftable := Recipes.can_craft(item_id)
+			draw_string(font, Vector2(66, 34), ItemDB.display_name(item_id), HORIZONTAL_ALIGNMENT_LEFT, size.x - 100, 20,
+				UIStyle.BROWN if craftable else UIStyle.BROWN_LIGHT)
+			if craftable:
+				draw_circle(Vector2(size.x - 22, size.y * 0.5), 8, UIStyle.GREEN)
+			return
+		var options := ItemDB.variants_of(item_id)
+		var x0 := _dots_x(options.size())
+		draw_string(font, Vector2(66, 34), ItemDB.display_name(choice), HORIZONTAL_ALIGNMENT_LEFT, x0 - 76, 19, UIStyle.BROWN)
+		for i in options.size():
+			var centre := Vector2(x0 + 11 + i * 22, size.y * 0.5)
+			var id: String = options[i]
+			if id == choice:
+				draw_circle(centre, 10, UIStyle.BROWN)
+			# Half and half: wood and fabric, or a garment's two colours.
+			var sw := ItemDB.swatch(id)
+			draw_circle(centre, 7, sw[0])
+			var half := PackedVector2Array()
+			for j in 9:
+				var a := -PI * 0.5 + PI * j / 8.0
+				half.append(centre + Vector2(cos(a), sin(a)) * 7.0)
+			draw_colored_polygon(half, sw[1])
+			draw_arc(centre, 7.5, 0.0, TAU, 20, UIStyle.BROWN_LIGHT, 1.5, true)
+			if id == item_id:
+				draw_circle(centre + Vector2(0, 14), 2.5, UIStyle.BROWN)

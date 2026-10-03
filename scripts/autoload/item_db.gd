@@ -26,6 +26,8 @@ var series: Dictionary = {}
 ## DIY recipes for series pieces (the first variant of each piece with a recipe), merged
 ## into Recipes.
 var series_recipes: Dictionary = {}
+## Item ids of every variant of a base (clothes and series furniture), in data order.
+var _variants: Dictionary = {}
 
 
 func _ready() -> void:
@@ -65,14 +67,19 @@ func _load_clothing() -> void:
 				look[keys[2]] = v["colors"][1]
 				look[keys[3]] = v.get("pattern", "plain")
 			var hex := "#ffffff"
+			var hex2 := ""
 			for c in Appearance.options("top_color"):
 				if c["id"] == v["colors"][0]:
 					hex = c["color"]
+				if v["colors"].size() > 1 and c["id"] == v["colors"][1]:
+					hex2 = c["color"]
 			items["%s_%s" % [base["id"], v["id"]]] = {
 				"name": "%s (%s)" % [base["name"], v["name"]], "category": "clothing", "stack": 1,
 				"price": base["price"], "color": hex, "desc": base.get("desc", ""),
 				"theme": base.get("theme", ""), "slot": base["slot"], "wear": look,
+				"base": base["id"], "variant": v["id"], "swatch": [hex, hex2 if hex2 != "" else hex],
 			}
+			_add_variant(base["id"], "%s_%s" % [base["id"], v["id"]])
 
 
 ## Furniture series (data/furniture/*.json): every piece comes in each of its series'
@@ -95,11 +102,45 @@ func _load_furniture() -> void:
 				items[id] = {
 					"name": "%s (%s)" % [piece["name"], v["name"]], "category": "furniture", "stack": 1,
 					"price": piece["price"], "color": "#" + v["wood"], "desc": piece.get("desc", ""),
-					"series": data["id"], "base": piece["id"], "placeable": placeable,
+					"series": data["id"], "base": piece["id"], "variant": v["id"], "placeable": placeable,
+					"swatch": ["#" + v["wood"], "#" + _bolder(v["fabric"][0], v["fabric"][1])],
 					"build": {"kind": piece["kind"], "params": piece.get("params", {}), "variant": v},
 				}
+				_add_variant(piece["id"], id)
 			if piece.has("recipe"):
 				series_recipes["%s_%s" % [piece["id"], data["variants"][0]["id"]]] = {"materials": piece["recipe"]}
+
+
+## The more colourful of two hex colours (a fabric's print colour rather than its cream).
+static func _bolder(a: String, b: String) -> String:
+	return a if Color(a).s >= Color(b).s else b
+
+
+func _add_variant(base: String, id: String) -> void:
+	if not _variants.has(base):
+		_variants[base] = []
+	_variants[base].append(id)
+
+
+## Every variant of the same base as `id` (including itself), or [] if it has none.
+func variants_of(id: String) -> Array:
+	var list: Array = _variants.get(items.get(id, {}).get("base", ""), [])
+	return list if list.size() > 1 else []
+
+
+## The variant's own name, e.g. "Sage" for "Meadow Chair (Sage)".
+func variant_name(id: String) -> String:
+	var n := display_name(id)
+	var open := n.rfind("(")
+	return n.substr(open + 1, n.length() - open - 2) if open >= 0 and n.ends_with(")") else n
+
+
+## Two colours that tell a variant apart (wood and fabric, or a garment's two colours).
+func swatch(id: String) -> Array[Color]:
+	var s: Array = items.get(id, {}).get("swatch", [])
+	if s.size() < 2:
+		return [color_of(id), color_of(id)]
+	return [Color(s[0]), Color(s[1])]
 
 
 func is_clothing(id: String) -> bool:

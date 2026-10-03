@@ -7,7 +7,7 @@ extends RefCounted
 
 const BUY_MARKUP := 4
 ## Always in stock, however many you buy.
-const STAPLES := ["flimsy_axe", "flimsy_shovel"]
+const STAPLES := ["flimsy_axe", "flimsy_shovel", "customisation_kit"]
 const FURNITURE_PER_DAY := 4
 const INTERIORS_PER_DAY := 2
 const CLOTHES_PER_DAY := 3

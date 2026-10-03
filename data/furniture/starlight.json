@@ -1,0 +1,21 @@
+{
+	"id": "starlight",
+	"name": "Starlight",
+	"desc": "Dreamy night-sky furniture. The stars and moons glow after dark.",
+	"variants": [
+		{"id": "midnight", "name": "Midnight", "wood": "4a5688", "trim": "f2cf73", "fabric": ["3d4a7a", "f6d58c", "stars"], "accent": "f6d58c", "glow": "fff0b0"},
+		{"id": "dusk", "name": "Dusk", "wood": "a99ad8", "trim": "f2cf73", "fabric": ["8c7bc9", "fff4e0", "stars"], "accent": "fff4e0", "glow": "fff4d0"},
+		{"id": "dawn", "name": "Dawn", "wood": "f3c6d2", "trim": "f2cf73", "fabric": ["f3b6c6", "fffaf0", "stars"], "accent": "fffaf0", "glow": "fff6c8"},
+		{"id": "aurora", "name": "Aurora", "wood": "8fc9be", "trim": "e8f1ff", "fabric": ["4f7f9a", "d9fff4", "stars"], "accent": "d9fff4", "glow": "d9fff4"}
+	],
+	"pieces": [
+		{"id": "star_chair", "name": "Star Chair", "kind": "chair", "footprint": [1, 1], "price": 620, "desc": "A star for a backrest, with a glowing heart.", "recipe": {"wood": 5, "gold_nugget": 1}, "params": {"back": "star", "legs": "tapered", "cushion": true}, "seat": 0.48},
+		{"id": "starlight_table", "name": "Starlight Table", "kind": "table", "footprint": [2, 1], "price": 860, "desc": "Little stars twinkle round its edge at night.", "recipe": {"wood": 8, "gold_nugget": 1}, "params": {"shape": "rect", "legs": "tapered", "stars": true}, "surface": 0.76},
+		{"id": "crescent_sofa", "name": "Crescent Sofa", "kind": "sofa", "footprint": [2, 1], "price": 1720, "desc": "Under a glowing crescent moon.", "params": {"legs": "tapered", "frame": true, "moon": true}, "seat": 0.46},
+		{"id": "starlight_bed", "name": "Starlight Bed", "kind": "bed", "footprint": [2, 2], "price": 1800, "desc": "A moon and stars watch over your sleep.", "params": {"headboard": "moon"}, "seat": 0.45, "bed": true},
+		{"id": "moon_lamp", "name": "Moon Lamp", "kind": "floor_lamp", "footprint": [1, 1], "price": 920, "desc": "A full moon on a crook.", "params": {"shade": "moon"}, "light": true},
+		{"id": "star_lamp", "name": "Star Lamp", "kind": "table_lamp", "footprint": [1, 1], "price": 480, "desc": "A little star to light a bedside table.", "recipe": {"stone": 2, "gold_nugget": 1}, "params": {"shade": "star"}, "light": true, "small": true},
+		{"id": "starlight_dresser", "name": "Starlight Dresser", "kind": "dresser", "footprint": [2, 1], "price": 1180, "desc": "Two star lamps keep watch on top.", "params": {"drawers": 3, "stars": true}, "surface": 0.9},
+		{"id": "starlight_rug", "name": "Starlight Rug", "kind": "rug", "footprint": [2, 2], "price": 640, "desc": "A round patch of night sky.", "params": {"shape": "round", "border": true}, "rug": true}
+	]
+}

@@ -17,7 +17,7 @@ extends Node3D
 ##   --demo=home        pitch the tent, go inside and furnish it (--room=wallpaper,flooring)
 ##   --demo=door        pitch the tent and stand outside its door
 ##   --house            with --demo: the tent has already become a house
-##   --series=ID        with --demo=home: furnish it from one furniture series (--variant=ID)
+##   --series=ID        with --demo or --demo=home: furniture from one series (--variant=ID)
 ##   --ui=pockets|pause|map|creator|crafting|customise|placing|intro|ask|lucy|sleep|shop|sell  (--tab=N picks a creator tab, --try=key:id,... dresses up, --closet=TEXT opens the wardrobe with clothes whose ids contain TEXT)  open a menu or mode (for screenshots)
 
 const AUTOSAVE_SECONDS := 60.0
@@ -428,6 +428,11 @@ func _run_demo() -> void:
 		return
 	# Some furniture around the spawn.
 	var decor := ["campfire", "log_bench", "stone_lantern", "wooden_table", "wooden_chair", "barrel", "flower_pot", "garden_lantern", "birdhouse"]
+	if Game.args.has("series"):
+		decor.clear()
+		for entry: Array in _series_layout(Game.args["series"], Game.args.get("variant", "")):
+			if not ItemDB.placeable(entry[0]).get("rug", false):
+				decor.append(entry[0])
 	var spot := 0
 	for dz in range(-1, 6):
 		for dx in range(-6, 7):
@@ -496,5 +501,9 @@ func _series_layout(series_id: String, variant: String) -> Array:
 			["sofa", Vector2i(0, 3), 1], ["bench", Vector2i(0, 3), 1], ["armchair", Vector2i(5, 4), 3],
 			["side_table", Vector2i(5, 2), 0], ["dresser", Vector2i(1, 5), 0], ["crate", Vector2i(5, 0), 0]]:
 		if by_kind.has(entry[0]):
-			out.append([by_kind[entry[0]], entry[1], entry[2]])
+			var at: Vector2i = entry[1]
+			# Seats go in front of the table, however deep it is.
+			if entry[0] in ["chair", "stool"] and by_kind.has("table"):
+				at.y = 2 + int(ItemDB.placeable(by_kind["table"])["footprint"][1])
+			out.append([by_kind[entry[0]], at, entry[2]])
 	return out

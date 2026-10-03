@@ -53,7 +53,8 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   and so are clothes, from bases with colourways in `data/clothing.json` (plan:
   `docs/CATALOGUE.md`), and furniture series from `data/furniture/<series>.json`
   (models with fabric have a second surface: show them with `Models.dress`). Rugs
-  (`placeable.rug`) sit on their own floor layer in `World`, under furniture. Effects: `Effects.burst(kind, pos)` / `Effects.emitter(kind)`.
+  (`placeable.rug`) sit on their own floor layer in `World`, under furniture. Parts that
+  glow at night go in a series model's glow surface (`night_glow` global). Effects: `Effects.burst(kind, pos)` / `Effects.emitter(kind)`.
   `data/recipes.json`: DIY recipes. `data/appearance.json`: character options.
 
 ## Conventions

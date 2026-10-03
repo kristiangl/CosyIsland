@@ -24,6 +24,7 @@ const PLANK_DARK := Color("b08463")
 static var _cache: Dictionary = {}
 static var _material: ShaderMaterial
 static var _fabrics: Dictionary = {}
+static var _glow: ShaderMaterial
 
 
 static func material() -> ShaderMaterial:
@@ -79,18 +80,23 @@ static func get_mesh(key: String) -> ArrayMesh:
 	return mesh
 
 
-## A furniture series piece: wood in the prop material, and fabric, if any, in its own
-## surface drawn with the cloth shader in the variant's print. Show it with `dress`.
+## A furniture series piece: wood in the prop material; fabric, if any, in its own
+## surface drawn with the cloth shader in the variant's print; and glowing parts, if
+## any, in a surface that lights up at night. Show it with `dress`.
 static func _series(id: String) -> ArrayMesh:
 	var spec: Dictionary = ItemDB.get_item(id).get("build", {})
 	var k := MeshKit.new()
 	var fabric := MeshKit.new()
-	SeriesModels.build(k, fabric, spec)
+	var glow := MeshKit.new()
+	SeriesModels.build(k, fabric, spec, glow)
 	var mesh := k.commit()
 	if not fabric.is_empty():
 		mesh.set_meta("fabric_surface", mesh.get_surface_count())
 		fabric.commit(mesh)
 		mesh.set_meta("fabric", spec["variant"].get("fabric", ["ffffff", "ffffff", "plain"]))
+	if not glow.is_empty():
+		mesh.set_meta("glow_surface", mesh.get_surface_count())
+		glow.commit(mesh)
 	return mesh
 
 
@@ -99,13 +105,27 @@ static func _series(id: String) -> ArrayMesh:
 ## (no world curve, fixed lighting).
 static func dress(mi: MeshInstance3D, base: Material, icon: bool = false) -> void:
 	var mesh := mi.mesh
-	if mesh and mesh.has_meta("fabric"):
+	if mesh and (mesh.has_meta("fabric") or mesh.has_meta("glow_surface")):
 		mi.material_override = null
-		var fabric_index: int = mesh.get_meta("fabric_surface", 1)
+		var fabric_index: int = mesh.get_meta("fabric_surface", -1)
+		var glow_index: int = mesh.get_meta("glow_surface", -1)
 		for i in mesh.get_surface_count():
-			mi.set_surface_override_material(i, fabric_material(mesh.get_meta("fabric"), icon) if i == fabric_index else base)
+			var mat := base
+			if i == fabric_index:
+				mat = fabric_material(mesh.get_meta("fabric"), icon)
+			elif i == glow_index and not icon:
+				mat = glow_material()
+			mi.set_surface_override_material(i, mat)
 	else:
 		mi.material_override = base
+
+
+## The prop material for parts that glow at night (see DayNight.glow_at).
+static func glow_material() -> ShaderMaterial:
+	if _glow == null:
+		_glow = material().duplicate()
+		_glow.set_shader_parameter("glow", 0.9)
+	return _glow
 
 
 ## Cloth-shader material for furniture fabric: [colour a, colour b, print id] with print

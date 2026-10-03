@@ -74,7 +74,15 @@ func _hour() -> float:
 	return fixed_hour if fixed_hour >= 0.0 else GameClock.hour_float()
 
 
+## How strongly glowing things glow: 0 by day, 1 at night (fading at dusk and dawn).
+static func glow_at(hour: float) -> float:
+	return maxf(smoothstep(17.5, 19.5, hour), 1.0 - smoothstep(5.0, 6.5, hour))
+
+
 func _apply(hour: float) -> void:
+	# Indoors the lamps are always on, so glowing things keep a little glow by day too.
+	var glow := glow_at(hour)
+	RenderingServer.global_shader_parameter_set("night_glow", 0.5 + glow * 0.5 if indoors else glow)
 	if indoors:
 		RenderingServer.global_shader_parameter_set("cel_lit", Vector3(1.0, 0.96, 0.9))
 		RenderingServer.global_shader_parameter_set("cel_shadow", Vector3(0.8, 0.73, 0.82))

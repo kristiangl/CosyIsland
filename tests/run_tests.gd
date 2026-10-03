@@ -515,7 +515,7 @@ func _test_clothes() -> void:
 
 
 func _test_furniture_series() -> void:
-	check(ItemDB.series.size() >= 3, "there are furniture series (%d)" % ItemDB.series.size())
+	check(ItemDB.series.size() >= 6, "there are furniture series (%d)" % ItemDB.series.size())
 	var pieces: Array = ItemDB.items.keys().filter(func(id): return ItemDB.get_item(id).has("series"))
 	check(pieces.size() >= 100, "series pieces come in variants (%d items)" % pieces.size())
 	for id: String in pieces:
@@ -550,6 +550,15 @@ func _test_furniture_series() -> void:
 		sold = sold or Shop.stock(7, day).any(func(id): return ItemDB.get_item(id).has("series"))
 	check(sold, "Lucy sells series furniture")
 	check(ItemDB.get_item("curtains_cherry").get("category", "") == "interior", "curtains are put up like wallpaper")
+	for id: String in ["toadstool_lamp_coral", "starlight_bed_midnight", "star_chair_dusk", "glowcap_cluster_teal"]:
+		var glowing := Models.get_mesh("series:" + id)
+		check(glowing.has_meta("glow_surface"), "%s has parts that glow" % id)
+		var shown := MeshInstance3D.new()
+		shown.mesh = glowing
+		Models.dress(shown, Models.material())
+		check(shown.get_surface_override_material(glowing.get_meta("glow_surface")) == Models.glow_material(), "%s glows in the world" % id)
+		shown.free()
+	check(DayNight.glow_at(12.0) == 0.0 and DayNight.glow_at(23.0) == 1.0 and DayNight.glow_at(3.0) == 1.0, "things glow at night, not by day")
 
 
 func _test_rugs_and_curtains() -> void:

@@ -16,6 +16,10 @@ A cosy island life game about crafting and decorating, made with Godot 4.
 | --- | --- | --- |
 | ![](docs/screenshots/series_meadow.png) | ![](docs/screenshots/series_lodge.png) | ![](docs/screenshots/series_driftwood.png) |
 
+| Mushroom Grove | Starlight (at night) |
+| --- | --- |
+| ![](docs/screenshots/series_mushroom.png) | ![](docs/screenshots/series_starlight.png) |
+
 | Character creator | Island Phone | DIY workbench |
 | --- | --- | --- |
 | ![](docs/screenshots/creator.png) | ![](docs/screenshots/phone.png) | ![](docs/screenshots/crafting.png) |
@@ -80,9 +84,10 @@ On-screen hints follow whatever you last touched, keyboard or controller.
   rocks for stone, clay and iron (one rock a day gives acorns).
 - DIY workbench with 61 recipes: tools and furniture. Message bottles wash up each day
   with new recipes.
-- 190 pieces of furniture to place anywhere on the grid with a preview, rotate and pick
-  back up. Three furniture series (Meadow Cottage, Driftwood, Woodland Lodge), each 10
-  pieces in four colourways with printed cushions, quilts and shades. Change a piece's
+- 254 pieces of furniture to place anywhere on the grid with a preview, rotate and pick
+  back up. Five furniture series (Meadow Cottage, Driftwood, Woodland Lodge, Mushroom
+  Grove, Starlight) in four colourways each, with printed cushions, quilts and shades.
+  Mushroom Grove's toadstools and Starlight's moons and stars glow at night. Change a piece's
   (or a garment's) colourway at the workbench with a customisation kit from Lucy.
 - Rugs (round, large and runners, in ten prints plus one per series) lie under your
   furniture, and curtains dress your home's windows. Sit on chairs and benches; put teapots, candles and plants on tables.

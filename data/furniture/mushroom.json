@@ -1,0 +1,21 @@
+{
+	"id": "mushroom",
+	"name": "Mushroom Grove",
+	"desc": "Fairytale toadstools with spotted caps. Little ones glow at night.",
+	"variants": [
+		{"id": "coral", "name": "Coral", "wood": "f6ead2", "trim": "8fbf73", "fabric": ["f2917e", "fff4e0", "dots"], "accent": "f2917e", "glow": "ffe9a8"},
+		{"id": "lilac", "name": "Lilac", "wood": "f3ecf6", "trim": "8fbf73", "fabric": ["b9a2e6", "fff4e0", "dots"], "accent": "b9a2e6", "glow": "d9ccff"},
+		{"id": "teal", "name": "Teal", "wood": "eef6ee", "trim": "7fb069", "fabric": ["6fc1c9", "f2fbf8", "dots"], "accent": "6fc1c9", "glow": "a9f5ff"},
+		{"id": "golden", "name": "Golden", "wood": "fbf1dc", "trim": "8fbf73", "fabric": ["f2c14e", "fff8e6", "dots"], "accent": "f2c14e", "glow": "fff2a8"}
+	],
+	"pieces": [
+		{"id": "toadstool_stool", "name": "Toadstool Stool", "kind": "stool", "footprint": [1, 1], "price": 420, "desc": "A spotted cap just the right height for sitting.", "recipe": {"wood": 3, "clay": 1}, "params": {"top": "cap", "legs": "none"}, "seat": 0.44},
+		{"id": "toadstool_chair", "name": "Toadstool Chair", "kind": "chair", "footprint": [1, 1], "price": 560, "desc": "A cap to lean on and sprouts at its feet.", "recipe": {"wood": 5, "clay": 1}, "params": {"back": "cap", "legs": "turned", "cushion": true}, "seat": 0.48},
+		{"id": "toadstool_table", "name": "Toadstool Table", "kind": "table", "footprint": [2, 2], "price": 980, "desc": "A great spotted top on a stout stalk.", "recipe": {"wood": 8, "clay": 3}, "params": {"shape": "cap"}, "surface": 0.7},
+		{"id": "toadstool_lamp", "name": "Toadstool Lamp", "kind": "floor_lamp", "footprint": [1, 1], "price": 860, "desc": "Its cap glows softly once the sun goes down.", "params": {"shade": "cap"}, "light": true, "effects": [{"kind": "spores", "at": [0, 1.3, 0], "night": true}]},
+		{"id": "toadstool_bed", "name": "Toadstool Bed", "kind": "bed", "footprint": [2, 2], "price": 1680, "desc": "Sleep under a spotted cap, like a forest sprite.", "params": {"headboard": "cap"}, "seat": 0.45, "bed": true},
+		{"id": "toadstool_shelf", "name": "Toadstool Shelf", "kind": "bookcase", "footprint": [2, 1], "price": 1040, "desc": "Bookshelves with a cap for a roof.", "params": {"top": "cap"}},
+		{"id": "glowcap_cluster", "name": "Glowcap Cluster", "kind": "table_lamp", "footprint": [1, 1], "price": 380, "desc": "Three tiny toadstools on a tuft of moss. They glow at night.", "recipe": {"clay": 1, "tree_branch": 1}, "params": {"shade": "cluster"}, "small": true},
+		{"id": "toadstool_rug", "name": "Toadstool Rug", "kind": "rug", "footprint": [2, 2], "price": 620, "desc": "Round and spotty, like looking down on a cap.", "params": {"shape": "round", "border": true}, "rug": true}
+	]
+}

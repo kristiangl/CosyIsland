@@ -91,6 +91,7 @@ func _ready() -> void:
 	var look: Dictionary = saved.get("player", {}).get("look", Appearance.DEFAULT)
 	player.setup(world, start, look)
 	Game.player = player
+	Effects.warm_up(player.position)
 
 	camera_rig = CameraRig.new()
 	camera_rig.target = player

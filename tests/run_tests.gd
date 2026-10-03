@@ -785,6 +785,20 @@ func _test_critters() -> void:
 	check(c.reel() == "", "reeling in too soon catches nothing")
 	var bug := c.add_bug("ladybug", spot + Vector3(0, 0, 3), "grass")
 	check(c.net(spot + Vector3(0.3, 0, 3)) == "ladybug" and c.bugs.is_empty(), "a net catches a bug")
+	var hopper := c.add_bug("cricket", spot + Vector3(0, 0, 3), "grass")
+	var node: Node3D = hopper["node"]
+	var last := node.position
+	var jump := 0.0
+	var roam := 0.0
+	for i in 600:
+		c._hop(hopper, 1.0 / 60.0)
+		jump = maxf(jump, node.position.distance_to(last))
+		roam = maxf(roam, Vector2(node.position.x - spot.x, node.position.z - spot.z - 3).length())
+		last = node.position
+	check(roam > 0.05 and roam <= Critters.HOP_RANGE + 0.01, "crickets hop about near home")
+	check(jump < 0.1, "moving smoothly, never jumping across in one frame")
+	check(Critters.bug_scale("cricket") > Critters.bug_scale("white_butterfly"), "small bugs are drawn bigger than butterflies")
+	c._remove_bug(hopper)
 	var shy := c.add_bug("white_butterfly", spot + Vector3(1.5, 1, 0), "air")
 	player._speed = Player.RUN_SPEED
 	c._update_bug(shy, 0.05, player)

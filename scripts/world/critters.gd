@@ -17,8 +17,14 @@ const BITE_TIME := 0.7
 
 ## Water kinds per tile: 0 none, else "sea" (near the shore), "river" or "pond".
 const WATER_KINDS := ["", "sea", "river", "pond"]
-## Bugs are drawn bigger than life so they read from the camera.
+## Bugs are drawn bigger than life so they read from the camera; small ones more so
+## than the big-winged ones.
 const BUG_SCALE := 2.2
+const SMALL_BUG_SCALE := 3.0
+const BIG_WINGS := ["butterfly", "moth", "dragonfly"]
+## How long one hop takes, and how far it goes from home at most.
+const HOP_TIME := 0.32
+const HOP_RANGE := 0.45
 
 var world: World
 var fish: Array[Dictionary] = []
@@ -363,14 +369,16 @@ func add_bug(id: String, at: Vector3, where: String) -> Dictionary:
 	node.mesh = Models.get_mesh("creature:" + id)
 	node.material_override = Models.material()
 	node.position = at
-	node.scale = Vector3.ONE * BUG_SCALE
+	var size := bug_scale(id)
+	node.scale = Vector3.ONE * size
 	add_child(node)
 	var flies: bool = where in ["flowers", "air", "water"] and not ItemDB.bugs[id].get("shape", "") in ["ladybug"]
 	if where == "trees":
 		# Clinging to the trunk, head up.
 		node.rotation.x = -PI * 0.5
 	var b := {"id": id, "node": node, "where": where, "home": at, "flies": flies, "t": _rng.randf() * 10.0,
-		"state": "idle", "away": Vector3.ZERO}
+		"state": "idle", "away": Vector3.ZERO, "size": size,
+		"hop": -1.0, "wait": _rng.randf_range(0.5, 3.0), "from": at, "to": at}
 	bugs.append(b)
 	return b
 
@@ -386,7 +394,7 @@ func _update_bug(b: Dictionary, delta: float, player: Player) -> void:
 	if b["state"] == "flee":
 		node.position += Vector3(b["away"]) * delta
 		node.scale *= 1.0 - delta * 0.6
-		if node.scale.y < 0.2 * BUG_SCALE:
+		if node.scale.y < 0.2 * float(b["size"]):
 			_remove_bug(b)
 		return
 	# Running nearby scares bugs off; walking up slowly doesn't.
@@ -401,12 +409,44 @@ func _update_bug(b: Dictionary, delta: float, player: Player) -> void:
 		node.position = home + wander
 		node.rotation.y = atan2(cos(t * 0.7) * 0.42, -sin(t * 0.53) * 0.27)
 		# Wings flapping: squash the wings in and out.
-		node.scale = Vector3(0.35 + 0.65 * absf(sin(t * 14.0)), 1, 1) * BUG_SCALE
+		node.scale = Vector3(0.35 + 0.65 * absf(sin(t * 14.0)), 1, 1) * float(b["size"])
 	elif b["where"] in ["grass", "beach"]:
-		# Little hops or scuttles now and then.
-		var hop := fposmod(t, 3.0)
-		if hop < 0.4:
-			node.position = home + Vector3(sin(t) * 0.3, sin(hop / 0.4 * PI) * 0.12, cos(t) * 0.3)
+		_hop(b, delta)
+
+
+## Grass and beach bugs: a pause, then a hop (or a crab's sideways scuttle) to a new
+## spot near home, turning to face where they're going.
+func _hop(b: Dictionary, delta: float) -> void:
+	var node: Node3D = b["node"]
+	var crab: bool = ItemDB.bugs[b["id"]].get("shape", "") == "crab"
+	if float(b["hop"]) < 0.0:
+		b["wait"] = float(b["wait"]) - delta
+		if float(b["wait"]) > 0.0:
+			return
+		var home: Vector3 = b["home"]
+		var a := _rng.randf() * TAU
+		var to := home + Vector3(cos(a), 0, sin(a)) * _rng.randf_range(0.1, HOP_RANGE)
+		var from := node.position
+		from.y = home.y
+		b["from"] = from
+		b["to"] = to
+		b["hop"] = 0.0
+		var d := to - from
+		if d.length() > 0.01:
+			node.rotation.y = atan2(d.x, d.z) + (PI * 0.5 if crab else 0.0)
+		return
+	var k := minf(float(b["hop"]) + delta / (HOP_TIME * (2.0 if crab else 1.0)), 1.0)
+	b["hop"] = k
+	var lift := 0.0 if crab else sin(k * PI) * 0.14
+	node.position = Vector3(b["from"]).lerp(Vector3(b["to"]), k) + Vector3(0, lift, 0)
+	if k >= 1.0:
+		b["hop"] = -1.0
+		b["wait"] = _rng.randf_range(1.2, 3.5)
+
+
+## How much bigger than life a bug is drawn.
+static func bug_scale(id: String) -> float:
+	return BUG_SCALE if ItemDB.bugs.get(id, {}).get("shape", "") in BIG_WINGS else SMALL_BUG_SCALE
 
 
 func scare(b: Dictionary, away: Vector2) -> void:

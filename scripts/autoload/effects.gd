@@ -36,6 +36,9 @@ const KINDS := {
 	"dust": {"shape": "puff", "amount": 8, "lifetime": 0.55, "size": [0.18, 0.3], "colours": ["efe4d0", "e2d6c0"],
 		"speed": [0.6, 1.2], "direction": [0, 0.3, 0], "spread": 90.0, "gravity": 0.0, "radius": 0.3,
 		"one_shot": true, "grow": 1.6, "fade": true},
+	"step": {"shape": "puff", "amount": 3, "lifetime": 0.45, "size": [0.13, 0.2], "colours": ["f6efe2", "ebe0cc"],
+		"speed": [0.2, 0.45], "direction": [0, 1, 0], "spread": 70.0, "gravity": 0.0, "radius": 0.05,
+		"one_shot": true, "grow": 1.8, "fade": true, "alpha": 0.8},
 	"hearts": {"shape": "heart", "amount": 4, "lifetime": 1.3, "size": [0.14, 0.2], "colours": ["f48fa6", "f7b2c4"],
 		"speed": [0.6, 0.9], "direction": [0, 1, 0], "spread": 25.0, "gravity": 0.2, "radius": 0.15,
 		"one_shot": true, "grow": 0.6},
@@ -79,6 +82,8 @@ const KINDS := {
 }
 
 var _materials: Dictionary = {}
+## Kind -> [size curve, colour picks, fade], shared by every emitter of that kind.
+var _ramps: Dictionary = {}
 var _quad: QuadMesh
 
 
@@ -138,12 +143,29 @@ func emitter(kind: String) -> CPUParticles3D:
 	else:
 		p.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
 		p.emission_sphere_radius = cfg.get("radius", 0.1)
+	if not _ramps.has(kind):
+		_ramps[kind] = _make_ramps(cfg, p.one_shot)
+	var ramps: Array = _ramps[kind]
+	p.scale_amount_curve = ramps[0]
+	p.color_initial_ramp = ramps[1]
+	p.color_ramp = ramps[2]
+	return p
+
+
+## Compiles both particle shaders up front, so the first sparkle or footstep puff in play
+## doesn't stall while the GPU driver builds them: one particle of each, under the ground
+## at `at` where the terrain hides it.
+func warm_up(at: Vector3, parent: Node = null) -> void:
+	for kind: String in ["step", "sparks"]:
+		burst(kind, at + Vector3(0, -0.6, 0), parent)
+
+
+func _make_ramps(cfg: Dictionary, one_shot: bool) -> Array:
 	# Size over life: from full size to `grow` times it.
 	var curve := Curve.new()
 	curve.max_value = maxf(1.0, cfg.get("grow", 1.0))
 	curve.add_point(Vector2(0, 1.0 if cfg.get("grow", 1.0) <= 1.0 else 0.6))
 	curve.add_point(Vector2(1, cfg.get("grow", 1.0)))
-	p.scale_amount_curve = curve
 	# Colours: picked per particle; fading in and out over its life.
 	var picks := Gradient.new()
 	var offsets := PackedFloat32Array()
@@ -155,16 +177,14 @@ func emitter(kind: String) -> CPUParticles3D:
 	picks.offsets = offsets
 	picks.colors = cols
 	picks.interpolation_mode = Gradient.GRADIENT_INTERPOLATE_CONSTANT
-	p.color_initial_ramp = picks
 	var alpha: float = cfg.get("alpha", 1.0)
 	var fade := Gradient.new()
 	fade.set_color(0, Color(1, 1, 1, 0.0 if cfg.get("fade", false) else alpha))
 	fade.set_color(1, Color(1, 1, 1, 0.0))
-	if cfg.get("fade", false) or not p.one_shot:
+	if cfg.get("fade", false) or not one_shot:
 		fade.add_point(0.2, Color(1, 1, 1, alpha))
 		fade.add_point(0.7, Color(1, 1, 1, alpha))
-	p.color_ramp = fade
-	return p
+	return [curve, picks, fade]
 
 
 func _material(cfg: Dictionary) -> ShaderMaterial:

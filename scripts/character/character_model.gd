@@ -480,30 +480,9 @@ func _apply(t: Dictionary, delta: float) -> void:
 
 ## A little dust cloud left behind at the feet.
 func _puff(offset: Vector3) -> void:
-	var parent := get_parent()
-	if parent == null or not is_inside_tree():
+	if not is_inside_tree():
 		return
-	var mi := MeshInstance3D.new()
-	var sphere := SphereMesh.new()
-	sphere.radius = 0.07
-	sphere.height = 0.12
-	sphere.radial_segments = 8
-	sphere.rings = 4
-	mi.mesh = sphere
-	var mat := StandardMaterial3D.new()
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.albedo_color = Color(1.0, 0.98, 0.92, 0.75)
-	mi.material_override = mat
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	get_tree().current_scene.add_child(mi)
-	mi.global_position = global_transform * offset
-	var tw := mi.create_tween().set_parallel()
-	tw.tween_property(mi, "scale", Vector3.ONE * 1.8, 0.45).from(Vector3.ONE * 0.5)
-	tw.tween_property(mi, "position:y", mi.position.y + 0.15, 0.45)
-	tw.tween_property(mat, "albedo_color:a", 0.0, 0.45)
-	tw.chain().tween_callback(mi.queue_free)
-
+	Effects.burst("step", global_transform * offset)
 
 func _animate_blink(delta: float) -> void:
 	_blink_timer -= delta

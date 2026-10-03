@@ -126,7 +126,14 @@
 		{"id": "hearts", "name": "Hearts"},
 		{"id": "stars", "name": "Stars"},
 		{"id": "flowers", "name": "Flowers"},
-		{"id": "two_tone", "name": "Two-tone"}
+		{"id": "two_tone", "name": "Two-tone"},
+		{"id": "gingham", "name": "Gingham"},
+		{"id": "tartan", "name": "Tartan"},
+		{"id": "waves", "name": "Waves"},
+		{"id": "leaves", "name": "Leaves"},
+		{"id": "argyle", "name": "Argyle"},
+		{"id": "cherries", "name": "Cherries"},
+		{"id": "clouds", "name": "Clouds"}
 	],
 	"colors": [
 		{"id": "white", "color": "#f7f4ee"},

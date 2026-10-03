@@ -226,6 +226,51 @@ static func top(style: String) -> Dictionary:
 				k.cylinder(Vector3(sx * 0.1, 0.77, 0.02), Vector3(sx * 0.085, 0.5, -TORSO_RADIUS.z - 0.02), 0.022, 0.022, PLAIN, 6, true)
 			_short_sleeve(sleeve)
 			_recolour(sleeve, TRIM)
+		"pyjama_top":
+			# Piped collar and cuffs, buttons and a chest pocket.
+			_hem(k, 0.39, 0.214)
+			_collar(k)
+			var front := TORSO_RADIUS.z + 0.014
+			for i in 4:
+				k.sphere(Vector3(0, 0.67 - i * 0.07, front + 0.006), Vector3.ONE * 0.013, TRIM, 3, 6)
+			k.box(Vector3(-0.09, 0.62, front - 0.002), Vector3(0.07, 0.065, 0.014), PLAIN)
+			k.box(Vector3(-0.09, 0.652, front + 0.004), Vector3(0.072, 0.01, 0.01), TRIM)
+			k.cylinder(Vector3(0, 0.395, 0), Vector3(0, 0.385, 0), 0.215, 0.215, TRIM, 18, false)
+			_long_sleeve(sleeve, cuff, 0.074, false)
+			cuff.cylinder(Vector3(0, -ARM_LOWER + 0.045, 0), Vector3(0, -ARM_LOWER + 0.035, 0), 0.08, 0.08, TRIM, 10, false)
+		"nightgown":
+			# Long and loose to the ankles, with puffed sleeves and a frilled hem.
+			k.cylinder(Vector3(0, 0.47, 0), Vector3(0, 0.08, 0), 0.2, 0.31, PLAIN, 20, true)
+			for i in 18:
+				var a := TAU * i / 18.0
+				k.sphere(Vector3(cos(a) * 0.31, 0.085, sin(a) * 0.31), Vector3(0.06, 0.035, 0.06), TRIM, 3, 6)
+			k.cylinder(Vector3(0, 0.735, 0), Vector3(0, 0.72, 0), 0.12, 0.13, TRIM, 14, false)
+			sleeve.sphere(Vector3(0, -0.025, 0), Vector3(0.09, 0.085, 0.09), PLAIN, 6, 10)
+			sleeve.cylinder(Vector3(0, -0.085, 0), Vector3(0, -0.1, 0), 0.07, 0.068, TRIM, 10, false)
+		"folk_blouse":
+			# Puffed sleeves and a square neck stitched with little flowers.
+			_hem(k, 0.4, 0.207)
+			var front := TORSO_RADIUS.z + 0.012
+			k.box(Vector3(0, 0.7, front - 0.03), Vector3(0.2, 0.012, 0.03), TRIM)
+			for i in 7:
+				var x := -0.09 + i * 0.03
+				k.sphere(Vector3(x, 0.665 - absf(i - 3.0) * 0.006, front + 0.003), Vector3(0.012, 0.012, 0.006), TRIM, 3, 6)
+			for i in 5:
+				k.sphere(Vector3(-0.06 + i * 0.03, 0.635, front + 0.004), Vector3.ONE * 0.008, SHADED, 2, 5)
+			sleeve.sphere(Vector3(0, -0.03, 0), Vector3(0.095, 0.09, 0.095), PLAIN, 6, 10)
+			sleeve.cylinder(Vector3(0, -0.1, 0), Vector3(0, -0.115, 0), 0.066, 0.064, TRIM, 10, false)
+		"waistcoat":
+			# A sleeveless waistcoat over a shirt in the second colour.
+			_hem(k, 0.39, 0.214)
+			var front := TORSO_RADIUS.z + 0.016
+			k.box(Vector3(0, 0.62, front - 0.004), Vector3(0.06, 0.24, 0.012), TRIM)
+			for sx: float in [-1.0, 1.0]:
+				k.leaf(Vector3(sx * 0.03, 0.76, 0.13), Vector3(sx * 0.7, -0.7, 0.45), 0.09, 0.06, TRIM, 0.0)
+			for i in 3:
+				k.sphere(Vector3(0.04, 0.6 - i * 0.06, front + 0.008), Vector3.ONE * 0.012, SHADED, 3, 6)
+			_long_sleeve(sleeve, cuff, 0.068, false)
+			_recolour(sleeve, TRIM)
+			_recolour(cuff, TRIM)
 		"swimsuit":
 			k.sphere(Vector3(0, 0.37, 0), Vector3(0.185, 0.09, 0.156), PLAIN, 6, 16)
 			# A little frilled skirt.
@@ -325,6 +370,17 @@ static func bottom(style: String) -> Dictionary:
 			# A stripe down the outside of each leg.
 			leg.box(Vector3(0.0, -0.05, 0), Vector3(0.175, 0.15, 0.03), TRIM)
 			k.cylinder(Vector3(0, 0.42, 0.155), Vector3(0, 0.36, 0.165), 0.008, 0.008, TRIM, 4, true)
+		"pyjama_bottoms":
+			_trouser_leg(leg, shin, 0.084, 0.08, 0.035)
+			shin.cylinder(Vector3(0, -LEG_LOWER + 0.05, 0), Vector3(0, -LEG_LOWER + 0.035, 0), 0.082, 0.082, TRIM, 10, false)
+			k.cylinder(Vector3(0, 0.43, 0), Vector3(0, 0.41, 0), 0.185, 0.185, TRIM, 18, false)
+		"folk_skirt":
+			# Full and swishy, with two ribbon bands near the hem.
+			k.cylinder(Vector3(0, 0.44, 0), Vector3(0, 0.2, 0), 0.185, 0.31, PLAIN, 24, true)
+			for y: float in [0.26, 0.3]:
+				var r := lerpf(0.185, 0.31, (0.44 - y) / 0.24) + 0.004
+				k.cylinder(Vector3(0, y + 0.01, 0), Vector3(0, y - 0.01, 0), r - 0.002, r + 0.002, TRIM, 24, false)
+			leg = null
 		"cargo_shorts":
 			leg.cylinder(Vector3(0, 0.03, 0), Vector3(0, -0.11, 0), 0.083, 0.082, PLAIN, 10, true)
 			leg.cylinder(Vector3(0, -0.095, 0), Vector3(0, -0.12, 0), 0.088, 0.088, SHADED, 10, true)
@@ -365,6 +421,19 @@ static func shoe(style: String) -> ArrayMesh:
 			k.sphere(Vector3(0, y - 0.045, 0.025), Vector3(0.075, 0.016, 0.11), TRIM, 4, 12)
 			for z: float in [-0.01, 0.07]:
 				k.sphere(Vector3(0, y + 0.005, z), Vector3(0.072, 0.03, 0.026), PLAIN, 4, 10)
+		"slippers":
+			# Fluffy bunny slippers.
+			k.sphere(Vector3(0, y + 0.005, 0.035), Vector3(0.085, 0.06, 0.12), PLAIN, 6, 12)
+			k.sphere(Vector3(0, y - 0.035, 0.03), Vector3(0.088, 0.02, 0.122), TRIM, 4, 12)
+			for sx: float in [-1.0, 1.0]:
+				k.sphere(Vector3(sx * 0.03, y + 0.08, 0.06), Vector3(0.018, 0.05, 0.012), PLAIN, 4, 6)
+			k.sphere(Vector3(0, y + 0.04, 0.15), Vector3.ONE * 0.012, TRIM, 3, 5)
+		"clogs":
+			# Painted wooden clogs with an upturned toe.
+			k.sphere(Vector3(0, y, 0.035), Vector3(0.08, 0.06, 0.125), PLAIN, 6, 12)
+			k.sphere(Vector3(0, y + 0.02, 0.135), Vector3(0.045, 0.035, 0.035), PLAIN, 4, 8)
+			k.sphere(Vector3(0, y - 0.04, 0.03), Vector3(0.082, 0.02, 0.12), SHADED, 4, 12)
+			k.sphere(Vector3(0, y + 0.045, 0.08), Vector3(0.022, 0.014, 0.012), TRIM, 3, 6)
 		"work_boots":
 			k.cylinder(Vector3(0, y + 0.14, 0), Vector3(0, y, 0), 0.08, 0.084, PLAIN, 10, true)
 			k.sphere(Vector3(0, y - 0.005, 0.04), Vector3(0.088, 0.064, 0.125), PLAIN, 6, 12)
@@ -567,6 +636,20 @@ static func hat(style: String) -> ArrayMesh:
 			k.sphere(Vector3(0, 0.0, -0.37), Vector3(0.07, 0.06, 0.05), PLAIN, 4, 8)
 			for sx: float in [-1.0, 1.0]:
 				k.leaf(Vector3(sx * 0.03, -0.02, -0.39), Vector3(sx * 0.6, -1.0, -0.4), 0.16, 0.08, PLAIN, 0.0)
+		"nightcap":
+			# A long floppy cap drooping to one side, with a bobble.
+			k.sphere(Vector3(0, 0.14, -0.03), Vector3(0.41, 0.28, 0.4), PLAIN, 8, 18)
+			k.cylinder(Vector3(0, 0.05, -0.03), Vector3(0, 0.12, -0.03), 0.415, 0.41, TRIM, 20, false)
+			var prev := Vector3(0, 0.38, -0.03)
+			var r := 0.17
+			for i in 5:
+				var t := float(i + 1) / 5.0
+				var p := Vector3(0.1 + t * 0.4, 0.42 + sin(t * PI) * 0.06 - t * t * 0.4, 0.0)
+				k.cylinder(prev, p, r, r * 0.72, PLAIN, 10, false)
+				k.sphere(p, Vector3.ONE * r * 0.72, PLAIN, 4, 8)
+				prev = p
+				r *= 0.72
+			k.sphere(prev + Vector3(0.02, -0.04, 0), Vector3.ONE * 0.06, TRIM, 4, 8)
 		"cat_ears":
 			k.cylinder(Vector3(-0.36, 0.12, 0), Vector3(0.36, 0.12, 0), 0.015, 0.015, PLAIN, 6, false)
 			for s: float in [-1.0, 1.0]:

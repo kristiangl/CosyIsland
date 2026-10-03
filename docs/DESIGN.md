@@ -127,6 +127,8 @@ Milestone 3b:
 - [x] Customising at the workbench: any colourway of a piece or garment, one kit each
 - [x] Rugs on a floor layer under furniture; windows in every room, and curtains
 - [x] Mushroom Grove and Starlight series, with parts that glow at night
+- [x] Sleepy Time and Folk Festival clothes (pyjamas, nightgown, nightcap, bunny
+  slippers; folk blouse, waistcoat, folk skirt, clogs, festival crown)
 - [x] Flowers: picked blooms regrow overnight, worn in hair or put in vases; plants dug
   up with a shovel and replanted (breeding later)
 

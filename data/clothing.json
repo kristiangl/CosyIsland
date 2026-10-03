@@ -4,7 +4,9 @@
 		"cosy_knits": "Cosy Knits",
 		"rainy_day": "Rainy Day",
 		"seaside": "Seaside",
-		"garden_work": "Garden and Work"
+		"garden_work": "Garden and Work",
+		"sleepy_time": "Sleepy Time",
+		"folk_festival": "Folk Festival"
 	},
 	"clothes": [
 		{
@@ -818,6 +820,462 @@
 						"white"
 					],
 					"pattern": "checks"
+				}
+			]
+		},
+		{
+			"id": "pyjama_top",
+			"name": "Pyjama Top",
+			"slot": "top",
+			"style": "pyjama_top",
+			"theme": "sleepy_time",
+			"price": 420,
+			"desc": "Soft cotton with piped edges. Matches the bottoms.",
+			"variants": [
+				{
+					"id": "sky",
+					"name": "Sky",
+					"colors": [
+						"sky",
+						"white"
+					],
+					"pattern": "stars"
+				},
+				{
+					"id": "pink",
+					"name": "Pink Check",
+					"colors": [
+						"pink",
+						"white"
+					],
+					"pattern": "checks"
+				},
+				{
+					"id": "mint",
+					"name": "Mint Stripe",
+					"colors": [
+						"mint",
+						"white"
+					],
+					"pattern": "stripes"
+				},
+				{
+					"id": "navy",
+					"name": "Night",
+					"colors": [
+						"navy",
+						"yellow"
+					],
+					"pattern": "stars"
+				},
+				{
+					"id": "cloud",
+					"name": "Cloud",
+					"colors": [
+						"sky",
+						"white"
+					],
+					"pattern": "clouds"
+				}
+			]
+		},
+		{
+			"id": "pyjama_bottoms",
+			"name": "Pyjama Bottoms",
+			"slot": "bottom",
+			"style": "pyjama_bottoms",
+			"theme": "sleepy_time",
+			"price": 360,
+			"desc": "Loose and comfy, with piped cuffs.",
+			"variants": [
+				{
+					"id": "sky",
+					"name": "Sky",
+					"colors": [
+						"sky",
+						"white"
+					]
+				},
+				{
+					"id": "pink",
+					"name": "Pink",
+					"colors": [
+						"pink",
+						"white"
+					]
+				},
+				{
+					"id": "mint",
+					"name": "Mint",
+					"colors": [
+						"mint",
+						"white"
+					]
+				},
+				{
+					"id": "navy",
+					"name": "Night",
+					"colors": [
+						"navy",
+						"white"
+					]
+				}
+			]
+		},
+		{
+			"id": "nightgown",
+			"name": "Nightgown",
+			"slot": "top",
+			"style": "nightgown",
+			"theme": "sleepy_time",
+			"price": 560,
+			"desc": "Long and floaty, with frills at the hem.",
+			"variants": [
+				{
+					"id": "cream",
+					"name": "Cream",
+					"colors": [
+						"cream",
+						"pink"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "lavender",
+					"name": "Lavender",
+					"colors": [
+						"lavender",
+						"white"
+					],
+					"pattern": "dots"
+				},
+				{
+					"id": "rose",
+					"name": "Rose",
+					"colors": [
+						"rose",
+						"white"
+					],
+					"pattern": "hearts"
+				},
+				{
+					"id": "mint",
+					"name": "Mint",
+					"colors": [
+						"mint",
+						"white"
+					],
+					"pattern": "flowers"
+				}
+			]
+		},
+		{
+			"id": "nightcap",
+			"name": "Nightcap",
+			"slot": "hat",
+			"style": "nightcap",
+			"theme": "sleepy_time",
+			"price": 300,
+			"desc": "For dreaming in. The bobble is very important.",
+			"variants": [
+				{
+					"id": "sky",
+					"name": "Sky",
+					"colors": [
+						"sky",
+						"white"
+					]
+				},
+				{
+					"id": "red",
+					"name": "Red",
+					"colors": [
+						"red",
+						"white"
+					]
+				},
+				{
+					"id": "lavender",
+					"name": "Lavender",
+					"colors": [
+						"lavender",
+						"white"
+					]
+				},
+				{
+					"id": "navy",
+					"name": "Navy",
+					"colors": [
+						"navy",
+						"white"
+					]
+				}
+			]
+		},
+		{
+			"id": "bunny_slippers",
+			"name": "Bunny Slippers",
+			"slot": "shoes",
+			"style": "slippers",
+			"theme": "sleepy_time",
+			"price": 340,
+			"desc": "Fluffy, with ears.",
+			"variants": [
+				{
+					"id": "white",
+					"name": "White",
+					"colors": [
+						"white",
+						"pink"
+					]
+				},
+				{
+					"id": "pink",
+					"name": "Pink",
+					"colors": [
+						"pink",
+						"white"
+					]
+				},
+				{
+					"id": "grey",
+					"name": "Grey",
+					"colors": [
+						"grey",
+						"white"
+					]
+				}
+			]
+		},
+		{
+			"id": "folk_blouse",
+			"name": "Folk Blouse",
+			"slot": "top",
+			"style": "folk_blouse",
+			"theme": "folk_festival",
+			"price": 520,
+			"desc": "Puffed sleeves and little flowers stitched round the neck.",
+			"variants": [
+				{
+					"id": "white",
+					"name": "White",
+					"colors": [
+						"white",
+						"red"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "cream",
+					"name": "Cream",
+					"colors": [
+						"cream",
+						"blue"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "sky",
+					"name": "Sky",
+					"colors": [
+						"sky",
+						"yellow"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "pink",
+					"name": "Pink",
+					"colors": [
+						"pink",
+						"green"
+					],
+					"pattern": "plain"
+				}
+			]
+		},
+		{
+			"id": "waistcoat",
+			"name": "Waistcoat",
+			"slot": "top",
+			"style": "waistcoat",
+			"theme": "folk_festival",
+			"price": 580,
+			"desc": "A smart waistcoat over a crisp shirt.",
+			"variants": [
+				{
+					"id": "red",
+					"name": "Red",
+					"colors": [
+						"red",
+						"white"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "green",
+					"name": "Green",
+					"colors": [
+						"green",
+						"cream"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "navy",
+					"name": "Navy",
+					"colors": [
+						"navy",
+						"white"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "tartan",
+					"name": "Tartan",
+					"colors": [
+						"red",
+						"white"
+					],
+					"pattern": "tartan"
+				},
+				{
+					"id": "brown",
+					"name": "Brown",
+					"colors": [
+						"brown",
+						"cream"
+					],
+					"pattern": "argyle"
+				}
+			]
+		},
+		{
+			"id": "folk_skirt",
+			"name": "Folk Skirt",
+			"slot": "bottom",
+			"style": "folk_skirt",
+			"theme": "folk_festival",
+			"price": 480,
+			"desc": "A full skirt with ribbon bands. It swishes when you dance.",
+			"variants": [
+				{
+					"id": "red",
+					"name": "Red",
+					"colors": [
+						"red",
+						"white"
+					]
+				},
+				{
+					"id": "green",
+					"name": "Green",
+					"colors": [
+						"green",
+						"white"
+					]
+				},
+				{
+					"id": "navy",
+					"name": "Navy",
+					"colors": [
+						"navy",
+						"white"
+					]
+				},
+				{
+					"id": "yellow",
+					"name": "Yellow",
+					"colors": [
+						"yellow",
+						"white"
+					]
+				}
+			]
+		},
+		{
+			"id": "clogs",
+			"name": "Clogs",
+			"slot": "shoes",
+			"style": "clogs",
+			"theme": "folk_festival",
+			"price": 400,
+			"desc": "Painted wooden clogs. Clip, clop.",
+			"variants": [
+				{
+					"id": "tan",
+					"name": "Natural",
+					"colors": [
+						"tan",
+						"red"
+					]
+				},
+				{
+					"id": "red",
+					"name": "Red",
+					"colors": [
+						"red",
+						"white"
+					]
+				},
+				{
+					"id": "sky",
+					"name": "Sky",
+					"colors": [
+						"sky",
+						"white"
+					]
+				},
+				{
+					"id": "yellow",
+					"name": "Yellow",
+					"colors": [
+						"yellow",
+						"white"
+					]
+				}
+			]
+		},
+		{
+			"id": "festival_crown",
+			"name": "Festival Crown",
+			"slot": "hat",
+			"style": "flower_crown",
+			"theme": "folk_festival",
+			"price": 360,
+			"desc": "A crown of flowers for the summer festival.",
+			"variants": [
+				{
+					"id": "pink",
+					"name": "Pink",
+					"colors": [
+						"pink",
+						"yellow"
+					]
+				},
+				{
+					"id": "white",
+					"name": "Daisy",
+					"colors": [
+						"white",
+						"yellow"
+					]
+				},
+				{
+					"id": "lavender",
+					"name": "Lavender",
+					"colors": [
+						"lavender",
+						"yellow"
+					]
+				},
+				{
+					"id": "yellow",
+					"name": "Buttercup",
+					"colors": [
+						"yellow",
+						"orange"
+					]
 				}
 			]
 		}

@@ -104,7 +104,11 @@
 		{"id": "puffer_jacket", "name": "Puffer jacket", "designed": true},
 		{"id": "denim_jacket", "name": "Denim jacket", "designed": true},
 		{"id": "pinafore", "name": "Pinafore dress", "full_body": true, "designed": true},
-		{"id": "swimsuit", "name": "Swimsuit", "full_body": true, "designed": true}
+		{"id": "swimsuit", "name": "Swimsuit", "full_body": true, "designed": true},
+		{"id": "pyjama_top", "name": "Pyjama top", "designed": true},
+		{"id": "nightgown", "name": "Nightgown", "full_body": true, "designed": true},
+		{"id": "folk_blouse", "name": "Folk blouse", "designed": true},
+		{"id": "waistcoat", "name": "Waistcoat", "designed": true}
 	],
 	"bottom": [
 		{"id": "shorts", "name": "Shorts"},
@@ -115,7 +119,9 @@
 		{"id": "overalls", "name": "Overalls"},
 		{"id": "pleated_skirt", "name": "Pleated skirt", "designed": true},
 		{"id": "board_shorts", "name": "Board shorts", "designed": true},
-		{"id": "cargo_shorts", "name": "Cargo shorts", "designed": true}
+		{"id": "cargo_shorts", "name": "Cargo shorts", "designed": true},
+		{"id": "pyjama_bottoms", "name": "Pyjama bottoms", "designed": true},
+		{"id": "folk_skirt", "name": "Folk skirt", "designed": true}
 	],
 	"pattern": [
 		{"id": "plain", "name": "Plain"},
@@ -165,7 +171,9 @@
 		{"id": "flats", "name": "Flats"},
 		{"id": "wellies", "name": "Wellies"},
 		{"id": "sandals", "name": "Sandals", "open": true, "designed": true},
-		{"id": "work_boots", "name": "Work boots", "designed": true}
+		{"id": "work_boots", "name": "Work boots", "designed": true},
+		{"id": "slippers", "name": "Bunny slippers", "designed": true},
+		{"id": "clogs", "name": "Clogs", "designed": true}
 	],
 	"hat": [
 		{"id": "none", "name": "None"},
@@ -180,7 +188,8 @@
 		{"id": "earmuffs", "name": "Earmuffs", "designed": true},
 		{"id": "sou_wester", "name": "Rain hat", "covers": "full", "designed": true},
 		{"id": "sun_hat", "name": "Sun hat", "covers": "full", "designed": true, "positions": [{"name": "Level", "rot": [0, 0, 0]}, {"name": "Tipped back", "rot": [-14, 0, 0]}]},
-		{"id": "headscarf", "name": "Headscarf", "covers": "top", "designed": true}
+		{"id": "headscarf", "name": "Headscarf", "covers": "top", "designed": true},
+		{"id": "nightcap", "name": "Nightcap", "covers": "full", "designed": true}
 	],
 	"glasses": [
 		{"id": "none", "name": "None"},

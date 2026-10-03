@@ -68,8 +68,8 @@ On-screen hints follow whatever you last touched, keyboard or controller.
 - A paved plaza with the office marquee and the DIY workbench.
 - Lucy's shop: sell her anything with a price, and buy from a new stock each day,
   including clothes.
-- 66 designed clothes (20 pieces in colourways, four themes: Cosy Knits, Rainy Day,
-  Seaside, Garden and Work). Wear them from your pockets and they stay in your
+- 107 designed clothes (30 pieces in colourways, six themes: Cosy Knits, Rainy Day,
+  Seaside, Garden and Work, Sleepy Time, Folk Festival). Wear them from your pockets and they stay in your
   wardrobe. The plan for scaling to thousands of items is in
   [docs/CATALOGUE.md](docs/CATALOGUE.md).
 - Particle effects: campfires, candles, chimney smoke, wood chips, sparks, falling

@@ -76,8 +76,8 @@ items donated). Rough order:
 6. **Island makeover.** Path tool, then terraforming (cliffs), waterscaping (rivers and
    ponds), and the rock-moving tool. Bridges and ramps become buildable anywhere.
 
-Time travel: the pause menu ("Island Phone") moves the clock forwards or back by hours or
-days. Daily resets (wood, rocks, fruit regrowth) happen at 5am island time.
+Time travel: sleeping in a bed moves the clock on to morning, noon, evening or midnight.
+For testing, the Island Phone's time travel app moves it forwards or back by hours or days. Daily resets (wood, rocks, fruit regrowth) happen at 5am island time.
 
 ## Systems roadmap
 
@@ -109,9 +109,17 @@ Milestone 3:
 - [x] Tent interior with floor, walls and indoor decorating; rooms saved per home
 - [x] Paved plaza with the Island Office; Poppy and Lucy with dialogue and an intro
 
+Milestone 3b:
+- [x] Rivers no longer run along beaches (generator version 2; old islands keep theirs)
+- [x] Character creator with tabs, option pictures, Mii-style face adjustments, noses,
+      hat positions
+- [x] Island Phone with apps; sleeping in beds moves time on
+- [x] Wallpaper and flooring items
+
 Next milestones (suggested order):
-3b. Wallpaper and flooring items; house upgrade path (tent, house, bigger house) with
-   Poppy. Clothes as items instead of everything unlocked. Lucy's shop.
+3c. Lucy's shop (selling things for acorns, a daily stock), then the house upgrade path
+   (tent, house, bigger house) through Poppy. Clothes as items instead of everything
+   unlocked. Time travel moves out of the phone into an options menu.
 4. Daily visitors and the first animal neighbours (homes, schedules).
 5. Fishing, bug catching, the museum.
 6. Island tours to random islands (reusing the generator with different seeds).

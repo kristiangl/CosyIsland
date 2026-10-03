@@ -12,9 +12,9 @@ A cosy island life game about crafting and decorating, made with Godot 4.
 | --- | --- | --- |
 | ![](docs/screenshots/furniture.png) | ![](docs/screenshots/dusk.png) | ![](docs/screenshots/river.png) |
 
-| Character creator | DIY workbench | Pockets |
+| Character creator | Island Phone | DIY workbench |
 | --- | --- | --- |
-| ![](docs/screenshots/creator.png) | ![](docs/screenshots/crafting.png) | ![](docs/screenshots/pockets.png) |
+| ![](docs/screenshots/creator.png) | ![](docs/screenshots/phone.png) | ![](docs/screenshots/crafting.png) |
 
 ![Characters](docs/screenshots/characters.png)
 
@@ -39,7 +39,8 @@ Add `-- --new` to start a fresh island, or `-- --seed=123` for a specific one.
 | Switch tool | D-pad left/right | Z / C |
 | Rotate while placing | R | R |
 | Map | - | M |
-| Island Phone (time travel, wardrobe, save) | + | Esc / P |
+| Island Phone (map, wardrobe, time travel, save) | + | Esc / P |
+| Switch tabs in menus | L / R | Q / E |
 
 On-screen hints follow whatever you last touched, keyboard or controller.
 
@@ -48,14 +49,18 @@ On-screen hints follow whatever you last touched, keyboard or controller.
 - A random island from a seed: beach, cliffs, rivers with a bridge, ponds, ramps,
   a native fruit and flower. Coastlines, cliffs and riverbanks are rounded off.
 - Pastel cel-shaded look with ink outlines and a day/night cycle.
-- Character creator and wardrobe: 14 hairstyles, 16 hair colours, 8 eye styles,
-  mouths, brows, cheeks, 8 skin tones, 9 tops with 9 patterns, bottoms, shoes,
-  hats and glasses.
+- Character creator and wardrobe with icon tabs and pictures of every option: 14
+  hairstyles, 16 hair colours, 8 eye styles, brows, noses, mouths, cheeks, 8 skin
+  tones, 9 tops with 9 patterns, bottoms, shoes, hats, bows and glasses. Face
+  features can be moved, spaced, sized and tilted, Mii-style, and some hats can be
+  worn different ways (bows on either side or the back, caps backwards).
 - Poppy (a long-haired cat who runs the Island Office) welcomes you and hands over
   your tent; Lucy (a Jack Russell who does odd jobs) explains the workbench. Both
   have things to say every day.
 - A paved plaza with the office marquee and the DIY workbench.
-- Go inside your tent and decorate it: furniture, seats and table tops work indoors.
+- Go inside your tent and decorate it: furniture, seats and table tops work indoors,
+  plus wallpaper and flooring. Sleep in a bed or sleeping bag until morning, noon,
+  evening or midnight.
 - Chop wood, shake trees for fruit and branches (and the odd piece of furniture), hit
   rocks for stone, clay and iron (one rock a day gives acorns).
 - DIY workbench with 32 recipes: tools and furniture. Message bottles wash up each day
@@ -66,6 +71,7 @@ On-screen hints follow whatever you last touched, keyboard or controller.
 - An animated player with knees and elbows: walking, running, chopping, sitting.
 - Minimap and a full island map.
 - Pockets with item icons, stacking and tools that wear out.
-- Real-time clock with time travel from the Island Phone. Autosave.
+- Real-time clock. The Island Phone has the map, wardrobe, controls, saving and (for
+  now) a time travel app. Autosave.
 
 See [docs/DESIGN.md](docs/DESIGN.md) for the full plan.

@@ -17,11 +17,13 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
 - Check every script parses: `tools/check_scripts.sh` (run this first; GDScript treats
   inferred-Variant types as errors, so type loop variables over literal arrays).
 - Art check scenes (render with `tools/screenshot_scene.sh out.png res://tools/<scene>`):
-  `character_lineup.tscn` (`--seed`, `--angle`, `--vary=KEY`, `--poses`, `--npcs`),
+  `character_lineup.tscn` (`--seed`, `--angle`, `--vary=KEY`, `--base=k:v`, `--poses`,
+  `--npcs`, `--close`),
   `model_gallery.tscn` (`--drops`, `--keys`, `--only=id,id`), `calibrate.tscn`
   (`-- --shadows`, checks the cel lighting maths).
 - Game screenshot options are listed at the top of `scripts/main.gd` (`--demo`,
-  `--demo=decor|sit|home`, `--ui=pockets|pause|map|creator|crafting|placing|intro|ask|lucy`,
+  `--demo=decor|sit|home`, `--ui=pockets|pause|map|creator|crafting|placing|intro|ask|lucy|sleep`,
+  `--tab=N` and `--try=key:id` for the creator, `--room=wallpaper,flooring`, `--gen=N`,
   `--at=X,Z`, `--hour`).
 
 ## Layout
@@ -38,6 +40,8 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   `IslandData.room()`; `main.gd` swaps between the island and the room.
 - `Story` (autoload) holds conversation progress and every character's lines;
   `DialogueBox` shows them. Await its `finished`/`picked` signals, not coroutines.
+- Island generation is versioned (`IslandGenerator.VERSION`, saved as "gen"): bump it
+  for changes that would reshape existing islands, and keep the old behaviour behind it.
 - Worker-thread tasks must always be collected (`IslandMap.finish()`), or Godot
   crashes on quit.
 - `shaders/`: every world shader includes `include/world.gdshaderinc` and runs vertices

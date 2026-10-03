@@ -1,11 +1,11 @@
 {
-	"_note": "Main island characters. look uses ids from appearance.json; species colours are hex.",
+	"_note": "Main island characters. look uses ids from appearance.json; species colours are hex (cats: fur, fur2 for the muzzle, bib and tail tip, stripes for tabby markings, blaze for a pale stripe up the nose).",
 	"poppy": {
 		"name": "Poppy",
 		"title": "Island Office",
 		"tag": "#9fd3c7",
 		"voice": 1.15,
-		"species": {"kind": "cat", "fur": "#3e3a40", "fur2": "#9b8a7b", "eyes": "#b9c25a", "inner_ear": "#d79aa1", "nose": "#d48f99"},
+		"species": {"kind": "cat", "fur": "#a8845a", "fur2": "#f6f1ea", "stripes": "#3a2c22", "blaze": true, "eyes": "#c9cf7a", "inner_ear": "#e3b0b4", "nose": "#e3a0a8"},
 		"look": {"eyes": "wide", "mouth": "cat", "cheeks": "blush", "top": "sweater", "top_color": "cream", "top_color2": "coral",
 			"top_pattern": "plain", "bottom": "long_skirt", "bottom_color": "teal", "shoes": "none", "hat": "none", "glasses": "round"}
 	},

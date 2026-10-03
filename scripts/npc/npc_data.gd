@@ -46,5 +46,5 @@ static func model(id: String, curved := true) -> CharacterModel:
 	m.curved = curved
 	var sp: Dictionary = def.get("species", {})
 	for key in sp:
-		m.species[key] = sp[key] if key == "kind" else Color(sp[key])
+		m.species[key] = sp[key] if key == "kind" or sp[key] is bool else Color(sp[key])
 	return m

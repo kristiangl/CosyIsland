@@ -217,6 +217,8 @@ func _build_animal() -> void:
 	var fur2: Color = species.get("fur2", fur)
 	_face.set_shader_parameter("species", 1 if kind == "cat" else 2)
 	_face.set_shader_parameter("fur_b", fur2)
+	_face.set_shader_parameter("fur_c", species.get("stripes", fur2))
+	_face.set_shader_parameter("cat_blaze", species.get("blaze", false))
 	_face.set_shader_parameter("eye_colour", species.get("eyes", Color("6a4430")))
 	_face.set_shader_parameter("brow_style", 0)
 	_face.set_shader_parameter("nose_colour", species.get("nose", Color("d98f98")))

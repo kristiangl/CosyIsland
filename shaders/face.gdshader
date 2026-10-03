@@ -39,8 +39,11 @@ uniform float nose_scale = 1.0;
 // Animal heads: 0 person, 1 cat (tabby forehead, pale muzzle, pink nose, whiskers),
 // 2 dog (patches over the eyes and ears with a pale blaze, pale muzzle).
 uniform int species = 0;
-// Second fur colour for markings.
+// Second fur colour for markings (a cat's pale muzzle), and a cat's tabby stripes.
 uniform vec3 fur_b : source_color = vec3(1.0);
+uniform vec3 fur_c : source_color = vec3(1.0);
+// A cat's pale blaze from the nose up between the eyes.
+uniform bool cat_blaze = false;
 uniform vec3 whisker_colour : source_color = vec3(0.85, 0.82, 0.8);
 uniform vec3 nose_colour : source_color = vec3(0.9, 0.55, 0.6);
 
@@ -192,6 +195,11 @@ vec3 markings(vec3 col, vec3 p) {
 		if (p.z > 0.1) {
 			float muzzle = sd_ellipse(p.xy - vec2(0.0, -0.13), vec2(0.15, 0.085));
 			col = mix(col, fur_b, 1.0 - smoothstep(-0.012, 0.012, muzzle));
+			if (cat_blaze) {
+				// Narrow between the eyes, widening down to the muzzle.
+				float b = sd_segment(p.xy, vec2(0.0, -0.1), vec2(0.0, 0.13)) - (0.022 + clamp(0.02 - p.y, 0.0, 0.12) * 0.45);
+				col = mix(col, fur_b, 1.0 - smoothstep(-0.01, 0.01, b));
+			}
 		}
 		float stripes = 0.0;
 		for (int i = -1; i <= 1; i++) {
@@ -204,7 +212,7 @@ vec3 markings(vec3 col, vec3 p) {
 			float d = sd_segment(vec2(abs(p.x), p.y), vec2(0.27, y), vec2(0.36, y + 0.02));
 			stripes = max(stripes, (1.0 - smoothstep(0.007, 0.014, d)) * step(0.05, p.z));
 		}
-		col = mix(col, fur_b, stripes * 0.75);
+		col = mix(col, fur_c, stripes * 0.8);
 	} else if (species == 2) {
 		// Dog: coloured patches over the eyes and ears either side of a pale blaze.
 		float blaze = 0.045 + clamp(-p.y, 0.0, 0.2) * 0.35;

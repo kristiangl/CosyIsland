@@ -159,7 +159,8 @@ Next milestones (suggested order):
 3c. Bigger house (more rooms) and outdoor house colours. Clothes as items instead of
    everything unlocked, sold by Lucy. Time travel moves out of the phone into an
    options menu.
-4. Daily visitors; more neighbour life (requests, friendship, moving out, more species).
+4. Daily visitors; more neighbour life (requests, friendship, moving out, more species);
+   the clothes shop run by Daisy and Morris.
 5. The museum building: Bramble's tent grows into a real museum with exhibits inside
    (materials project after enough donations).
 6. Island tours to random islands (reusing the generator with different seeds).
@@ -169,13 +170,16 @@ Next milestones (suggested order):
 
 ## Characters
 
-- **Poppy**: a domestic long-haired cat, black with grey-brown markings. Runs the
+- **Poppy**: a domestic long-haired cat, a golden-brown tabby with dark stripes, a white
+  blaze, muzzle and bib, and green-gold eyes. Runs the
   Island Office in the plaza, welcomes new arrivals, hands over the tent and will
   look after house upgrades and new neighbours.
 - **Lucy**: a Jack Russell terrier. Does odd jobs, knows all about DIY, and wants to
   open the island's first shop.
 - **Bramble**: an elderly spaniel-ish naturalist in a waistcoat and glasses, Poppy's
   old friend. Comes to run the museum.
+- **Daisy and Morris** (planned): two British Shorthair cats, Daisy dark brown and Morris
+  grey, who run the island's clothes shop once it opens.
 
 Characters are defined in `data/characters.json` (species, fur colours, outfit) and
 their lines live in `scripts/autoload/story.gd`, with progress flags saved in the game.

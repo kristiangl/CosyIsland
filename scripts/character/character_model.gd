@@ -16,6 +16,8 @@ var look: Dictionary = Appearance.DEFAULT.duplicate()
 var species: Dictionary = {}
 ## False for characters shown in menus, away from the island's world curvature.
 var curved := true
+## True in menus: lit with fixed daytime colours instead of the island's time of day.
+var fixed_light := false
 
 var _hips: Node3D
 var _waist: Node3D
@@ -136,12 +138,14 @@ func rebuild() -> void:
 	_face.set_shader_parameter("skin", skin_colour)
 	_face.set_shader_parameter("light_wrap", FACE_WRAP)
 	_face.set_shader_parameter("curved", curved)
+	_face.set_shader_parameter("fixed_tints", fixed_light)
 	_face.set_shader_parameter("eye_colour", Appearance.color(look, "eye_color"))
 	_face.set_shader_parameter("brow_colour", hair_colour.darkened(0.35))
 	_face.set_shader_parameter("eye_style", Appearance.index_of(look, "eyes"))
 	_face.set_shader_parameter("brow_style", Appearance.index_of(look, "brows"))
 	_face.set_shader_parameter("mouth_style", Appearance.index_of(look, "mouth"))
 	_face.set_shader_parameter("cheek_style", Appearance.index_of(look, "cheeks"))
+	_apply_face_adjustments()
 	var head_mesh := _mesh(AnimalParts.head() if animal else P.head(), _face, _head)
 	head_mesh.position = P.HEAD_CENTRE
 	_tail = null
@@ -158,12 +162,40 @@ func rebuild() -> void:
 		var hat_mat := _cloth(Appearance.color(look, "hat_color"), Color("fff4e0") if hat_style != "flower_crown" else Color("f6d36b"))
 		var hat_mesh := _mesh(P.hat(hat_style), hat_mat, _head)
 		hat_mesh.position = P.HEAD_CENTRE
+		# Some hats can be worn different ways (a bow on either side, a cap backwards).
+		var ways := Appearance.hat_positions(look)
+		if not ways.is_empty():
+			var rot: Array = ways[clampi(int(look.get("hat_pos", 0)), 0, ways.size() - 1)]["rot"]
+			hat_mesh.rotation_degrees = Vector3(rot[0], rot[1], rot[2])
 		hat_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	if look["glasses"] != "none":
 		var frame := _cloth(Color("4a4550"), Color("3a3a4a") if look["glasses"] == "sunnies" else Color("4a4550"))
 		var glasses_mesh := _mesh(P.glasses(look["glasses"]), frame, _head)
-		glasses_mesh.position = P.HEAD_CENTRE
+		# Glasses follow the eyes: their height and spacing, plus their own nudges.
+		var size := 1.0 + int(look.get("glasses_size", 0)) * 0.06
+		var gap := 1.0 + int(look.get("eye_gap", 0)) * 0.08
+		glasses_mesh.scale = Vector3(size * gap, size, 1.0)
+		glasses_mesh.position = P.HEAD_CENTRE + Vector3(0, (int(look.get("eye_y", 0)) + int(look.get("glasses_y", 0))) * 0.01, 0)
 		glasses_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
+
+## Where the face features sit and how big they are, from the look's adjustments.
+func _apply_face_adjustments() -> void:
+	var adj := func(key: String) -> float: return float(look.get(key, 0))
+	var eye_scale: float = 1.0 + adj.call("eye_size") * 0.07
+	_face.set_shader_parameter("eye_x", 0.125 + adj.call("eye_gap") * 0.01)
+	_face.set_shader_parameter("eye_y", -0.035 + adj.call("eye_y") * 0.01)
+	_face.set_shader_parameter("eye_scale", eye_scale)
+	_face.set_shader_parameter("eye_tilt", adj.call("eye_tilt") * 0.07)
+	_face.set_shader_parameter("brow_y", 0.085 + (eye_scale - 1.0) * 0.06 + adj.call("brow_y") * 0.008)
+	_face.set_shader_parameter("brow_x", adj.call("brow_gap") * 0.008)
+	_face.set_shader_parameter("brow_tilt", adj.call("brow_tilt") * 0.1)
+	_face.set_shader_parameter("mouth_y", -0.13 + adj.call("mouth_y") * 0.009)
+	_face.set_shader_parameter("mouth_scale", 1.0 + adj.call("mouth_size") * 0.1)
+	_face.set_shader_parameter("nose_style", Appearance.index_of(look, "nose"))
+	_face.set_shader_parameter("nose_y", -0.085 + adj.call("nose_y") * 0.008)
+	_face.set_shader_parameter("nose_scale", 1.0 + adj.call("nose_size") * 0.12)
+	_face.set_shader_parameter("cheek_y", -0.11 + adj.call("cheek_y") * 0.01)
 
 
 ## Ears, tail, snout or ruff, and the face shader's fur markings.
@@ -451,6 +483,7 @@ func _cloth(a: Color, b: Color = Color.WHITE, pattern: int = 0) -> ShaderMateria
 	mat.set_shader_parameter("pattern", pattern)
 	mat.set_shader_parameter("light_wrap", BODY_WRAP)
 	mat.set_shader_parameter("curved", curved)
+	mat.set_shader_parameter("fixed_tints", fixed_light)
 	return mat
 
 

@@ -1,5 +1,5 @@
 {
-	"_note": "Character options. Order matters for eyes, brows, mouth, cheeks and patterns: the index is what the shaders use.",
+	"_note": "Character options. Order matters for eyes, brows, mouth, cheeks and patterns: the index is what the shaders use. Hats can list positions (names and a rotation in degrees about the head).",
 	"skin": [
 		{"id": "porcelain", "color": "#fde6d6"},
 		{"id": "peach", "color": "#f8d2b8"},
@@ -147,13 +147,13 @@
 	],
 	"hat": [
 		{"id": "none", "name": "None"},
-		{"id": "cap", "name": "Cap"},
+		{"id": "cap", "name": "Cap", "positions": [{"name": "Forwards", "rot": [0, 0, 0]}, {"name": "Backwards", "rot": [0, 180, 0]}, {"name": "To the side", "rot": [0, 70, 0]}]},
 		{"id": "beanie", "name": "Beanie"},
-		{"id": "bucket", "name": "Bucket hat"},
-		{"id": "straw", "name": "Straw hat"},
-		{"id": "beret", "name": "Beret"},
-		{"id": "bow", "name": "Bow"},
-		{"id": "flower_crown", "name": "Flower crown"},
+		{"id": "bucket", "name": "Bucket hat", "positions": [{"name": "Level", "rot": [0, 0, 0]}, {"name": "Tipped back", "rot": [-12, 0, 0]}]},
+		{"id": "straw", "name": "Straw hat", "positions": [{"name": "Level", "rot": [0, 0, 0]}, {"name": "Tipped back", "rot": [-12, 0, 0]}]},
+		{"id": "beret", "name": "Beret", "positions": [{"name": "Tilted right", "rot": [0, 0, 0]}, {"name": "Straight", "rot": [0, 0, 11]}, {"name": "Tilted left", "rot": [0, 0, 23]}]},
+		{"id": "bow", "name": "Bow", "positions": [{"name": "Right side", "rot": [0, 0, 0]}, {"name": "On top", "rot": [0, 0, 32]}, {"name": "Left side", "rot": [0, 0, 64]}, {"name": "At the back", "rot": [0, 95, 0]}]},
+		{"id": "flower_crown", "name": "Flower crown", "positions": [{"name": "Level", "rot": [0, 0, 0]}, {"name": "Tilted", "rot": [0, 0, -10]}]},
 		{"id": "cat_ears", "name": "Cat ears"}
 	],
 	"glasses": [
@@ -161,5 +161,13 @@
 		{"id": "round", "name": "Round"},
 		{"id": "square", "name": "Square"},
 		{"id": "sunnies", "name": "Sunglasses"}
+	],
+	"nose": [
+		{"id": "none", "name": "None"},
+		{"id": "dot", "name": "Dot"},
+		{"id": "button", "name": "Button"},
+		{"id": "curve", "name": "Curve"},
+		{"id": "pointy", "name": "Pointy"},
+		{"id": "round", "name": "Round"}
 	]
 }

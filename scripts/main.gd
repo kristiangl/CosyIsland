@@ -15,7 +15,7 @@ extends Node3D
 ##   --demo=decor       same, but stay by the furniture instead of chopping
 ##   --demo=sit         same, and sit on the chair
 ##   --demo=home        pitch the tent, go inside and furnish it
-##   --ui=pockets|pause|map|creator|crafting|placing|intro|ask|lucy  open a menu or mode (for screenshots)
+##   --ui=pockets|pause|map|creator|crafting|placing|intro|ask|lucy  (--tab=N picks a creator tab, --try=key:id,... dresses up)  open a menu or mode (for screenshots)
 
 const AUTOSAVE_SECONDS := 60.0
 
@@ -147,7 +147,12 @@ func _ready() -> void:
 					ev.pressed = true
 					Input.parse_input_event(ev)
 		"creator":
-			hud.creator.open(Appearance.DEFAULT, true)
+			var trying := Appearance.DEFAULT.duplicate()
+			for pair in Game.args.get("try", "").split(",", false):
+				trying[pair.get_slice(":", 0)] = pair.get_slice(":", 1)
+			hud.creator.open(trying, true)
+			if Game.args.has("tab"):
+				hud.creator._select_tab(int(Game.args["tab"]))
 		"crafting":
 			Inventory.add_item("wood", 12)
 			Inventory.add_item("stone", 5)

@@ -27,6 +27,9 @@ static func register() -> void:
 	_action("rotate", [KEY_R], [JOY_BUTTON_RIGHT_SHOULDER])
 	_action("cancel", [KEY_ESCAPE, KEY_BACKSPACE], [NINTENDO_B])
 	_action("map", [KEY_M], [JOY_BUTTON_BACK])
+	# Menus with tabs (character creator, phone apps).
+	_action("tab_prev", [KEY_Q], [JOY_BUTTON_LEFT_SHOULDER])
+	_action("tab_next", [KEY_E], [JOY_BUTTON_RIGHT_SHOULDER])
 
 	# Menus use Nintendo confirm/back positions too.
 	_replace_joy_button("ui_accept", JOY_BUTTON_A, NINTENDO_A)

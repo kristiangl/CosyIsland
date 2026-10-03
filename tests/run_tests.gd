@@ -178,8 +178,25 @@ func _test_appearance() -> void:
 	check(look["hair"] == "spiky", "stepping an option moves through the catalogue")
 	for key in Appearance.SOURCES:
 		check(Appearance.options(key).size() > 1, "appearance has options for " + key)
+	var tuned := Appearance.sanitise({"eye_size": 99, "mouth_y": "-2", "hat": "cap", "hat_pos": 5})
+	check(tuned["eye_size"] == 4 and tuned["mouth_y"] == -2, "face adjustments are kept within range")
+	check(tuned["hat_pos"] == Appearance.hat_positions(tuned).size() - 1, "a hat position past the end is pulled back")
+	var bow := Appearance.sanitise({"hat": "bow"})
+	for i in 10:
+		Appearance.adjust(bow, "hat_pos", 1)
+	check(bow["hat_pos"] == Appearance.hat_positions(bow).size() - 1, "bows can be worn in each position and no further")
+	var creator := CharacterCreator.new()
+	add_child(creator)
+	creator.open(Appearance.DEFAULT, true)
+	for i in CharacterCreator.TABS.size():
+		creator._select_tab(i)
+	check(creator._content.get_child_count() > 0, "every creator tab builds")
+	creator.choose("nose", "button")
+	check(creator.look["nose"] == "button" and creator._preview.look["nose"] == "button", "trying on an option updates the preview")
+	creator.free()
+	Game.mode = Game.Mode.PLAY
 	# Every part option should build a mesh without errors.
-	for key in ["hair", "top", "bottom", "shoes", "hat", "glasses"]:
+	for key in ["hair", "top", "bottom", "shoes", "hat", "glasses", "nose"]:
 		for opt in Appearance.options(key):
 			var test_look := Appearance.DEFAULT.duplicate()
 			test_look[key] = opt["id"]

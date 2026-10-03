@@ -1,36 +1,69 @@
 class_name CharacterCreator
 extends Control
 ## Make your villager (at a new game) or change their look later (the wardrobe).
-## Left: a turning 3D preview. Right: a scrolling list of options; up/down picks a row,
-## left/right changes it. Works with a controller, keyboard or mouse.
+##
+## Left: a 3D preview that leans in on the face for face tabs. Right: a row of tabs with
+## icons (switch with L/R or Q/E, or click), and for each tab a grid of styles drawn as
+## little pictures, colour swatches, and Mii-style adjustments (move, space, size, tilt).
+## Moving the focus over a style or colour tries it on straight away.
 
 signal finished(look: Dictionary, player_name: String, island_name: String)
 
-const ROWS := [
-	["Skin", "skin"], ["Hairstyle", "hair"], ["Hair colour", "hair_color"],
-	["Eyes", "eyes"], ["Eye colour", "eye_color"], ["Eyebrows", "brows"],
-	["Mouth", "mouth"], ["Cheeks", "cheeks"],
-	["Top", "top"], ["Top colour", "top_color"], ["Pattern", "top_pattern"],
-	["Pattern colour", "top_color2"], ["Bottoms", "bottom"], ["Bottoms colour", "bottom_color"],
-	["Shoes", "shoes"], ["Shoe colour", "shoe_color"], ["Hat", "hat"], ["Hat colour", "hat_color"],
-	["Glasses", "glasses"],
+## Each tab: icon, title, the camera view, and what it holds. "styles"/"colours" name
+## appearance keys; "adjust" lists [key, label]; "patterns" adds the top's pattern rows.
+const TABS := [
+	{"icon": "you", "title": "You", "view": "head", "colours": "skin", "colour_title": "Skin"},
+	{"icon": "hair", "title": "Hair", "view": "head", "styles": "hair", "colours": "hair_color"},
+	{"icon": "eyes", "title": "Eyes", "view": "face", "styles": "eyes", "colours": "eye_color",
+		"adjust": [["eye_y", "Up and down"], ["eye_gap", "Spacing"], ["eye_size", "Size"], ["eye_tilt", "Tilt"]]},
+	{"icon": "brows", "title": "Eyebrows", "view": "face", "styles": "brows",
+		"adjust": [["brow_y", "Up and down"], ["brow_gap", "Spacing"], ["brow_tilt", "Tilt"]]},
+	{"icon": "nose", "title": "Nose", "view": "face", "styles": "nose",
+		"adjust": [["nose_y", "Up and down"], ["nose_size", "Size"]]},
+	{"icon": "mouth", "title": "Mouth", "view": "face", "styles": "mouth",
+		"adjust": [["mouth_y", "Up and down"], ["mouth_size", "Size"]]},
+	{"icon": "cheeks", "title": "Cheeks", "view": "face", "styles": "cheeks", "adjust": [["cheek_y", "Up and down"]]},
+	{"icon": "top", "title": "Top", "view": "body", "styles": "top", "colours": "top_color", "patterns": true},
+	{"icon": "bottom", "title": "Bottoms", "view": "body", "styles": "bottom", "colours": "bottom_color"},
+	{"icon": "shoes", "title": "Shoes", "view": "feet", "styles": "shoes", "colours": "shoe_color"},
+	{"icon": "hat", "title": "Hats and bows", "view": "head", "styles": "hat", "colours": "hat_color", "positions": true},
+	{"icon": "glasses", "title": "Glasses", "view": "face", "styles": "glasses",
+		"adjust": [["glasses_y", "Up and down"], ["glasses_size", "Size"]]},
 ]
+## Preview camera [eye, target] for each view.
+const VIEWS := {
+	"face": [Vector3(0, 1.12, 2.7), Vector3(0, 1.0, 0)],
+	"head": [Vector3(0, 1.25, 3.0), Vector3(0, 0.92, 0)],
+	"body": [Vector3(0, 0.98, 3.6), Vector3(0, 0.64, 0)],
+	"feet": [Vector3(0, 0.9, 3.2), Vector3(0, 0.38, 0)],
+}
 const NAMES := ["Kit", "Robin", "Sam", "Juniper", "Ash", "Wren", "Mika", "Sunny", "Pip", "Rowan"]
 
 var look: Dictionary
+var thumbs: CharacterThumbs
 var _preview: CharacterModel
-var _rows: Array[OptionRow] = []
+var _preview_cam: Camera3D
+var _cam_eye := Vector3(0, 1.0, 4.4)
+var _cam_target := Vector3(0, 0.78, 0)
+var _tab := 0
+var _tab_buttons: Array[TabIcon] = []
+var _tab_title: Label
+var _content: VBoxContainer
+var _scroll: ScrollContainer
+var _name_box: VBoxContainer
 var _name_edit: LineEdit
 var _island_edit: LineEdit
 var _title: Label
-var _first_focus: Control
 var _naming := true
+var _spin := 0.0
 
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	theme = UIStyle.theme()
 	visible = false
+	thumbs = CharacterThumbs.new()
+	add_child(thumbs)
 	var dim := ColorRect.new()
 	dim.color = Color(0.98, 0.95, 0.88, 0.75)
 	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -40,40 +73,58 @@ func _ready() -> void:
 	centre.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(centre)
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(1100, 640)
+	panel.custom_minimum_size = Vector2(1180, 660)
 	centre.add_child(panel)
 	var columns := HBoxContainer.new()
-	columns.add_theme_constant_override("separation", 24)
+	columns.add_theme_constant_override("separation", 22)
 	panel.add_child(columns)
-
 	columns.add_child(_build_preview())
 
 	var right := VBoxContainer.new()
 	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	right.add_theme_constant_override("separation", 10)
+	right.add_theme_constant_override("separation", 8)
 	columns.add_child(right)
 	_title = Label.new()
-	_title.add_theme_font_size_override("font_size", 32)
+	_title.add_theme_font_size_override("font_size", 30)
 	right.add_child(_title)
-	var scroll := ScrollContainer.new()
-	scroll.follow_focus = true
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	right.add_child(scroll)
-	var list := VBoxContainer.new()
-	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	list.add_theme_constant_override("separation", 6)
-	scroll.add_child(list)
 
-	_name_edit = _text_row(list, "Your name")
-	_island_edit = _text_row(list, "Island name")
-	for row in ROWS:
-		var r := OptionRow.new(row[0], row[1], self)
-		list.add_child(r)
-		_rows.append(r)
+	# Tabs, with the shoulder buttons that switch them at either end.
+	var tab_row := HBoxContainer.new()
+	tab_row.add_theme_constant_override("separation", 4)
+	right.add_child(tab_row)
+	tab_row.add_child(_shoulder_hint("{tab_prev}"))
+	for i in TABS.size():
+		var t := TabIcon.new(TABS[i]["icon"])
+		t.pressed.connect(_select_tab.bind(i))
+		tab_row.add_child(t)
+		_tab_buttons.append(t)
+	tab_row.add_child(_shoulder_hint("{tab_next}"))
+	_tab_title = Label.new()
+	_tab_title.add_theme_font_size_override("font_size", 22)
+	_tab_title.add_theme_color_override("font_color", UIStyle.BROWN_LIGHT)
+	right.add_child(_tab_title)
+
+	_scroll = ScrollContainer.new()
+	_scroll.follow_focus = true
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	right.add_child(_scroll)
+	var scroll_box := VBoxContainer.new()
+	scroll_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll_box.add_theme_constant_override("separation", 8)
+	_scroll.add_child(scroll_box)
+	_name_box = VBoxContainer.new()
+	_name_box.add_theme_constant_override("separation", 6)
+	scroll_box.add_child(_name_box)
+	_name_edit = _text_row(_name_box, "Your name")
+	_island_edit = _text_row(_name_box, "Island name")
+	_content = VBoxContainer.new()
+	_content.add_theme_constant_override("separation", 8)
+	scroll_box.add_child(_content)
+
 	var buttons := HBoxContainer.new()
 	buttons.add_theme_constant_override("separation", 10)
-	list.add_child(buttons)
+	right.add_child(buttons)
 	var shuffle := Button.new()
 	shuffle.text = "Surprise me"
 	shuffle.pressed.connect(_randomise)
@@ -84,15 +135,26 @@ func _ready() -> void:
 	done.pressed.connect(_done)
 	buttons.add_child(done)
 	var hint := Label.new()
-	Prompts.bind_label(hint, "Up/down to choose   Left/right to change   {ui_accept} next")
+	Prompts.bind_label(hint, "{tab_prev} {tab_next} tabs   Move to try things on   Left/right to adjust   {pause} done")
 	hint.add_theme_font_size_override("font_size", 16)
 	hint.add_theme_color_override("font_color", UIStyle.BROWN_LIGHT)
 	right.add_child(hint)
+	thumbs.thumb_ready.connect(func(_key): get_tree().call_group("creator_tiles", "queue_redraw"))
+
+
+func _shoulder_hint(template: String) -> Label:
+	var l := Label.new()
+	l.custom_minimum_size = Vector2(30, 0)
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.add_theme_font_size_override("font_size", 16)
+	l.add_theme_color_override("font_color", UIStyle.BROWN_LIGHT)
+	Prompts.bind_label(l, template)
+	return l
 
 
 func _build_preview() -> Control:
 	var container := SubViewportContainer.new()
-	container.custom_minimum_size = Vector2(420, 600)
+	container.custom_minimum_size = Vector2(400, 620)
 	container.stretch = true
 	var viewport := SubViewport.new()
 	viewport.own_world_3d = true
@@ -112,15 +174,18 @@ func _build_preview() -> Control:
 	sun.shadow_enabled = true
 	sun.rotation_degrees = Vector3(-40, 30, 0)
 	viewport.add_child(sun)
-	var cam := Camera3D.new()
-	cam.fov = 30.0
-	var eye := Vector3(0, 1.0, 4.4)
-	cam.transform = Transform3D(Basis.looking_at(Vector3(0, 0.78, 0) - eye), eye)
-	viewport.add_child(cam)
-	CameraRig.add_outline_pass(cam)
+	_preview_cam = Camera3D.new()
+	_preview_cam.fov = 30.0
+	viewport.add_child(_preview_cam)
+	CameraRig.add_outline_pass(_preview_cam)
 	_preview = CharacterModel.new()
 	_preview.curved = false
+	_preview.fixed_light = true
 	viewport.add_child(_preview)
+	# Drag with the mouse to turn the preview round.
+	container.gui_input.connect(func(event: InputEvent):
+		if event is InputEventMouseMotion and event.button_mask & MOUSE_BUTTON_MASK_LEFT:
+			_spin += event.relative.x * 0.01)
 	return container
 
 
@@ -128,7 +193,7 @@ func _text_row(list: VBoxContainer, label_text: String) -> LineEdit:
 	var row := HBoxContainer.new()
 	var label := Label.new()
 	label.text = label_text
-	label.custom_minimum_size = Vector2(180, 0)
+	label.custom_minimum_size = Vector2(170, 0)
 	row.add_child(label)
 	var edit := LineEdit.new()
 	edit.max_length = 14
@@ -145,67 +210,283 @@ func _text_row(list: VBoxContainer, label_text: String) -> LineEdit:
 func open(current: Dictionary, naming: bool, player_name: String = "", island_name: String = "") -> void:
 	look = Appearance.sanitise(current)
 	_naming = naming
-	_name_edit.get_parent().visible = naming
-	_island_edit.get_parent().visible = naming
 	_name_edit.text = player_name if player_name != "" else NAMES[randi() % NAMES.size()]
 	_island_edit.text = island_name if island_name != "" else "Driftwood"
 	_title.text = "Let's make you!" if naming else "Wardrobe"
-	_refresh()
+	_preview.set_look(look)
 	visible = true
 	Game.mode = Game.Mode.MENU
-	(_name_edit if naming else _rows[0]).grab_focus()
+	_select_tab(0)
+	var view: Array = VIEWS[TABS[0]["view"]]
+	_cam_eye = view[0]
+	_cam_target = view[1]
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not visible:
+		return
+	if event.is_action_pressed("tab_prev"):
+		_select_tab(posmod(_tab - 1, TABS.size()))
+	elif event.is_action_pressed("tab_next"):
+		_select_tab(posmod(_tab + 1, TABS.size()))
+	elif event.is_action_pressed("pause"):
+		_done()
+	else:
+		return
+	get_viewport().set_input_as_handled()
+
+
+func _select_tab(i: int) -> void:
+	_tab = i
+	thumbs.clear_queue()
+	for t in _tab_buttons.size():
+		_tab_buttons[t].selected = t == i
+		_tab_buttons[t].queue_redraw()
+	var tab: Dictionary = TABS[i]
+	_tab_title.text = tab["title"]
+	_name_box.visible = _naming and i == 0
+	for child in _content.get_children():
+		child.free()
+	var first: Control = null
+	if tab.has("styles"):
+		first = _style_grid(tab["styles"], tab["view"])
+	if tab.has("positions"):
+		var row := AdjustRow.new(self, "hat_pos", "Wear it")
+		row.visible = not Appearance.hat_positions(look).is_empty()
+		row.name = "HatPos"
+		_content.add_child(row)
+	if tab.has("colours"):
+		var colour_first := _swatches(tab["colours"], tab.get("colour_title", "Colour"))
+		first = first if first else colour_first
+	if tab.get("patterns", false):
+		_style_grid("top_pattern", "body", "Pattern")
+		_swatches("top_color2", "Pattern colour")
+	if tab.has("adjust"):
+		_section("Adjust")
+		for entry: Array in tab["adjust"]:
+			_content.add_child(AdjustRow.new(self, entry[0], entry[1]))
+	if _naming and i == 0:
+		_name_edit.grab_focus.call_deferred()
+	elif first:
+		_focus_selected(first).grab_focus.call_deferred()
+	_scroll.scroll_vertical = 0
+
+
+## The selected tile in a grid, to start the focus on.
+func _focus_selected(grid: Control) -> Control:
+	for child in grid.get_children():
+		if child is OptionTile and child.is_selected():
+			return child
+	return grid.get_child(0)
+
+
+func _section(text: String) -> void:
+	var l := Label.new()
+	l.text = text
+	l.add_theme_font_size_override("font_size", 18)
+	l.add_theme_color_override("font_color", UIStyle.BROWN_LIGHT)
+	_content.add_child(l)
+
+
+func _style_grid(key: String, view: String, title: String = "Style") -> GridContainer:
+	_section(title)
+	var grid := GridContainer.new()
+	grid.columns = 8
+	grid.add_theme_constant_override("h_separation", 8)
+	grid.add_theme_constant_override("v_separation", 8)
+	_content.add_child(grid)
+	for opt in Appearance.options(key):
+		grid.add_child(OptionTile.new(self, key, opt["id"], view, false))
+	return grid
+
+
+func _swatches(key: String, title: String) -> GridContainer:
+	_section(title)
+	var grid := GridContainer.new()
+	grid.columns = 12
+	grid.add_theme_constant_override("h_separation", 6)
+	grid.add_theme_constant_override("v_separation", 6)
+	_content.add_child(grid)
+	for opt in Appearance.options(key):
+		grid.add_child(OptionTile.new(self, key, opt["id"], "", true))
+	return grid
+
+
+## Tries an option on.
+func choose(key: String, id: String) -> void:
+	if look.get(key, "") == id:
+		return
+	look[key] = id
+	if key == "hat":
+		look["hat_pos"] = 0
+		var row := _content.get_node_or_null("HatPos")
+		if row:
+			row.visible = not Appearance.hat_positions(look).is_empty()
+	changed()
 
 
 func changed() -> void:
-	_refresh()
-
-
-func _refresh() -> void:
 	_preview.set_look(look)
-	for r in _rows:
-		r.queue_redraw()
+	get_tree().call_group("creator_tiles", "queue_redraw")
+
+
+## How an option's picture is drawn: the current look wearing it, simplified so the
+## part shows (no hat over the hair, short hair for faces).
+func thumb_look(key: String, id: String, view: String) -> Dictionary:
+	var l := look.duplicate()
+	l[key] = id
+	if key != "hat":
+		l["hat"] = "none"
+	if view == "face":
+		l["hair"] = "buzz"
+		if key != "glasses":
+			l["glasses"] = "none"
+	return l
 
 
 func _process(delta: float) -> void:
-	if visible and _preview:
-		_preview.rotation.y = sin(Time.get_ticks_msec() / 1600.0) * 0.6
-		_preview.animate(delta, 0.0)
+	if not visible or _preview == null:
+		return
+	var view: Array = VIEWS[TABS[_tab]["view"]]
+	var k := 1.0 - exp(-delta * 6.0)
+	_cam_eye = _cam_eye.lerp(view[0], k)
+	_cam_target = _cam_target.lerp(view[1], k)
+	_preview_cam.transform = Transform3D(Basis.looking_at(_cam_target - _cam_eye), _cam_eye)
+	# Faces stay facing the camera; outfits sway round so you see them from the side too.
+	var sway := 0.15 if TABS[_tab]["view"] == "face" else 0.6
+	_preview.rotation.y = _spin + sin(Time.get_ticks_msec() / 1600.0) * sway
+	_preview.animate(delta, 0.0)
 
 
 func _randomise() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
 	look = Appearance.random(rng)
-	_refresh()
+	changed()
+	_select_tab(_tab)
 
 
 func _done() -> void:
 	visible = false
+	thumbs.clear_queue()
 	Game.mode = Game.Mode.PLAY
 	var player_name := _name_edit.text.strip_edges()
 	var island_name := _island_edit.text.strip_edges()
 	finished.emit(look.duplicate(), player_name if player_name != "" else "Kit", island_name if island_name != "" else "Driftwood")
 
 
-## One "Label   < value >" line. Left/right (or clicking the arrows) changes the value.
-class OptionRow:
+## A tab: an icon on a rounded square, highlighted when selected.
+class TabIcon:
 	extends Button
-	var label_text: String
-	var key: String
-	var creator: CharacterCreator
+	var icon_id: String
+	var selected := false
 
-	func _init(text_label: String, look_key: String, owner_creator: CharacterCreator) -> void:
-		label_text = text_label
-		key = look_key
+	func _init(id: String) -> void:
+		icon_id = id
+		custom_minimum_size = Vector2(52, 52)
+		focus_mode = Control.FOCUS_NONE
+		flat = true
+
+	func _draw() -> void:
+		var r := Rect2(Vector2(2, 2), size - Vector2(4, 4))
+		var sb := StyleBoxFlat.new()
+		sb.set_corner_radius_all(14)
+		sb.bg_color = UIStyle.ACCENT if selected else UIStyle.CREAM_DARK
+		draw_style_box(sb, r)
+		UIIcons.draw(self, icon_id, size * 0.5, size.x * 0.62, UIStyle.BROWN if selected else UIStyle.BROWN_LIGHT)
+
+
+## One option: a style shown as a picture of the character wearing it, or a colour
+## swatch. Focusing it (moving onto it) tries it on.
+class OptionTile:
+	extends Button
+	var creator: CharacterCreator
+	var key: String
+	var id: String
+	var view: String
+	var swatch: bool
+
+	func _init(owner_creator: CharacterCreator, look_key: String, option_id: String, thumb_view: String, is_swatch: bool) -> void:
 		creator = owner_creator
+		key = look_key
+		id = option_id
+		view = thumb_view
+		swatch = is_swatch
+		custom_minimum_size = Vector2(40, 40) if swatch else Vector2(76, 76)
+		focus_mode = Control.FOCUS_ALL
+		flat = true
+		tooltip_text = _name()
+		add_to_group("creator_tiles")
+		focus_entered.connect(func(): creator.choose(key, id))
+		pressed.connect(func(): creator.choose(key, id))
+
+	func is_selected() -> bool:
+		return creator.look.get(key, "") == id
+
+	func _name() -> String:
+		for opt in Appearance.options(key):
+			if opt["id"] == id:
+				return opt.get("name", id.capitalize())
+		return id
+
+	func _draw() -> void:
+		var selected := is_selected()
+		var focused := has_focus()
+		var r := Rect2(Vector2.ZERO, size)
+		if swatch:
+			var colour := Color("#ff00ff")
+			for opt in Appearance.options(key):
+				if opt["id"] == id:
+					colour = Color(opt.get("color", "#ff00ff"))
+			var c := size * 0.5
+			if selected or focused:
+				draw_circle(c, size.x * 0.5, UIStyle.ACCENT if focused else UIStyle.BROWN_LIGHT)
+			draw_circle(c, size.x * 0.5 - 4, Color.WHITE)
+			draw_circle(c, size.x * 0.5 - 6, colour)
+			return
+		var sb := StyleBoxFlat.new()
+		sb.set_corner_radius_all(16)
+		sb.bg_color = Color("f3ead2") if not selected else Color("fbe3b0")
+		sb.border_color = UIStyle.ACCENT if focused else (UIStyle.BROWN_LIGHT if selected else Color(0, 0, 0, 0))
+		sb.set_border_width_all(4 if focused else 3)
+		draw_style_box(sb, r)
+		if id == "none" or id == "plain":
+			# "None": an empty circle with a line through it.
+			if id == "none":
+				draw_arc(size * 0.5, size.x * 0.22, 0, TAU, 24, UIStyle.BROWN_LIGHT, 3, true)
+				draw_line(size * 0.5 + Vector2(-0.15, 0.15) * size.x, size * 0.5 + Vector2(0.15, -0.15) * size.x, UIStyle.BROWN_LIGHT, 3)
+				return
+		var tex := creator.thumbs.get_thumb(creator.thumb_look(key, id, view), view)
+		if tex:
+			draw_texture_rect(tex, r.grow(-4), false)
+		else:
+			var font := get_theme_default_font()
+			draw_string(font, Vector2(4, size.y * 0.5 + 6), _name(), HORIZONTAL_ALIGNMENT_CENTER, size.x - 8, 13, UIStyle.BROWN)
+
+
+## An adjustment: "Label   - ●●●○●●●●● +". Left/right (or clicking either end) changes it.
+class AdjustRow:
+	extends Button
+	var creator: CharacterCreator
+	var key: String
+	var label_text: String
+
+	func _init(owner_creator: CharacterCreator, look_key: String, text_label: String) -> void:
+		creator = owner_creator
+		key = look_key
+		label_text = text_label
 		custom_minimum_size = Vector2(560, 42)
 		focus_mode = Control.FOCUS_ALL
+		flat = true
+		add_to_group("creator_tiles")
+		focus_entered.connect(queue_redraw)
+		focus_exited.connect(queue_redraw)
 
 	func _gui_input(event: InputEvent) -> void:
 		if event.is_action_pressed("ui_left"):
 			_step(-1)
 			accept_event()
-		elif event.is_action_pressed("ui_right") or event.is_action_pressed("ui_accept"):
+		elif event.is_action_pressed("ui_right"):
 			_step(1)
 			accept_event()
 		elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
@@ -213,20 +494,30 @@ class OptionRow:
 			accept_event()
 
 	func _step(direction: int) -> void:
-		Appearance.step(creator.look, key, direction)
+		Appearance.adjust(creator.look, key, direction)
 		creator.changed()
 
 	func _draw() -> void:
+		var sb := StyleBoxFlat.new()
+		sb.set_corner_radius_all(16)
+		sb.bg_color = UIStyle.ACCENT if has_focus() else UIStyle.CREAM_DARK
+		draw_style_box(sb, Rect2(Vector2.ZERO, size))
 		var font := get_theme_default_font()
 		var y := size.y * 0.5 + 7
-		draw_string(font, Vector2(18, y), label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 20, UIStyle.BROWN)
-		var value := Appearance.display_name(creator.look, key)
-		var opt := Appearance.option(creator.look, key)
-		var x := size.x * 0.5
-		draw_string(font, Vector2(x - 30, y), "<", HORIZONTAL_ALIGNMENT_LEFT, -1, 20, UIStyle.BROWN_LIGHT)
-		if opt.has("color"):
-			draw_circle(Vector2(x + 2, size.y * 0.5), 11, Color(opt["color"]).darkened(0.2))
-			draw_circle(Vector2(x + 2, size.y * 0.5), 9, Color(opt["color"]))
-			x += 22
-		draw_string(font, Vector2(x, y), value, HORIZONTAL_ALIGNMENT_LEFT, size.x * 0.5 - 60, 20, UIStyle.BROWN)
-		draw_string(font, Vector2(size.x - 30, y), ">", HORIZONTAL_ALIGNMENT_LEFT, -1, 20, UIStyle.BROWN_LIGHT)
+		draw_string(font, Vector2(18, y), label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 19, UIStyle.BROWN)
+		var x0 := size.x * 0.42
+		draw_string(font, Vector2(x0 - 26, y), "<", HORIZONTAL_ALIGNMENT_LEFT, -1, 20, UIStyle.BROWN_LIGHT)
+		draw_string(font, Vector2(size.x - 28, y), ">", HORIZONTAL_ALIGNMENT_LEFT, -1, 20, UIStyle.BROWN_LIGHT)
+		var value := int(creator.look.get(key, 0))
+		if key == "hat_pos":
+			var ways := Appearance.hat_positions(creator.look)
+			var name: String = ways[clampi(value, 0, ways.size() - 1)]["name"] if not ways.is_empty() else "-"
+			draw_string(font, Vector2(x0, y), name, HORIZONTAL_ALIGNMENT_CENTER, size.x - x0 - 40, 19, UIStyle.BROWN)
+			return
+		var lo: int = Appearance.ADJUST[key][0]
+		var hi: int = Appearance.ADJUST[key][1]
+		var width := size.x - x0 - 44
+		for v in range(lo, hi + 1):
+			var cx := x0 + 6 + width * float(v - lo) / float(hi - lo)
+			var on := v == value
+			draw_circle(Vector2(cx, size.y * 0.5), 8.0 if on else (5.0 if v == 0 else 4.0), UIStyle.BROWN if on else UIStyle.BROWN_LIGHT)

@@ -6,7 +6,10 @@ extends RefCounted
 ## Keys and the catalogue list each one draws from:
 ##   skin, eyes, eye_color, brows, mouth, cheeks, hair, hair_color,
 ##   top, top_color, top_color2, top_pattern, bottom, bottom_color,
-##   shoes, shoe_color, hat, hat_color, glasses
+##   shoes, shoe_color, hat, hat_color, glasses, nose
+##
+## Plus whole-number adjustments (see ADJUST), Mii-style: where each face feature sits,
+## how big it is, how far apart and tilted, and where a hat or bow is worn.
 
 const DATA_PATH := "res://data/appearance.json"
 
@@ -16,7 +19,19 @@ const SOURCES := {
 	"mouth": "mouth", "cheeks": "cheeks", "hair": "hair", "hair_color": "hair_color",
 	"top": "top", "top_color": "colors", "top_color2": "colors", "top_pattern": "pattern",
 	"bottom": "bottom", "bottom_color": "colors", "shoes": "shoes", "shoe_color": "colors",
-	"hat": "hat", "hat_color": "colors", "glasses": "glasses",
+	"hat": "hat", "hat_color": "colors", "glasses": "glasses", "nose": "nose",
+}
+
+## Adjustments: key -> [lowest, highest]. All default to 0 (except hat_pos, an index
+## into the hat's "positions").
+const ADJUST := {
+	"eye_y": [-4, 4], "eye_gap": [-4, 4], "eye_size": [-4, 4], "eye_tilt": [-4, 4],
+	"brow_y": [-4, 4], "brow_gap": [-4, 4], "brow_tilt": [-4, 4],
+	"nose_y": [-4, 4], "nose_size": [-4, 4],
+	"mouth_y": [-4, 4], "mouth_size": [-4, 4],
+	"cheek_y": [-4, 4],
+	"glasses_y": [-4, 4], "glasses_size": [-4, 4],
+	"hat_pos": [0, 7],
 }
 
 const DEFAULT := {
@@ -24,7 +39,10 @@ const DEFAULT := {
 	"mouth": "smile", "cheeks": "blush", "hair": "short", "hair_color": "brown",
 	"top": "tee", "top_color": "coral", "top_color2": "white", "top_pattern": "plain",
 	"bottom": "shorts", "bottom_color": "navy", "shoes": "sneakers", "shoe_color": "white",
-	"hat": "none", "hat_color": "red", "glasses": "none",
+	"hat": "none", "hat_color": "red", "glasses": "none", "nose": "none",
+	"eye_y": 0, "eye_gap": 0, "eye_size": 0, "eye_tilt": 0, "brow_y": 0, "brow_gap": 0,
+	"brow_tilt": 0, "nose_y": 0, "nose_size": 0, "mouth_y": 0, "mouth_size": 0,
+	"cheek_y": 0, "glasses_y": 0, "glasses_size": 0, "hat_pos": 0,
 }
 
 static var _catalogue: Dictionary = {}
@@ -76,7 +94,25 @@ static func sanitise(saved: Dictionary) -> Dictionary:
 			for opt in options(key):
 				if opt["id"] == saved[key]:
 					look[key] = saved[key]
+	for key in ADJUST:
+		if saved.has(key):
+			look[key] = clampi(int(saved[key]), ADJUST[key][0], ADJUST[key][1])
+	look["hat_pos"] = mini(look["hat_pos"], maxi(0, hat_positions(look).size() - 1))
 	return look
+
+
+## Ways the current hat can be worn: [{"name", "rot": [x, y, z] degrees}]. Empty if
+## there's only one.
+static func hat_positions(look: Dictionary) -> Array:
+	return option(look, "hat").get("positions", [])
+
+
+## Changes an adjustment by a step, within its range.
+static func adjust(look: Dictionary, key: String, direction: int) -> void:
+	var top: int = ADJUST[key][1]
+	if key == "hat_pos":
+		top = maxi(0, hat_positions(look).size() - 1)
+	look[key] = clampi(int(look.get(key, 0)) + direction, ADJUST[key][0], top)
 
 
 static func random(rng: RandomNumberGenerator) -> Dictionary:
@@ -91,6 +127,8 @@ static func random(rng: RandomNumberGenerator) -> Dictionary:
 		look["hat"] = "none"
 	if rng.randf() < 0.75:
 		look["glasses"] = "none"
+	if rng.randf() < 0.6:
+		look["nose"] = "none"
 	return look
 
 

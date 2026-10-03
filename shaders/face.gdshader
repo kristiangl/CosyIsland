@@ -23,6 +23,19 @@ uniform float blink = 0.0;
 uniform float eye_x = 0.125;
 uniform float eye_y = -0.035;
 uniform float mouth_y = -0.13;
+// Mii-style adjustments (see Appearance.ADJUST).
+uniform float eye_scale = 1.0;
+uniform float eye_tilt = 0.0;
+// Brows: height above the eye, nudge outwards, tilt.
+uniform float brow_y = 0.085;
+uniform float brow_x = 0.0;
+uniform float brow_tilt = 0.0;
+uniform float mouth_scale = 1.0;
+uniform float cheek_y = -0.11;
+// 0 none, 1 dot, 2 button, 3 curve, 4 pointy, 5 round.
+uniform int nose_style = 0;
+uniform float nose_y = -0.085;
+uniform float nose_scale = 1.0;
 // Animal heads: 0 person, 1 cat (tabby forehead, pale muzzle, pink nose, whiskers),
 // 2 dog (patches over the eyes and ears with a pale blaze, pale muzzle).
 uniform int species = 0;
@@ -130,7 +143,8 @@ vec3 draw_brow(vec3 base, vec2 p, float aa, float side) {
 	if (brow_style == 0) {
 		return base;
 	}
-	vec2 q = p - vec2(0.0, 0.085);
+	vec2 q = p - vec2(side * brow_x, brow_y);
+	q = mat2(vec2(cos(side * brow_tilt), sin(side * brow_tilt)), vec2(-sin(side * brow_tilt), cos(side * brow_tilt))) * q;
 	if (brow_style == 1) {
 		return paint(base, brow_colour, sd_arc(q, vec2(0.0, -0.05), 0.05, 1.1, 2.05) - 0.007, aa);
 	}
@@ -148,7 +162,8 @@ vec3 draw_mouth(vec3 base, vec2 p, float aa) {
 	vec3 line = vec3(0.45, 0.22, 0.24);
 	vec3 inside = vec3(0.62, 0.24, 0.3);
 	vec3 tongue = vec3(0.96, 0.55, 0.58);
-	vec2 q = p - vec2(0.0, mouth_y);
+	vec2 q = (p - vec2(0.0, mouth_y)) / mouth_scale;
+	aa /= mouth_scale;
 	if (mouth_style == 0) {
 		return paint(base, line, sd_arc(q, vec2(0.0, 0.018), 0.026, -2.4, -0.74) - 0.0055, aa);
 	}
@@ -220,6 +235,32 @@ vec3 whiskers(vec3 base, vec2 p, float aa) {
 	return base;
 }
 
+// A person's nose: a few simple shapes in a darker skin tone.
+vec3 draw_nose(vec3 base, vec2 p, float aa) {
+	if (nose_style == 0) {
+		return base;
+	}
+	vec2 q = (p - vec2(0.0, nose_y)) / nose_scale;
+	aa /= nose_scale;
+	vec3 shade = skin * vec3(0.8, 0.68, 0.66);
+	if (nose_style == 1) {
+		return paint(base, shade, sd_ellipse(q, vec2(0.012, 0.009)), aa);
+	}
+	if (nose_style == 2) {
+		base = paint(base, mix(skin, shade, 0.55), sd_ellipse(q, vec2(0.03, 0.022)), aa);
+		return paint(base, mix(skin, vec3(1.0), 0.5), length(q - vec2(-0.01, 0.007)) - 0.007, aa);
+	}
+	if (nose_style == 3) {
+		return paint(base, shade, sd_arc(q, vec2(-0.004, 0.0), 0.02, -1.6, 1.4) - 0.004, aa);
+	}
+	if (nose_style == 4) {
+		float d = max(abs(q.x) * 0.9 + q.y * 0.45, -q.y - 0.014) - 0.012;
+		return paint(base, shade, abs(d) - 0.0035, aa);
+	}
+	base = paint(base, mix(skin, shade, 0.5), sd_ellipse(q, vec2(0.04, 0.03)), aa);
+	return paint(base, shade, length(vec2(abs(q.x) - 0.014, q.y + 0.008)) - 0.006, aa);
+}
+
 void fragment() {
 	vec3 col = markings(skin, local_pos);
 	if (local_pos.z > 0.12) {
@@ -228,18 +269,24 @@ void fragment() {
 		float side = sign(p.x);
 		// Position relative to this side's eye; `side` says which way is outwards.
 		vec2 e = vec2(p.x - side * eye_x, p.y - eye_y);
+		// Eyes tilt their outer corners up or down and scale about their centre.
+		float t = side * eye_tilt;
+		vec2 eye = mat2(vec2(cos(t), sin(t)), vec2(-sin(t), cos(t))) * e / eye_scale;
 		if (cheek_style == 1 || cheek_style == 3) {
-			vec2 c = vec2(abs(p.x) - 0.2, p.y + 0.11);
+			vec2 c = vec2(abs(p.x) - 0.2, p.y - cheek_y);
 			col = mix(col, vec3(0.98, 0.6, 0.6), 0.55 * (1.0 - smoothstep(-aa, aa, sd_ellipse(c, vec2(0.05, 0.026)))));
 		}
 		if (cheek_style >= 2) {
 			for (int i = 0; i < 3; i++) {
-				vec2 f = vec2(abs(p.x) - 0.17 - float(i) * 0.022, p.y + 0.085 + float(i % 2) * 0.014);
+				vec2 f = vec2(abs(p.x) - 0.17 - float(i) * 0.022, p.y - cheek_y - 0.025 + float(i % 2) * 0.014);
 				col = paint(col, skin * 0.72, length(f) - 0.0055, aa);
 			}
 		}
 		col = draw_brow(col, e, aa, side);
-		col = draw_eye(col, e, aa, side);
+		col = draw_eye(col, eye, aa / eye_scale, side);
+		if (species == 0) {
+			col = draw_nose(col, p, aa);
+		}
 		col = draw_mouth(col, p, aa);
 		if (species == 1) {
 			col = whiskers(col, p, aa);

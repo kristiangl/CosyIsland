@@ -76,6 +76,18 @@ items donated). Rough order:
 6. **Island makeover.** Path tool, then terraforming (cliffs), waterscaping (rivers and
    ponds), and the rock-moving tool. Bridges and ramps become buildable anywhere.
 
+### The progression spine
+
+- **Poppy's Island Journal** (`data/journal.json`, the `Journal` autoload): lifetime
+  milestones in tiers (wood chopped, things made, flowers planted...) and five daily
+  tasks, all paying **stamps**. Some milestone tiers teach recipes (the stone axe after
+  50 wood, the sturdy shovel after 50 rock finds). Systems report with `Journal.add()`.
+- **The stamp exchange** (the journal's third page): bigger pockets (20, 30, 40),
+  recipe cards, customisation kits, surprise furniture and clothes.
+- **Projects**: things the islanders build when you bring materials (Lucy's shop next,
+  then the museum and neighbours' plots).
+- Acorns are for buying and building; stamps reward playing and buy conveniences.
+
 Time travel: sleeping in a bed moves the clock on to morning, noon, evening or midnight.
 For testing, the Island Phone's time travel app moves it forwards or back by hours or days. Daily resets (wood, rocks, fruit regrowth) happen at 5am island time.
 
@@ -130,6 +142,8 @@ Milestone 3b:
 - [x] Sleepy Time and Folk Festival clothes (pyjamas, nightgown, nightcap, bunny
   slippers; folk blouse, waistcoat, folk skirt, clogs, festival crown)
 - [x] Painted colourways for the original wooden furniture
+- [x] Island Journal: milestones and daily tasks earning stamps; stamp exchange with
+  pocket upgrades
 - [x] Flowers: picked blooms regrow overnight, worn in hair or put in vases; plants dug
   up with a shovel and replanted (breeding later)
 

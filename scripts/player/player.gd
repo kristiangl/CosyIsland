@@ -259,6 +259,7 @@ func _stand_up() -> void:
 
 ## Eats something from the pockets: up to the mouth, crumbs, hearts.
 func eat(item_id: String) -> void:
+	Journal.add("eaten")
 	_busy = 1.6
 	model.play("eat")
 	model.hold(Models.get_mesh("drop:" + item_id), 1.4)

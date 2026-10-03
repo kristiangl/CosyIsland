@@ -57,6 +57,7 @@ func craft(id: String) -> bool:
 	if Inventory.add_item(id, makes(id)) > 0:
 		Inventory.from_save(before)
 		return false
+	Journal.add("crafted")
 	return true
 
 
@@ -70,6 +71,7 @@ func customise(slot: int, new_id: String) -> String:
 		return "You need a customisation kit. Lucy sells them."
 	entry["id"] = new_id
 	Inventory.remove_item(KIT, 1)
+	Journal.add("customised")
 	if slot == Inventory.equipped_slot:
 		Events.equipped_changed.emit(new_id)
 	return ""

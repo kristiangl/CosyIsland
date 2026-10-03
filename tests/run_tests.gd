@@ -27,6 +27,7 @@ func _run() -> void:
 	_test_customising()
 	_test_rugs_and_curtains()
 	_test_flowers()
+	_test_journal()
 	print("\n%d checks, %d failures" % [_checks, _failures])
 	get_tree().quit(1 if _failures > 0 else 0)
 
@@ -660,3 +661,54 @@ func _test_flowers() -> void:
 	check(not room.can_plant(Vector2i(2, 2)), "flowers aren't planted indoors")
 	room.free()
 	Inventory.reset()
+
+
+func _test_journal() -> void:
+	Journal.reset()
+	Inventory.reset()
+	Recipes.reset()
+	Journal.add("wood", 9)
+	check(Journal.tiers.get("woodcutter", 0) == 0, "no milestone before its goal")
+	Journal.add("wood")
+	check(Journal.stamps >= 100 and Journal.tiers.get("woodcutter", 0) == 1, "ten wood earns the first Woodcutter stamps")
+	var before := Journal.stamps
+	Journal.add("wood", 40)
+	check(Journal.tiers["woodcutter"] == 2 and Journal.stamps > before, "the next goal pays too")
+	check(Recipes.is_known("stone_axe"), "and teaches the stone axe recipe")
+	var tasks := Journal.tasks_today()
+	check(tasks.size() == Journal.DAILY_COUNT, "five tasks a day")
+	var task: Dictionary = tasks.filter(func(t): return t["stat"] != "wood")[0]
+	before = Journal.stamps
+	Journal.add(task["stat"], int(task["n"]))
+	check(task["id"] in Journal.today_done and Journal.stamps >= before + int(task["stamps"]), "finishing a daily task pays stamps")
+	var saved: Dictionary = JSON.parse_string(JSON.stringify(Journal.to_save()))
+	var stamps := Journal.stamps
+	Journal.from_save(saved)
+	check(Journal.stamps == stamps and Journal.tiers["woodcutter"] == 2 and task["id"] in Journal.today_done, "the journal is saved")
+	var pockets: Dictionary = Journal.exchange.filter(func(o): return o["id"] == "pockets_30")[0]
+	Journal.stamps = 0
+	check(Journal.can_buy(pockets) != "", "offers cost stamps")
+	Journal.stamps = 5000
+	var rng := RandomNumberGenerator.new()
+	check(Journal.buy(pockets, rng) != "" and Inventory.slots.size() == 30 and Journal.stamps == 3500, "bigger pockets can be bought")
+	check(Journal.can_buy(pockets) != "", "but only once")
+	Inventory.add_item("wood", 1)
+	var inv: Dictionary = JSON.parse_string(JSON.stringify(Inventory.to_save()))
+	Inventory.from_save(inv)
+	check(Inventory.slots.size() == 30, "bigger pockets are saved")
+	var surprise: Dictionary = Journal.exchange.filter(func(o): return o["id"] == "furniture_box")[0]
+	var got := Journal.buy(surprise, rng)
+	check(got != "" and Inventory.slots.any(func(sl): return ItemDB.get_item(sl.get("id", "")).get("category", "") == "furniture"), "surprise furniture arrives in the pockets")
+	Inventory.add_item("wood", 4)
+	before = Journal.stats.get("crafted", 0)
+	Recipes.craft("wooden_stool")
+	check(Journal.stats.get("crafted", 0) == before + 1, "crafting is counted")
+	var menu := JournalMenu.new()
+	add_child(menu)
+	menu.open("milestones")
+	check(menu._rows.size() == Journal.milestones.size(), "the journal lists every milestone")
+	menu.close()
+	menu.free()
+	Journal.reset()
+	Inventory.reset()
+	Recipes.reset()

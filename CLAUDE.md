@@ -41,6 +41,8 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   character model), `scripts/npc/` (island characters).
 - Rooms inside homes are a second `World` with `interior = true` on a small
   `IslandData.room()`; `main.gd` swaps between the island and the room.
+- `Journal` (autoload, `data/journal.json`) counts what the player does (`Journal.add(stat)`)
+  and pays stamps for milestones and daily tasks; its exchange sells pocket upgrades etc.
 - `Story` (autoload) holds conversation progress and every character's lines;
   `DialogueBox` shows them. Await its `finished`/`picked` signals, not coroutines.
 - Island generation is versioned (`IslandGenerator.VERSION`, saved as "gen"): bump it

@@ -107,6 +107,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			else:
 				world.place_item(_item, _rect, _rot)
 			Inventory.remove_from_slot(_slot)
+			Journal.add("placed")
 			Events.toast.emit("Perfect spot!" if _item != "tent_kit" else "Your tent is up! Welcome home.")
 			_end()
 		else:

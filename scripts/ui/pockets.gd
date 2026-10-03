@@ -58,17 +58,23 @@ func _ready() -> void:
 	hint.add_theme_font_size_override("font_size", 16)
 	hint.add_theme_color_override("font_color", UIStyle.BROWN_LIGHT)
 	footer.add_child(hint)
-	for i in Inventory.slots.size():
+	_add_slots()
+	Events.pockets_resized.connect(_add_slots)
+	Events.inventory_changed.connect(_refresh)
+	Events.equipped_changed.connect(func(_id): _refresh())
+	Events.currency_changed.connect(func(_c): _refresh())
+	Icons.icon_ready.connect(func(_id): if visible: _refresh())
+
+
+## A button for every pocket slot (more appear when the pockets grow).
+func _add_slots() -> void:
+	for i in range(_buttons.size(), Inventory.slots.size()):
 		var b := SlotButton.new()
 		b.index = i
 		b.focus_entered.connect(_on_focus.bind(i))
 		b.pressed.connect(_use_slot.bind(i))
 		_grid.add_child(b)
 		_buttons.append(b)
-	Events.inventory_changed.connect(_refresh)
-	Events.equipped_changed.connect(func(_id): _refresh())
-	Events.currency_changed.connect(func(_c): _refresh())
-	Icons.icon_ready.connect(func(_id): if visible: _refresh())
 
 
 func open() -> void:
@@ -150,6 +156,7 @@ func _use_slot(i: int) -> void:
 	elif def.get("category", "") == "clothing":
 		var player := Game.player
 		player.model.set_look(Inventory.wear_from_slot(i, player.model.look))
+		Journal.add("clothes_worn")
 		player.model.play("cheer")
 		Effects.burst("sparkle", player.position + Vector3(0, 0.9, 0))
 		Events.toast.emit("You put on the %s. It's in your wardrobe now." % ItemDB.display_name(id).to_lower())

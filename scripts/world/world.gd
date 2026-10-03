@@ -365,6 +365,7 @@ func chop(obj: Dictionary, player_pos: Vector3) -> void:
 		return
 	if _drop_near(obj, player_pos, {"item": "wood", "count": 1}):
 		obj["wood_left"] -= 1
+		Journal.add("wood")
 
 
 func strike_rock(obj: Dictionary, player_pos: Vector3) -> bool:
@@ -380,6 +381,7 @@ func strike_rock(obj: Dictionary, player_pos: Vector3) -> bool:
 		obj["hits_left"] = 0
 		return false
 	obj["hits_left"] -= 1
+	Journal.add("rock_hits")
 	return true
 
 
@@ -391,6 +393,7 @@ func shake(obj: Dictionary, player_pos: Vector3) -> void:
 	if obj["kind"] == "fruit_tree" and obj.get("fruit_count", 0) > 0:
 		for i in obj["fruit_count"]:
 			_drop_near(obj, player_pos, {"item": obj["fruit"], "count": 1})
+		Journal.add("fruit", obj["fruit_count"])
 		obj["fruit_count"] = 0
 		obj["picked_day"] = day_key
 		refresh_node(obj)
@@ -409,6 +412,7 @@ func shake(obj: Dictionary, player_pos: Vector3) -> void:
 		if obj.get("branches", 0) < BRANCHES_PER_TREE and _rng.randf() < 0.75:
 			obj["branches"] = obj.get("branches", 0) + 1
 			_drop_near(obj, player_pos, {"item": "tree_branch", "count": 1})
+			Journal.add("branches")
 
 
 ## Puts placed furniture back in the pockets. Fixed things and homes stay put.
@@ -439,10 +443,12 @@ func pick_up(x: int, z: int) -> bool:
 		"drop":
 			if obj["item"] == "acorn_pouch":
 				Inventory.add_currency(obj.get("amount", 100))
+				Journal.add("acorns_earned", obj.get("amount", 100))
 				Events.toast.emit("You got %d %s!" % [obj.get("amount", 100), Game.CURRENCY_NAME.to_lower()])
 			elif obj["item"] == "message_bottle":
 				Effects.burst("sparkle", Vector3(x + 0.5, data.height_at(x + 0.5, z + 0.5) + 0.4, z + 0.5))
 				var learned := Recipes.learn_random(_rng)
+				Journal.add("bottles")
 				if learned == "":
 					Events.toast.emit("A note inside says: \"Hello from across the sea!\"")
 				else:
@@ -466,6 +472,7 @@ func pick_up(x: int, z: int) -> bool:
 			Events.toast.emit("You picked a %s." % ItemDB.display_name(id).to_lower())
 			obj["picked"] = true
 			refresh_node(obj)
+			Journal.add("flowers_picked")
 			Effects.burst("leaves", Vector3(x + 0.5, data.height_at(x + 0.5, z + 0.5) + 0.4, z + 0.5))
 			return true
 	return false
@@ -497,6 +504,7 @@ func plant_flower(item_id: String, tile: Vector2i) -> Dictionary:
 	var def := ItemDB.get_item(item_id)
 	var obj := add_object({"kind": "flower", "x": tile.x, "z": tile.y, "species": def["species"], "color": def["flower_color"]})
 	_pop_in(obj)
+	Journal.add("flowers_planted")
 	return obj
 
 

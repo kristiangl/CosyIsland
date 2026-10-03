@@ -51,6 +51,7 @@ func talk_to(who: Npc) -> void:
 	if talking or Game.dialogue == null:
 		return
 	await _begin(who)
+	Journal.add("chats")
 	match who.id:
 		"poppy":
 			await _poppy(who)

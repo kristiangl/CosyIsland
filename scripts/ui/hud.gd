@@ -19,6 +19,7 @@ var _toast_timer := 0.0
 var _pockets: Pockets
 var creator: CharacterCreator
 var crafting: CraftingMenu
+var journal: JournalMenu
 var shop: ShopMenu
 var phone: IslandPhone
 var _minimap: PanelContainer
@@ -116,6 +117,8 @@ func _ready() -> void:
 	centre.add_child(crafting)
 	shop = ShopMenu.new()
 	centre.add_child(shop)
+	journal = JournalMenu.new()
+	centre.add_child(journal)
 	Game.shop = shop
 	Events.workbench_opened.connect(crafting.open)
 
@@ -273,6 +276,8 @@ func _on_phone_app(app: String) -> void:
 			open_map()
 		"wardrobe":
 			wardrobe_requested.emit()
+		"journal":
+			journal.open()
 		"save":
 			save_requested.emit()
 			Events.toast.emit("Game saved.")

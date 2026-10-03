@@ -82,6 +82,7 @@ static func buy(id: String, day: int) -> String:
 		return "Your pockets are full!"
 	Inventory.add_item(id)
 	Inventory.add_currency(-cost)
+	Journal.add("bought")
 	if not id in STAPLES:
 		var ids := sold_today(day).duplicate()
 		ids.append(id)
@@ -100,4 +101,6 @@ static func sell(slot: int, count: int) -> int:
 		Inventory.equip(-1)
 	Inventory.remove_from_slot(slot, n)
 	Inventory.add_currency(earned)
+	Journal.add("sold", n)
+	Journal.add("acorns_earned", earned)
 	return earned

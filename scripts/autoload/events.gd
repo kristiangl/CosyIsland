@@ -3,6 +3,8 @@ extends Node
 
 signal toast(text: String)
 signal inventory_changed
+## The pockets gained more slots.
+signal pockets_resized
 signal currency_changed(amount: int)
 signal equipped_changed(item_id: String)
 signal day_changed(day_key: int)

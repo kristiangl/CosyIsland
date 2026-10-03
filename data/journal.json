@@ -1,0 +1,46 @@
+{
+	"_note": "Poppy's Island Journal. Milestones count things you do over the whole game (stat counters) and pay stamps at each goal; a goal can also teach a recipe. Five daily tasks are picked from the pool each day. Stamps buy the exchange's offers.",
+	"milestones": [
+		{"id": "woodcutter", "name": "Woodcutter", "stat": "wood", "text": "Chop {n} pieces of wood", "goals": [10, 50, 200, 1000], "stamps": [100, 300, 600, 1500], "recipes": {"1": "stone_axe"}},
+		{"id": "rock_breaker", "name": "Rock Breaker", "stat": "rock_hits", "text": "Get {n} things from rocks", "goals": [10, 50, 200, 800], "stamps": [100, 300, 600, 1500], "recipes": {"1": "sturdy_shovel"}},
+		{"id": "fruit_picker", "name": "Fruit Picker", "stat": "fruit", "text": "Shake down {n} fruit", "goals": [10, 50, 200, 1000], "stamps": [100, 300, 600, 1500]},
+		{"id": "branch_collector", "name": "Twig Gatherer", "stat": "branches", "text": "Shake down {n} branches", "goals": [10, 50, 200], "stamps": [100, 300, 600]},
+		{"id": "maker", "name": "DIY Maker", "stat": "crafted", "text": "Make {n} things at the workbench", "goals": [1, 10, 50, 200], "stamps": [150, 300, 800, 2000]},
+		{"id": "decorator", "name": "Decorator", "stat": "placed", "text": "Place {n} pieces of furniture", "goals": [1, 10, 50, 200], "stamps": [100, 300, 800, 2000]},
+		{"id": "seller", "name": "Good Customer", "stat": "sold", "text": "Sell {n} things to Lucy", "goals": [5, 50, 300, 1000], "stamps": [100, 300, 800, 2000]},
+		{"id": "shopper", "name": "Shopper", "stat": "bought", "text": "Buy {n} things from Lucy", "goals": [1, 10, 50], "stamps": [100, 400, 1000]},
+		{"id": "florist", "name": "Florist", "stat": "flowers_picked", "text": "Pick {n} flowers", "goals": [5, 30, 150], "stamps": [100, 300, 800]},
+		{"id": "gardener", "name": "Gardener", "stat": "flowers_planted", "text": "Plant {n} flowers", "goals": [1, 10, 50], "stamps": [100, 400, 1000]},
+		{"id": "beachcomber", "name": "Beachcomber", "stat": "bottles", "text": "Open {n} message bottles", "goals": [1, 10, 30], "stamps": [150, 400, 1000]},
+		{"id": "fashion", "name": "Snappy Dresser", "stat": "clothes_worn", "text": "Put on {n} new clothes", "goals": [1, 10, 50], "stamps": [100, 300, 800]},
+		{"id": "customiser", "name": "Customiser", "stat": "customised", "text": "Customise {n} things", "goals": [1, 10, 50], "stamps": [150, 400, 1000]},
+		{"id": "snacker", "name": "Snacker", "stat": "eaten", "text": "Eat {n} pieces of fruit", "goals": [5, 50, 300], "stamps": [100, 300, 800]},
+		{"id": "sleepyhead", "name": "Sleepyhead", "stat": "slept", "text": "Have {n} good sleeps", "goals": [1, 10, 50], "stamps": [100, 300, 800]},
+		{"id": "friendly", "name": "Friendly Face", "stat": "chats", "text": "Have {n} chats", "goals": [5, 50, 200], "stamps": [100, 300, 800]},
+		{"id": "saver", "name": "Acorn Saver", "stat": "acorns_earned", "text": "Earn {n} acorns", "goals": [1000, 10000, 100000], "stamps": [200, 600, 2000]}
+	],
+	"daily": [
+		{"id": "wood", "stat": "wood", "n": 5, "stamps": 60, "text": "Chop 5 pieces of wood"},
+		{"id": "rocks", "stat": "rock_hits", "n": 4, "stamps": 60, "text": "Get 4 things from rocks"},
+		{"id": "fruit", "stat": "fruit", "n": 3, "stamps": 50, "text": "Shake down 3 fruit"},
+		{"id": "branches", "stat": "branches", "n": 3, "stamps": 50, "text": "Shake down 3 branches"},
+		{"id": "craft", "stat": "crafted", "n": 1, "stamps": 80, "text": "Make something at the workbench"},
+		{"id": "place", "stat": "placed", "n": 2, "stamps": 60, "text": "Place 2 pieces of furniture"},
+		{"id": "sell", "stat": "sold", "n": 5, "stamps": 60, "text": "Sell 5 things to Lucy"},
+		{"id": "buy", "stat": "bought", "n": 1, "stamps": 60, "text": "Buy something from Lucy"},
+		{"id": "flowers", "stat": "flowers_picked", "n": 3, "stamps": 50, "text": "Pick 3 flowers"},
+		{"id": "plant", "stat": "flowers_planted", "n": 1, "stamps": 60, "text": "Plant a flower"},
+		{"id": "eat", "stat": "eaten", "n": 2, "stamps": 40, "text": "Eat 2 pieces of fruit"},
+		{"id": "chat", "stat": "chats", "n": 2, "stamps": 40, "text": "Chat with Poppy and Lucy"},
+		{"id": "dress", "stat": "clothes_worn", "n": 1, "stamps": 50, "text": "Put on something new"},
+		{"id": "customise", "stat": "customised", "n": 1, "stamps": 80, "text": "Customise something"}
+	],
+	"exchange": [
+		{"id": "pockets_30", "name": "Bigger Pockets", "desc": "Sewn in by Poppy: ten more pocket spaces.", "cost": 1500, "pockets": 30, "icon": "acorn_pouch"},
+		{"id": "pockets_40", "name": "Even Bigger Pockets", "desc": "Ten more again. Where does it all go?", "cost": 4000, "pockets": 40, "icon": "acorn_pouch"},
+		{"id": "recipe_card", "name": "Recipe Card", "desc": "A DIY recipe you don't know yet, picked at random.", "cost": 300, "recipe": true, "icon": "message_bottle"},
+		{"id": "kits", "name": "Customisation Kits x5", "desc": "Five kits for remaking things in new colours.", "cost": 250, "item": "customisation_kit", "count": 5, "icon": "customisation_kit"},
+		{"id": "furniture_box", "name": "Surprise Furniture", "desc": "A piece of furniture from Poppy's store room. Who knows which?", "cost": 400, "random": "furniture", "icon": "wooden_box"},
+		{"id": "clothes_box", "name": "Surprise Outfit Piece", "desc": "Something to wear, picked from the mail-order catalogue.", "cost": 350, "random": "clothing", "icon": "knit_jumper_cream"}
+	]
+}

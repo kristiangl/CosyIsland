@@ -19,7 +19,7 @@ extends Node3D
 ##   --demo=flowers     stand by some flowers, one picked, with a flower in your hair
 ##   --house            with --demo: the tent has already become a house
 ##   --series=ID        with --demo or --demo=home: furniture from one series (--variant=ID)
-##   --ui=pockets|pause|map|creator|crafting|customise|placing|intro|ask|lucy|sleep|shop|sell  (--tab=N picks a creator tab, --try=key:id,... dresses up, --closet=TEXT opens the wardrobe with clothes whose ids contain TEXT)  open a menu or mode (for screenshots)
+##   --ui=pockets|pause|map|creator|crafting|customise|journal|exchange|placing|intro|ask|lucy|sleep|shop|sell  (--tab=N picks a creator tab, --try=key:id,... dresses up, --closet=TEXT opens the wardrobe with clothes whose ids contain TEXT)  open a menu or mode (for screenshots)
 
 const AUTOSAVE_SECONDS := 60.0
 
@@ -68,6 +68,7 @@ func _ready() -> void:
 		_new_game_pockets()
 	Recipes.from_save(saved.get("recipes", []))
 	Story.from_save(saved.get("story", {}))
+	Journal.from_save(saved.get("journal", {}))
 	if not saved.is_empty() and not saved.has("story"):
 		# Saved before the story began: they've already got going.
 		Story.flags["intro_done"] = true
@@ -183,6 +184,11 @@ func _ready() -> void:
 			Inventory.add_item("wood", 12)
 			Inventory.add_item("stone", 5)
 			hud.crafting.open()
+		"journal", "exchange":
+			Journal.add("wood", 12)
+			Journal.add("crafted", 2)
+			Journal.add("sold", 6)
+			hud.journal.open("today" if Game.args["ui"] == "journal" else "exchange")
 		"customise":
 			for id: String in ["meadow_armchair_cream", "lodge_sofa_honey", "raincoat_yellow", "driftwood_lamp_bleached"]:
 				Inventory.add_item(id)
@@ -244,6 +250,7 @@ func save_game() -> void:
 		"player": player.to_save(),
 		"recipes": Recipes.to_save(),
 		"story": Story.to_save(),
+		"journal": Journal.to_save(),
 		"player_name": Game.player_name,
 		"island_name": Game.island_name,
 	})
@@ -294,6 +301,7 @@ func _sleep(hour: float) -> void:
 	Game.mode = Game.Mode.MENU
 	await hud.fade_out()
 	var hours := GameClock.sleep_until(hour)
+	Journal.add("slept")
 	await get_tree().create_timer(0.6).timeout
 	await hud.fade_in()
 	Game.mode = Game.Mode.PLAY

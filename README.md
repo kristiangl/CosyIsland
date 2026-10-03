@@ -98,6 +98,8 @@ On-screen hints follow whatever you last touched, keyboard or controller.
 - An animated player with knees and elbows: walking, running, chopping, sitting.
 - Minimap and a full island map.
 - Pockets with item icons, stacking and tools that wear out.
+- Poppy's Island Journal (a phone app): milestones and five daily tasks earn stamps,
+  spent on bigger pockets, recipe cards, customisation kits and surprises.
 - Real-time clock. The Island Phone has the map, wardrobe, controls, saving and (for
   now) a time travel app. Autosave.
 

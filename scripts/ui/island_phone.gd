@@ -8,6 +8,7 @@ extends Control
 signal app_chosen(app: String)
 
 const APPS := [
+	["journal", "Journal", "journal", "f6e3a1"],
 	["map", "Map", "map", "c7e6c1"],
 	["wardrobe", "Wardrobe", "wardrobe", "f6c9c0"],
 	["time", "Time travel", "clock", "c9d8f2"],

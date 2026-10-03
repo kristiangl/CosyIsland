@@ -147,6 +147,14 @@ func wear_from_slot(index: int, look: Dictionary) -> Dictionary:
 	return worn
 
 
+## Grows the pockets to `size` slots (they never shrink).
+func expand(size: int) -> void:
+	while slots.size() < size:
+		slots.append({})
+	Events.inventory_changed.emit()
+	Events.pockets_resized.emit()
+
+
 func add_currency(amount: int) -> void:
 	currency += amount
 	Events.currency_changed.emit(currency)
@@ -159,6 +167,8 @@ func to_save() -> Dictionary:
 func from_save(data: Dictionary) -> void:
 	reset()
 	var saved: Array = data.get("slots", [])
+	while slots.size() < saved.size():
+		slots.append({})
 	for i in min(saved.size(), slots.size()):
 		var s: Dictionary = saved[i]
 		if not s.is_empty() and ItemDB.has_item(s["id"]):

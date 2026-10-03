@@ -88,6 +88,8 @@ static func build(data: IslandData, style_id: String, look: Dictionary = {}) -> 
 	var variant: Dictionary = curtains.get("build", {}).get("variant", {})
 	var fabric := MeshKit.new()
 	var maker := SeriesModels.make(kit, fabric, variant)
+	var glass := MeshKit.new()
+	maker.glass = glass
 	var opening := Vector2(0.9, 0.8) if h > 2.0 else Vector2(0.7, 0.6)
 	var spots: Array[Transform3D] = []
 	for side: float in [-1.0, 1.0]:
@@ -102,10 +104,12 @@ static func build(data: IslandData, style_id: String, look: Dictionary = {}) -> 
 	for xform in spots:
 		kit.xform = xform
 		fabric.xform = xform
+		glass.xform = xform
 		maker.window(Vector3(0, 0, 0.004), opening, not curtains.is_empty())
 	kit.xform = Transform3D.IDENTITY
 	var props := _instance("Trim", kit.commit(), Models.material())
 	room.add_child(props)
+	room.add_child(_instance("Glass", glass.commit(), Models.glass_material()))
 	if not fabric.is_empty():
 		room.add_child(_instance("Curtains", fabric.commit(), Models.fabric_material(variant["fabric"])))
 	return room

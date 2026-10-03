@@ -16,6 +16,9 @@ uniform float glow = 0.0;
 // More sway for short things like flowers.
 uniform float sway_scale = 1.0;
 global uniform float night_glow;
+// Window glass uses a copy with this set: it shows the night sky after dark.
+uniform float night_sky = 0.0;
+global uniform float night;
 
 void vertex() {
 	vec3 root = MODEL_MATRIX[3].xyz;
@@ -27,6 +30,7 @@ void vertex() {
 
 void fragment() {
 	ALBEDO = mix(COLOR.rgb, tint.rgb, tint_mix);
+	ALBEDO = mix(ALBEDO, vec3(0.25, 0.3, 0.52), night_sky * night);
 	ROUGHNESS = 1.0;
 	// Glow lifts the colour towards full brightness, more the darker the light is.
 	EMISSION = cel_ambient(ALBEDO) + ALBEDO * glow * night_glow * max(vec3(0.0), vec3(1.25) - cel_lit);

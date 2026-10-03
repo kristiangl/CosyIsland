@@ -82,10 +82,14 @@ static func glow_at(hour: float) -> float:
 func _apply(hour: float) -> void:
 	# Indoors the lamps are always on, so glowing things keep a little glow by day too.
 	var glow := glow_at(hour)
+	RenderingServer.global_shader_parameter_set("night", glow)
 	RenderingServer.global_shader_parameter_set("night_glow", 0.5 + glow * 0.5 if indoors else glow)
 	if indoors:
-		RenderingServer.global_shader_parameter_set("cel_lit", Vector3(1.0, 0.96, 0.9))
-		RenderingServer.global_shader_parameter_set("cel_shadow", Vector3(0.8, 0.73, 0.82))
+		# Warm and steady, a little dimmer and cosier once it's dark outside.
+		var lit := Vector3(1.0, 0.96, 0.9).lerp(Vector3(0.9, 0.83, 0.8), glow)
+		var shade := Vector3(0.8, 0.73, 0.82).lerp(Vector3(0.66, 0.58, 0.72), glow)
+		RenderingServer.global_shader_parameter_set("cel_lit", lit)
+		RenderingServer.global_shader_parameter_set("cel_shadow", shade)
 		sun.rotation_degrees = Vector3(-60, -24, 0)
 		return
 	var a: Array = KEYS[0]

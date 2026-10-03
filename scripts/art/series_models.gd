@@ -23,6 +23,8 @@ var f: MeshKit
 ## Parts that glow at night (a surface of their own).
 var g: MeshKit
 var glow: Color
+## Window glass, if it has its own kit (rooms: it darkens at night).
+var glass: MeshKit
 var params: Dictionary
 var wood: Color
 var wood_light: Color
@@ -658,9 +660,10 @@ func window(centre: Vector3, opening: Vector2, curtains: bool) -> void:
 	var hw := opening.x * 0.5
 	var hh := opening.y * 0.5
 	var frame := MeshKit.lin(Color("fff8ec"))
-	k.box(centre, Vector3(opening.x, opening.y, 0.02), MeshKit.lin(Color("bfe3ef")), MeshKit.lin(Color("bfe3ef")))
+	var pane := glass if glass else k
+	pane.box(centre, Vector3(opening.x, opening.y, 0.02), MeshKit.lin(Color("bfe3ef")), MeshKit.lin(Color("bfe3ef")))
 	# A soft cloud of light on the glass.
-	k.sphere(centre + Vector3(-hw * 0.3, hh * 0.35, 0.012), Vector3(hw * 0.35, hh * 0.18, 0.004), MeshKit.lin(Color("e6f5fa")), 3, 8)
+	pane.sphere(centre + Vector3(-hw * 0.3, hh * 0.35, 0.012), Vector3(hw * 0.35, hh * 0.18, 0.004), MeshKit.lin(Color("e6f5fa")), 3, 8)
 	for sx: float in [-1.0, 1.0]:
 		k.box(centre + Vector3(sx * (hw + 0.03), 0, 0.02), Vector3(0.06, opening.y + 0.12, 0.05), frame)
 	k.box(centre + Vector3(0, hh + 0.03, 0.02), Vector3(opening.x + 0.12, 0.06, 0.05), frame)

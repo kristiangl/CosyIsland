@@ -26,6 +26,7 @@ static var _material: ShaderMaterial
 static var _fabrics: Dictionary = {}
 static var _glow: ShaderMaterial
 static var _flower: ShaderMaterial
+static var _glass: ShaderMaterial
 
 
 static func material() -> ShaderMaterial:
@@ -131,6 +132,14 @@ static func flower_material() -> ShaderMaterial:
 		_flower = material().duplicate()
 		_flower.set_shader_parameter("sway_scale", 3.5)
 	return _flower
+
+
+## The prop material for window glass: the sky outside, dark blue at night.
+static func glass_material() -> ShaderMaterial:
+	if _glass == null:
+		_glass = material().duplicate()
+		_glass.set_shader_parameter("night_sky", 1.0)
+	return _glass
 
 
 ## The prop material for parts that glow at night (see DayNight.glow_at).

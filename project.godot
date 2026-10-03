@@ -23,6 +23,7 @@ Icons="*res://scripts/autoload/icons.gd"
 Prompts="*res://scripts/autoload/prompts.gd"
 SaveGame="*res://scripts/autoload/save_game.gd"
 Story="*res://scripts/autoload/story.gd"
+Effects="*res://scripts/autoload/effects.gd"
 
 [display]
 

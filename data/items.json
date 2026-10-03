@@ -121,7 +121,17 @@
 						7
 					],
 					"style": "cottage"
-				}
+				},
+				"effects": [
+					{
+						"kind": "smoke",
+						"at": [
+							0.65,
+							3.0,
+							-0.35
+						]
+					}
+				]
 			}
 		},
 		"island_office": {
@@ -390,7 +400,33 @@
 				],
 				"model": "furniture:campfire",
 				"rotatable": true,
-				"light": true
+				"light": true,
+				"effects": [
+					{
+						"kind": "flame",
+						"at": [
+							0,
+							0.12,
+							0
+						]
+					},
+					{
+						"kind": "embers",
+						"at": [
+							0,
+							0.4,
+							0
+						]
+					},
+					{
+						"kind": "smoke",
+						"at": [
+							0,
+							0.75,
+							0
+						]
+					}
+				]
 			}
 		},
 		"stone_lantern": {
@@ -407,7 +443,18 @@
 				],
 				"model": "furniture:stone_lantern",
 				"rotatable": true,
-				"light": true
+				"light": true,
+				"effects": [
+					{
+						"kind": "candle",
+						"at": [
+							0,
+							0.7,
+							0
+						],
+						"night": true
+					}
+				]
 			}
 		},
 		"stone_stool": {
@@ -475,7 +522,18 @@
 				],
 				"model": "furniture:garden_lantern",
 				"rotatable": true,
-				"light": true
+				"light": true,
+				"effects": [
+					{
+						"kind": "candle",
+						"at": [
+							0,
+							1.17,
+							0
+						],
+						"night": true
+					}
+				]
 			}
 		},
 		"wooden_fence": {
@@ -607,7 +665,33 @@
 				"model": "furniture:candle_set",
 				"rotatable": true,
 				"small": true,
-				"light": true
+				"light": true,
+				"effects": [
+					{
+						"kind": "candle",
+						"at": [
+							-0.08,
+							0.235,
+							0.04
+						]
+					},
+					{
+						"kind": "candle",
+						"at": [
+							0.08,
+							0.175,
+							0.05
+						]
+					},
+					{
+						"kind": "candle",
+						"at": [
+							0.0,
+							0.295,
+							-0.08
+						]
+					}
+				]
 			}
 		},
 		"book_stack": {

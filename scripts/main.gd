@@ -36,6 +36,7 @@ var _home_uid := -1
 ## Saved rooms by home uid (as a string, for JSON).
 var _rooms: Dictionary = {}
 var _going_through_door := false
+var ambient: AmbientEffects
 
 
 func _ready() -> void:
@@ -90,6 +91,9 @@ func _ready() -> void:
 	camera_rig.overview = Game.args.get("view", "") == "overview"
 	add_child(camera_rig)
 	Game.camera = camera_rig
+	ambient = AmbientEffects.new()
+	ambient.camera = camera_rig
+	add_child(ambient)
 	_spawn_npcs()
 
 	day_night = DayNight.new()
@@ -353,6 +357,7 @@ func _switch_world(to: World) -> void:
 	placement.world = to
 	day_night.indoors = not outside
 	hud.indoors = not outside
+	ambient.indoors = not outside
 	RenderingServer.global_shader_parameter_set("curve_amount", ProjectSettings.get_setting("shader_globals/curve_amount")["value"] if outside else 0.0)
 	RenderingServer.global_shader_parameter_set("wind_strength", ProjectSettings.get_setting("shader_globals/wind_strength")["value"] if outside else 0.0)
 

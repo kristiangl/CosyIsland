@@ -61,6 +61,7 @@ func setup(island: IslandData, saved: Dictionary = {}) -> void:
 	_build_terrain()
 	for obj in data.objects:
 		_register(obj)
+	_add_forest_glow()
 	Events.day_changed.connect(_on_day_changed)
 	if day_key != GameClock.day_key():
 		_on_day_changed(GameClock.day_key())
@@ -270,13 +271,29 @@ func _spawn_node(obj: Dictionary) -> void:
 		lamp.visible = _is_night
 		lamp.add_to_group("night_lights")
 		node.add_child(lamp)
+	# Fires, candle flames, chimney smoke.
+	if obj["kind"] == "placed":
+		for fx: Dictionary in ItemDB.placeable(obj["item"]).get("effects", []):
+			var e := Effects.emitter(fx["kind"])
+			var at: Array = fx["at"]
+			e.position = Vector3(at[0], at[1], at[2])
+			e.emitting = true
+			if fx.get("night", false):
+				e.visible = _is_night
+				e.add_to_group("night_lights")
+			node.add_child(e)
 	add_child(node)
 	_nodes[obj["uid"]] = node
 
 
 func refresh_node(obj: Dictionary) -> void:
 	var node: Node3D = _nodes.get(obj["uid"])
-	if node:
+	if node and obj["kind"] == "placed":
+		# Furniture and buildings are rebuilt whole (effects and lights may change too).
+		node.queue_free()
+		_nodes.erase(obj["uid"])
+		_spawn_node(obj)
+	elif node:
 		var mesh: MeshInstance3D = node.get_child(0)
 		mesh.mesh = Models.get_mesh(Models.key_for(obj))
 
@@ -322,6 +339,7 @@ func can_step(from: Vector3, px: float, pz: float) -> bool:
 
 func chop(obj: Dictionary, player_pos: Vector3) -> void:
 	_wiggle(obj, 5.0)
+	_burst_towards(obj, player_pos, "chips", 0.55)
 	if obj.get("wood_left", 0) <= 0:
 		return
 	if _drop_near(obj, player_pos, {"item": "wood", "count": 1}):
@@ -330,6 +348,8 @@ func chop(obj: Dictionary, player_pos: Vector3) -> void:
 
 func strike_rock(obj: Dictionary, player_pos: Vector3) -> bool:
 	_squash(obj)
+	_burst_towards(obj, player_pos, "sparks", 0.35)
+	_burst_towards(obj, player_pos, "pebbles", 0.3)
 	if obj.get("hits_left", 0) <= 0:
 		return false
 	var drop := {"item": _roll_rock_item(), "count": 1}
@@ -344,6 +364,9 @@ func strike_rock(obj: Dictionary, player_pos: Vector3) -> bool:
 
 func shake(obj: Dictionary, player_pos: Vector3) -> void:
 	_wiggle(obj, 3.0)
+	var node := node_of(obj["uid"])
+	if node:
+		Effects.burst("leaves", node.global_position + Vector3(0, 1.9 if obj["kind"] != "palm" else 2.4, 0))
 	if obj["kind"] == "fruit_tree" and obj.get("fruit_count", 0) > 0:
 		for i in obj["fruit_count"]:
 			_drop_near(obj, player_pos, {"item": obj["fruit"], "count": 1})
@@ -355,6 +378,8 @@ func shake(obj: Dictionary, player_pos: Vector3) -> void:
 			# A piece of furniture tumbles out (two trees a day hide one).
 			_drop_near(obj, player_pos, {"item": obj["gift"], "count": 1})
 			Events.toast.emit("Something fell out of the tree!")
+			if node:
+				Effects.burst("sparkle", node.global_position + Vector3(0, 1.2, 0))
 			obj.erase("gift")
 			return
 		if obj.get("shaken_day", -1) != day_key:
@@ -377,6 +402,9 @@ func pack_up(obj: Dictionary) -> bool:
 	if Inventory.add_item(obj["item"]) > 0:
 		Events.toast.emit("Your pockets are full!")
 		return false
+	var node := node_of(obj["uid"])
+	if node:
+		Effects.burst("dust", node.global_position + Vector3(0, 0.1, 0))
 	remove_object(obj["uid"])
 	return true
 
@@ -392,6 +420,7 @@ func pick_up(x: int, z: int) -> bool:
 				Inventory.add_currency(obj.get("amount", 100))
 				Events.toast.emit("You got %d %s!" % [obj.get("amount", 100), Game.CURRENCY_NAME.to_lower()])
 			elif obj["item"] == "message_bottle":
+				Effects.burst("sparkle", Vector3(x + 0.5, data.height_at(x + 0.5, z + 0.5) + 0.4, z + 0.5))
 				var learned := Recipes.learn_random(_rng)
 				if learned == "":
 					Events.toast.emit("A note inside says: \"Hello from across the sea!\"")
@@ -772,10 +801,59 @@ func _squash(obj: Dictionary) -> void:
 	tw.tween_property(mesh, "scale", Vector3.ONE, 0.18).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 
 
+## At night the thickest bits of forest glow: soft moss light on the ground and spores
+## drifting up. A few emitters, placed once where trees cluster.
+func _add_forest_glow() -> void:
+	var trees: Array[Vector2] = []
+	for obj in data.objects:
+		if obj["kind"] in ["tree", "fruit_tree"]:
+			trees.append(Vector2(obj["x"] + 0.5, obj["z"] + 0.5))
+	var picked: Array[Vector2] = []
+	for t in trees:
+		var near: Array[Vector2] = []
+		for u in trees:
+			if t.distance_to(u) < 2.6:
+				near.append(u)
+		if near.size() < 5:
+			continue
+		var centre := Vector2.ZERO
+		for u in near:
+			centre += u
+		centre /= near.size()
+		if picked.any(func(p: Vector2): return p.distance_to(centre) < 7.0):
+			continue
+		picked.append(centre)
+		if picked.size() >= 12:
+			break
+	for c in picked:
+		for kind: String in ["moss_glow", "spores"]:
+			var e := Effects.emitter(kind)
+			e.position = Vector3(c.x, data.height_at(c.x, c.y) + (0.05 if kind == "moss_glow" else 0.2), c.y)
+			e.emitting = true
+			e.visible = _is_night
+			e.add_to_group("night_lights")
+			add_child(e)
+
+
+## A burst on the side of an object facing the player, at a height.
+func _burst_towards(obj: Dictionary, player_pos: Vector3, kind: String, height: float) -> void:
+	var node := node_of(obj["uid"])
+	if node == null:
+		return
+	var to := player_pos - node.global_position
+	to.y = 0.0
+	Effects.burst(kind, node.global_position + to.normalized() * 0.35 + Vector3(0, height, 0))
+
+
 func _pop_in(obj: Dictionary) -> void:
 	var node := node_of(obj["uid"])
 	if node == null:
 		return
+	if obj["kind"] == "placed":
+		# Furniture lands with a little puff of dust.
+		get_tree().create_timer(0.3).timeout.connect(func():
+			if is_instance_valid(node):
+				Effects.burst("dust", node.global_position + Vector3(0, 0.05, 0)))
 	var mesh: Node3D = node.get_child(0)
 	mesh.scale = Vector3.ONE * 0.2
 	mesh.position.y = 0.6

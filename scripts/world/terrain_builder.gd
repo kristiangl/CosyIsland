@@ -209,7 +209,7 @@ static func build_fresh_water(d: IslandData) -> ArrayMesh:
 	var col := Color(0.4, 0, 0, 1)
 	for z in d.height:
 		for x in d.width:
-			if d.tile(x, z) != T.WATER:
+			if d.tile(x, z) != T.WATER or _is_mouth(d, x, z):
 				continue
 			var y := d.water_surface(x, z)
 			var ids: Array[int] = []
@@ -242,7 +242,7 @@ static func build_bank_foam(d: IslandData) -> ArrayMesh:
 		for x in d.width:
 			var i := d.idx(x, z)
 			var split: Dictionary = d.splits.get(i, {})
-			if d.tile(x, z) == T.WATER:
+			if d.tile(x, z) == T.WATER and not _is_mouth(d, x, z):
 				var y := d.water_surface(x, z)
 				var pts := _tile_points(x, z, y)
 				for e in edges:
@@ -266,6 +266,15 @@ static func build_bank_foam(d: IslandData) -> ArrayMesh:
 				var inward := (pts[c] - pts[(c + 2) % 4]).normalized()
 				_foam_strip(k, pts[(c + 3) % 4], pts[(c + 1) % 4], inward)
 	return k.commit()
+
+
+## River tiles opening onto the sea are left to the sea itself, so the river runs into
+## it rather than ending in a ledge.
+static func _is_mouth(d: IslandData, x: int, z: int) -> bool:
+	for dir: Vector2i in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+		if d.in_bounds(x + dir.x, z + dir.y) and d.tile(x + dir.x, z + dir.y) == T.OCEAN:
+			return true
+	return false
 
 
 static func _foam_strip(k: MeshKit, a: Vector3, b: Vector3, inward: Vector3) -> void:

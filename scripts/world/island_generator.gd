@@ -12,6 +12,10 @@ const PLAZA_SIZE := 8
 ## Where the office and workbench sit in the plaza (top-left tile, plaza coordinates).
 const OFFICE_AT := Vector2i(2, 0)
 const WORKBENCH_AT := Vector2i(5, 4)
+## Bumped when a change to generation would alter existing islands. Saves remember the
+## version their island was made with, so old islands keep their shape.
+##   1: first release. 2: rivers cross the beach instead of running along it.
+const VERSION := 2
 const ROCK_COUNT := 6
 const FRUIT_TREE_COUNT := 8
 
@@ -33,6 +37,7 @@ const CORNER_NEIGHBOURS := [
 const T := IslandData.Tile
 
 var d: IslandData
+var version := VERSION
 var rng := RandomNumberGenerator.new()
 var ocean_dist: PackedInt32Array
 var beach_width: PackedInt32Array
@@ -42,8 +47,10 @@ var reserved: PackedByteArray
 var occupied: PackedByteArray
 
 
-static func generate(seed_value: int, w: int = WIDTH, h: int = HEIGHT) -> IslandData:
-	return IslandGenerator.new()._run(seed_value, w, h)
+static func generate(seed_value: int, w: int = WIDTH, h: int = HEIGHT, gen_version: int = VERSION) -> IslandData:
+	var g := IslandGenerator.new()
+	g.version = gen_version
+	return g._run(seed_value, w, h)
 
 
 func _run(seed_value: int, w: int, h: int) -> IslandData:
@@ -61,6 +68,7 @@ func _run(seed_value: int, w: int, h: int) -> IslandData:
 	_choose_plaza()
 	_make_rivers()
 	_make_ponds()
+	_merge_lagoons()
 	_make_ramps()
 	_compute_corners()
 	_compute_splits()
@@ -254,7 +262,9 @@ func _make_rivers() -> void:
 	var land_cost := func(x: int, z: int) -> float:
 		if d.tier(x, z) >= 2 or avoid.has_point(Vector2i(x, z)):
 			return -1.0
-		return 1.0 + (meander.get_noise_2d(x, z) + 1.0) * 2.5
+		# Beaches are dear, so rivers cut straight across them to the sea.
+		var beach := 8.0 if version >= 2 and d.tile(x, z) == T.SAND else 0.0
+		return 1.0 + (meander.get_noise_2d(x, z) + 1.0) * 2.5 + beach
 
 	var south_mouth := func(x: int, z: int) -> bool:
 		return z > d.height * 0.6
@@ -355,6 +365,51 @@ func _carve_river(path: Array[Vector2i], no_go: Rect2i) -> void:
 			var q: Vector2i = p + off
 			if d.is_land(q.x, q.y) and d.tier(q.x, q.y) <= 1 and not no_go.has_point(q):
 				d.tiles[d.idx(q.x, q.y)] = T.WATER
+
+
+## River water on the beach sits at sea level, so it becomes part of the sea: a little
+## lagoon or inlet with a proper shoreline, instead of a second water surface fighting
+## with the sea's.
+func _merge_lagoons() -> void:
+	var merged: Array[Vector2i] = []
+	for i in d.tiles.size():
+		if d.tiles[i] == T.WATER and d.tiers[i] == 0:
+			d.tiles[i] = T.OCEAN
+			merged.append(Vector2i(i % d.width, i / d.width))
+	# Thin sandbars left between the lagoon and the sea wash away.
+	if merged.is_empty():
+		return
+	for pass_i in 3:
+		var washed: Array[int] = []
+		for z in d.height:
+			for x in d.width:
+				var i := d.idx(x, z)
+				if d.tiles[i] != T.SAND or reserved[i]:
+					continue
+				var n := d.tile(x, z - 1) == T.OCEAN
+				var s := d.tile(x, z + 1) == T.OCEAN
+				var e := d.tile(x + 1, z) == T.OCEAN
+				var w := d.tile(x - 1, z) == T.OCEAN
+				if (n and s) or (e and w) or int(n) + int(s) + int(e) + int(w) >= 3:
+					washed.append(i)
+		for i in washed:
+			d.tiles[i] = T.OCEAN
+	# So do little sand islands cut off from the shore.
+	var mainland := {}
+	for i in d.tiles.size():
+		if d.tiles[i] == T.GRASS and not mainland.has(i):
+			mainland.merge(_flood(Vector2i(i % d.width, i / d.width), func(x: int, z: int) -> bool: return d.tile(x, z) != T.OCEAN))
+	for i in d.tiles.size():
+		if d.tiles[i] == T.SAND and not mainland.has(i) and not reserved[i]:
+			d.tiles[i] = T.OCEAN
+	# Grass right at the water's edge becomes beach, so the shore slopes down gently.
+	for p in merged:
+		for dz in range(-1, 2):
+			for dx in range(-1, 2):
+				var q := p + Vector2i(dx, dz)
+				if d.tile(q.x, q.y) == T.GRASS and d.tier(q.x, q.y) == 1 and not reserved[d.idx(q.x, q.y)]:
+					d.tiles[d.idx(q.x, q.y)] = T.SAND
+					d.tiers[d.idx(q.x, q.y)] = 0
 
 
 func _near_water(x: int, z: int, radius: int) -> bool:

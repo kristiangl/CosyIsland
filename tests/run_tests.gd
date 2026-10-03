@@ -67,10 +67,18 @@ func _test_generation() -> void:
 		check(counts.get("flower", 0) >= 10, "seed %d has flowers" % s)
 		check(d.tile(d.spawn.x, d.spawn.y) == IslandData.Tile.GRASS, "seed %d spawn is on grass" % s)
 		check(counts.get("bridge", 0) >= 1, "seed %d has a river with a bridge" % s)
-		check(d.tiles.count(IslandData.Tile.WATER) >= 60, "seed %d has rivers and ponds" % s)
+		check(d.tiles.count(IslandData.Tile.WATER) >= 50, "seed %d has rivers and ponds" % s)
 		var reach := _reachable_fraction(d)
 		check(reach > 0.9, "seed %d: %.0f%% of land reachable from spawn" % [s, reach * 100.0])
 	print("Generated 20 islands in %d ms" % (Time.get_ticks_msec() - t0))
+	# Older islands keep their shape, but river water never sits on the beach any more.
+	for s in [10, 37]:
+		var old := IslandGenerator.generate(s, IslandGenerator.WIDTH, IslandGenerator.HEIGHT, 1)
+		var beach_water := 0
+		for i in old.tiles.size():
+			if old.tiles[i] == IslandData.Tile.WATER and old.tiers[i] == 0:
+				beach_water += 1
+		check(beach_water == 0, "seed %d (version 1) has no river water on the beach" % s)
 
 
 ## Fraction of walkable land the player can reach from the spawn point on foot.

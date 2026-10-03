@@ -40,6 +40,10 @@ func setup(island: IslandData, saved: Dictionary = {}) -> void:
 	if saved.has("objects"):
 		data.objects.clear()
 		for obj in saved["objects"]:
+			# Natural things left in the water by a change to the island's shape are gone.
+			if obj["kind"] in ["tree", "palm", "rock", "flower", "drop"] and not interior \
+					and not island.is_land(int(obj["x"]), int(obj["z"])):
+				continue
 			data.objects.append(_ints(obj))
 		data.next_uid = int(saved.get("next_uid", data.next_uid))
 	day_key = int(saved.get("day_key", GameClock.day_key()))

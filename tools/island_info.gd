@@ -6,6 +6,18 @@ extends Node
 
 
 func _ready() -> void:
+	if Game.args.has("survey"):
+		# Seeds whose rivers run over the beach (fresh water on sand-level tiles).
+		for s in int(Game.args["survey"]):
+			var isl := IslandGenerator.generate(s)
+			var beach_water := 0
+			for i in isl.tiles.size():
+				if isl.tiles[i] == IslandData.Tile.WATER and isl.tiers[i] == 0:
+					beach_water += 1
+			if beach_water > 0:
+				print("seed %d: %d beach water tiles" % [s, beach_water])
+		get_tree().quit()
+		return
 	var d := IslandGenerator.generate(int(Game.args.get("seed", "7")))
 	var marks := {}
 	for o in d.objects:

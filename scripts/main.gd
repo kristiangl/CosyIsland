@@ -4,6 +4,7 @@ extends Node3D
 ## Command-line options (after `--`):
 ##   --new              ignore the save and start a fresh island
 ##   --seed=N           start a fresh island from seed N
+##   --gen=N            ...made with an older generator version (see IslandGenerator.VERSION)
 ##   --hour=H           time travel to hour H today
 ##   --screenshot=PATH  render a few frames, save a PNG and quit
 ##   --view=overview    frame the whole island (for screenshots)
@@ -25,6 +26,7 @@ var day_night: DayNight
 var hud: Hud
 var placement: Placement
 var _seed := 0
+var _gen_version := IslandGenerator.VERSION
 var _welcome_pending := false
 ## The room the player is in, or null outdoors.
 var room: World
@@ -38,7 +40,9 @@ func _ready() -> void:
 	var fresh := Game.args.has("new") or Game.args.has("seed") or Game.args.has("screenshot")
 	var saved := {} if fresh else SaveGame.read()
 	_seed = int(Game.args.get("seed", saved.get("seed", randi() % 1000000)))
-	var island := IslandGenerator.generate(_seed)
+	# Islands keep the generator version they were made with (saves before versions are 1).
+	_gen_version = int(saved.get("gen", 1)) if saved.has("seed") else int(Game.args.get("gen", IslandGenerator.VERSION))
+	var island := IslandGenerator.generate(_seed, IslandGenerator.WIDTH, IslandGenerator.HEIGHT, _gen_version)
 
 	GameClock.offset_seconds = int(saved.get("clock_offset", 0))
 	if Game.args.has("hour"):
@@ -194,6 +198,7 @@ func save_game() -> void:
 		_rooms[str(_home_uid)] = room.to_save()
 	SaveGame.write({
 		"seed": _seed,
+		"gen": _gen_version,
 		"clock_offset": GameClock.offset_seconds,
 		"world": world.to_save(),
 		"rooms": _rooms,

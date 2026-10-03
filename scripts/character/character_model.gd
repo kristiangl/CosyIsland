@@ -104,13 +104,13 @@ func rebuild() -> void:
 
 	# Body and limbs.
 	_mesh(P.torso_skin(), skin, _body)
-	var barefoot: bool = look["shoes"] == "none"
+	var barefoot: bool = look["shoes"] == "none" or Appearance.option(look, "shoes").get("open", false)
 	var legs := P.leg_skin(barefoot)
 	var arms := P.arm_skin()
 	for side in [[_leg_l, _knee_l], [_leg_r, _knee_r]]:
 		_mesh(legs["upper"], skin, side[0])
 		_mesh(legs["lower"], skin, side[1])
-		if not barefoot:
+		if look["shoes"] != "none":
 			_mesh(P.shoe(look["shoes"]), shoe_mat, side[1])
 	for side in [[_arm_l, _elbow_l], [_arm_r, _elbow_r]]:
 		_mesh(arms["upper"], skin, side[0])
@@ -154,7 +154,8 @@ func rebuild() -> void:
 	if animal:
 		_build_animal()
 	else:
-		var hair_mesh := _mesh(P.hair(look["hair"], hat_style in ["cap", "beanie", "bucket", "straw"], hat_style == "beret"), hair_mat, _head)
+		var covers: String = Appearance.option(look, "hat").get("covers", "")
+		var hair_mesh := _mesh(P.hair(look["hair"], covers == "full", covers == "top"), hair_mat, _head)
 		hair_mesh.position = P.HEAD_CENTRE
 		# Hair, hats and glasses don't cast shadows, so faces stay bright under a brim.
 		hair_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF

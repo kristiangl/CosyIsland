@@ -1,0 +1,825 @@
+{
+	"_note": "Designed clothes: each base comes in variants (colourways), expanded into one item each as <base>_<variant>. Colours are ids from appearance.json colors; pattern from its pattern list; style is a designed option in appearance.json. See docs/CATALOGUE.md.",
+	"themes": {
+		"cosy_knits": "Cosy Knits",
+		"rainy_day": "Rainy Day",
+		"seaside": "Seaside",
+		"garden_work": "Garden and Work"
+	},
+	"clothes": [
+		{
+			"id": "knit_jumper",
+			"name": "Heart Jumper",
+			"slot": "top",
+			"style": "knit_jumper",
+			"theme": "cosy_knits",
+			"price": 520,
+			"desc": "A chunky knit with a heart on the front.",
+			"variants": [
+				{
+					"id": "cream",
+					"name": "Cream",
+					"colors": [
+						"cream",
+						"coral"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "mint",
+					"name": "Mint",
+					"colors": [
+						"mint",
+						"pink"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "lavender",
+					"name": "Lavender",
+					"colors": [
+						"lavender",
+						"yellow"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "navy",
+					"name": "Navy",
+					"colors": [
+						"navy",
+						"white"
+					],
+					"pattern": "plain"
+				}
+			]
+		},
+		{
+			"id": "cardigan",
+			"name": "Cardigan",
+			"slot": "top",
+			"style": "cardigan",
+			"theme": "cosy_knits",
+			"price": 560,
+			"desc": "Buttoned down one side, open over a top.",
+			"variants": [
+				{
+					"id": "mustard",
+					"name": "Mustard",
+					"colors": [
+						"yellow",
+						"white"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "sage",
+					"name": "Sage",
+					"colors": [
+						"olive",
+						"cream"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "rose",
+					"name": "Rose",
+					"colors": [
+						"rose",
+						"cream"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "oat",
+					"name": "Oatmeal",
+					"colors": [
+						"tan",
+						"sky"
+					],
+					"pattern": "plain"
+				}
+			]
+		},
+		{
+			"id": "turtleneck",
+			"name": "Turtleneck",
+			"slot": "top",
+			"style": "turtleneck",
+			"theme": "cosy_knits",
+			"price": 440,
+			"desc": "Snug right up to the chin.",
+			"variants": [
+				{
+					"id": "charcoal",
+					"name": "Charcoal",
+					"colors": [
+						"charcoal",
+						"cream"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "cream",
+					"name": "Cream",
+					"colors": [
+						"cream",
+						"cream"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "rust",
+					"name": "Rust",
+					"colors": [
+						"orange",
+						"cream"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "stripe",
+					"name": "Striped",
+					"colors": [
+						"navy",
+						"white"
+					],
+					"pattern": "stripes"
+				}
+			]
+		},
+		{
+			"id": "earmuffs",
+			"name": "Earmuffs",
+			"slot": "hat",
+			"style": "earmuffs",
+			"theme": "cosy_knits",
+			"price": 300,
+			"desc": "Fluffy and warm.",
+			"variants": [
+				{
+					"id": "white",
+					"name": "Snowy",
+					"colors": [
+						"grey",
+						"white"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "pink",
+					"name": "Pink",
+					"colors": [
+						"rose",
+						"pink"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "sky",
+					"name": "Sky",
+					"colors": [
+						"navy",
+						"sky"
+					],
+					"pattern": "plain"
+				}
+			]
+		},
+		{
+			"id": "puffer_jacket",
+			"name": "Puffer Jacket",
+			"slot": "top",
+			"style": "puffer_jacket",
+			"theme": "cosy_knits",
+			"price": 900,
+			"desc": "Like wearing a duvet.",
+			"variants": [
+				{
+					"id": "red",
+					"name": "Red",
+					"colors": [
+						"red",
+						"white"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "lilac",
+					"name": "Lilac",
+					"colors": [
+						"lavender",
+						"white"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "black",
+					"name": "Black",
+					"colors": [
+						"charcoal",
+						"yellow"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "mint",
+					"name": "Mint",
+					"colors": [
+						"mint",
+						"white"
+					],
+					"pattern": "plain"
+				}
+			]
+		},
+		{
+			"id": "raincoat",
+			"name": "Raincoat",
+			"slot": "top",
+			"style": "raincoat",
+			"theme": "rainy_day",
+			"price": 640,
+			"desc": "Toggles, pockets and a hood. Puddles beware.",
+			"variants": [
+				{
+					"id": "yellow",
+					"name": "Sunny",
+					"colors": [
+						"yellow",
+						"navy"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "red",
+					"name": "Postbox",
+					"colors": [
+						"red",
+						"cream"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "blue",
+					"name": "Sky",
+					"colors": [
+						"sky",
+						"yellow"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "green",
+					"name": "Frog",
+					"colors": [
+						"green",
+						"yellow"
+					],
+					"pattern": "dots"
+				}
+			]
+		},
+		{
+			"id": "rain_hat",
+			"name": "Rain Hat",
+			"slot": "hat",
+			"style": "sou_wester",
+			"theme": "rainy_day",
+			"price": 340,
+			"desc": "Keeps the drips off your neck.",
+			"variants": [
+				{
+					"id": "yellow",
+					"name": "Sunny",
+					"colors": [
+						"yellow",
+						"cream"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "red",
+					"name": "Postbox",
+					"colors": [
+						"red",
+						"cream"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "navy",
+					"name": "Navy",
+					"colors": [
+						"navy",
+						"cream"
+					],
+					"pattern": "plain"
+				}
+			]
+		},
+		{
+			"id": "rain_boots",
+			"name": "Puddle Boots",
+			"slot": "shoes",
+			"style": "wellies",
+			"theme": "rainy_day",
+			"price": 380,
+			"desc": "Made for jumping in puddles.",
+			"variants": [
+				{
+					"id": "yellow",
+					"name": "Sunny",
+					"colors": [
+						"yellow",
+						"cream"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "frog",
+					"name": "Frog",
+					"colors": [
+						"green",
+						"cream"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "polka",
+					"name": "Polka",
+					"colors": [
+						"pink",
+						"white"
+					],
+					"pattern": "dots"
+				}
+			]
+		},
+		{
+			"id": "sailor_top",
+			"name": "Sailor Top",
+			"slot": "top",
+			"style": "sailor_top",
+			"theme": "seaside",
+			"price": 480,
+			"desc": "Big square collar, little tie. Ahoy!",
+			"variants": [
+				{
+					"id": "white",
+					"name": "Classic",
+					"colors": [
+						"white",
+						"navy"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "sky",
+					"name": "Sky",
+					"colors": [
+						"sky",
+						"white"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "pink",
+					"name": "Shell",
+					"colors": [
+						"pink",
+						"red"
+					],
+					"pattern": "plain"
+				}
+			]
+		},
+		{
+			"id": "swimsuit",
+			"name": "Frilly Swimsuit",
+			"slot": "top",
+			"style": "swimsuit",
+			"theme": "seaside",
+			"price": 420,
+			"desc": "For paddling and sandcastles.",
+			"variants": [
+				{
+					"id": "stripe",
+					"name": "Stripy",
+					"colors": [
+						"red",
+						"white"
+					],
+					"pattern": "stripes"
+				},
+				{
+					"id": "dots",
+					"name": "Dotty",
+					"colors": [
+						"navy",
+						"white"
+					],
+					"pattern": "dots"
+				},
+				{
+					"id": "sun",
+					"name": "Sunshine",
+					"colors": [
+						"yellow",
+						"orange"
+					],
+					"pattern": "plain"
+				}
+			]
+		},
+		{
+			"id": "board_shorts",
+			"name": "Board Shorts",
+			"slot": "bottom",
+			"style": "board_shorts",
+			"theme": "seaside",
+			"price": 300,
+			"desc": "Long, loose and quick to dry.",
+			"variants": [
+				{
+					"id": "teal",
+					"name": "Lagoon",
+					"colors": [
+						"teal",
+						"yellow"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "coral",
+					"name": "Coral",
+					"colors": [
+						"coral",
+						"white"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "navy",
+					"name": "Deep",
+					"colors": [
+						"navy",
+						"sky"
+					],
+					"pattern": "plain"
+				}
+			]
+		},
+		{
+			"id": "sandals",
+			"name": "Sandals",
+			"slot": "shoes",
+			"style": "sandals",
+			"theme": "seaside",
+			"price": 260,
+			"desc": "Toes out, sun on your feet.",
+			"variants": [
+				{
+					"id": "tan",
+					"name": "Leather",
+					"colors": [
+						"brown",
+						"tan"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "white",
+					"name": "Shell",
+					"colors": [
+						"white",
+						"sky"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "pink",
+					"name": "Flamingo",
+					"colors": [
+						"pink",
+						"rose"
+					],
+					"pattern": "plain"
+				}
+			]
+		},
+		{
+			"id": "sun_hat",
+			"name": "Sun Hat",
+			"slot": "hat",
+			"style": "sun_hat",
+			"theme": "seaside",
+			"price": 360,
+			"desc": "Wide and floppy with a ribbon.",
+			"variants": [
+				{
+					"id": "straw",
+					"name": "Straw",
+					"colors": [
+						"tan",
+						"coral"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "white",
+					"name": "Seashell",
+					"colors": [
+						"white",
+						"sky"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "pink",
+					"name": "Blossom",
+					"colors": [
+						"pink",
+						"white"
+					],
+					"pattern": "plain"
+				}
+			]
+		},
+		{
+			"id": "pinafore",
+			"name": "Pinafore Dress",
+			"slot": "top",
+			"style": "pinafore",
+			"theme": "garden_work",
+			"price": 680,
+			"desc": "A bibbed pinafore over a blouse. Pockets for seeds.",
+			"variants": [
+				{
+					"id": "denim",
+					"name": "Denim",
+					"colors": [
+						"blue",
+						"white"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "cherry",
+					"name": "Cherry",
+					"colors": [
+						"red",
+						"cream"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "sage",
+					"name": "Sage",
+					"colors": [
+						"olive",
+						"cream"
+					],
+					"pattern": "dots"
+				},
+				{
+					"id": "check",
+					"name": "Gingham",
+					"colors": [
+						"coral",
+						"white"
+					],
+					"pattern": "checks"
+				}
+			]
+		},
+		{
+			"id": "flannel_shirt",
+			"name": "Flannel Shirt",
+			"slot": "top",
+			"style": "flannel_shirt",
+			"theme": "garden_work",
+			"price": 460,
+			"desc": "Soft, checked and good for chores.",
+			"variants": [
+				{
+					"id": "red",
+					"name": "Red Check",
+					"colors": [
+						"red",
+						"charcoal"
+					],
+					"pattern": "checks"
+				},
+				{
+					"id": "green",
+					"name": "Forest",
+					"colors": [
+						"green",
+						"navy"
+					],
+					"pattern": "checks"
+				},
+				{
+					"id": "blue",
+					"name": "Blue Check",
+					"colors": [
+						"blue",
+						"white"
+					],
+					"pattern": "checks"
+				}
+			]
+		},
+		{
+			"id": "denim_jacket",
+			"name": "Denim Jacket",
+			"slot": "top",
+			"style": "denim_jacket",
+			"theme": "garden_work",
+			"price": 720,
+			"desc": "Chest pockets and brass buttons.",
+			"variants": [
+				{
+					"id": "blue",
+					"name": "Classic",
+					"colors": [
+						"blue",
+						"yellow"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "pale",
+					"name": "Faded",
+					"colors": [
+						"sky",
+						"white"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "black",
+					"name": "Ink",
+					"colors": [
+						"charcoal",
+						"grey"
+					],
+					"pattern": "plain"
+				}
+			]
+		},
+		{
+			"id": "cargo_shorts",
+			"name": "Cargo Shorts",
+			"slot": "bottom",
+			"style": "cargo_shorts",
+			"theme": "garden_work",
+			"price": 320,
+			"desc": "So many pockets.",
+			"variants": [
+				{
+					"id": "khaki",
+					"name": "Khaki",
+					"colors": [
+						"tan",
+						"cream"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "olive",
+					"name": "Olive",
+					"colors": [
+						"olive",
+						"cream"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "navy",
+					"name": "Navy",
+					"colors": [
+						"navy",
+						"cream"
+					],
+					"pattern": "plain"
+				}
+			]
+		},
+		{
+			"id": "pleated_skirt",
+			"name": "Pleated Skirt",
+			"slot": "bottom",
+			"style": "pleated_skirt",
+			"theme": "garden_work",
+			"price": 360,
+			"desc": "Swishes when you twirl.",
+			"variants": [
+				{
+					"id": "navy",
+					"name": "Navy",
+					"colors": [
+						"navy",
+						"white"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "check",
+					"name": "Tartan",
+					"colors": [
+						"red",
+						"navy"
+					],
+					"pattern": "checks"
+				},
+				{
+					"id": "mint",
+					"name": "Mint",
+					"colors": [
+						"mint",
+						"white"
+					],
+					"pattern": "plain"
+				}
+			]
+		},
+		{
+			"id": "work_boots",
+			"name": "Work Boots",
+			"slot": "shoes",
+			"style": "work_boots",
+			"theme": "garden_work",
+			"price": 420,
+			"desc": "Sturdy boots with chunky soles.",
+			"variants": [
+				{
+					"id": "brown",
+					"name": "Brown",
+					"colors": [
+						"brown",
+						"cream"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "tan",
+					"name": "Tan",
+					"colors": [
+						"tan",
+						"red"
+					],
+					"pattern": "plain"
+				},
+				{
+					"id": "black",
+					"name": "Black",
+					"colors": [
+						"charcoal",
+						"yellow"
+					],
+					"pattern": "plain"
+				}
+			]
+		},
+		{
+			"id": "headscarf",
+			"name": "Headscarf",
+			"slot": "hat",
+			"style": "headscarf",
+			"theme": "garden_work",
+			"price": 220,
+			"desc": "Tied at the back, ready for gardening.",
+			"variants": [
+				{
+					"id": "red",
+					"name": "Red Dots",
+					"colors": [
+						"red",
+						"white"
+					],
+					"pattern": "dots"
+				},
+				{
+					"id": "yellow",
+					"name": "Daisy",
+					"colors": [
+						"yellow",
+						"white"
+					],
+					"pattern": "flowers"
+				},
+				{
+					"id": "blue",
+					"name": "Gingham",
+					"colors": [
+						"blue",
+						"white"
+					],
+					"pattern": "checks"
+				}
+			]
+		}
+	]
+}

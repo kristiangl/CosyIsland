@@ -118,7 +118,8 @@ static func adjust(look: Dictionary, key: String, direction: int) -> void:
 static func random(rng: RandomNumberGenerator) -> Dictionary:
 	var look := DEFAULT.duplicate()
 	for key in SOURCES:
-		var list := options(key)
+		# Designed clothes are owned, not picked at random.
+		var list := options(key).filter(func(o): return not o.get("designed", false))
 		look[key] = list[rng.randi() % list.size()]["id"]
 	# Keep random characters tidy: mostly plain clothes, few hats and glasses.
 	if rng.randf() < 0.6:

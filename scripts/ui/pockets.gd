@@ -132,6 +132,12 @@ func _use_slot(i: int) -> void:
 	elif not ItemDB.placeable(id).is_empty():
 		close()
 		place_requested.emit(i)
+	elif def.get("category", "") == "clothing":
+		var player := Game.player
+		player.model.set_look(Inventory.wear_from_slot(i, player.model.look))
+		player.model.play("cheer")
+		Effects.burst("sparkle", player.position + Vector3(0, 0.9, 0))
+		Events.toast.emit("You put on the %s. It's in your wardrobe now." % ItemDB.display_name(id).to_lower())
 	elif def.get("category", "") == "interior":
 		var here: World = Game.world
 		if not here.interior:

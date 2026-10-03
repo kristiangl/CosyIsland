@@ -86,7 +86,8 @@ static func top(style: String) -> Dictionary:
 	var sleeve := MeshKit.new()
 	var cuff := MeshKit.new()
 	var shell := TORSO_RADIUS + Vector3(0.016, 0.014, 0.016)
-	k.sphere(TORSO_CENTRE, shell, PLAIN, 10, 18)
+	# A pinafore's body is the blouse underneath, in the second colour.
+	k.sphere(TORSO_CENTRE, shell, TRIM if style == "pinafore" else PLAIN, 10, 18)
 	match style:
 		"tee":
 			_hem(k, 0.4, 0.205)
@@ -131,8 +132,123 @@ static func top(style: String) -> Dictionary:
 			for s: float in [-1.0, 1.0]:
 				k.cylinder(Vector3(s * 0.1, 0.62, 0.12), Vector3(s * 0.12, 0.76, 0.0), 0.02, 0.02, TRIM, 6, false)
 			sleeve = null
+		"knit_jumper":
+			_hem(k, 0.39, 0.212, SHADED)
+			_ribs(k, 0.39, 0.44, 0.205)
+			k.cylinder(Vector3(0, 0.72, 0), Vector3(0, 0.775, 0), 0.09, 0.085, SHADED, 14, false)
+			# A knitted heart on the chest.
+			var front := TORSO_RADIUS.z + 0.012
+			for sx: float in [-1.0, 1.0]:
+				k.sphere(Vector3(sx * 0.03, 0.62, front), Vector3(0.036, 0.032, 0.012), TRIM, 4, 8)
+			k.cone(Vector3(0, 0.61, front - 0.002), Vector3(0, 0.55, front + 0.004), 0.05, TRIM, 4)
+			_long_sleeve(sleeve, cuff, 0.072, true)
+		"cardigan":
+			_hem(k, 0.39, 0.212, SHADED)
+			# Open at the front over a top in the second colour, with buttons down one side.
+			var front := TORSO_RADIUS.z + 0.014
+			k.box(Vector3(0, 0.58, front - 0.004), Vector3(0.07, 0.28, 0.012), TRIM)
+			for sx: float in [-1.0, 1.0]:
+				k.box(Vector3(sx * 0.045, 0.57, front + 0.002), Vector3(0.022, 0.32, 0.014), SHADED)
+			for i in 4:
+				k.sphere(Vector3(0.045, 0.66 - i * 0.065, front + 0.012), Vector3.ONE * 0.013, SHADED, 3, 6)
+			_long_sleeve(sleeve, cuff, 0.072, true)
+		"turtleneck":
+			_hem(k, 0.39, 0.212)
+			# The rolled collar shows under the chin.
+			k.cylinder(Vector3(0, 0.7, 0), Vector3(0, 0.8, 0), 0.1, 0.095, SHADED, 16, false)
+			k.sphere(Vector3(0, 0.765, 0.0), Vector3(0.135, 0.045, 0.125), SHADED, 5, 16)
+			_long_sleeve(sleeve, cuff, 0.068, true)
+		"raincoat":
+			# A long coat with a hood down the back, toggles and pocket flaps.
+			k.cylinder(Vector3(0, 0.47, 0), Vector3(0, 0.24, 0), 0.208, 0.25, PLAIN, 18, true)
+			k.sphere(Vector3(0, 0.79, -0.14), Vector3(0.2, 0.13, 0.12), PLAIN, 6, 12)
+			k.sphere(Vector3(0, 0.8, -0.1), Vector3(0.15, 0.08, 0.08), SHADED, 5, 10)
+			var front := TORSO_RADIUS.z + 0.02
+			for i in 3:
+				k.cylinder(Vector3(-0.03, 0.66 - i * 0.09, front), Vector3(0.03, 0.66 - i * 0.09, front), 0.012, 0.012, TRIM, 5, true)
+			for sx: float in [-1.0, 1.0]:
+				k.box(Vector3(sx * 0.12, 0.36, 0.2), Vector3(0.09, 0.03, 0.03), SHADED)
+			_long_sleeve(sleeve, cuff, 0.075, true)
+		"sailor_top":
+			_hem(k, 0.4, 0.205)
+			# The big square collar at the back, a V at the front and a little tie.
+			k.box(Vector3(0, 0.7, -0.165), Vector3(0.3, 0.16, 0.018), TRIM)
+			k.box(Vector3(0, 0.625, -0.172), Vector3(0.3, 0.012, 0.012), PLAIN)
+			for sx: float in [-1.0, 1.0]:
+				k.leaf(Vector3(sx * 0.09, 0.77, 0.08), Vector3(-sx * 0.55, -0.75, 0.6), 0.17, 0.07, TRIM, 0.0)
+			k.sphere(Vector3(0, 0.63, 0.18), Vector3(0.035, 0.025, 0.018), TRIM, 4, 6)
+			for sx: float in [-1.0, 1.0]:
+				k.leaf(Vector3(0, 0.62, 0.185), Vector3(sx * 0.4, -1.0, 0.1), 0.08, 0.04, TRIM, 0.0)
+			_short_sleeve(sleeve)
+			sleeve.cylinder(Vector3(0, -0.095, 0), Vector3(0, -0.11, 0), 0.073, 0.072, TRIM, 10, false)
+		"flannel_shirt":
+			_hem(k, 0.4, 0.207)
+			_collar(k)
+			var front := TORSO_RADIUS.z + 0.014
+			for i in 4:
+				k.sphere(Vector3(0, 0.67 - i * 0.07, front + 0.006), Vector3.ONE * 0.012, TRIM, 3, 6)
+			for sx: float in [-1.0, 1.0]:
+				k.box(Vector3(sx * 0.085, 0.62, front - 0.004), Vector3(0.07, 0.07, 0.016), SHADED)
+			_long_sleeve(sleeve, cuff, 0.07, true)
+		"puffer_jacket":
+			# Quilted bands, each a little puffy, a high collar and a zip.
+			for i in 5:
+				var y := 0.41 + i * 0.075
+				var r := 0.215 - absf(i - 2.0) * 0.012
+				k.sphere(Vector3(0, y, 0), Vector3(r, 0.05, r * 0.88), PLAIN, 5, 16)
+				if i > 0:
+					k.cylinder(Vector3(0, y - 0.042, 0), Vector3(0, y - 0.034, 0), r * 0.92, r * 0.92, SHADED, 16, false)
+			k.cylinder(Vector3(0, 0.71, 0), Vector3(0, 0.8, 0), 0.11, 0.105, SHADED, 14, false)
+			k.box(Vector3(0, 0.56, TORSO_RADIUS.z + 0.035), Vector3(0.012, 0.36, 0.01), TRIM)
+			_long_sleeve(sleeve, cuff, 0.085, true)
+			for i in 2:
+				sleeve.sphere(Vector3(0, -0.04 - i * 0.05, 0), Vector3(0.09, 0.03, 0.09), PLAIN, 4, 10)
+		"denim_jacket":
+			_hem(k, 0.4, 0.212, SHADED)
+			_collar(k)
+			var front := TORSO_RADIUS.z + 0.014
+			for sx: float in [-1.0, 1.0]:
+				k.box(Vector3(sx * 0.085, 0.63, front), Vector3(0.075, 0.06, 0.016), SHADED)
+				k.sphere(Vector3(sx * 0.085, 0.61, front + 0.01), Vector3.ONE * 0.01, TRIM, 3, 6)
+			for i in 4:
+				k.sphere(Vector3(0.012, 0.66 - i * 0.07, front + 0.006), Vector3.ONE * 0.012, TRIM, 3, 6)
+			k.box(Vector3(0, 0.5, front - 0.006), Vector3(0.3, 0.008, 0.012), SHADED)
+			_long_sleeve(sleeve, cuff, 0.072, true)
+		"pinafore":
+			# A blouse (second colour) under a bibbed pinafore dress.
+			k.cylinder(Vector3(0, 0.47, 0), Vector3(0, 0.17, 0), 0.205, 0.3, PLAIN, 18, true)
+			_hem(k, 0.18, 0.3, SHADED)
+			var front := TORSO_RADIUS.z + 0.02
+			k.box(Vector3(0, 0.56, front - 0.008), Vector3(0.2, 0.17, 0.03), PLAIN)
+			k.box(Vector3(0, 0.55, front + 0.01), Vector3(0.08, 0.06, 0.01), SHADED)
+			for sx: float in [-1.0, 1.0]:
+				k.cylinder(Vector3(sx * 0.08, 0.64, front - 0.006), Vector3(sx * 0.1, 0.77, 0.02), 0.022, 0.022, PLAIN, 6, true)
+				k.cylinder(Vector3(sx * 0.1, 0.77, 0.02), Vector3(sx * 0.085, 0.5, -TORSO_RADIUS.z - 0.02), 0.022, 0.022, PLAIN, 6, true)
+			_short_sleeve(sleeve)
+			_recolour(sleeve, TRIM)
+		"swimsuit":
+			k.sphere(Vector3(0, 0.37, 0), Vector3(0.185, 0.09, 0.156), PLAIN, 6, 16)
+			# A little frilled skirt.
+			k.cylinder(Vector3(0, 0.38, 0), Vector3(0, 0.3, 0), 0.188, 0.218, TRIM, 18, false)
+			for sx: float in [-1.0, 1.0]:
+				k.cylinder(Vector3(sx * 0.1, 0.62, 0.12), Vector3(sx * 0.12, 0.76, 0.0), 0.02, 0.02, PLAIN, 6, false)
+			sleeve = null
 	return {"torso": k.commit(), "sleeve": sleeve.commit() if sleeve else null,
 		"cuff": cuff.commit() if not cuff.is_empty() else null}
+
+
+## Knitted ribbing: fine vertical ridges round a band.
+static func _ribs(k: MeshKit, y0: float, y1: float, r: float) -> void:
+	for i in 24:
+		var a := TAU * i / 24.0
+		var p := Vector3(cos(a) * r, 0, sin(a) * r)
+		k.cylinder(p + Vector3(0, y0, 0), p + Vector3(0, y1, 0), 0.005, 0.005, SHADED, 3, false)
+
+
+## Paints every vertex built so far one colour code (PLAIN, SHADED or TRIM).
+static func _recolour(k: MeshKit, c: Color) -> void:
+	for i in k.colours.size():
+		k.colours[i] = c
 
 
 static func _hem(k: MeshKit, y: float, r: float, c: Color = PLAIN) -> void:
@@ -195,6 +311,25 @@ static func bottom(style: String) -> Dictionary:
 				k.cylinder(Vector3(s * 0.11, 0.775, 0.02), Vector3(s * 0.09, 0.56, -TORSO_RADIUS.z - 0.025), 0.022, 0.022, PLAIN, 6, true)
 				k.sphere(Vector3(s * 0.085, 0.66, front + 0.012), Vector3.ONE * 0.017, TRIM, 3, 6)
 			_trouser_leg(leg, shin, 0.08, 0.075, 0.04)
+		"pleated_skirt":
+			k.cylinder(Vector3(0, 0.44, 0), Vector3(0, 0.27, 0), 0.185, 0.275, PLAIN, 24, true)
+			for i in 16:
+				var a := TAU * i / 16.0
+				var top := Vector3(cos(a) * 0.188, 0.43, sin(a) * 0.188)
+				var bottom := Vector3(cos(a) * 0.278, 0.275, sin(a) * 0.278)
+				k.cylinder(top, bottom, 0.004, 0.007, SHADED, 3, false)
+			k.cylinder(Vector3(0, 0.44, 0), Vector3(0, 0.41, 0), 0.19, 0.192, TRIM, 20, false)
+			leg = null
+		"board_shorts":
+			leg.cylinder(Vector3(0, 0.03, 0), Vector3(0, -LEG_UPPER - 0.02, 0), 0.085, 0.084, PLAIN, 10, true)
+			# A stripe down the outside of each leg.
+			leg.box(Vector3(0.0, -0.05, 0), Vector3(0.175, 0.15, 0.03), TRIM)
+			k.cylinder(Vector3(0, 0.42, 0.155), Vector3(0, 0.36, 0.165), 0.008, 0.008, TRIM, 4, true)
+		"cargo_shorts":
+			leg.cylinder(Vector3(0, 0.03, 0), Vector3(0, -0.11, 0), 0.083, 0.082, PLAIN, 10, true)
+			leg.cylinder(Vector3(0, -0.095, 0), Vector3(0, -0.12, 0), 0.088, 0.088, SHADED, 10, true)
+			for sx: float in [-1.0, 1.0]:
+				leg.box(Vector3(sx * 0.085, -0.04, 0), Vector3(0.02, 0.07, 0.07), SHADED)
 	return {"hips": k.commit(), "leg": leg.commit() if leg else null,
 		"shin": shin.commit() if not shin.is_empty() else null}
 
@@ -225,6 +360,17 @@ static func shoe(style: String) -> ArrayMesh:
 		"wellies":
 			k.cylinder(Vector3(0, y + 0.22, 0), Vector3(0, y, 0), 0.082, 0.08, PLAIN, 10, true)
 			k.sphere(Vector3(0, y, 0.035), Vector3(0.08, 0.058, 0.115), PLAIN, 6, 12)
+		"sandals":
+			# A sole under the bare foot and two straps over it.
+			k.sphere(Vector3(0, y - 0.045, 0.025), Vector3(0.075, 0.016, 0.11), TRIM, 4, 12)
+			for z: float in [-0.01, 0.07]:
+				k.sphere(Vector3(0, y + 0.005, z), Vector3(0.072, 0.03, 0.026), PLAIN, 4, 10)
+		"work_boots":
+			k.cylinder(Vector3(0, y + 0.14, 0), Vector3(0, y, 0), 0.08, 0.084, PLAIN, 10, true)
+			k.sphere(Vector3(0, y - 0.005, 0.04), Vector3(0.088, 0.064, 0.125), PLAIN, 6, 12)
+			k.sphere(Vector3(0, y - 0.045, 0.035), Vector3(0.092, 0.028, 0.13), SHADED, 4, 12)
+			for i in 3:
+				k.cylinder(Vector3(-0.04, y + 0.03 + i * 0.035, 0.07 - i * 0.01), Vector3(0.04, y + 0.03 + i * 0.035, 0.07 - i * 0.01), 0.007, 0.007, TRIM, 4, true)
 	return k.commit()
 
 
@@ -399,6 +545,28 @@ static func hat(style: String) -> ArrayMesh:
 					var pa := TAU * p / 5.0
 					k.sphere(centre + Vector3(cos(pa), sin(pa), 0.3).normalized() * 0.03, Vector3.ONE * 0.026, PLAIN, 3, 6)
 				k.sphere(centre + Vector3(0, 0, 0.01), Vector3.ONE * 0.018, TRIM, 3, 6)
+		"earmuffs":
+			for i in 8:
+				var a0 := PI * i / 8.0
+				var a1 := PI * (i + 1) / 8.0
+				k.cylinder(Vector3(cos(a0) * 0.46, sin(a0) * 0.45, -0.04), Vector3(cos(a1) * 0.46, sin(a1) * 0.45, -0.04), 0.025, 0.025, PLAIN, 5, false)
+			for sx: float in [-1.0, 1.0]:
+				# Fluffy muffs, outside any hairstyle.
+				k.sphere(Vector3(sx * 0.46, -0.02, -0.02), Vector3(0.08, 0.13, 0.12), TRIM, 5, 10)
+		"sou_wester":
+			k.sphere(Vector3(0, 0.2, -0.02), Vector3(0.405, 0.25, 0.4), PLAIN, 8, 18)
+			k.sphere(Vector3(0, 0.12, -0.1), Vector3(0.56, 0.035, 0.6), PLAIN, 5, 20)
+			k.cylinder(Vector3(0, 0.12, -0.02), Vector3(0, 0.17, -0.02), 0.41, 0.405, SHADED, 20, false)
+		"sun_hat":
+			k.sphere(Vector3(0, 0.22, -0.02), Vector3(0.36, 0.2, 0.36), PLAIN, 8, 18)
+			k.sphere(Vector3(0, 0.15, -0.02), Vector3(0.72, 0.03, 0.72), PLAIN, 5, 24)
+			k.cylinder(Vector3(0, 0.15, -0.02), Vector3(0, 0.23, -0.02), 0.37, 0.36, TRIM, 20, false)
+			k.sphere(Vector3(0.3, 0.2, 0.18), Vector3(0.07, 0.05, 0.03), TRIM, 4, 8)
+		"headscarf":
+			k.sphere(Vector3(0, 0.12, -0.03), Vector3(0.405, 0.27, 0.39), PLAIN, 8, 18)
+			k.sphere(Vector3(0, 0.0, -0.37), Vector3(0.07, 0.06, 0.05), PLAIN, 4, 8)
+			for sx: float in [-1.0, 1.0]:
+				k.leaf(Vector3(sx * 0.03, -0.02, -0.39), Vector3(sx * 0.6, -1.0, -0.4), 0.16, 0.08, PLAIN, 0.0)
 		"cat_ears":
 			k.cylinder(Vector3(-0.36, 0.12, 0), Vector3(0.36, 0.12, 0), 0.015, 0.015, PLAIN, 6, false)
 			for s: float in [-1.0, 1.0]:

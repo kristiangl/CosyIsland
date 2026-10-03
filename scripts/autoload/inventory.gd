@@ -9,6 +9,8 @@ const START_SLOTS := 20
 var slots: Array[Dictionary] = []
 var currency: int = 0
 var equipped_slot: int = -1
+## Clothes you own (item ids), worn from the wardrobe any time.
+var closet: Array[String] = []
 
 
 func _ready() -> void:
@@ -21,6 +23,7 @@ func reset() -> void:
 		slots.append({})
 	currency = 0
 	equipped_slot = -1
+	closet.clear()
 
 
 ## Adds items, filling existing stacks first. Returns how many didn't fit.
@@ -131,13 +134,26 @@ func wear_equipped() -> bool:
 	return true
 
 
+## Puts on a piece of clothing from the pockets: it joins the closet for good.
+func wear_from_slot(index: int, look: Dictionary) -> Dictionary:
+	var id: String = slots[index].get("id", "")
+	if not ItemDB.is_clothing(id):
+		return look
+	remove_from_slot(index)
+	if not id in closet:
+		closet.append(id)
+	var worn := look.duplicate()
+	worn.merge(ItemDB.get_item(id)["wear"], true)
+	return worn
+
+
 func add_currency(amount: int) -> void:
 	currency += amount
 	Events.currency_changed.emit(currency)
 
 
 func to_save() -> Dictionary:
-	return {"slots": slots.duplicate(true), "currency": currency, "equipped_slot": equipped_slot}
+	return {"slots": slots.duplicate(true), "currency": currency, "equipped_slot": equipped_slot, "closet": closet.duplicate()}
 
 
 func from_save(data: Dictionary) -> void:
@@ -151,6 +167,9 @@ func from_save(data: Dictionary) -> void:
 				s["durability"] = int(s["durability"])
 			slots[i] = s
 	currency = int(data.get("currency", 0))
+	for id in data.get("closet", []):
+		if ItemDB.is_clothing(id) and not id in closet:
+			closet.append(id)
 	equipped_slot = int(data.get("equipped_slot", -1))
 	Events.inventory_changed.emit()
 	Events.currency_changed.emit(currency)

@@ -1,5 +1,5 @@
 {
-	"_note": "Character options. Order matters for eyes, brows, mouth, cheeks and patterns: the index is what the shaders use. Hats can list positions (names and a rotation in degrees about the head).",
+	"_note": "Character options. Order matters for eyes, brows, mouth, cheeks and patterns: the index is what the shaders use. Hats can list positions (names and a rotation in degrees about the head). \"designed\" options are clothes you own as items (data/clothing.json), not free in the creator. Hats say what hair they \"cover\" (full or top); shoes can be \"open\" (bare feet show).",
 	"skin": [
 		{"id": "porcelain", "color": "#fde6d6"},
 		{"id": "peach", "color": "#f8d2b8"},
@@ -94,7 +94,17 @@
 		{"id": "sweater", "name": "Sweater"},
 		{"id": "coat", "name": "Coat"},
 		{"id": "dress", "name": "Dress", "full_body": true},
-		{"id": "sundress", "name": "Sundress", "full_body": true}
+		{"id": "sundress", "name": "Sundress", "full_body": true},
+		{"id": "knit_jumper", "name": "Knit jumper", "designed": true},
+		{"id": "cardigan", "name": "Cardigan", "designed": true},
+		{"id": "turtleneck", "name": "Turtleneck", "designed": true},
+		{"id": "raincoat", "name": "Raincoat", "designed": true},
+		{"id": "sailor_top", "name": "Sailor top", "designed": true},
+		{"id": "flannel_shirt", "name": "Flannel shirt", "designed": true},
+		{"id": "puffer_jacket", "name": "Puffer jacket", "designed": true},
+		{"id": "denim_jacket", "name": "Denim jacket", "designed": true},
+		{"id": "pinafore", "name": "Pinafore dress", "full_body": true, "designed": true},
+		{"id": "swimsuit", "name": "Swimsuit", "full_body": true, "designed": true}
 	],
 	"bottom": [
 		{"id": "shorts", "name": "Shorts"},
@@ -102,7 +112,10 @@
 		{"id": "skirt", "name": "Skirt"},
 		{"id": "long_skirt", "name": "Long skirt"},
 		{"id": "leggings", "name": "Leggings"},
-		{"id": "overalls", "name": "Overalls"}
+		{"id": "overalls", "name": "Overalls"},
+		{"id": "pleated_skirt", "name": "Pleated skirt", "designed": true},
+		{"id": "board_shorts", "name": "Board shorts", "designed": true},
+		{"id": "cargo_shorts", "name": "Cargo shorts", "designed": true}
 	],
 	"pattern": [
 		{"id": "plain", "name": "Plain"},
@@ -143,18 +156,24 @@
 		{"id": "sneakers", "name": "Sneakers"},
 		{"id": "boots", "name": "Boots"},
 		{"id": "flats", "name": "Flats"},
-		{"id": "wellies", "name": "Wellies"}
+		{"id": "wellies", "name": "Wellies"},
+		{"id": "sandals", "name": "Sandals", "open": true, "designed": true},
+		{"id": "work_boots", "name": "Work boots", "designed": true}
 	],
 	"hat": [
 		{"id": "none", "name": "None"},
-		{"id": "cap", "name": "Cap", "positions": [{"name": "Forwards", "rot": [0, 0, 0]}, {"name": "Backwards", "rot": [0, 180, 0]}, {"name": "To the side", "rot": [0, 70, 0]}]},
-		{"id": "beanie", "name": "Beanie"},
-		{"id": "bucket", "name": "Bucket hat", "positions": [{"name": "Level", "rot": [0, 0, 0]}, {"name": "Tipped back", "rot": [-12, 0, 0]}]},
-		{"id": "straw", "name": "Straw hat", "positions": [{"name": "Level", "rot": [0, 0, 0]}, {"name": "Tipped back", "rot": [-12, 0, 0]}]},
-		{"id": "beret", "name": "Beret", "positions": [{"name": "Tilted right", "rot": [0, 0, 0]}, {"name": "Straight", "rot": [0, 0, 11]}, {"name": "Tilted left", "rot": [0, 0, 23]}]},
+		{"id": "cap", "name": "Cap", "positions": [{"name": "Forwards", "rot": [0, 0, 0]}, {"name": "Backwards", "rot": [0, 180, 0]}, {"name": "To the side", "rot": [0, 70, 0]}], "covers": "full"},
+		{"id": "beanie", "name": "Beanie", "covers": "full"},
+		{"id": "bucket", "name": "Bucket hat", "positions": [{"name": "Level", "rot": [0, 0, 0]}, {"name": "Tipped back", "rot": [-12, 0, 0]}], "covers": "full"},
+		{"id": "straw", "name": "Straw hat", "positions": [{"name": "Level", "rot": [0, 0, 0]}, {"name": "Tipped back", "rot": [-12, 0, 0]}], "covers": "full"},
+		{"id": "beret", "name": "Beret", "positions": [{"name": "Tilted right", "rot": [0, 0, 0]}, {"name": "Straight", "rot": [0, 0, 11]}, {"name": "Tilted left", "rot": [0, 0, 23]}], "covers": "top"},
 		{"id": "bow", "name": "Bow", "positions": [{"name": "Right side", "rot": [0, 0, 0]}, {"name": "On top", "rot": [0, 0, 32]}, {"name": "Left side", "rot": [0, 0, 64]}, {"name": "At the back", "rot": [0, 95, 0]}]},
 		{"id": "flower_crown", "name": "Flower crown", "positions": [{"name": "Level", "rot": [0, 0, 0]}, {"name": "Tilted", "rot": [0, 0, -10]}]},
-		{"id": "cat_ears", "name": "Cat ears"}
+		{"id": "cat_ears", "name": "Cat ears"},
+		{"id": "earmuffs", "name": "Earmuffs", "designed": true},
+		{"id": "sou_wester", "name": "Rain hat", "covers": "full", "designed": true},
+		{"id": "sun_hat", "name": "Sun hat", "covers": "full", "designed": true, "positions": [{"name": "Level", "rot": [0, 0, 0]}, {"name": "Tipped back", "rot": [-14, 0, 0]}]},
+		{"id": "headscarf", "name": "Headscarf", "covers": "top", "designed": true}
 	],
 	"glasses": [
 		{"id": "none", "name": "None"},

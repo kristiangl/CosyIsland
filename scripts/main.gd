@@ -17,7 +17,7 @@ extends Node3D
 ##   --demo=home        pitch the tent, go inside and furnish it (--room=wallpaper,flooring)
 ##   --demo=door        pitch the tent and stand outside its door
 ##   --house            with --demo: the tent has already become a house
-##   --ui=pockets|pause|map|creator|crafting|placing|intro|ask|lucy|sleep|shop|sell  (--tab=N picks a creator tab, --try=key:id,... dresses up)  open a menu or mode (for screenshots)
+##   --ui=pockets|pause|map|creator|crafting|placing|intro|ask|lucy|sleep|shop|sell  (--tab=N picks a creator tab, --try=key:id,... dresses up, --closet=TEXT opens the wardrobe with clothes whose ids contain TEXT)  open a menu or mode (for screenshots)
 
 const AUTOSAVE_SECONDS := 60.0
 
@@ -169,7 +169,12 @@ func _ready() -> void:
 			var trying := Appearance.DEFAULT.duplicate()
 			for pair in Game.args.get("try", "").split(",", false):
 				trying[pair.get_slice(":", 0)] = pair.get_slice(":", 1)
-			hud.creator.open(trying, true)
+			if Game.args.has("closet"):
+				# A wardrobe full of clothes, for screenshots.
+				for id in ItemDB.items:
+					if ItemDB.is_clothing(id) and Game.args["closet"] in id:
+						Inventory.closet.append(id)
+			hud.creator.open(trying, not Game.args.has("closet"))
 			if Game.args.has("tab"):
 				hud.creator._select_tab(int(Game.args["tab"]))
 		"crafting":

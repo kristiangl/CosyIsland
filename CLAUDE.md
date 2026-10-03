@@ -19,7 +19,8 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
 - Art check scenes (render with `tools/screenshot_scene.sh out.png res://tools/<scene>`):
   `character_lineup.tscn` (`--seed`, `--angle`, `--vary=KEY`, `--base=k:v`, `--poses`,
   `--npcs`, `--close`),
-  `model_gallery.tscn` (`--drops`, `--keys`, `--only=id,id`), `calibrate.tscn`
+  `model_gallery.tscn` (`--drops`, `--keys`, `--only=id,id`), `effects_gallery.tscn`
+  (`--night`, every particle effect), `calibrate.tscn`
   (`-- --shadows`, checks the cel lighting maths).
 - Game screenshot options are listed at the top of `scripts/main.gd` (`--demo`,
   `--demo=decor|sit|home|door` (`--house` builds the house first),
@@ -47,7 +48,9 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   crashes on quit.
 - `shaders/`: every world shader includes `include/world.gdshaderinc` and runs vertices
   through `curve_world()`; lit ones include `include/toon_light.gdshaderinc`.
-- `data/items.json`: item definitions. Fruit and flower items are generated in `ItemDB`.
+- `data/items.json`: item definitions. Fruit and flower items are generated in `ItemDB`,
+  and so are clothes, from bases with colourways in `data/clothing.json` (plan:
+  `docs/CATALOGUE.md`). Effects: `Effects.burst(kind, pos)` / `Effects.emitter(kind)`.
   `data/recipes.json`: DIY recipes. `data/appearance.json`: character options.
 
 ## Conventions

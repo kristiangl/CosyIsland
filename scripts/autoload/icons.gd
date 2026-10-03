@@ -83,6 +83,8 @@ static func model_key(item_id: String) -> String:
 	var def := ItemDB.get_item(item_id)
 	if def.has("placeable"):
 		return def["placeable"]["model"]
+	if def.get("category", "") == "clothing":
+		return "clothing:" + item_id
 	if def.get("category", "") == "tool":
 		return "tool:" + item_id
 	return "drop:" + item_id

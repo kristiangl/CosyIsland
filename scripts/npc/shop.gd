@@ -1,7 +1,8 @@
 class_name Shop
 extends RefCounted
-## Lucy's shop: a few things for sale each day (one of each, chosen by the island and
-## the day), and buying back anything with a price. Things sell to Lucy for their
+## Lucy's shop: a few things for sale each day (furniture, wallpaper and flooring, and
+## clothes; one of each, chosen by the island and the day), and buying back anything
+## with a price. Things sell to Lucy for their
 ## listed price and cost four times that to buy.
 
 const BUY_MARKUP := 4
@@ -9,6 +10,7 @@ const BUY_MARKUP := 4
 const STAPLES := ["flimsy_axe", "flimsy_shovel"]
 const FURNITURE_PER_DAY := 4
 const INTERIORS_PER_DAY := 2
+const CLOTHES_PER_DAY := 3
 
 
 static func buy_price(id: String) -> int:
@@ -23,12 +25,13 @@ static func can_sell(id: String) -> bool:
 	return sell_price(id) > 0
 
 
-## Today's stock: staples first, then the day's furniture and wallpaper or flooring.
+## Today's stock: staples first, then the day's furniture, wallpaper or flooring, and clothes.
 static func stock(island_seed: int, day: int) -> Array[String]:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = island_seed * 7919 + day
 	var furniture: Array[String] = []
 	var interiors: Array[String] = []
+	var clothes: Array[String] = []
 	for id in ItemDB.items:
 		var def := ItemDB.get_item(id)
 		match def.get("category", ""):
@@ -37,12 +40,16 @@ static func stock(island_seed: int, day: int) -> Array[String]:
 					furniture.append(id)
 			"interior":
 				interiors.append(id)
+			"clothing":
+				clothes.append(id)
 	furniture.sort()
 	interiors.sort()
+	clothes.sort()
 	var out: Array[String] = []
 	out.append_array(STAPLES)
 	out.append_array(_pick(rng, furniture, FURNITURE_PER_DAY))
 	out.append_array(_pick(rng, interiors, INTERIORS_PER_DAY))
+	out.append_array(_pick(rng, clothes, CLOTHES_PER_DAY))
 	return out
 
 

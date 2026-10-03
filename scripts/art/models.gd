@@ -64,6 +64,8 @@ static func get_mesh(key: String) -> ArrayMesh:
 			_tool(k, p[1])
 		"furniture":
 			FurnitureModels.build(k, p[1])
+		"clothing":
+			_clothing(k, p[1])
 		_:
 			push_warning("Unknown model key %s" % key)
 			k.sphere(Vector3(0, 0.3, 0), Vector3.ONE * 0.3, MeshKit.lin(Color.MAGENTA))
@@ -435,10 +437,74 @@ static func _bridge(k: MeshKit, length: int) -> void:
 
 # --- Items ---------------------------------------------------------------------------
 
+## A piece of clothing on its own (for icons), in its colours.
+static func _clothing(k: MeshKit, id: String) -> void:
+	var P := CharacterParts
+	var look := Appearance.DEFAULT.duplicate()
+	look.merge(ItemDB.get_item(id).get("wear", {}), true)
+	var slot: String = ItemDB.get_item(id).get("slot", "top")
+	var keys: Array = ItemDB.SLOT_KEYS[slot]
+	var a := Appearance.color(look, keys[1])
+	var b := Appearance.color(look, keys[2]) if keys[2] != "" else a.lightened(0.5)
+	match slot:
+		"top":
+			var t := P.top(look["top"])
+			_append(k, t["torso"], Transform3D.IDENTITY, a, b)
+			for sx: float in [-1.0, 1.0]:
+				var shoulder := P.SHOULDER * Vector3(sx, 1, 1)
+				# Arms held a little out, like on a hanger.
+				var arm := Transform3D(Basis(Vector3.BACK, sx * 0.35), shoulder)
+				if t["sleeve"]:
+					_append(k, t["sleeve"], arm, a, b)
+				if t["cuff"]:
+					_append(k, t["cuff"], arm * Transform3D(Basis(), Vector3(0, -P.ARM_UPPER, 0)), a, b)
+		"bottom":
+			var bt := P.bottom(look["bottom"])
+			_append(k, bt["hips"], Transform3D.IDENTITY, a, b)
+			for sx: float in [-1.0, 1.0]:
+				var hip := Transform3D(Basis(), Vector3(sx * P.LEG_X, P.HIP_Y, 0))
+				if bt["leg"]:
+					_append(k, bt["leg"], hip, a, b)
+				if bt["shin"]:
+					_append(k, bt["shin"], hip * Transform3D(Basis(), Vector3(0, -P.LEG_UPPER, 0)), a, b)
+		"shoes":
+			for sx: float in [-1.0, 1.0]:
+				_append(k, P.shoe(look["shoes"]), Transform3D(Basis(), Vector3(sx * 0.11, P.LEG_LOWER, 0)), a, b)
+		"hat":
+			_append(k, P.hat(look["hat"]), Transform3D.IDENTITY, a, b)
+
+
+## Copies a character part into this kit, turning its colour codes (see CharacterParts)
+## into real colours: the second colour on trim, shaded a touch where marked.
+static func _append(k: MeshKit, mesh: ArrayMesh, xform: Transform3D, a: Color, b: Color) -> void:
+	if mesh == null or mesh.get_surface_count() == 0:
+		return
+	var arrays := mesh.surface_get_arrays(0)
+	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var normals: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+	var colours: PackedColorArray = arrays[Mesh.ARRAY_COLOR]
+	var indices: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
+	var base := k.verts.size()
+	for i in verts.size():
+		var code := colours[i]
+		var c := (b if code.g < 0.5 else a) * Color(code.r, code.r, code.r)
+		k.verts.append(xform * verts[i])
+		k.normals.append((xform.basis * normals[i]).normalized())
+		k.colours.append(Color(c.r, c.g, c.b, 0.0))
+		k.uvs.append(Vector2.ZERO)
+	for idx in indices:
+		k.indices.append(base + idx)
+
+
 static func _drop(k: MeshKit, item: String) -> void:
 	var def := ItemDB.get_item(item)
 	var col := MeshKit.lin(ItemDB.color_of(item))
 	match def.get("category", ""):
+		"clothing":
+			# A neatly folded bundle tied with a ribbon.
+			k.rounded_box(Vector3(0, 0.07, 0), Vector3(0.36, 0.14, 0.28), col, 0.4)
+			k.box(Vector3(0, 0.08, 0), Vector3(0.05, 0.16, 0.3), MeshKit.lin(Color("fff4e0")))
+			return
 		"fruit":
 			k.sphere(Vector3(0, 0.15, 0), Vector3.ONE * 0.15, col, 5, 8, 0.3)
 			k.leaf(Vector3(0, 0.3, 0), Vector3(1, 0.4, 0), 0.14, 0.08, MeshKit.lin(Color("5c9e46")))

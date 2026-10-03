@@ -56,6 +56,8 @@ var _island_edit: LineEdit
 var _title: Label
 var _naming := true
 var _spin := 0.0
+## While true, moving the focus doesn't try things on.
+var quiet := false
 
 
 func _ready() -> void:
@@ -248,17 +250,22 @@ func _select_tab(i: int) -> void:
 	for child in _content.get_children():
 		child.free()
 	var first: Control = null
+	var designed := false
 	if tab.has("styles"):
 		first = _style_grid(tab["styles"], tab["view"])
+		# Clothes you own sit under the everyday styles; they come in their own colours.
+		if ItemDB.SLOT_KEYS.has(tab["styles"]):
+			_closet_grid(tab["styles"], tab["view"])
+			designed = Appearance.option(look, tab["styles"]).get("designed", false)
 	if tab.has("positions"):
 		var row := AdjustRow.new(self, "hat_pos", "Wear it")
 		row.visible = not Appearance.hat_positions(look).is_empty()
 		row.name = "HatPos"
 		_content.add_child(row)
-	if tab.has("colours"):
+	if tab.has("colours") and not designed:
 		var colour_first := _swatches(tab["colours"], tab.get("colour_title", "Colour"))
 		first = first if first else colour_first
-	if tab.get("patterns", false):
+	if tab.get("patterns", false) and not designed:
 		_style_grid("top_pattern", "body", "Pattern")
 		_swatches("top_color2", "Pattern colour")
 	if tab.has("adjust"):
@@ -268,14 +275,23 @@ func _select_tab(i: int) -> void:
 	if _naming and i == 0:
 		_name_edit.grab_focus.call_deferred()
 	elif first:
-		_focus_selected(first).grab_focus.call_deferred()
+		_focus_quietly.call_deferred(_focus_selected(first))
 	_scroll.scroll_vertical = 0
 
 
-## The selected tile in a grid, to start the focus on.
+## Moves the focus without trying anything on.
+func _focus_quietly(target: Control) -> void:
+	if not is_instance_valid(target):
+		return
+	quiet = true
+	target.grab_focus()
+	quiet = false
+
+
+## The selected tile anywhere on the tab (or the grid's first), to start the focus on.
 func _focus_selected(grid: Control) -> Control:
-	for child in grid.get_children():
-		if child is OptionTile and child.is_selected():
+	for child in _content.find_children("*", "", true, false):
+		if child is OptionTile and child.is_selected() and not child.swatch:
 			return child
 	return grid.get_child(0)
 
@@ -296,8 +312,24 @@ func _style_grid(key: String, view: String, title: String = "Style") -> GridCont
 	grid.add_theme_constant_override("v_separation", 8)
 	_content.add_child(grid)
 	for opt in Appearance.options(key):
-		grid.add_child(OptionTile.new(self, key, opt["id"], view, false))
+		if not opt.get("designed", false):
+			grid.add_child(OptionTile.new(self, key, opt["id"], view, false))
 	return grid
+
+
+## Owned clothes for a slot, from the closet.
+func _closet_grid(slot: String, view: String) -> void:
+	var owned := Inventory.closet.filter(func(id): return ItemDB.get_item(id).get("slot", "") == slot)
+	if owned.is_empty():
+		return
+	_section("Your clothes")
+	var grid := GridContainer.new()
+	grid.columns = 8
+	grid.add_theme_constant_override("h_separation", 8)
+	grid.add_theme_constant_override("v_separation", 8)
+	_content.add_child(grid)
+	for id: String in owned:
+		grid.add_child(OptionTile.new(self, "item", id, view, false))
 
 
 func _swatches(key: String, title: String) -> GridContainer:
@@ -314,15 +346,43 @@ func _swatches(key: String, title: String) -> GridContainer:
 
 ## Tries an option on.
 func choose(key: String, id: String) -> void:
+	if key == "item":
+		_wear_item(id)
+		return
 	if look.get(key, "") == id:
 		return
+	var was_designed := _designed(key)
 	look[key] = id
+	if _designed(key) != was_designed:
+		# Colour choices come and go with everyday styles.
+		_select_tab.call_deferred(_tab)
 	if key == "hat":
 		look["hat_pos"] = 0
 		var row := _content.get_node_or_null("HatPos")
 		if row:
 			row.visible = not Appearance.hat_positions(look).is_empty()
 	changed()
+
+
+func _designed(key: String) -> bool:
+	return ItemDB.SLOT_KEYS.has(key) and Appearance.option(look, key).get("designed", false)
+
+
+func _wear_item(id: String) -> void:
+	var wear: Dictionary = ItemDB.get_item(id).get("wear", {})
+	var same := true
+	for k in wear:
+		same = same and look.get(k, "") == wear[k]
+	if same:
+		return
+	var key: String = ItemDB.SLOT_KEYS[ItemDB.get_item(id)["slot"]][0]
+	var was_designed := _designed(key)
+	look.merge(wear, true)
+	if key == "hat":
+		look["hat_pos"] = 0
+	changed()
+	if not was_designed:
+		_select_tab.call_deferred(_tab)
 
 
 func changed() -> void:
@@ -417,13 +477,21 @@ class OptionTile:
 		flat = true
 		tooltip_text = _name()
 		add_to_group("creator_tiles")
-		focus_entered.connect(func(): creator.choose(key, id))
+		focus_entered.connect(func(): if not creator.quiet: creator.choose(key, id))
 		pressed.connect(func(): creator.choose(key, id))
 
 	func is_selected() -> bool:
+		if key == "item":
+			var wear: Dictionary = ItemDB.get_item(id).get("wear", {})
+			for k in wear:
+				if creator.look.get(k, "") != wear[k]:
+					return false
+			return true
 		return creator.look.get(key, "") == id
 
 	func _name() -> String:
+		if key == "item":
+			return ItemDB.display_name(id)
 		for opt in Appearance.options(key):
 			if opt["id"] == id:
 				return opt.get("name", id.capitalize())
@@ -456,7 +524,15 @@ class OptionTile:
 				draw_arc(size * 0.5, size.x * 0.22, 0, TAU, 24, UIStyle.BROWN_LIGHT, 3, true)
 				draw_line(size * 0.5 + Vector2(-0.15, 0.15) * size.x, size * 0.5 + Vector2(0.15, -0.15) * size.x, UIStyle.BROWN_LIGHT, 3)
 				return
-		var tex := creator.thumbs.get_thumb(creator.thumb_look(key, id, view), view)
+		var tex: Texture2D
+		if key == "item":
+			var l := creator.look.duplicate()
+			l.merge(ItemDB.get_item(id).get("wear", {}), true)
+			if not ItemDB.get_item(id).get("slot", "") == "hat":
+				l["hat"] = "none"
+			tex = creator.thumbs.get_thumb(l, view)
+		else:
+			tex = creator.thumbs.get_thumb(creator.thumb_look(key, id, view), view)
 		if tex:
 			draw_texture_rect(tex, r.grow(-4), false)
 		else:

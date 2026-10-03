@@ -58,7 +58,15 @@ On-screen hints follow whatever you last touched, keyboard or controller.
   your tent; Lucy (a Jack Russell who does odd jobs) explains the workbench. Both
   have things to say every day.
 - A paved plaza with the office marquee and the DIY workbench.
-- Lucy's shop: sell her anything with a price, and buy from a new stock each day.
+- Lucy's shop: sell her anything with a price, and buy from a new stock each day,
+  including clothes.
+- 66 designed clothes (20 pieces in colourways, four themes: Cosy Knits, Rainy Day,
+  Seaside, Garden and Work). Wear them from your pockets and they stay in your
+  wardrobe. The plan for scaling to thousands of items is in
+  [docs/CATALOGUE.md](docs/CATALOGUE.md).
+- Particle effects: campfires, candles, chimney smoke, wood chips, sparks, falling
+  leaves, crafting confetti, eating crumbs and hearts, fireflies and glowing forest
+  at night, drifting petals by day.
 - Save up 10,000 acorns and Poppy builds you a house overnight where your tent was,
   with a bigger room inside.
 - Go inside your tent and decorate it: furniture, seats and table tops work indoors,

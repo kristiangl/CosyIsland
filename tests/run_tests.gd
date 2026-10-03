@@ -22,6 +22,7 @@ func _run() -> void:
 	_test_story()
 	_test_phone_and_sleep()
 	_test_shop_and_house()
+	_test_clothes()
 	print("\n%d checks, %d failures" % [_checks, _failures])
 	get_tree().quit(1 if _failures > 0 else 0)
 
@@ -439,7 +440,8 @@ func _test_shop_and_house() -> void:
 	var today := Shop.stock(42, 100)
 	check(today == Shop.stock(42, 100), "the shop's stock is the same all day")
 	check(today != Shop.stock(42, 101), "and changes the next day")
-	check(today.size() == Shop.STAPLES.size() + Shop.FURNITURE_PER_DAY + Shop.INTERIORS_PER_DAY, "the shop has a full stock")
+	check(today.size() == Shop.STAPLES.size() + Shop.FURNITURE_PER_DAY + Shop.INTERIORS_PER_DAY + Shop.CLOTHES_PER_DAY, "the shop has a full stock")
+	check(today.any(func(id): return ItemDB.is_clothing(id)), "the shop sells clothes")
 	var thing: String = today[Shop.STAPLES.size()]
 	check(Shop.buy(thing, 100) != "", "can't buy without acorns")
 	Inventory.add_currency(Shop.buy_price(thing) * 2)
@@ -474,4 +476,36 @@ func _test_shop_and_house() -> void:
 	w.free()
 	Game.island = null
 	Story.reset()
+	Inventory.reset()
+
+
+func _test_clothes() -> void:
+	Inventory.reset()
+	var clothes: Array = ItemDB.items.keys().filter(func(id): return ItemDB.is_clothing(id))
+	check(clothes.size() >= 60, "there are plenty of clothes (%d)" % clothes.size())
+	for id: String in clothes:
+		var wear: Dictionary = ItemDB.get_item(id)["wear"]
+		var look := Appearance.sanitise(wear)
+		var ok := true
+		for k in wear:
+			ok = ok and look[k] == wear[k]
+		check(ok, "%s uses real styles and colours" % id)
+		check(Models.get_mesh("clothing:" + id).get_surface_count() > 0, "%s has a model" % id)
+	check(not Appearance.random(RandomNumberGenerator.new()).values().any(func(v): return v is String and Appearance.options("top").any(func(o): return o["id"] == v and o.get("designed", false))), "random looks don't use designed clothes")
+	Inventory.add_item("raincoat_yellow")
+	var slot := Inventory.slots.find_custom(func(sl): return sl.get("id", "") == "raincoat_yellow")
+	var worn := Inventory.wear_from_slot(slot, Appearance.DEFAULT.duplicate())
+	check(worn["top"] == "raincoat" and worn["top_color"] == "yellow", "wearing a raincoat changes your top")
+	check(Inventory.count_of("raincoat_yellow") == 0 and "raincoat_yellow" in Inventory.closet, "it moves from the pockets to the wardrobe")
+	var saved: Dictionary = JSON.parse_string(JSON.stringify(Inventory.to_save()))
+	Inventory.reset()
+	Inventory.from_save(saved)
+	check("raincoat_yellow" in Inventory.closet, "the wardrobe is saved")
+	var creator := CharacterCreator.new()
+	add_child(creator)
+	creator.open(worn, false)
+	creator._select_tab(7)
+	check(creator._content.find_children("*", "", true, false).any(func(n): return n is Label and n.text == "Your clothes"), "the wardrobe lists your clothes")
+	creator.free()
+	Game.mode = Game.Mode.PLAY
 	Inventory.reset()

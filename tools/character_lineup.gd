@@ -1,7 +1,7 @@
 extends Node3D
 ## Renders a row of characters for checking the character art:
 ##   tools/screenshot_scene.sh out.png res://tools/character_lineup.tscn [--seed=N] [--angle=DEG]
-##     [--vary=KEY] [--base=key:id,key:id] [--npcs] [--close]
+##     [--vary=KEY [--only=id,id]] [--base=key:id,key:id] [--npcs] [--close]
 ## Without --vary: the --base look (default look if none) and five random ones.
 ## With --vary: one character per option of KEY, all on the --base look.
 
@@ -45,7 +45,10 @@ func _ready() -> void:
 		return
 	if Game.args.has("vary"):
 		# One character per option of the given key, on the --base look.
+		var only: PackedStringArray = Game.args.get("only", "").split(",", false)
 		for opt in Appearance.options(Game.args["vary"]):
+			if not only.is_empty() and not opt["id"] in only:
+				continue
 			var look := base.duplicate()
 			look[Game.args["vary"]] = opt["id"]
 			looks.append(look)

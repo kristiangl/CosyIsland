@@ -5,6 +5,15 @@ extends Node
 ## colour gets an item id like "apple" or "tulip_red".
 
 const DATA_PATH := "res://data/items.json"
+const CLOTHING_PATH := "res://data/clothing.json"
+## Which appearance keys a piece of clothing sets, by slot: style, colour, second colour,
+## pattern.
+const SLOT_KEYS := {
+	"top": ["top", "top_color", "top_color2", "top_pattern"],
+	"bottom": ["bottom", "bottom_color", "", ""],
+	"shoes": ["shoes", "shoe_color", "", ""],
+	"hat": ["hat", "hat_color", "", ""],
+}
 
 var items: Dictionary = {}
 var fruits: Dictionary = {}
@@ -32,6 +41,33 @@ func _ready() -> void:
 				"species": id, "flower_color": colour,
 				"desc": "Freshly picked. They'd look lovely planted somewhere.",
 			}
+	_load_clothing()
+
+
+## Designed clothes come as bases with colourways (data/clothing.json); each colourway
+## becomes an item "<base>_<variant>" that sets part of the character's look when worn.
+func _load_clothing() -> void:
+	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(CLOTHING_PATH))
+	for base: Dictionary in data["clothes"]:
+		var keys: Array = SLOT_KEYS[base["slot"]]
+		for v: Dictionary in base["variants"]:
+			var look := {keys[0]: base["style"], keys[1]: v["colors"][0]}
+			if keys[2] != "":
+				look[keys[2]] = v["colors"][1]
+				look[keys[3]] = v.get("pattern", "plain")
+			var hex := "#ffffff"
+			for c in Appearance.options("top_color"):
+				if c["id"] == v["colors"][0]:
+					hex = c["color"]
+			items["%s_%s" % [base["id"], v["id"]]] = {
+				"name": "%s (%s)" % [base["name"], v["name"]], "category": "clothing", "stack": 1,
+				"price": base["price"], "color": hex, "desc": base.get("desc", ""),
+				"theme": base.get("theme", ""), "slot": base["slot"], "wear": look,
+			}
+
+
+func is_clothing(id: String) -> bool:
+	return items.get(id, {}).get("category", "") == "clothing"
 
 
 func get_item(id: String) -> Dictionary:

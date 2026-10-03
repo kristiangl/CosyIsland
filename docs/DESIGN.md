@@ -119,6 +119,10 @@ Milestone 3b:
 - [x] Lucy's shop: selling for acorns, a daily stock of furniture and wallpaper
 - [x] Tent to house through Poppy (10,000 acorns, built overnight, 8x7 room)
 
+- [x] Particle effects (fire, smoke, chips, sparks, leaves, confetti, fireflies, glow)
+- [x] Pockets at the top; eating and crafting animations
+- [x] Catalogue plan (docs/CATALOGUE.md); designed clothes as items with a wardrobe
+
 Next milestones (suggested order):
 3c. Bigger house (more rooms) and outdoor house colours. Clothes as items instead of
    everything unlocked, sold by Lucy. Time travel moves out of the phone into an

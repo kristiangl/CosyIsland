@@ -19,11 +19,12 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
 - Art check scenes (render with `tools/screenshot_scene.sh out.png res://tools/<scene>`):
   `character_lineup.tscn` (`--seed`, `--angle`, `--vary=KEY`, `--base=k:v`, `--poses`,
   `--npcs`, `--close`),
-  `model_gallery.tscn` (`--drops`, `--keys`, `--only=id,id`), `effects_gallery.tscn`
+  `model_gallery.tscn` (`--drops`, `--keys`, `--only=id,id`, `--series=id`, `--variant=id`), `effects_gallery.tscn`
   (`--night`, every particle effect), `calibrate.tscn`
   (`-- --shadows`, checks the cel lighting maths).
 - Game screenshot options are listed at the top of `scripts/main.gd` (`--demo`,
-  `--demo=decor|sit|home|door` (`--house` builds the house first),
+  `--demo=decor|sit|home|door` (`--house` builds the house first, `--series=id` furnishes
+  the home from one series),
   `--ui=pockets|pause|map|creator|crafting|placing|intro|ask|lucy|sleep|shop|sell`,
   `--tab=N` and `--try=key:id` for the creator, `--room=wallpaper,flooring`, `--gen=N`,
   `--at=X,Z`, `--hour`).
@@ -36,7 +37,7 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   (`terrain_builder.gd`, `grass_field.gd`), the live `world.gd` (objects, walkability,
   island rules), `day_night.gd`, `placement.gd`.
 - `scripts/player/`, `scripts/ui/`, `scripts/art/` (procedural models, `MeshKit`,
-  `FurnitureModels`), `scripts/character/` (appearance, parts, animal parts, the
+  `FurnitureModels`, `SeriesModels` for furniture series), `scripts/character/` (appearance, parts, animal parts, the
   character model), `scripts/npc/` (island characters).
 - Rooms inside homes are a second `World` with `interior = true` on a small
   `IslandData.room()`; `main.gd` swaps between the island and the room.
@@ -50,7 +51,8 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   through `curve_world()`; lit ones include `include/toon_light.gdshaderinc`.
 - `data/items.json`: item definitions. Fruit and flower items are generated in `ItemDB`,
   and so are clothes, from bases with colourways in `data/clothing.json` (plan:
-  `docs/CATALOGUE.md`). Effects: `Effects.burst(kind, pos)` / `Effects.emitter(kind)`.
+  `docs/CATALOGUE.md`), and furniture series from `data/furniture/<series>.json`
+  (models with fabric have a second surface: show them with `Models.dress`). Effects: `Effects.burst(kind, pos)` / `Effects.emitter(kind)`.
   `data/recipes.json`: DIY recipes. `data/appearance.json`: character options.
 
 ## Conventions

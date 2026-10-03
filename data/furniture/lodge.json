@@ -1,0 +1,23 @@
+{
+	"id": "lodge",
+	"name": "Woodland Lodge",
+	"desc": "Honey logs, tartan blankets and a fire crackling somewhere.",
+	"variants": [
+		{"id": "honey", "name": "Honey", "wood": "d9a86c", "trim": "9e6e43", "fabric": ["d9534f", "2f5d50", "tartan"]},
+		{"id": "walnut", "name": "Walnut", "wood": "a77a55", "trim": "6f4c33", "fabric": ["3f6e8f", "f6d58c", "tartan"]},
+		{"id": "birch", "name": "Birch", "wood": "ece2cf", "trim": "6b5e52", "fabric": ["7a9b5e", "f3ecdc", "tartan"]},
+		{"id": "moss", "name": "Mossy", "wood": "b9935e", "trim": "6f8a4a", "fabric": ["8fbf73", "fff4e0", "leaves"]}
+	],
+	"pieces": [
+		{"id": "lodge_chair", "name": "Log Chair", "kind": "chair", "footprint": [1, 1], "price": 460, "desc": "Sturdy logs, a tartan seat.", "recipe": {"wood": 6}, "params": {"back": "log", "legs": "log", "cushion": true}, "seat": 0.48},
+		{"id": "lodge_stool", "name": "Stump Stool", "kind": "stool", "footprint": [1, 1], "price": 280, "desc": "Just the right height.", "recipe": {"wood": 3}, "params": {"top": "stump", "legs": "none"}, "seat": 0.42},
+		{"id": "lodge_table", "name": "Log Table", "kind": "table", "footprint": [2, 1], "price": 760, "desc": "A thick slab on log legs.", "recipe": {"wood": 10}, "params": {"shape": "slab", "legs": "log"}, "surface": 0.74},
+		{"id": "lodge_bench", "name": "Log Bench", "kind": "bench", "footprint": [2, 1], "price": 520, "desc": "A split log with a backrest.", "recipe": {"wood": 8}, "params": {"legs": "log", "back": true}, "seat": 0.46},
+		{"id": "lodge_armchair", "name": "Lodge Armchair", "kind": "armchair", "footprint": [1, 1], "price": 960, "desc": "Deep, tartan and toasty.", "params": {"legs": "log", "frame": true}, "seat": 0.46},
+		{"id": "lodge_sofa", "name": "Lodge Sofa", "kind": "sofa", "footprint": [2, 1], "price": 1680, "desc": "For long winter evenings.", "params": {"legs": "log", "frame": true}, "seat": 0.46},
+		{"id": "lodge_bed", "name": "Lodge Bed", "kind": "bed", "footprint": [2, 2], "price": 1500, "desc": "A log headboard and a heavy tartan blanket.", "params": {"headboard": "log"}, "seat": 0.45, "bed": true},
+		{"id": "lodge_bookcase", "name": "Lodge Bookcase", "kind": "bookcase", "footprint": [2, 1], "price": 940, "desc": "Chunky shelves for chunky books.", "recipe": {"wood": 12}, "params": {"top": "log"}},
+		{"id": "lodge_lamp", "name": "Lantern Lamp", "kind": "table_lamp", "footprint": [1, 1], "price": 480, "desc": "A little lantern with a warm glow.", "recipe": {"wood": 2, "iron_nugget": 1}, "params": {"shade": "lantern"}, "light": true, "small": true},
+		{"id": "lodge_side_table", "name": "Stump Side Table", "kind": "side_table", "footprint": [1, 1], "price": 360, "desc": "A stump with a smooth top.", "recipe": {"wood": 4}, "params": {"legs": "stump", "drawer": false}, "surface": 0.56}
+	]
+}

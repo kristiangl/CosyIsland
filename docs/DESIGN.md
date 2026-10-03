@@ -122,6 +122,8 @@ Milestone 3b:
 - [x] Particle effects (fire, smoke, chips, sparks, leaves, confetti, fireflies, glow)
 - [x] Pockets at the top; eating and crafting animations
 - [x] Catalogue plan (docs/CATALOGUE.md); designed clothes as items with a wardrobe
+- [x] Seven more fabric prints; furniture series Meadow Cottage, Driftwood and Woodland
+  Lodge (120 items from a shared part library, sold by Lucy, 19 new recipes)
 
 Next milestones (suggested order):
 3c. Bigger house (more rooms) and outdoor house colours. Clothes as items instead of

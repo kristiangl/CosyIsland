@@ -1,0 +1,23 @@
+{
+	"id": "meadow",
+	"name": "Meadow Cottage",
+	"desc": "Painted country furniture with gingham cushions.",
+	"variants": [
+		{"id": "cream", "name": "Cream", "wood": "f3e8cf", "trim": "c9b48f", "fabric": ["fff4e0", "f2a7a0", "gingham"]},
+		{"id": "sage", "name": "Sage", "wood": "bcd3a8", "trim": "8fae7c", "fabric": ["f6f1e0", "8fc58a", "gingham"]},
+		{"id": "butter", "name": "Butter", "wood": "f6dc8e", "trim": "d4b062", "fabric": ["fff8e6", "f4b860", "gingham"]},
+		{"id": "rose", "name": "Rose", "wood": "f2c4c4", "trim": "d39a9a", "fabric": ["fff4f0", "e58f9c", "gingham"]}
+	],
+	"pieces": [
+		{"id": "meadow_chair", "name": "Meadow Chair", "kind": "chair", "footprint": [1, 1], "price": 520, "desc": "A ladder-back chair with a gingham cushion.", "recipe": {"wood": 5}, "params": {"back": "ladder", "legs": "turned", "cushion": true}, "seat": 0.48},
+		{"id": "meadow_stool", "name": "Meadow Stool", "kind": "stool", "footprint": [1, 1], "price": 360, "desc": "A little round stool.", "recipe": {"wood": 4}, "params": {"top": "round", "legs": "turned"}, "seat": 0.46},
+		{"id": "meadow_table", "name": "Meadow Table", "kind": "table", "footprint": [2, 1], "price": 720, "desc": "A farmhouse table, painted with care.", "recipe": {"wood": 8}, "params": {"shape": "rect", "legs": "turned"}, "surface": 0.76},
+		{"id": "meadow_side_table", "name": "Meadow Side Table", "kind": "side_table", "footprint": [1, 1], "price": 400, "desc": "Round, with a drawer for bits and bobs.", "recipe": {"wood": 4}, "params": {"legs": "turned", "drawer": true}, "surface": 0.62},
+		{"id": "meadow_armchair", "name": "Meadow Armchair", "kind": "armchair", "footprint": [1, 1], "price": 980, "desc": "Plump, gingham and very sittable.", "recipe": {"wood": 4, "clay": 2}, "params": {"legs": "turned", "frame": true}, "seat": 0.46},
+		{"id": "meadow_sofa", "name": "Meadow Sofa", "kind": "sofa", "footprint": [2, 1], "price": 1600, "desc": "Room for two and a cat.", "params": {"legs": "turned", "frame": true}, "seat": 0.46},
+		{"id": "meadow_bed", "name": "Meadow Bed", "kind": "bed", "footprint": [2, 2], "price": 1500, "desc": "An arched headboard and a patchwork of gingham.", "params": {"headboard": "arched"}, "seat": 0.45, "bed": true},
+		{"id": "meadow_dresser", "name": "Meadow Dresser", "kind": "dresser", "footprint": [2, 1], "price": 1100, "desc": "Three drawers and heart cut-outs.", "recipe": {"wood": 10}, "params": {"drawers": 3, "hearts": true}, "surface": 0.9},
+		{"id": "meadow_bookcase", "name": "Meadow Bookcase", "kind": "bookcase", "footprint": [2, 1], "price": 980, "desc": "Full of well-loved books.", "params": {"top": "scalloped"}},
+		{"id": "meadow_lamp", "name": "Meadow Lamp", "kind": "floor_lamp", "footprint": [1, 1], "price": 760, "desc": "A frilly shade on a painted stand.", "params": {"shade": "frilly"}, "light": true}
+	]
+}

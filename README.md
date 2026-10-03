@@ -12,6 +12,10 @@ A cosy island life game about crafting and decorating, made with Godot 4.
 | --- | --- | --- |
 | ![](docs/screenshots/furniture.png) | ![](docs/screenshots/dusk.png) | ![](docs/screenshots/river.png) |
 
+| Meadow Cottage | Woodland Lodge | Driftwood |
+| --- | --- | --- |
+| ![](docs/screenshots/series_meadow.png) | ![](docs/screenshots/series_lodge.png) | ![](docs/screenshots/series_driftwood.png) |
+
 | Character creator | Island Phone | DIY workbench |
 | --- | --- | --- |
 | ![](docs/screenshots/creator.png) | ![](docs/screenshots/phone.png) | ![](docs/screenshots/crafting.png) |
@@ -74,10 +78,11 @@ On-screen hints follow whatever you last touched, keyboard or controller.
   evening or midnight.
 - Chop wood, shake trees for fruit and branches (and the odd piece of furniture), hit
   rocks for stone, clay and iron (one rock a day gives acorns).
-- DIY workbench with 32 recipes: tools and furniture. Message bottles wash up each day
+- DIY workbench with 61 recipes: tools and furniture. Message bottles wash up each day
   with new recipes.
-- 28 pieces of furniture to place anywhere on the grid with a preview, rotate and pick
-  back up. Sit on chairs and benches; put teapots, candles and plants on tables.
+- 148 pieces of furniture to place anywhere on the grid with a preview, rotate and pick
+  back up. Three furniture series (Meadow Cottage, Driftwood, Woodland Lodge), each 10
+  pieces in four colourways with printed cushions, quilts and shades. Sit on chairs and benches; put teapots, candles and plants on tables.
   Lanterns and campfires glow at night.
 - An animated player with knees and elbows: walking, running, chopping, sitting.
 - Minimap and a full island map.

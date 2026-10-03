@@ -23,6 +23,7 @@ func _run() -> void:
 	_test_phone_and_sleep()
 	_test_shop_and_house()
 	_test_clothes()
+	_test_furniture_series()
 	print("\n%d checks, %d failures" % [_checks, _failures])
 	get_tree().quit(1 if _failures > 0 else 0)
 
@@ -509,3 +510,40 @@ func _test_clothes() -> void:
 	creator.free()
 	Game.mode = Game.Mode.PLAY
 	Inventory.reset()
+
+
+func _test_furniture_series() -> void:
+	check(ItemDB.series.size() >= 3, "there are furniture series (%d)" % ItemDB.series.size())
+	var pieces: Array = ItemDB.items.keys().filter(func(id): return ItemDB.get_item(id).has("series"))
+	check(pieces.size() >= 100, "series pieces come in variants (%d items)" % pieces.size())
+	for id: String in pieces:
+		var def := ItemDB.get_item(id)
+		var mesh := Models.get_mesh(def["placeable"]["model"])
+		var tris := 0
+		for s in mesh.get_surface_count():
+			tris += mesh.surface_get_array_index_len(s) / 3
+		check(tris > 0 and tris < 1500, "%s has a model within budget (%d triangles)" % [id, tris])
+		if mesh.get_surface_count() > 1:
+			check(mesh.has_meta("fabric"), "%s knows its fabric" % id)
+	check(ItemDB.placeable("meadow_chair_sage").get("seat", 0.0) > 0.0, "series chairs can be sat on")
+	check(ItemDB.placeable("lodge_table_walnut").get("surface", 0.0) > 0.0, "series tables hold things")
+	check(ItemDB.placeable("driftwood_bed_grey").get("bed", false), "series beds can be slept in")
+	check(ItemDB.display_name("meadow_sofa_rose") == "Meadow Sofa (Rose)", "series pieces are named with their variant")
+	var mi := MeshInstance3D.new()
+	mi.mesh = Models.get_mesh("series:meadow_sofa_sage")
+	Models.dress(mi, Models.material())
+	var fabric := mi.get_surface_override_material(1) as ShaderMaterial
+	check(mi.material_override == null and fabric != null and fabric.get_shader_parameter("pattern") == Appearance.options("top_pattern").map(func(o): return o["id"]).find("gingham"), "sofa cushions are gingham")
+	mi.mesh = Models.get_mesh("furniture:wooden_chair")
+	Models.dress(mi, Models.material())
+	check(mi.material_override == Models.material(), "plain models keep the one material")
+	mi.free()
+	check(Recipes.recipes.has("meadow_chair_cream") and not Recipes.is_known("meadow_chair_cream"), "series recipes can be learned")
+	Inventory.reset()
+	Inventory.add_item("wood", 5)
+	check(Recipes.craft("meadow_chair_cream") and Inventory.count_of("meadow_chair_cream") == 1, "crafting a series chair works")
+	Inventory.reset()
+	var sold := false
+	for day in 20:
+		sold = sold or Shop.stock(7, day).any(func(id): return ItemDB.get_item(id).has("series"))
+	check(sold, "Lucy sells series furniture")

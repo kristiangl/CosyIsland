@@ -41,7 +41,7 @@ func _ready() -> void:
 		add_child(node)
 		var mi := MeshInstance3D.new()
 		mi.mesh = Models.get_mesh(ItemDB.placeable(id)["model"])
-		mi.material_override = Models.material()
+		Models.dress(mi, Models.material())
 		node.add_child(mi)
 		if id == "house":
 			node.scale = Vector3.ONE * 0.6

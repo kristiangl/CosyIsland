@@ -17,6 +17,7 @@ extends Node3D
 ##   --demo=home        pitch the tent, go inside and furnish it (--room=wallpaper,flooring)
 ##   --demo=door        pitch the tent and stand outside its door
 ##   --house            with --demo: the tent has already become a house
+##   --series=ID        with --demo=home: furnish it from one furniture series (--variant=ID)
 ##   --ui=pockets|pause|map|creator|crafting|placing|intro|ask|lucy|sleep|shop|sell  (--tab=N picks a creator tab, --try=key:id,... dresses up, --closet=TEXT opens the wardrobe with clothes whose ids contain TEXT)  open a menu or mode (for screenshots)
 
 const AUTOSAVE_SECONDS := 60.0
@@ -392,16 +393,27 @@ func _run_demo() -> void:
 		return
 	if Game.args["demo"] == "home" and not tent.is_empty():
 		await _enter_home(tent["uid"], true)
-		for entry in [["simple_bed", Vector2i(1, 0), 0], ["wooden_table", Vector2i(3, 1), 0], ["wooden_chair", Vector2i(3, 2), 2],
-				["stone_lantern", Vector2i(5, 0), 0], ["potted_plant", Vector2i(5, 5), 0], ["barrel", Vector2i(5, 3), 0], ["log_bench", Vector2i(0, 3), 1]]:
+		var furniture := [["simple_bed", Vector2i(1, 0), 0], ["wooden_table", Vector2i(3, 1), 0], ["wooden_chair", Vector2i(3, 2), 2],
+				["stone_lantern", Vector2i(5, 0), 0], ["potted_plant", Vector2i(5, 5), 0], ["barrel", Vector2i(5, 3), 0], ["log_bench", Vector2i(0, 3), 1]]
+		if Game.args.has("series"):
+			furniture = _series_layout(Game.args["series"], Game.args.get("variant", ""))
+		for entry in furniture:
 			var size: Array = ItemDB.placeable(entry[0])["footprint"]
 			var dims := Vector2i(size[0], size[1]) if entry[2] % 2 == 0 else Vector2i(size[1], size[0])
-			room.place_item(entry[0], Rect2i(entry[1], dims), entry[2])
+			if room.can_place(Rect2i(entry[1], dims), player.position):
+				room.place_item(entry[0], Rect2i(entry[1], dims), entry[2])
 		for item in Game.args.get("room", "").split(",", false):
 			room.set_room_look(item)
-		room.place_on_surface("teapot", Vector2i(3, 1), 0)
-		room.place_on_surface("fruit_bowl", Vector2i(4, 1), 0)
-		room.place_on_surface("candle_set", Vector2i(5, 3), 0)
+		if Game.args.has("series"):
+			room.place_on_surface("teapot", Vector2i(3, 2), 0)
+			room.place_on_surface("fruit_bowl", Vector2i(4, 2), 0)
+			var lamp: Array = ItemDB.items.keys().filter(func(id): return ItemDB.get_item(id).get("series", "") == Game.args["series"] \
+					and ItemDB.get_item(id)["build"]["kind"] == "table_lamp")
+			room.place_on_surface(lamp[0] if not lamp.is_empty() else "candle_set", Vector2i(5, 2), 0)
+		else:
+			room.place_on_surface("teapot", Vector2i(3, 1), 0)
+			room.place_on_surface("fruit_bowl", Vector2i(4, 1), 0)
+			room.place_on_surface("candle_set", Vector2i(5, 3), 0)
 		player.position.x += 0.6
 		player.facing = Vector3(0, 0, 1)
 		camera_rig.snap()
@@ -457,3 +469,24 @@ func _take_screenshot(path: String, frames: int) -> void:
 	image.save_png(path)
 	print("Saved screenshot to ", path)
 	get_tree().quit()
+
+
+## A room's worth of one furniture series for --demo=home: [item, tile, rotation] by kind.
+func _series_layout(series_id: String, variant: String) -> Array:
+	var data: Dictionary = ItemDB.series.get(series_id, {})
+	if data.is_empty():
+		return []
+	if variant == "":
+		variant = data["variants"][0]["id"]
+	var by_kind := {}
+	for piece: Dictionary in data["pieces"]:
+		if not by_kind.has(piece["kind"]):
+			by_kind[piece["kind"]] = "%s_%s" % [piece["id"], variant]
+	var out := []
+	for entry: Array in [["bed", Vector2i(1, 0), 0], ["bookcase", Vector2i(3, 0), 0], ["table", Vector2i(3, 2), 0],
+			["chair", Vector2i(3, 3), 2], ["stool", Vector2i(4, 3), 2], ["floor_lamp", Vector2i(5, 0), 0],
+			["sofa", Vector2i(0, 3), 1], ["bench", Vector2i(0, 3), 1], ["armchair", Vector2i(5, 4), 3],
+			["side_table", Vector2i(5, 2), 0], ["dresser", Vector2i(1, 5), 0], ["crate", Vector2i(5, 0), 0]]:
+		if by_kind.has(entry[0]):
+			out.append([by_kind[entry[0]], entry[1], entry[2]])
+	return out

@@ -237,7 +237,7 @@ func _spawn_node(obj: Dictionary) -> void:
 	var node := Node3D.new()
 	var mesh := MeshInstance3D.new()
 	mesh.mesh = Models.get_mesh(Models.key_for(obj))
-	mesh.material_override = Models.material()
+	Models.dress(mesh, Models.material())
 	if obj["kind"] in ["flower", "drop"]:
 		mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	node.add_child(mesh)

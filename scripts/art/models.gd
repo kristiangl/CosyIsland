@@ -23,6 +23,7 @@ const PLANK_DARK := Color("b08463")
 
 static var _cache: Dictionary = {}
 static var _material: ShaderMaterial
+static var _fabrics: Dictionary = {}
 
 
 static func material() -> ShaderMaterial:
@@ -39,6 +40,10 @@ static func get_mesh(key: String) -> ArrayMesh:
 		return _cache[key]
 	var p := key.split(":")
 	var k := MeshKit.new()
+	if p[0] == "series":
+		var mesh := _series(p[1])
+		_cache[key] = mesh
+		return mesh
 	match p[0]:
 		"tree":
 			_tree(k, int(p[1]), "", 0)
@@ -72,6 +77,56 @@ static func get_mesh(key: String) -> ArrayMesh:
 	var mesh := k.commit()
 	_cache[key] = mesh
 	return mesh
+
+
+## A furniture series piece: wood in surface 0 (the prop material), and fabric, if any, in
+## surface 1 drawn with the cloth shader in the variant's print. Show it with `dress`.
+static func _series(id: String) -> ArrayMesh:
+	var spec: Dictionary = ItemDB.get_item(id).get("build", {})
+	var k := MeshKit.new()
+	var fabric := MeshKit.new()
+	SeriesModels.build(k, fabric, spec)
+	var mesh := k.commit()
+	if not fabric.is_empty():
+		fabric.commit(mesh)
+		mesh.set_meta("fabric", spec["variant"].get("fabric", ["ffffff", "ffffff", "plain"]))
+	return mesh
+
+
+## Sets a mesh instance's material: `base` for a plain model; for a model with fabric,
+## `base` on the wood and the fabric material on the rest. `icon` for menus and icons
+## (no world curve, fixed lighting).
+static func dress(mi: MeshInstance3D, base: Material, icon: bool = false) -> void:
+	var mesh := mi.mesh
+	if mesh and mesh.get_surface_count() > 1 and mesh.has_meta("fabric"):
+		mi.material_override = null
+		mi.set_surface_override_material(0, base)
+		mi.set_surface_override_material(1, fabric_material(mesh.get_meta("fabric"), icon))
+	else:
+		mi.material_override = base
+
+
+## Cloth-shader material for furniture fabric: [colour a, colour b, print id] with print
+## ids from appearance.json "pattern". Cached.
+static func fabric_material(spec: Array, icon: bool = false) -> ShaderMaterial:
+	var key := "%s|%s|%s|%s" % [spec[0], spec[1], spec[2], icon]
+	if not _fabrics.has(key):
+		var m := ShaderMaterial.new()
+		m.shader = load("res://shaders/cloth.gdshader")
+		m.set_shader_parameter("colour_a", Color(spec[0]))
+		m.set_shader_parameter("colour_b", Color(spec[1]))
+		var pattern := 0
+		var list := Appearance.options("top_pattern")
+		for i in list.size():
+			if list[i]["id"] == spec[2]:
+				pattern = i
+		m.set_shader_parameter("pattern", pattern)
+		m.set_shader_parameter("pattern_scale", 1.8)
+		m.set_shader_parameter("light_softness", 0.1)
+		m.set_shader_parameter("curved", not icon)
+		m.set_shader_parameter("fixed_tints", icon)
+		_fabrics[key] = m
+	return _fabrics[key]
 
 
 ## Model key for an island object dictionary.

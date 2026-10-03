@@ -93,6 +93,7 @@ static func model_key(item_id: String) -> String:
 ## Points the camera so the mesh fills the icon, seen from the front and a little above.
 func _frame(mesh: ArrayMesh) -> void:
 	_mesh.mesh = mesh
+	Models.dress(_mesh, _material, true)
 	var box := mesh.get_aabb()
 	var centre := box.get_center()
 	var radius := maxf(box.size.length() * 0.5, 0.05)

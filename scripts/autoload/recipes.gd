@@ -1,5 +1,6 @@
 extends Node
-## DIY recipes (data/recipes.json) and which ones the player knows.
+## DIY recipes (data/recipes.json, plus furniture series pieces) and which ones the
+## player knows.
 
 signal learned(item_id: String)
 
@@ -11,6 +12,7 @@ var known: Array[String] = []
 
 func _ready() -> void:
 	recipes = JSON.parse_string(FileAccess.get_file_as_string(DATA_PATH))["recipes"]
+	recipes.merge(ItemDB.series_recipes)
 	reset()
 
 

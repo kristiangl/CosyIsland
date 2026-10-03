@@ -9,8 +9,8 @@ extends RefCounted
 var verts := PackedVector3Array()
 var normals := PackedVector3Array()
 var colours := PackedColorArray()
-## Texture coordinates in metres (around, up) for spheres and tubes, used by patterned
-## fabrics. Other shapes leave them at zero.
+## Texture coordinates in metres, used by patterned fabrics: (around, up) on spheres and
+## tubes, and flat across each face on quads, boxes and caps. Leaves leave them at zero.
 var uvs := PackedVector2Array()
 var indices := PackedInt32Array()
 
@@ -51,11 +51,21 @@ func quad(a: int, b: int, c: int, d: int, facing: Vector3) -> void:
 
 ## Flat-shaded quad from four positions.
 func flat_quad(p0: Vector3, p1: Vector3, p2: Vector3, p3: Vector3, n: Vector3, c: Color) -> void:
-	var a := vertex(p0, n, c)
-	var b := vertex(p1, n, c)
-	var cc := vertex(p2, n, c)
-	var d := vertex(p3, n, c)
+	var a := vertex(p0, n, c, planar_uv(p0, n))
+	var b := vertex(p1, n, c, planar_uv(p1, n))
+	var cc := vertex(p2, n, c, planar_uv(p2, n))
+	var d := vertex(p3, n, c, planar_uv(p3, n))
 	quad(a, b, cc, d, xform.basis * n)
+
+
+## Texture coordinates for a point on a flat face: the two axes across the face.
+static func planar_uv(p: Vector3, n: Vector3) -> Vector2:
+	var a := n.abs()
+	if a.y >= a.x and a.y >= a.z:
+		return Vector2(p.x, p.z)
+	if a.x >= a.z:
+		return Vector2(p.z, p.y)
+	return Vector2(p.x, p.y)
 
 
 ## Ellipsoid. `shade` darkens the underside for a soft painted gradient.
@@ -122,11 +132,12 @@ func cylinder(base: Vector3, top: Vector3, r_base: float, r_top: float, c: Color
 func _disc(centre: Vector3, n: Vector3, r: float, c: Color, segments: int, side: Vector3, fwd: Vector3) -> void:
 	if r <= 0.0:
 		return
-	var mid := vertex(centre, n, c)
+	var mid := vertex(centre, n, c, planar_uv(centre, n))
 	var first := verts.size()
 	for j in segments + 1:
 		var a := TAU * j / segments
-		vertex(centre + (side * cos(a) + fwd * sin(a)) * r, n, c)
+		var p := centre + (side * cos(a) + fwd * sin(a)) * r
+		vertex(p, n, c, planar_uv(p, n))
 	for j in segments:
 		tri(mid, first + j, first + j + 1, xform.basis * n)
 

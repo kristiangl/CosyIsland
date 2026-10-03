@@ -3,6 +3,7 @@ extends Node3D
 ## island, for checking the art:
 ##   tools/screenshot_scene.sh out.png res://tools/model_gallery.tscn [--drops] [--only=id,id]
 ##     [--keys=model_key,model_key]  (any Models key, e.g. tree:0,fruit_tree:1:apple:3)
+##     [--series=meadow [--variant=sage]]  (one furniture series)
 
 
 func _ready() -> void:
@@ -36,13 +37,20 @@ func _ready() -> void:
 	elif Game.args.has("only"):
 		keys.clear()
 		for id in Game.args["only"].split(","):
-			keys.append("furniture:" + id)
+			keys.append(ItemDB.placeable(id).get("model", "furniture:" + id))
+	elif Game.args.has("series"):
+		# One series: every piece in the first variant, or the one given (--variant=sage).
+		keys.clear()
+		var data: Dictionary = ItemDB.series[Game.args["series"]]
+		var variant: String = Game.args.get("variant", data["variants"][0]["id"])
+		for piece: Dictionary in data["pieces"]:
+			keys.append("series:%s_%s" % [piece["id"], variant])
 	var columns := mini(6, keys.size())
 	var spacing := 2.2 if not Game.args.has("drops") else 0.9
 	for i in keys.size():
 		var mi := MeshInstance3D.new()
 		mi.mesh = Models.get_mesh(keys[i])
-		mi.material_override = Models.material()
+		Models.dress(mi, Models.material())
 		mi.position = Vector3((i % columns - (columns - 1) * 0.5) * spacing, 0, (i / columns) * spacing)
 		add_child(mi)
 	var rows := ceili(keys.size() / float(columns))

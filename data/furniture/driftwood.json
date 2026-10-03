@@ -1,0 +1,23 @@
+{
+	"id": "driftwood",
+	"name": "Driftwood",
+	"desc": "Bleached wood, rope and sea glass, washed up and made cosy.",
+	"variants": [
+		{"id": "bleached", "name": "Bleached", "wood": "e4ddd2", "trim": "b9ad9c", "fabric": ["f7f4ee", "6d8ec6", "wide_stripes"], "accent": "9fd3c7"},
+		{"id": "grey", "name": "Weathered", "wood": "bdb8b0", "trim": "8f8a82", "fabric": ["eef3f7", "e58f7c", "stripes"], "accent": "aed4f2"},
+		{"id": "sandy", "name": "Sandy", "wood": "e6cfa6", "trim": "bfa47a", "fabric": ["fdf6e3", "56aaa6", "wide_stripes"], "accent": "f6d58c"},
+		{"id": "seaglass", "name": "Sea Glass", "wood": "cfe3dc", "trim": "98b8ad", "fabric": ["f2fbf8", "7cbfd1", "waves"], "accent": "9fd3c7"}
+	],
+	"pieces": [
+		{"id": "driftwood_chair", "name": "Driftwood Chair", "kind": "chair", "footprint": [1, 1], "price": 480, "desc": "Slatted, with a rope-tied cushion.", "recipe": {"wood": 5, "tree_branch": 2}, "params": {"back": "slat", "legs": "plank", "cushion": true, "rope": true}, "seat": 0.48},
+		{"id": "driftwood_stool", "name": "Rope Stool", "kind": "stool", "footprint": [1, 1], "price": 320, "desc": "A woven rope seat on driftwood legs.", "recipe": {"tree_branch": 6}, "params": {"top": "rope", "legs": "branch"}, "seat": 0.44},
+		{"id": "driftwood_table", "name": "Driftwood Table", "kind": "table", "footprint": [2, 1], "price": 680, "desc": "Planks laid side by side.", "recipe": {"wood": 8}, "params": {"shape": "plank", "legs": "plank"}, "surface": 0.74},
+		{"id": "driftwood_bench", "name": "Driftwood Bench", "kind": "bench", "footprint": [2, 1], "price": 560, "desc": "A long seat with a striped pad.", "recipe": {"wood": 6, "tree_branch": 2}, "params": {"legs": "plank", "pad": true}, "seat": 0.46},
+		{"id": "driftwood_armchair", "name": "Deck Armchair", "kind": "armchair", "footprint": [1, 1], "price": 880, "desc": "Stripy and sunny, like a deckchair.", "params": {"legs": "plank", "frame": false}, "seat": 0.44},
+		{"id": "driftwood_bed", "name": "Driftwood Bed", "kind": "bed", "footprint": [2, 2], "price": 1400, "desc": "A plank headboard and a seaside quilt.", "params": {"headboard": "plank"}, "seat": 0.45, "bed": true},
+		{"id": "driftwood_shelf", "name": "Rope Shelf", "kind": "bookcase", "footprint": [2, 1], "price": 760, "desc": "Shelves hung on knotted rope.", "recipe": {"wood": 6, "tree_branch": 4}, "params": {"top": "rope", "open": true}},
+		{"id": "driftwood_crate", "name": "Driftwood Crate", "kind": "crate", "footprint": [1, 1], "price": 360, "desc": "With rope handles. Smells faintly of the sea.", "recipe": {"wood": 4}, "params": {"rope": true}, "surface": 0.56},
+		{"id": "driftwood_lamp", "name": "Glass Float Lamp", "kind": "table_lamp", "footprint": [1, 1], "price": 520, "desc": "A glass fishing float, glowing softly.", "params": {"shade": "float"}, "light": true, "small": true},
+		{"id": "driftwood_side_table", "name": "Barrel Side Table", "kind": "side_table", "footprint": [1, 1], "price": 420, "desc": "A little table made from a barrel lid.", "params": {"legs": "plank", "drawer": false}, "surface": 0.58}
+	]
+}

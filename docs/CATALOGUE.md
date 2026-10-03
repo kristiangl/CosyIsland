@@ -28,8 +28,25 @@ at load (`ItemDB`). One file per theme or series keeps files small and diffs rea
 
 ```
 data/clothing/<theme>.json        clothes, one theme per file (data/clothing.json for now)
-data/furniture/<series>.json      furniture, one series per file (later)
+data/furniture/<series>.json      furniture, one series per file
 ```
+
+A furniture series file has the series' variants (wood, trim, fabric colours and print,
+an accent) and its pieces. Each piece names a `kind` (the builder in
+`scripts/art/series_models.gd`) and `params` choosing parts, plus its placeable settings
+(`seat`, `surface`, `bed`, `light`, `small`) and an optional DIY `recipe`, which makes
+the first variant. Pieces become items `<piece>_<variant>`:
+
+```json
+{"id": "meadow_chair", "name": "Meadow Chair", "kind": "chair", "footprint": [1, 1],
+ "price": 520, "recipe": {"wood": 5}, "params": {"back": "ladder", "legs": "turned",
+ "cushion": true}, "seat": 0.48}
+```
+
+Fabric parts are a second mesh surface drawn with the cloth shader, so cushions, quilts
+and lampshades share the clothes' prints. `tools/model_gallery.tscn --series=meadow
+[--variant=sage]` shows a series; `--demo=home --house --series=lodge` furnishes a room
+with one.
 
 A base:
 
@@ -73,7 +90,8 @@ Imported models (if we add packs later) slot into the same scheme: `style` becom
   bibs and straps, frills, quilting, knit ribbing.
 - **Fabric prints** in the cloth shader: stripes, wide stripes, dots, checks, hearts,
   stars, flowers so far; planned gingham, tartan, waves, leaves, fruit, argyle, polka
-  hearts, rainbow, cloud, paisley-like swirl. Prints are shared by clothes, cushions,
+  hearts, rainbow, cloud, paisley-like swirl (gingham, tartan, waves, leaves, argyle,
+  cherries and clouds are in). Prints are shared by clothes, cushions,
   curtains and rugs.
 
 ## Budgets (Switch 1 and phones)
@@ -142,9 +160,10 @@ Crossing, to keep characters cheap to draw.
 
 1. Now: the variant data model, garment builders, about 20 clothing bases in four
    themes (Cosy Knits, Rainy Day, Seaside, Garden and Work), sold by Lucy.
-2. Furniture data split into series files; Meadow Cottage, Driftwood and Woodland Lodge
-   series (about 10 bases each, 4 variants).
-3. More prints in the cloth shader; rugs and curtains share them.
+2. Done: furniture series files and a part library; Meadow Cottage, Driftwood and
+   Woodland Lodge (10 bases each, 4 variants).
+3. Done: more prints in the cloth shader. Next: rugs and curtains share them, and the
+   workbench can change a piece's variant.
 4. Mushroom Grove and Starlight with glowing pieces (uses the particle and glow work).
 5. Seasonal series alongside the seasons and weather milestone.
 6. Icon atlas baking once the item count passes a few hundred.

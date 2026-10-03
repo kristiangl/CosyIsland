@@ -6,6 +6,9 @@ extends Node
 
 const DATA_PATH := "res://data/items.json"
 const CLOTHING_PATH := "res://data/clothing.json"
+const FURNITURE_DIR := "res://data/furniture/"
+## Placeable settings a series piece passes straight through to its items.
+const PIECE_PLACEABLE := ["seat", "surface", "small", "light", "bed", "effects"]
 ## Which appearance keys a piece of clothing sets, by slot: style, colour, second colour,
 ## pattern.
 const SLOT_KEYS := {
@@ -18,6 +21,11 @@ const SLOT_KEYS := {
 var items: Dictionary = {}
 var fruits: Dictionary = {}
 var flowers: Dictionary = {}
+## Furniture series by id: {name, desc, variants, pieces} as in data/furniture/<id>.json.
+var series: Dictionary = {}
+## DIY recipes for series pieces (the first variant of each piece with a recipe), merged
+## into Recipes.
+var series_recipes: Dictionary = {}
 
 
 func _ready() -> void:
@@ -42,6 +50,7 @@ func _ready() -> void:
 				"desc": "Freshly picked. They'd look lovely planted somewhere.",
 			}
 	_load_clothing()
+	_load_furniture()
 
 
 ## Designed clothes come as bases with colourways (data/clothing.json); each colourway
@@ -64,6 +73,33 @@ func _load_clothing() -> void:
 				"price": base["price"], "color": hex, "desc": base.get("desc", ""),
 				"theme": base.get("theme", ""), "slot": base["slot"], "wear": look,
 			}
+
+
+## Furniture series (data/furniture/*.json): every piece comes in each of its series'
+## variants, as an item "<piece>_<variant>" built by SeriesModels from its "build" entry.
+func _load_furniture() -> void:
+	var files := Array(DirAccess.get_files_at(FURNITURE_DIR))
+	files.sort()
+	for file: String in files:
+		if not file.ends_with(".json"):
+			continue
+		var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(FURNITURE_DIR + file))
+		series[data["id"]] = data
+		for piece: Dictionary in data["pieces"]:
+			for v: Dictionary in data["variants"]:
+				var id := "%s_%s" % [piece["id"], v["id"]]
+				var placeable := {"footprint": piece["footprint"], "model": "series:" + id, "rotatable": true}
+				for key: String in PIECE_PLACEABLE:
+					if piece.has(key):
+						placeable[key] = piece[key]
+				items[id] = {
+					"name": "%s (%s)" % [piece["name"], v["name"]], "category": "furniture", "stack": 1,
+					"price": piece["price"], "color": "#" + v["wood"], "desc": piece.get("desc", ""),
+					"series": data["id"], "base": piece["id"], "placeable": placeable,
+					"build": {"kind": piece["kind"], "params": piece.get("params", {}), "variant": v},
+				}
+			if piece.has("recipe"):
+				series_recipes["%s_%s" % [piece["id"], data["variants"][0]["id"]]] = {"materials": piece["recipe"]}
 
 
 func is_clothing(id: String) -> bool:

@@ -26,6 +26,7 @@ func _run() -> void:
 	_test_furniture_series()
 	_test_customising()
 	_test_rugs_and_curtains()
+	_test_flowers()
 	print("\n%d checks, %d failures" % [_checks, _failures])
 	get_tree().quit(1 if _failures > 0 else 0)
 
@@ -617,4 +618,43 @@ func _test_customising() -> void:
 	check(not menu.is_customising(), "the tabs switch back to making")
 	menu.close()
 	menu.free()
+	Inventory.reset()
+
+
+func _test_flowers() -> void:
+	Inventory.reset()
+	var d := IslandGenerator.generate(7)
+	var w := World.new()
+	add_child(w)
+	w.setup(d)
+	var flower: Dictionary = w.objects().filter(func(o): return o["kind"] == "flower")[0]
+	var id := "%s_%s" % [flower["species"], flower["color"]]
+	check(w.pick_up(flower["x"], flower["z"]) and Inventory.count_of(id) == 1, "picking a flower gives a bloom")
+	check(w.object_at(flower["x"], flower["z"]) == flower and flower.get("picked", false), "and leaves the plant behind")
+	check(not w.pick_up(flower["x"], flower["z"]), "a picked plant has nothing more to pick")
+	w._on_day_changed(w.day_key + 1)
+	check(not flower.get("picked", false), "it blooms again the next day")
+	check(w.dig_up(flower) and Inventory.count_of(id + "_plant") == 1, "a shovel digs up the whole plant")
+	check(w.object_at(flower["x"], flower["z"]).is_empty(), "leaving the ground clear")
+	var spot := Vector2i(flower["x"], flower["z"])
+	check(w.can_plant(spot), "it can be planted again")
+	var planted := w.plant_flower(id + "_plant", spot)
+	check(planted["species"] == flower["species"] and w.object_at(spot.x, spot.y) == planted, "planting puts the flower back in the ground")
+	for key: String in ["flower:%s:%s:picked" % [flower["species"], flower["color"]], "vase:" + id, "hairflower:" + id, "drop:" + id + "_plant"]:
+		check(Models.get_mesh(key).get_surface_count() > 0, "%s has a model" % key)
+	check(ItemDB.placeable(id).get("small", false), "picked flowers stand in a vase on tables")
+	var look := Appearance.sanitise({"hair_flower": id})
+	check(look["hair_flower"] == id, "a flower can be worn in your hair")
+	check(Appearance.sanitise({"hair_flower": "wood"})["hair_flower"] == "", "but not just anything")
+	var model := CharacterModel.new(look)
+	add_child(model)
+	check(model.find_children("*", "MeshInstance3D", true, false).any(func(m): return m.mesh == Models.get_mesh("hairflower:" + id)), "the hair flower shows on the character")
+	model.free()
+	w.free()
+	var room := World.new()
+	room.interior = true
+	add_child(room)
+	room.setup(IslandData.room(6, 6))
+	check(not room.can_plant(Vector2i(2, 2)), "flowers aren't planted indoors")
+	room.free()
 	Inventory.reset()

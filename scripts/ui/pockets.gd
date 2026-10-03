@@ -127,6 +127,21 @@ func _use_slot(i: int) -> void:
 		return
 	var id: String = slot["id"]
 	var def := ItemDB.get_item(id)
+	if def.get("category", "") == "flower":
+		_use_flower(i)
+		return
+	if def.get("category", "") == "flower_plant":
+		var here: World = Game.world
+		var front := Game.player.target_tile()
+		if not here.can_plant(front):
+			Events.toast.emit("Flowers need open ground outdoors. Try facing a clear spot.")
+			return
+		here.plant_flower(id, front)
+		Inventory.remove_from_slot(i)
+		close()
+		Game.player.model.play("pickup")
+		Events.toast.emit("Planted! It'll flower every day.")
+		return
 	if ItemDB.is_tool(id):
 		Inventory.equip(-1 if Inventory.equipped_slot == i else i)
 	elif not ItemDB.placeable(id).is_empty():
@@ -156,6 +171,40 @@ func _use_slot(i: int) -> void:
 		Events.toast.emit("Mmm, delicious!")
 	else:
 		_drop_slot(i)
+
+
+## A picked flower: wear it in your hair, or stand it in a vase somewhere.
+func _use_flower(i: int) -> void:
+	var id: String = Inventory.slots[i]["id"]
+	var player := Game.player
+	close()
+	var options := ["Wear it in my hair", "Put it in a vase", "Never mind"]
+	var wearing: String = player.model.look.get("hair_flower", "")
+	if wearing != "":
+		options.insert(2, "Take out my hair flower")
+	Game.mode = Game.Mode.MENU
+	Game.dialogue.ask("", "What shall I do with the %s?" % ItemDB.display_name(id).to_lower(), options)
+	var pick: String = options[await Game.dialogue.picked]
+	Game.mode = Game.Mode.PLAY
+	match pick:
+		"Wear it in my hair":
+			var look: Dictionary = player.model.look.duplicate()
+			look["hair_flower"] = id
+			Inventory.remove_from_slot(i)
+			if wearing != "":
+				Inventory.add_item(wearing)
+			player.model.set_look(look)
+			player.model.play("cheer")
+			Effects.burst("sparkle", player.position + Vector3(0, 1.0, 0))
+		"Put it in a vase":
+			place_requested.emit(i)
+		"Take out my hair flower":
+			var look: Dictionary = player.model.look.duplicate()
+			look["hair_flower"] = ""
+			player.model.set_look(look)
+			if Inventory.add_item(wearing) > 0:
+				Events.toast.emit("Your pockets are full, so it's on the ground.")
+				Game.world.drop_from_pockets(player.tile(), player.target_tile(), wearing, 1)
 
 
 func _drop_slot(i: int) -> void:

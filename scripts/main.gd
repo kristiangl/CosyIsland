@@ -16,6 +16,7 @@ extends Node3D
 ##   --demo=sit         same, and sit on the chair
 ##   --demo=home        pitch the tent, go inside and furnish it (--room=wallpaper,flooring)
 ##   --demo=door        pitch the tent and stand outside its door
+##   --demo=flowers     stand by some flowers, one picked, with a flower in your hair
 ##   --house            with --demo: the tent has already become a house
 ##   --series=ID        with --demo or --demo=home: furniture from one series (--variant=ID)
 ##   --ui=pockets|pause|map|creator|crafting|customise|placing|intro|ask|lucy|sleep|shop|sell  (--tab=N picks a creator tab, --try=key:id,... dresses up, --closet=TEXT opens the wardrobe with clothes whose ids contain TEXT)  open a menu or mode (for screenshots)
@@ -391,6 +392,21 @@ func _run_demo() -> void:
 		Story.flags["tent_gift"] = true
 		Story.flags["house_day"] = GameClock.day_key() - 1
 		_check_house()
+	if Game.args["demo"] == "flowers":
+		# Stand by the nearest flowers, pick one for your hair and leave it picked.
+		var flowers := world.objects().filter(func(o): return o["kind"] == "flower")
+		flowers.sort_custom(func(a, b): return Vector2(a["x"], a["z"]).distance_to(Vector2(spawn)) < Vector2(b["x"], b["z"]).distance_to(Vector2(spawn)))
+		if not flowers.is_empty():
+			var f: Dictionary = flowers[0]
+			world.pick_up(f["x"], f["z"])
+			var look: Dictionary = player.model.look.duplicate()
+			look["hair_flower"] = "%s_%s" % [f["species"], f["color"]]
+			player.model.set_look(look)
+			player.position = Vector3(f["x"] + 1.5, 0, f["z"] + 1.6)
+			player.position.y = world.ground_height(player.position.x, player.position.z)
+			player.facing = Vector3(-0.3, 0, 1).normalized()
+			camera_rig.snap()
+		return
 	if Game.args["demo"] == "door" and not tent.is_empty():
 		var out := world.outside_door(tent)
 		player.position = out["position"] + Vector3(0.8, 0, 1.6)

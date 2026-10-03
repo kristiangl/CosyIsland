@@ -7,6 +7,7 @@ extends RefCounted
 ##   skin, eyes, eye_color, brows, mouth, cheeks, hair, hair_color,
 ##   top, top_color, top_color2, top_pattern, bottom, bottom_color,
 ##   shoes, shoe_color, hat, hat_color, glasses, nose
+## and hair_flower, a picked flower's item id ("" for none).
 ##
 ## Plus whole-number adjustments (see ADJUST), Mii-style: where each face feature sits,
 ## how big it is, how far apart and tilted, and where a hat or bow is worn.
@@ -43,6 +44,7 @@ const DEFAULT := {
 	"eye_y": 0, "eye_gap": 0, "eye_size": 0, "eye_tilt": 0, "brow_y": 0, "brow_gap": 0,
 	"brow_tilt": 0, "nose_y": 0, "nose_size": 0, "mouth_y": 0, "mouth_size": 0,
 	"cheek_y": 0, "glasses_y": 0, "glasses_size": 0, "hat_pos": 0,
+	"hair_flower": "",
 }
 
 static var _catalogue: Dictionary = {}
@@ -98,6 +100,9 @@ static func sanitise(saved: Dictionary) -> Dictionary:
 		if saved.has(key):
 			look[key] = clampi(int(saved[key]), ADJUST[key][0], ADJUST[key][1])
 	look["hat_pos"] = mini(look["hat_pos"], maxi(0, hat_positions(look).size() - 1))
+	var flower: String = saved.get("hair_flower", "")
+	if ItemDB.get_item(flower).get("category", "") == "flower":
+		look["hair_flower"] = flower
 	return look
 
 

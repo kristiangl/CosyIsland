@@ -80,6 +80,8 @@ On-screen hints follow whatever you last touched, keyboard or controller.
 - Go inside your tent and decorate it: furniture, seats and table tops work indoors,
   plus wallpaper and flooring. Sleep in a bed or sleeping bag until morning, noon,
   evening or midnight.
+- Pick flowers (the plant blooms again the next day) to wear in your hair or stand in
+  a vase, or dig the whole plant up with a shovel and replant it.
 - Chop wood, shake trees for fruit and branches (and the odd piece of furniture), hit
   rocks for stone, clay and iron (one rock a day gives acorns).
 - DIY workbench with 61 recipes: tools and furniture. Message bottles wash up each day

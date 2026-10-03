@@ -25,6 +25,7 @@ static var _cache: Dictionary = {}
 static var _material: ShaderMaterial
 static var _fabrics: Dictionary = {}
 static var _glow: ShaderMaterial
+static var _flower: ShaderMaterial
 
 
 static func material() -> ShaderMaterial:
@@ -55,7 +56,11 @@ static func get_mesh(key: String) -> ArrayMesh:
 		"rock":
 			_rock(k, int(p[1]))
 		"flower":
-			_flower_clump(k, p[1], p[2])
+			_flower_clump(k, p[1], p[2], p.size() > 3 and p[3] == "picked")
+		"hairflower":
+			_hair_flower(k, p[1])
+		"vase":
+			_vase_flower(k, p[1])
 		"tent":
 			_tent(k)
 		"office":
@@ -120,6 +125,14 @@ static func dress(mi: MeshInstance3D, base: Material, icon: bool = false) -> voi
 		mi.material_override = base
 
 
+## The prop material for flowers: short, so they sway more for their height.
+static func flower_material() -> ShaderMaterial:
+	if _flower == null:
+		_flower = material().duplicate()
+		_flower.set_shader_parameter("sway_scale", 3.5)
+	return _flower
+
+
 ## The prop material for parts that glow at night (see DayNight.glow_at).
 static func glow_material() -> ShaderMaterial:
 	if _glow == null:
@@ -163,7 +176,7 @@ static func key_for(obj: Dictionary) -> String:
 		"rock":
 			return "rock:%d" % obj.get("variant", 0)
 		"flower":
-			return "flower:%s:%s" % [obj["species"], obj["color"]]
+			return "flower:%s:%s%s" % [obj["species"], obj["color"], ":picked" if obj.get("picked", false) else ""]
 		"bridge":
 			return "bridge:%d" % obj["length"]
 		"drop":
@@ -253,52 +266,112 @@ static func _rock(k: MeshKit, variant: int) -> void:
 	k.sphere(Vector3(0.28, 0.15, 0.2), Vector3(0.24, 0.2, 0.22), MeshKit.lin(_shade(ROCK, 0.9)), 4, 7, 0.4, 0.3, variant + 8)
 
 
-static func _flower_clump(k: MeshKit, species: String, colour: String) -> void:
-	var petal_col := MeshKit.lin(Color(ItemDB.flowers.get(species, {}).get("colors", {}).get(colour, "#ffffff")), 0.6)
-	var spots := [Vector3(-0.14, 0, 0.08), Vector3(0.15, 0, 0.12), Vector3(0.0, 0, -0.14)]
-	for i in spots.size():
-		var base: Vector3 = spots[i]
-		var height := 0.36 + i * 0.05
-		_flower(k, base, height, species, petal_col)
-	var leaf_col := MeshKit.lin(Color("4f8f3c"), 0.4)
-	for i in 4:
-		var a := TAU * i / 4.0 + 0.4
-		k.leaf(Vector3(0, 0.02, 0), Vector3(cos(a), 0.5, sin(a)), 0.3, 0.12, leaf_col, 0.08)
+## A clump of flowers: a rosette of leaves and four or five stems of different heights,
+## leaning out a little. Picked clumps keep their stems and leaves, with green buds
+## where the blooms were, until they flower again the next day.
+static func _flower_clump(k: MeshKit, species: String, colour: String, picked: bool = false) -> void:
+	var petal := MeshKit.lin(Color(ItemDB.flowers.get(species, {}).get("colors", {}).get(colour, "#ffffff")), 0.9)
+	var leaf_dark := MeshKit.lin(Color("5a9a46"), 0.45)
+	var leaf_light := MeshKit.lin(Color("7cbb5c"), 0.45)
+	for i in 7:
+		var a := TAU * i / 7.0 + 0.3
+		var lift := 0.3 + (i % 3) * 0.12
+		k.leaf(Vector3(0, 0.02, 0), Vector3(cos(a), lift, sin(a)), 0.22 + (i % 2) * 0.06, 0.12, leaf_dark if i % 2 == 0 else leaf_light, 0.07)
+	var stems := [[Vector3(-0.12, 0, 0.06), 0.34], [Vector3(0.13, 0, 0.09), 0.4], [Vector3(0.02, 0, -0.12), 0.47],
+		[Vector3(0.06, 0, 0.15), 0.27], [Vector3(-0.08, 0, -0.06), 0.42]]
+	var stem_col := MeshKit.lin(Color("5f9e45"), 0.7)
+	for i in stems.size():
+		var base: Vector3 = stems[i][0]
+		var height: float = stems[i][1]
+		var top := base + Vector3(base.x * 0.35, height, base.z * 0.35)
+		k.cylinder(base, top, 0.016, 0.012, stem_col, 4, false)
+		# A small leaf partway up every other stem.
+		if i % 2 == 0:
+			var mid := base.lerp(top, 0.45)
+			k.leaf(mid, Vector3(base.x + 0.01, 0.6, base.z + 0.01), 0.1, 0.05, leaf_light, 0.02)
+		if picked or i == 4:
+			# A closed green bud (the last stem is always still budding).
+			k.sphere(top + Vector3(0, 0.025, 0), Vector3(0.025, 0.04, 0.025), MeshKit.lin(Color("8cc56a"), 0.8), 3, 5)
+		else:
+			bloom(k, top, species, petal, i)
 
 
-static func _flower(k: MeshKit, base: Vector3, height: float, species: String, c: Color) -> void:
-	var stem := MeshKit.lin(Color("5b9a42"), 0.5)
-	var top := base + Vector3(0, height, 0)
-	k.cylinder(base, top, 0.02, 0.015, stem, 4, false)
-	var centre_col := MeshKit.lin(Color("f2c641"), 0.6)
+## One flower head at `top`, facing up. `variant` varies the turn so a clump isn't uniform.
+static func bloom(k: MeshKit, top: Vector3, species: String, c: Color, variant: int = 0) -> void:
+	var light := Color(c.lightened(0.18), c.a)
+	var deep := Color(c.darkened(0.12), c.a)
+	var turn := variant * 0.9
+	var centre_col := MeshKit.lin(Color("f2c641"), 0.8)
 	match species:
 		"tulip":
-			k.sphere(top + Vector3(0, 0.07, 0), Vector3(0.075, 0.1, 0.075), c, 5, 8, 0.3)
-			for i in 3:
-				var a := TAU * i / 3.0
-				k.sphere(top + Vector3(cos(a) * 0.04, 0.15, sin(a) * 0.04), Vector3(0.035, 0.05, 0.035), c, 3, 5)
+			# A cup of six petals, three outer and three inner.
+			k.sphere(top + Vector3(0, 0.05, 0), Vector3(0.045, 0.06, 0.045), deep, 4, 6)
+			for i in 6:
+				var a := turn + TAU * i / 6.0
+				var inner := i % 2 == 1
+				k.leaf(top + Vector3(0, 0.005, 0), Vector3(cos(a) * (0.25 if inner else 0.4), 1.0, sin(a) * (0.25 if inner else 0.4)),
+					0.15 if inner else 0.17, 0.1, light if inner else c, -0.01)
 		"rose":
-			k.sphere(top + Vector3(0, 0.05, 0), Vector3(0.085, 0.07, 0.085), c, 5, 8, 0.35)
+			k.sphere(top + Vector3(0, 0.045, 0), Vector3(0.045, 0.045, 0.045), deep, 4, 7)
 			for i in 5:
-				var a := TAU * i / 5.0
-				k.sphere(top + Vector3(cos(a) * 0.06, 0.03, sin(a) * 0.06), Vector3(0.05, 0.045, 0.05), _shade(c, 0.9), 3, 6)
+				var a := turn + TAU * i / 5.0
+				k.leaf(top + Vector3(0, 0.02, 0), Vector3(cos(a), 1.1, sin(a)), 0.085, 0.09, c, -0.015)
+			for i in 6:
+				var a := turn + TAU * (i + 0.5) / 6.0
+				k.leaf(top + Vector3(0, 0.01, 0), Vector3(cos(a), 0.35, sin(a)), 0.11, 0.1, light, 0.01)
 		"hyacinth":
-			for i in 9:
-				var a := i * 2.4
-				var y := 0.02 + i * 0.022
-				k.sphere(top + Vector3(cos(a) * 0.045, y, sin(a) * 0.045), Vector3.ONE * 0.035, c, 3, 5)
+			for i in 13:
+				var a := turn + i * 2.4
+				var y := 0.02 + i * 0.016
+				var r := 0.042 * (1.0 - i / 18.0)
+				k.sphere(top + Vector3(cos(a) * r, y, sin(a) * r), Vector3.ONE * (0.03 - i * 0.0009), c if i % 3 else light, 3, 5)
+		"lily":
+			for i in 6:
+				var a := turn + TAU * i / 6.0
+				k.leaf(top, Vector3(cos(a), 0.75, sin(a)), 0.16, 0.06, c if i % 2 else light, 0.04)
+			for i in 3:
+				var a := turn + TAU * i / 3.0 + 0.4
+				var tip := top + Vector3(cos(a) * 0.04, 0.09, sin(a) * 0.04)
+				k.cylinder(top, tip, 0.004, 0.004, MeshKit.lin(Color("c8d68a"), 0.8), 3, false)
+				k.sphere(tip, Vector3.ONE * 0.01, MeshKit.lin(Color("d9894a"), 0.8), 2, 4)
 		_:
-			var count: int = {"pansy": 5, "cosmos": 8, "windflower": 6, "mum": 14, "lily": 6}.get(species, 6)
-			var length: float = {"pansy": 0.12, "cosmos": 0.13, "windflower": 0.11, "mum": 0.09, "lily": 0.15}.get(species, 0.11)
-			var width: float = {"pansy": 0.12, "cosmos": 0.06, "windflower": 0.08, "mum": 0.04, "lily": 0.06}.get(species, 0.07)
-			var tilt: float = {"pansy": 0.25, "cosmos": 0.15, "windflower": 0.2, "mum": 0.5, "lily": 0.9}.get(species, 0.2)
+			# Flat flowers: a back ring of petals and a lighter front ring between them.
+			var count: int = {"pansy": 5, "cosmos": 8, "windflower": 6, "mum": 12}.get(species, 6)
+			var length: float = {"pansy": 0.11, "cosmos": 0.12, "windflower": 0.1, "mum": 0.09}.get(species, 0.1)
+			var width: float = {"pansy": 0.12, "cosmos": 0.06, "windflower": 0.08, "mum": 0.035}.get(species, 0.07)
+			var tilt: float = {"pansy": 0.3, "cosmos": 0.15, "windflower": 0.25, "mum": 0.55}.get(species, 0.2)
 			for i in count:
-				var a := TAU * i / count
+				var a := turn + TAU * i / count
 				k.leaf(top, Vector3(cos(a), tilt, sin(a)), length, width, c, 0.0)
+			if species in ["mum", "cosmos"]:
+				for i in count:
+					var a := turn + TAU * (i + 0.5) / count
+					k.leaf(top + Vector3(0, 0.008, 0), Vector3(cos(a), tilt + 0.35, sin(a)), length * 0.75, width * 0.9, light, 0.0)
 			var middle := centre_col
 			if species in ["pansy", "windflower"]:
-				middle = MeshKit.lin(Color("3a2b3a"), 0.6)
-			k.sphere(top + Vector3(0, 0.015, 0), Vector3.ONE * 0.03, middle, 3, 6)
+				middle = MeshKit.lin(Color("3a2b3a"), 0.8)
+			k.sphere(top + Vector3(0, 0.012, 0), Vector3(0.03, 0.02, 0.03), middle, 3, 6)
+
+
+## A single picked flower with a leaf, for wearing in your hair.
+static func _hair_flower(k: MeshKit, id: String) -> void:
+	var def := ItemDB.get_item(id)
+	var c := MeshKit.lin(ItemDB.color_of(id))
+	k.leaf(Vector3.ZERO, Vector3(-1, 0.2, -0.6), 0.1, 0.05, MeshKit.lin(Color("7cbb5c")), 0.0)
+	k.leaf(Vector3.ZERO, Vector3(-0.6, -0.4, -1), 0.09, 0.05, MeshKit.lin(Color("5a9a46")), 0.0)
+	bloom(k, Vector3.ZERO, def.get("species", "pansy"), c, 1)
+
+
+## A bud vase with one picked flower in it.
+static func _vase_flower(k: MeshKit, id: String) -> void:
+	var def := ItemDB.get_item(id)
+	var glass := MeshKit.lin(Color("bfe3ef"))
+	k.cylinder(Vector3.ZERO, Vector3(0, 0.1, 0), 0.06, 0.07, glass, 10, true)
+	k.cylinder(Vector3(0, 0.1, 0), Vector3(0, 0.17, 0), 0.07, 0.03, glass, 10, false)
+	k.cylinder(Vector3(0, 0.17, 0), Vector3(0, 0.2, 0), 0.03, 0.035, glass, 10, false)
+	k.cylinder(Vector3(0, 0.08, 0), Vector3(0.02, 0.36, 0), 0.008, 0.008, MeshKit.lin(Color("5f9e45")), 4, false)
+	k.leaf(Vector3(0.01, 0.24, 0), Vector3(1, 0.7, 0.2), 0.08, 0.04, MeshKit.lin(Color("7cbb5c")), 0.0)
+	bloom(k, Vector3(0.02, 0.36, 0), def.get("species", "pansy"), MeshKit.lin(ItemDB.color_of(id)), 2)
 
 
 # --- Buildings -----------------------------------------------------------------------
@@ -609,11 +682,20 @@ static func _drop(k: MeshKit, item: String) -> void:
 				k.box(Vector3(0, 0.12, 0), Vector3(0.18, 0.06, 0.18), a)
 			return
 		"flower":
+			# A little posy: three stems fanning out from a ribbon.
+			var species: String = def.get("species", "pansy")
 			for i in 3:
-				var a := TAU * i / 3.0
-				var base := Vector3(cos(a) * 0.05, 0, sin(a) * 0.05)
-				k.cylinder(base, base + Vector3(0, 0.22, 0), 0.015, 0.015, MeshKit.lin(Color("5b9a42")), 4, false)
-				k.sphere(base + Vector3(0, 0.25, 0), Vector3.ONE * 0.06, col, 4, 6)
+				var tip := Vector3((i - 1) * 0.09, 0.3 - absf(i - 1) * 0.04, (i % 2) * 0.03)
+				k.cylinder(Vector3(0, 0.0, 0), tip, 0.012, 0.012, MeshKit.lin(Color("5f9e45")), 4, false)
+				bloom(k, tip, species, col, i)
+			k.cylinder(Vector3(0, 0.08, 0), Vector3(0, 0.11, 0), 0.03, 0.03, MeshKit.lin(Color("fff4e0")), 6, true)
+			return
+		"flower_plant":
+			# A whole plant with a ball of soil round its roots.
+			k.sphere(Vector3(0, 0.08, 0), Vector3(0.14, 0.1, 0.14), MeshKit.lin(Color("8a6650")), 5, 8, 0.3, 0.2, 3)
+			k.xform = Transform3D(Basis.from_scale(Vector3.ONE * 0.7), Vector3(0, 0.12, 0))
+			_flower_clump(k, def.get("species", "pansy"), def.get("flower_color", "red"))
+			k.xform = Transform3D.IDENTITY
 			return
 	match item:
 		"wood":

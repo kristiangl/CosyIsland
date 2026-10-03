@@ -127,6 +127,8 @@ Milestone 3b:
 - [x] Customising at the workbench: any colourway of a piece or garment, one kit each
 - [x] Rugs on a floor layer under furniture; windows in every room, and curtains
 - [x] Mushroom Grove and Starlight series, with parts that glow at night
+- [x] Flowers: picked blooms regrow overnight, worn in hair or put in vases; plants dug
+  up with a shovel and replanted (breeding later)
 
 Next milestones (suggested order):
 3c. Bigger house (more rooms) and outdoor house colours. Clothes as items instead of

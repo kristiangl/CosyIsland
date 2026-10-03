@@ -258,8 +258,8 @@ func _spawn_node(obj: Dictionary) -> void:
 	var node := Node3D.new()
 	var mesh := MeshInstance3D.new()
 	mesh.mesh = Models.get_mesh(Models.key_for(obj))
-	Models.dress(mesh, Models.material())
-	if obj["kind"] in ["flower", "drop"] or is_rug(obj):
+	Models.dress(mesh, Models.flower_material() if obj["kind"] == "flower" else Models.material())
+	if obj["kind"] == "drop" or is_rug(obj):
 		mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	node.add_child(mesh)
 	var tiles := footprint(obj)
@@ -455,14 +455,49 @@ func pick_up(x: int, z: int) -> bool:
 			remove_object(obj["uid"])
 			return true
 		"flower":
+			# Picking takes a bloom and leaves the plant, which flowers again tomorrow.
+			if obj.get("picked", false):
+				Events.toast.emit("It'll bloom again tomorrow. Dig it up with a shovel to move it.")
+				return false
 			var id := "%s_%s" % [obj["species"], obj["color"]]
 			if Inventory.add_item(id) > 0:
 				Events.toast.emit("Your pockets are full!")
 				return false
-			Events.toast.emit("You picked some %s." % ItemDB.display_name(id).to_lower())
-			remove_object(obj["uid"])
+			Events.toast.emit("You picked a %s." % ItemDB.display_name(id).to_lower())
+			obj["picked"] = true
+			refresh_node(obj)
+			Effects.burst("leaves", Vector3(x + 0.5, data.height_at(x + 0.5, z + 0.5) + 0.4, z + 0.5))
 			return true
 	return false
+
+
+## Digs up a flower, roots and all, into the pockets. Returns true if it was taken.
+func dig_up(obj: Dictionary) -> bool:
+	if obj.get("kind", "") != "flower":
+		return false
+	var id := "%s_%s_plant" % [obj["species"], obj["color"]]
+	if Inventory.add_item(id) > 0:
+		Events.toast.emit("Your pockets are full!")
+		return false
+	var node := node_of(obj["uid"])
+	if node:
+		Effects.burst("pebbles", node.global_position + Vector3(0, 0.15, 0))
+	remove_object(obj["uid"])
+	Events.toast.emit("You dug up the %s." % ItemDB.display_name(id).to_lower())
+	return true
+
+
+## Whether a flower can be planted on this tile: open ground outdoors.
+func can_plant(tile: Vector2i) -> bool:
+	return not interior and data.in_bounds(tile.x, tile.y) and _can_hold_drop(tile.x, tile.y) and not _rugs.has(data.idx(tile.x, tile.y))
+
+
+## Plants a dug-up flower (an item "<species>_<colour>_plant") on a tile.
+func plant_flower(item_id: String, tile: Vector2i) -> Dictionary:
+	var def := ItemDB.get_item(item_id)
+	var obj := add_object({"kind": "flower", "x": tile.x, "z": tile.y, "species": def["species"], "color": def["flower_color"]})
+	_pop_in(obj)
+	return obj
 
 
 func _roll_rock_item() -> String:
@@ -718,6 +753,11 @@ func _on_day_changed(key: int) -> void:
 			"rock":
 				obj["hits_left"] = ROCK_HITS
 				rocks += 1
+			"flower":
+				# Picked flowers bloom again overnight.
+				if obj.get("picked", false):
+					obj.erase("picked")
+					refresh_node(obj)
 	if rocks < ROCK_COUNT:
 		_respawn_rock()
 	_pick_money_rock()

@@ -180,6 +180,9 @@ func _use() -> void:
 				world.strike_rock(obj, position)
 				Inventory.wear_equipped()
 				_recoil()
+			elif kind == "flower" and tool_kind == "shovel":
+				if world.dig_up(obj):
+					Inventory.wear_equipped()
 		_:
 			if kind in ["tree", "fruit_tree", "palm"]:
 				_busy = SWING_TIME

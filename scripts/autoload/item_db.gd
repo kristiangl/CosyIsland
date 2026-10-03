@@ -45,11 +45,21 @@ func _ready() -> void:
 	for id in flowers:
 		var fl: Dictionary = flowers[id]
 		for colour in fl["colors"]:
-			items["%s_%s" % [id, colour]] = {
-				"name": "%s %s" % [colour.capitalize(), fl["name"].to_lower() + "s"],
+			# A picked flower: wear it in your hair or stand it in a bud vase.
+			var picked := "%s_%s" % [id, colour]
+			items[picked] = {
+				"name": "%s %s" % [colour.capitalize(), fl["name"].to_lower()],
 				"category": "flower", "stack": 10, "price": 40, "color": fl["colors"][colour],
 				"species": id, "flower_color": colour,
-				"desc": "Freshly picked. They'd look lovely planted somewhere.",
+				"desc": "Freshly picked. Wear it in your hair, or put it in a vase.",
+				"placeable": {"footprint": [1, 1], "model": "vase:" + picked, "rotatable": true, "small": true},
+			}
+			# The whole plant, dug up with a shovel: plant it somewhere else.
+			items[picked + "_plant"] = {
+				"name": "%s %s plant" % [colour.capitalize(), fl["name"].to_lower()],
+				"category": "flower_plant", "stack": 10, "price": 80, "color": fl["colors"][colour],
+				"species": id, "flower_color": colour,
+				"desc": "Roots and all. Plant it somewhere and it'll keep flowering.",
 			}
 	_load_clothing()
 	_load_furniture()

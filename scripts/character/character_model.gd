@@ -10,6 +10,7 @@ const P = preload("res://scripts/character/character_parts.gd")
 const FACE_WRAP := 0.5
 const BODY_WRAP := 0.25
 
+static var _flat: ShaderMaterial
 var look: Dictionary = Appearance.DEFAULT.duplicate()
 ## Animal characters: {"kind": "cat" or "dog", "fur": Color, "fur2": Color (markings),
 ## "eyes": Color, "inner_ear": Color, "nose": Color}. Empty for people.
@@ -169,6 +170,16 @@ func rebuild() -> void:
 			var rot: Array = ways[clampi(int(look.get("hat_pos", 0)), 0, ways.size() - 1)]["rot"]
 			hat_mesh.rotation_degrees = Vector3(rot[0], rot[1], rot[2])
 		hat_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	if not animal and look.get("hair_flower", "") != "":
+		# Tucked in above the left ear.
+		var flower := MeshInstance3D.new()
+		flower.mesh = Models.get_mesh("hairflower:" + look["hair_flower"])
+		flower.material_override = Models.material() if curved else _flat_prop()
+		var out := Vector3(0.68, 0.5, 0.55).normalized()
+		flower.position = P.HEAD_CENTRE + out * 0.41
+		flower.basis = Basis(Quaternion(Vector3.UP, out)).scaled(Vector3.ONE * 1.5)
+		flower.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		_head.add_child(flower)
 	if look["glasses"] != "none":
 		var frame := _cloth(Color("4a4550"), Color("3a3a4a") if look["glasses"] == "sunnies" else Color("4a4550"))
 		var glasses_mesh := _mesh(P.glasses(look["glasses"]), frame, _head)
@@ -528,6 +539,14 @@ func _cloth(a: Color, b: Color = Color.WHITE, pattern: int = 0) -> ShaderMateria
 	mat.set_shader_parameter("curved", curved)
 	mat.set_shader_parameter("fixed_tints", fixed_light)
 	return mat
+
+
+## The prop material for things worn outside the island (menus), with no world curve.
+static func _flat_prop() -> ShaderMaterial:
+	if _flat == null:
+		_flat = Models.material().duplicate()
+		_flat.set_shader_parameter("curved", false)
+	return _flat
 
 
 static func _shader(shader_name: String) -> Shader:

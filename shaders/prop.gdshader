@@ -13,11 +13,13 @@ uniform float tint_mix = 0.0;
 // Off for things shown outside the island (icons, menus).
 uniform bool curved = true;
 uniform float glow = 0.0;
+// More sway for short things like flowers.
+uniform float sway_scale = 1.0;
 global uniform float night_glow;
 
 void vertex() {
 	vec3 root = MODEL_MATRIX[3].xyz;
-	VERTEX += wind_offset(root, VERTEX.y - root.y, COLOR.a, TIME);
+	VERTEX += wind_offset(root, VERTEX.y - root.y, COLOR.a, TIME) * sway_scale;
 	if (curved) {
 		VERTEX = curve_world(VERTEX);
 	}

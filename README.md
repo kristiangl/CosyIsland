@@ -20,6 +20,10 @@ A cosy island life game about crafting and decorating, made with Godot 4.
 | --- | --- |
 | ![](docs/screenshots/series_mushroom.png) | ![](docs/screenshots/series_starlight.png) |
 
+| Flowers | Lucy's shop | Island Journal |
+| --- | --- | --- |
+| ![](docs/screenshots/flowers.png) | ![](docs/screenshots/lucy_shop.png) | ![](docs/screenshots/journal.png) |
+
 | Character creator | Island Phone | DIY workbench |
 | --- | --- | --- |
 | ![](docs/screenshots/creator.png) | ![](docs/screenshots/phone.png) | ![](docs/screenshots/crafting.png) |

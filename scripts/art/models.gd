@@ -375,6 +375,22 @@ static func _drop(k: MeshKit, item: String) -> void:
 			k.sphere(Vector3(0, 0.15, 0), Vector3.ONE * 0.15, col, 5, 8, 0.3)
 			k.leaf(Vector3(0, 0.3, 0), Vector3(1, 0.4, 0), 0.14, 0.08, MeshKit.lin(Color("5c9e46")))
 			return
+		"interior":
+			var look: Dictionary = def["interior"]
+			var a := MeshKit.lin(Color(look["a"]))
+			var b := MeshKit.lin(Color(look["b"]))
+			if look["part"] == "wall":
+				# A roll of wallpaper with its end unrolled a little.
+				k.cylinder(Vector3(-0.22, 0.1, 0), Vector3(0.22, 0.1, 0), 0.1, 0.1, a, 10, true, b)
+				k.box(Vector3(0, 0.012, 0.16), Vector3(0.42, 0.02, 0.18), b, a)
+			else:
+				# A little stack of floor tiles in its two colours.
+				for i in 4:
+					var x := (i % 2) * 0.2 - 0.1
+					var z := (i / 2) * 0.2 - 0.1
+					k.box(Vector3(x, 0.04, z), Vector3(0.19, 0.08, 0.19), a if (i == 0 or i == 3) else b)
+				k.box(Vector3(0, 0.12, 0), Vector3(0.18, 0.06, 0.18), a)
+			return
 		"flower":
 			for i in 3:
 				var a := TAU * i / 3.0

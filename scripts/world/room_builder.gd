@@ -23,8 +23,16 @@ const STYLES := {
 const BUNTING: Array[Color] = [Color("f2a7a0"), Color("f6d58c"), Color("9fd3c7"), Color("b9b3e6")]
 
 
-static func build(data: IslandData, style_id: String) -> Node3D:
-	var style: Dictionary = STYLES.get(style_id, STYLES["tent"])
+## `look` can swap the wall and floor for wallpaper and flooring items:
+## {"wall": item id, "floor": item id}.
+static func build(data: IslandData, style_id: String, look: Dictionary = {}) -> Node3D:
+	var style: Dictionary = STYLES.get(style_id, STYLES["tent"]).duplicate()
+	for part: String in ["wall", "floor"]:
+		var item: Dictionary = ItemDB.get_item(look.get(part, "")).get("interior", {})
+		if not item.is_empty():
+			style[part] = item
+			if part == "wall":
+				style["bunting"] = false
 	var room := Node3D.new()
 	room.name = "Room"
 	var w := float(data.width)

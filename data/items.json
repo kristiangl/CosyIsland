@@ -636,6 +636,146 @@
 				"rotatable": true,
 				"small": true
 			}
+		},
+		"cabin_wall": {
+			"name": "Cabin Wall",
+			"category": "interior",
+			"stack": 1,
+			"price": 300,
+			"color": "#d9b083",
+			"desc": "Snug wooden boards, like a log cabin.",
+			"interior": {
+				"part": "wall",
+				"pattern": 1,
+				"a": "d9b083",
+				"b": "b48a5e"
+			}
+		},
+		"striped_wallpaper": {
+			"name": "Striped Wallpaper",
+			"category": "interior",
+			"stack": 1,
+			"price": 300,
+			"color": "#fbf0d9",
+			"desc": "Cream stripes. Calm and classic.",
+			"interior": {
+				"part": "wall",
+				"pattern": 2,
+				"a": "fbf0d9",
+				"b": "e9cfa8"
+			}
+		},
+		"mint_dot_wallpaper": {
+			"name": "Mint Dot Wallpaper",
+			"category": "interior",
+			"stack": 1,
+			"price": 300,
+			"color": "#dff3e8",
+			"desc": "Little mint polka dots.",
+			"interior": {
+				"part": "wall",
+				"pattern": 6,
+				"a": "dff3e8",
+				"b": "a6d8c0"
+			}
+		},
+		"peach_dot_wallpaper": {
+			"name": "Peach Dot Wallpaper",
+			"category": "interior",
+			"stack": 1,
+			"price": 300,
+			"color": "#fde9e0",
+			"desc": "Warm peach dots for a sunny room.",
+			"interior": {
+				"part": "wall",
+				"pattern": 6,
+				"a": "fde9e0",
+				"b": "f2b3a0"
+			}
+		},
+		"sky_wallpaper": {
+			"name": "Sky Wallpaper",
+			"category": "interior",
+			"stack": 1,
+			"price": 300,
+			"color": "#cfe6f5",
+			"desc": "As plain and pale as a spring sky.",
+			"interior": {
+				"part": "wall",
+				"pattern": 0,
+				"a": "cfe6f5",
+				"b": "b6d6ee"
+			}
+		},
+		"wooden_flooring": {
+			"name": "Wooden Flooring",
+			"category": "interior",
+			"stack": 1,
+			"price": 300,
+			"color": "#d9b083",
+			"desc": "Honey-coloured planks.",
+			"interior": {
+				"part": "floor",
+				"pattern": 1,
+				"a": "d9b083",
+				"b": "b48a5e"
+			}
+		},
+		"woven_flooring": {
+			"name": "Woven Mat Flooring",
+			"category": "interior",
+			"stack": 1,
+			"price": 300,
+			"color": "#dcc79c",
+			"desc": "A soft woven mat, like the tent's.",
+			"interior": {
+				"part": "floor",
+				"pattern": 3,
+				"a": "dcc79c",
+				"b": "b89a6a"
+			}
+		},
+		"cream_tile_flooring": {
+			"name": "Cream Tile Flooring",
+			"category": "interior",
+			"stack": 1,
+			"price": 300,
+			"color": "#f3ece0",
+			"desc": "Smooth clay tiles.",
+			"interior": {
+				"part": "floor",
+				"pattern": 5,
+				"a": "f3ece0",
+				"b": "cdbfa8"
+			}
+		},
+		"mint_tile_flooring": {
+			"name": "Mint Tile Flooring",
+			"category": "interior",
+			"stack": 1,
+			"price": 300,
+			"color": "#cdeee0",
+			"desc": "Cool mint tiles.",
+			"interior": {
+				"part": "floor",
+				"pattern": 5,
+				"a": "cdeee0",
+				"b": "9ccdb8"
+			}
+		},
+		"rosy_carpet": {
+			"name": "Rosy Carpet",
+			"category": "interior",
+			"stack": 1,
+			"price": 300,
+			"color": "#efc9c6",
+			"desc": "Soft underfoot.",
+			"interior": {
+				"part": "floor",
+				"pattern": 0,
+				"a": "efc9c6",
+				"b": "e0b0ac"
+			}
 		}
 	},
 	"fruits": {

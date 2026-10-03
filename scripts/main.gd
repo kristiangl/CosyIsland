@@ -14,7 +14,7 @@ extends Node3D
 ##   --demo             pitch the tent, place furniture and chop a tree before the screenshot
 ##   --demo=decor       same, but stay by the furniture instead of chopping
 ##   --demo=sit         same, and sit on the chair
-##   --demo=home        pitch the tent, go inside and furnish it
+##   --demo=home        pitch the tent, go inside and furnish it (--room=wallpaper,flooring)
 ##   --ui=pockets|pause|map|creator|crafting|placing|intro|ask|lucy|sleep  (--tab=N picks a creator tab, --try=key:id,... dresses up)  open a menu or mode (for screenshots)
 
 const AUTOSAVE_SECONDS := 60.0
@@ -360,6 +360,8 @@ func _run_demo() -> void:
 			var size: Array = ItemDB.placeable(entry[0])["footprint"]
 			var dims := Vector2i(size[0], size[1]) if entry[2] % 2 == 0 else Vector2i(size[1], size[0])
 			room.place_item(entry[0], Rect2i(entry[1], dims), entry[2])
+		for item in Game.args.get("room", "").split(",", false):
+			room.set_room_look(item)
 		room.place_on_surface("teapot", Vector2i(3, 1), 0)
 		room.place_on_surface("fruit_bowl", Vector2i(4, 1), 0)
 		room.place_on_surface("candle_set", Vector2i(5, 3), 0)

@@ -124,6 +124,17 @@ func _use_slot(i: int) -> void:
 	elif not ItemDB.placeable(id).is_empty():
 		close()
 		place_requested.emit(i)
+	elif def.get("category", "") == "interior":
+		var here: World = Game.world
+		if not here.interior:
+			Events.toast.emit("That's for decorating inside your home.")
+			return
+		Inventory.remove_from_slot(i)
+		var old := here.set_room_look(id)
+		if old != "":
+			Inventory.add_item(old)
+		Events.toast.emit("The room looks lovely!")
+		_refresh()
 	elif def.get("category", "") == "fruit":
 		Inventory.remove_from_slot(i)
 		Events.toast.emit("Mmm, delicious!")

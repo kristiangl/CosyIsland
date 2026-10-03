@@ -18,6 +18,8 @@ var data: IslandData
 var interior := false
 ## Look of the room's floor and walls (see RoomBuilder.STYLES).
 var room_style := "tent"
+## Wallpaper and flooring put up in this room: {"wall": item id, "floor": item id}.
+var room_look: Dictionary = {}
 var day_key: int
 var money_rock_uid: int = -1
 var grass: GrassField
@@ -51,7 +53,8 @@ func setup(island: IslandData, saved: Dictionary = {}) -> void:
 
 	if interior:
 		_is_night = true
-		add_child(RoomBuilder.build(data, room_style))
+		room_look = saved.get("look", {}).duplicate()
+		add_child(RoomBuilder.build(data, room_style, room_look))
 		for obj in data.objects:
 			_register(obj)
 		return
@@ -85,7 +88,27 @@ func _process(delta: float) -> void:
 
 
 func to_save() -> Dictionary:
-	return {"objects": data.objects, "next_uid": data.next_uid, "day_key": day_key, "money_rock_uid": money_rock_uid}
+	var out := {"objects": data.objects, "next_uid": data.next_uid, "day_key": day_key, "money_rock_uid": money_rock_uid}
+	if interior:
+		out["look"] = room_look
+	return out
+
+
+## Puts up wallpaper or flooring indoors. Returns the item it replaced ("" for the
+## home's own walls or floor).
+func set_room_look(item_id: String) -> String:
+	var part: String = ItemDB.get_item(item_id).get("interior", {}).get("part", "")
+	if not interior or part == "":
+		return ""
+	var old: String = room_look.get(part, "")
+	room_look[part] = item_id
+	var shell := get_node_or_null("Room")
+	if shell:
+		shell.free()
+	var rebuilt := RoomBuilder.build(data, room_style, room_look)
+	add_child(rebuilt)
+	move_child(rebuilt, 0)
+	return old
 
 
 func _build_terrain() -> void:

@@ -27,7 +27,7 @@ func _ready() -> void:
 	for id in ItemDB.items:
 		var def := ItemDB.get_item(id)
 		if Game.args.has("drops"):
-			if def.get("category", "") in ["material", "fruit", "currency", "bottle"]:
+			if def.get("category", "") in ["material", "fruit", "currency", "bottle", "interior"]:
 				keys.append("drop:" + id)
 		elif def.get("category", "") == "furniture":
 			keys.append(def["placeable"]["model"])

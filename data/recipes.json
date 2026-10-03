@@ -186,6 +186,64 @@
 			"materials": {
 				"wood": 3
 			}
+		},
+		"cabin_wall": {
+			"materials": {
+				"wood": 6
+			},
+			"known": true
+		},
+		"wooden_flooring": {
+			"materials": {
+				"wood": 6
+			},
+			"known": true
+		},
+		"striped_wallpaper": {
+			"materials": {
+				"wood": 2,
+				"clay": 2
+			}
+		},
+		"mint_dot_wallpaper": {
+			"materials": {
+				"clay": 3,
+				"tree_branch": 2
+			}
+		},
+		"peach_dot_wallpaper": {
+			"materials": {
+				"clay": 3,
+				"tree_branch": 2
+			}
+		},
+		"sky_wallpaper": {
+			"materials": {
+				"clay": 3,
+				"stone": 1
+			}
+		},
+		"woven_flooring": {
+			"materials": {
+				"tree_branch": 6
+			}
+		},
+		"cream_tile_flooring": {
+			"materials": {
+				"clay": 5
+			}
+		},
+		"mint_tile_flooring": {
+			"materials": {
+				"clay": 4,
+				"stone": 2
+			}
+		},
+		"rosy_carpet": {
+			"materials": {
+				"wood": 2,
+				"clay": 2
+			}
 		}
 	}
 }

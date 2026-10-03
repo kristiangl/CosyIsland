@@ -162,7 +162,7 @@ func _use_slot(i: int) -> void:
 		Events.toast.emit("You put on the %s. It's in your wardrobe now." % ItemDB.display_name(id).to_lower())
 	elif def.get("category", "") == "interior":
 		var here: World = Game.world
-		if not here.interior:
+		if not here.interior or here.visitor:
 			Events.toast.emit("That's for decorating inside your home.")
 			return
 		Inventory.remove_from_slot(i)

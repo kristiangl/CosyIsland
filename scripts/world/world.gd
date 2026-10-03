@@ -26,6 +26,8 @@ var money_rock_uid: int = -1
 var grass: GrassField
 ## Fish and bugs (outdoors only).
 var critters: Critters
+## A room in someone else's home: look, don't touch.
+var visitor := false
 
 var _objects: Dictionary = {}   # uid -> object dictionary
 var _nodes: Dictionary = {}     # uid -> Node3D
@@ -422,6 +424,9 @@ func shake(obj: Dictionary, player_pos: Vector3) -> void:
 
 ## Puts placed furniture back in the pockets. Fixed things and homes stay put.
 func pack_up(obj: Dictionary) -> bool:
+	if visitor:
+		Events.toast.emit("That's not yours to take!")
+		return false
 	if obj.get("fixed", false) or ItemDB.placeable(obj["item"]).get("structure", false):
 		Events.toast.emit("That's staying right where it is.")
 		return false
@@ -743,8 +748,12 @@ func seats(obj: Dictionary) -> Array[Dictionary]:
 
 
 func place_item(item_id: String, rect: Rect2i, rot: int) -> Dictionary:
-	var obj := add_object({"kind": "placed", "item": item_id, "x": rect.position.x, "z": rect.position.y,
-		"w": rect.size.x, "d": rect.size.y, "rot": rot})
+	var fields := {"kind": "placed", "item": item_id, "x": rect.position.x, "z": rect.position.y,
+		"w": rect.size.x, "d": rect.size.y, "rot": rot}
+	if ItemDB.placeable(item_id).get("plot", false):
+		# A neighbour moves in the day after the plot is staked out.
+		fields["plot_day"] = day_key
+	var obj := add_object(fields)
 	_pop_in(obj)
 	return obj
 
@@ -869,6 +878,13 @@ func add_building(item_id: String) -> Dictionary:
 
 func add_shop() -> Dictionary:
 	return add_building("lucy_shop")
+
+
+func building_of(resident: String) -> Dictionary:
+	for obj in data.objects:
+		if obj.get("resident", "") == resident:
+			return obj
+	return {}
 
 
 func building(item_id: String) -> Dictionary:

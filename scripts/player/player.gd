@@ -135,7 +135,7 @@ func _clear(px: float, pz: float) -> bool:
 ## The character the player is facing and close enough to talk to, if any.
 func _facing_npc() -> Npc:
 	for npc in Game.npcs:
-		if npc.world != world:
+		if npc.world != world or not npc.visible:
 			continue
 		var to := npc.position - position
 		to.y = 0.0

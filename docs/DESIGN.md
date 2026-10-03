@@ -150,6 +150,8 @@ Milestone 3b:
   to time, bugs by habitat and hour that flee from runners
 - [x] The museum: five specimens for Poppy bring Bramble and his museum tent; donations,
   a critter log in the journal
+- [x] Neighbours (data/neighbours.json): plots from Poppy, move-ins overnight, houses in
+  their colours, wandering by day, personality chat and gifts, furnished homes to visit
 - [x] Flowers: picked blooms regrow overnight, worn in hair or put in vases; plants dug
   up with a shovel and replanted (breeding later)
 
@@ -157,7 +159,7 @@ Next milestones (suggested order):
 3c. Bigger house (more rooms) and outdoor house colours. Clothes as items instead of
    everything unlocked, sold by Lucy. Time travel moves out of the phone into an
    options menu.
-4. Daily visitors and the first animal neighbours (homes, schedules).
+4. Daily visitors; more neighbour life (requests, friendship, moving out, more species).
 5. The museum building: Bramble's tent grows into a real museum with exhibits inside
    (materials project after enough donations).
 6. Island tours to random islands (reusing the generator with different seeds).

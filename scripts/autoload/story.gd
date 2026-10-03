@@ -12,6 +12,8 @@ const HOUSE_COST := 10000
 const SHOP_MATERIALS := {"wood": 30, "stone": 20, "clay": 10}
 ## How many different fish and bugs bring Bramble to the island.
 const MUSEUM_SPECIMENS := 5
+## What Poppy charges for a neighbour's plot.
+const PLOT_COST := 2000
 var talking := false
 ## How many times each character has been chatted to today, to cycle their small talk.
 var _chats: Dictionary = {}
@@ -63,6 +65,9 @@ func talk_to(who: Npc) -> void:
 			await _lucy(who)
 		"bramble":
 			await _bramble(who)
+		_:
+			if NpcData.is_neighbour(who.id):
+				await _neighbour(who)
 	_end()
 
 
@@ -144,6 +149,9 @@ func _poppy_questions() -> void:
 		var house_offer := can_offer_house()
 		if house_offer:
 			options.insert(2, "About a proper house...")
+		var plot_offer := can_offer_plot()
+		if plot_offer:
+			options.insert(2, "About new neighbours...")
 		var museum_offer := museum_project_open()
 		if museum_offer:
 			options.insert(2, "About fish and bugs..." if not flags.has("museum_gifts") else "I've brought specimens")
@@ -152,6 +160,11 @@ func _poppy_questions() -> void:
 			await _museum_project()
 			continue
 		if museum_offer and pick > 2:
+			pick -= 1
+		if plot_offer and pick == 2:
+			await _plot_talk()
+			continue
+		if plot_offer and pick > 2:
 			pick -= 1
 		if house_offer and pick == 2:
 			await _house_talk()
@@ -467,6 +480,119 @@ func _creature_fact() -> String:
 		ItemDB.display_name(id).to_lower(), ItemDB.WHERE_TEXT.get(c["where"], ""), when, int(c["price"])]
 
 
+# --- Neighbours ----------------------------------------------------------------------
+
+## Poppy sells neighbour plots once your house is built, one at a time, until everyone
+## who might move in has.
+func can_offer_plot() -> bool:
+	if not flags.get("house_done", false) or Game.island == null:
+		return false
+	var residents := 0
+	for obj in Game.island.objects():
+		if obj["kind"] == "placed" and (obj.has("resident") or obj["item"] == "plot_kit"):
+			residents += 1
+	return Inventory.count_of("plot_kit") == 0 and residents < NpcData.neighbours().size()
+
+
+func _plot_talk() -> void:
+	await say("poppy", ["New neighbours! I get letters every week from folk who'd love to live here.",
+		"I can sell you a plot for %d acorns. Stake it out wherever you like," % PLOT_COST,
+		"and someone will move in the very next day."])
+	if Inventory.currency < PLOT_COST:
+		await say("poppy", ["Come back when you've saved up. Selling to Lucy helps!"])
+		return
+	if await ask("poppy", "Would you like a plot?", ["Yes please!", "Not yet"]) != 0:
+		return
+	Inventory.add_currency(-PLOT_COST)
+	_give("plot_kit")
+	await say("poppy", ["Here you go! Choose it from your pockets and find a nice flat spot.",
+		"Leave room in front for the door, and somewhere to sit wouldn't hurt."])
+
+
+## Plots staked out on an earlier day get a neighbour: someone not already on the
+## island, picked by the island and the day. Returns who moved in.
+func move_in(island: World) -> Array[String]:
+	var here: Array = []
+	for obj in island.objects():
+		if obj.has("resident"):
+			here.append(obj["resident"])
+	var arrived: Array[String] = []
+	for obj in island.objects():
+		if obj["kind"] != "placed" or obj["item"] != "plot_kit" or int(obj.get("plot_day", island.day_key)) >= island.day_key:
+			continue
+		var free: Array = NpcData.neighbours().keys().filter(func(id): return not id in here)
+		if free.is_empty():
+			break
+		free.sort()
+		var who: String = free[(island.data.seed_value + island.day_key + here.size()) % free.size()]
+		obj["item"] = "neighbour_house"
+		obj["resident"] = who
+		obj.erase("plot_day")
+		island.refresh_node(obj)
+		here.append(who)
+		arrived.append(who)
+	return arrived
+
+
+const NEIGHBOUR_TALK := {
+	"cheerful": [
+		"Isn't today just the best? I think it's the best. {catch}!",
+		"I waved at a butterfly and it waved back. Well, it flapped. Same thing!",
+		"You look lovely today, {player}! Have I said that already? {catch}!",
+		"I'm going to plant flowers all round my house. All of them. Every flower.",
+	],
+	"bookish": [
+		"I'm reading about the tides. Fascinating, {catch}.",
+		"Did you know Bramble has notes on every bug? I've asked to borrow them. Twice.",
+		"A quiet afternoon and a good book. What more could one want? {catch}.",
+		"I've been cataloguing the shells on the beach. There are eleven kinds, {catch}.",
+	],
+	"sporty": [
+		"I ran round the whole island this morning! Twice! {catch}!",
+		"Want to race to the beach? No? Next time then, {catch}!",
+		"Chopping wood is great exercise. Lucy says I'm her best customer.",
+		"Stretch before you shake trees, {player}. Trust me, {catch}.",
+	],
+	"sleepy": [
+		"I had a lovely nap. Then another one. {catch}.",
+		"The sun's so warm here. Perfect for... dozing... {catch}.",
+		"Have you seen the fireflies at night? I watch them from my window.",
+		"I'm not lazy, I'm resting up for later. Later's important, {catch}.",
+	],
+}
+
+
+func _neighbour(who: Npc) -> void:
+	var data := NpcData.get_character(who.id)
+	var catch: String = data.get("catchphrase", "")
+	var met: Array = flags.get("met_neighbours", [])
+	if not who.id in met:
+		met.append(who.id)
+		flags["met_neighbours"] = met
+		who.hop()
+		await say(who.id, [("Oh, hello! I'm %s. I've just moved in, isn't it exciting? %s!" % [data["name"], catch.capitalize()]),
+			"Poppy told me all about you, {player}. I think we're going to be great friends.",
+			"Come and visit me in the evening. I'll be home after six!"])
+		return
+	var lines: Array = NEIGHBOUR_TALK.get(data.get("personality", "cheerful"), NEIGHBOUR_TALK["cheerful"])
+	var line := String(_small_talk(who.id, lines)).replace("{catch}", catch)
+	await say(who.id, [line])
+	# Now and then, a little present (once a day at most).
+	var gifts: Dictionary = flags.get("neighbour_gifts", {})
+	if int(gifts.get(who.id, -1)) != GameClock.day_key() and (GameClock.day_key() + who.id.length()) % 3 == 0:
+		gifts[who.id] = GameClock.day_key()
+		flags["neighbour_gifts"] = gifts
+		var inside: Dictionary = data.get("inside", {})
+		var pieces: Array = ItemDB.items.keys().filter(func(id): return ItemDB.get_item(id).get("series", "") == inside.get("series", "") \
+			and ItemDB.get_item(id).has("placeable") and ItemDB.get_item(id)["placeable"].get("small", false) == false \
+			and ItemDB.get_item(id).get("variant", "") == inside.get("variant", ""))
+		if not pieces.is_empty():
+			pieces.sort()
+			var gift: String = pieces[GameClock.day_key() % pieces.size()]
+			await say(who.id, ["Oh! I made one of these and I've no room for it. Would you like it? %s!" % catch.capitalize()])
+			_give(gift)
+
+
 func _shop(mode: String) -> void:
 	if Game.shop == null:
 		return
@@ -530,6 +656,6 @@ func _has_home() -> bool:
 	if Game.island == null:
 		return false
 	for obj in Game.island.objects():
-		if obj["kind"] == "placed" and ItemDB.placeable(obj["item"]).has("room"):
+		if obj["kind"] == "placed" and ItemDB.placeable(obj["item"]).has("room") and not obj.has("resident"):
 			return true
 	return false

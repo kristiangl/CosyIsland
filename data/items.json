@@ -162,6 +162,49 @@
 				]
 			}
 		},
+		"plot_kit": {
+			"name": "Neighbour Plot",
+			"category": "kit",
+			"stack": 1,
+			"price": 0,
+			"color": "#c8a070",
+			"desc": "Stake out a plot and someone new will move in the next day.",
+			"placeable": {
+				"footprint": [
+					3,
+					3
+				],
+				"model": "plot",
+				"structure": true,
+				"rotatable": false,
+				"door": true,
+				"plot": true
+			}
+		},
+		"neighbour_house": {
+			"name": "Neighbour's House",
+			"category": "building",
+			"stack": 1,
+			"price": 0,
+			"color": "#e0857a",
+			"desc": "A neighbour's home.",
+			"placeable": {
+				"footprint": [
+					3,
+					3
+				],
+				"model": "house",
+				"structure": true,
+				"rotatable": false,
+				"room": {
+					"size": [
+						7,
+						6
+					],
+					"style": "cottage"
+				}
+			}
+		},
 		"island_office": {
 			"name": "Island Office",
 			"category": "building",

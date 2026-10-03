@@ -78,6 +78,12 @@ static func get_mesh(key: String) -> ArrayMesh:
 			_museum_tent(k)
 		"house":
 			_house(k)
+		"nhouse":
+			# A neighbour's house in their colours.
+			var home: Dictionary = NpcData.get_character(p[1]).get("home", {})
+			_house(k, Color(home.get("wall", "fbf0d9")), Color(home.get("roof", "e0857a")), Color(home.get("door", "9fd3c7")))
+		"plot":
+			_plot(k)
 		"bridge":
 			_bridge(k, int(p[1]))
 		"drop":
@@ -203,6 +209,8 @@ static func key_for(obj: Dictionary) -> String:
 		"drop":
 			return "drop:%s" % obj["item"]
 		"placed":
+			if obj.has("resident"):
+				return "nhouse:" + String(obj["resident"])
 			return ItemDB.placeable(obj["item"]).get("model", "drop:" + obj["item"])
 	return "unknown"
 
@@ -451,15 +459,16 @@ static func _tent(k: MeshKit) -> void:
 
 ## A little cottage: cream walls with timber trim, a tiled roof, round windows, a
 ## chimney and a front door with a step.
-static func _house(k: MeshKit) -> void:
+static func _house(k: MeshKit, wall_col: Color = Color("fbf0d9"), roof_col: Color = Color("e0857a"),
+		door_col: Color = Color("9fd3c7")) -> void:
 	var w := 1.3
 	var d := 1.15
 	var eave := 1.45
 	var top := 2.6
-	var wall := MeshKit.lin(Color("fbf0d9"))
+	var wall := MeshKit.lin(wall_col)
 	var trim := MeshKit.lin(PLANK_DARK)
-	var roof := MeshKit.lin(Color("e0857a"))
-	var roof_dark := MeshKit.lin(Color("c86c64"))
+	var roof := MeshKit.lin(roof_col)
+	var roof_dark := MeshKit.lin(roof_col.darkened(0.12))
 	var glass := MeshKit.lin(Color("a9d7e6"))
 	k.box(Vector3(0, 0.08, 0), Vector3(w * 2 + 0.12, 0.16, d * 2 + 0.12), MeshKit.lin(Color("c9bfb0")))
 	k.box(Vector3(0, eave * 0.5 + 0.08, 0), Vector3(w * 2, eave, d * 2), wall)
@@ -494,7 +503,7 @@ static func _house(k: MeshKit) -> void:
 	k.box(Vector3(0.65, top + 0.3, -0.35), Vector3(0.34, 0.08, 0.34), MeshKit.lin(Color("b3a99a")))
 	# Door with a little roof, step and knob.
 	var front := d + 0.01
-	k.box(Vector3(0, 0.6, front), Vector3(0.62, 1.04, 0.05), MeshKit.lin(Color("9fd3c7")))
+	k.box(Vector3(0, 0.6, front), Vector3(0.62, 1.04, 0.05), MeshKit.lin(door_col))
 	k.box(Vector3(0, 0.6, front + 0.005), Vector3(0.7, 1.12, 0.03), trim)
 	k.sphere(Vector3(0.2, 0.58, front + 0.05), Vector3.ONE * 0.04, MeshKit.lin(Color("f4d672")), 3, 6)
 	k.box(Vector3(0, 0.1, front + 0.22), Vector3(0.9, 0.12, 0.38), MeshKit.lin(Color("c9bfb0")))
@@ -716,6 +725,24 @@ static func _museum_tent(k: MeshKit) -> void:
 	k.sphere(stand + Vector3(-0.16, 0.47, 0.12), Vector3(0.06, 0.03, 0.01), MeshKit.lin(Color("f2922b")), 3, 6)
 	k.cylinder(stand + Vector3(0.18, 0.33, 0), stand + Vector3(0.18, 0.58, 0), 0.09, 0.08, MeshKit.lin(Color("dff3e8")), 10, true, MeshKit.lin(Color("c19a6e")))
 	k.leaf(stand + Vector3(0.18, 0.38, 0.0), Vector3(0.2, 1, 0.3), 0.14, 0.06, MeshKit.lin(Color("7cbb5c")))
+
+
+## A staked-out plot waiting for a neighbour: string between corner stakes, a little
+## sign, and a pile of planks.
+static func _plot(k: MeshKit) -> void:
+	var stake := MeshKit.lin(PLANK_DARK)
+	var string := MeshKit.lin(Color("f6f1e0"))
+	var corners := [Vector3(-1.3, 0, -1.15), Vector3(1.3, 0, -1.15), Vector3(1.3, 0, 1.15), Vector3(-1.3, 0, 1.15)]
+	for i in 4:
+		var a: Vector3 = corners[i]
+		var b: Vector3 = corners[(i + 1) % 4]
+		k.cylinder(a, a + Vector3(0, 0.45, 0), 0.04, 0.035, stake, 5, true)
+		k.cylinder(a + Vector3(0, 0.38, 0), b + Vector3(0, 0.38, 0), 0.008, 0.008, string, 3, false)
+	k.cylinder(Vector3(0, 0, 1.25), Vector3(0, 0.8, 1.25), 0.035, 0.035, stake, 5, true)
+	k.box(Vector3(0, 0.8, 1.27), Vector3(0.6, 0.36, 0.05), MeshKit.lin(Color("fbf0d9")))
+	k.sphere(Vector3(0, 0.82, 1.3), Vector3(0.1, 0.1, 0.02), MeshKit.lin(Color("e0857a")), 3, 8)
+	for i in 4:
+		k.box(Vector3(-0.6, 0.05 + i * 0.07, -0.3 + (i % 2) * 0.05), Vector3(0.9, 0.06, 0.18), MeshKit.lin(PLANK if i % 2 == 0 else PLANK_DARK))
 
 
 static func _bridge(k: MeshKit, length: int) -> void:

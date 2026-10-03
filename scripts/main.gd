@@ -17,6 +17,7 @@ extends Node3D
 ##   --demo=home        pitch the tent, go inside and furnish it (--room=wallpaper,flooring)
 ##   --demo=door        pitch the tent and stand outside its door
 ##   --demo=shop        Lucy's shop has been built; stand in front of it (--demo=museum: Bramble's)
+##   --demo=neighbours  two neighbours have just moved in (--visit: go inside one's home)
 ##   --demo=fishing     fishing off the beach with fish about (--demo=bugs: bugs nearby)
 ##   --demo=flowers     stand by some flowers, one picked, with a flower in your hair
 ##   --house            with --demo: the tent has already become a house
@@ -298,6 +299,9 @@ func _spawn_npcs() -> void:
 		Game.npcs.append(npc)
 	_place_lucy()
 	_place_bramble()
+	for obj in world.objects():
+		if obj.has("resident"):
+			_spawn_neighbour(obj)
 
 
 ## The house Poppy promised goes up once a night has passed (not while you're inside).
@@ -310,6 +314,22 @@ func _check_house() -> void:
 	if Story.finish_museum(world):
 		Events.toast.emit("Someone's put up a tent by the plaza. A museum?")
 		_place_bramble()
+	for who in Story.move_in(world):
+		Events.toast.emit("%s has moved in! Go and say hello." % NpcData.display_name(who))
+		_spawn_neighbour(world.building_of(who))
+
+
+## A neighbour, out and about near their house.
+func _spawn_neighbour(house: Dictionary) -> void:
+	if house.is_empty() or Story.npc(house["resident"]) != null:
+		return
+	var at := world.outside_door(house)
+	var npc := Npc.new()
+	world.add_child(npc)
+	npc.setup(house["resident"], world, at["position"], at["facing"])
+	npc.wanders = true
+	npc.home = at["position"]
+	Game.npcs.append(npc)
 
 
 ## Bramble comes to the island with his museum and stands at its door.
@@ -365,6 +385,10 @@ func _enter_home(uid: int, instant := false) -> void:
 	var def := ItemDB.placeable(home.get("item", ""))
 	if _going_through_door or room != null or not def.has("room"):
 		return
+	var resident: String = home.get("resident", "")
+	if resident != "" and Npc.out_at(GameClock.hour_float()):
+		Events.toast.emit("Nobody's home. %s is out and about until six." % NpcData.display_name(resident))
+		return
 	_going_through_door = true
 	Game.mode = Game.Mode.MENU
 	if not instant:
@@ -376,10 +400,32 @@ func _enter_home(uid: int, instant := false) -> void:
 	room.room_style = def["room"]["style"]
 	add_child(room)
 	var first_visit := not _rooms.has(str(uid))
+	room.visitor = resident != ""
 	room.setup(IslandData.room(size[0], size[1]), _rooms.get(str(uid), {}))
-	if first_visit:
+	if first_visit and resident != "":
+		_furnish_for(room, resident)
+	elif first_visit:
 		# Every new home comes with somewhere to sleep, against the back wall.
 		room.place_item("sleeping_bag", Rect2i(0, 0, 1, 2), 0)
+	if resident != "":
+		# They're home: standing by their table.
+		var host := Npc.new()
+		room.add_child(host)
+		# The free floor tile nearest the middle of the room, off the path to the door.
+		var spot := Vector3(size[0] * 0.5, 0, size[1] * 0.5)
+		var best := INF
+		var door := room.data.room_door()
+		for z in size[1]:
+			for x in size[0]:
+				var c := Vector3(x + 0.5, 0, z + 0.5)
+				if x != door.x and room.object_at(x, z).is_empty() and room.rug_at(x, z).is_empty() \
+						and room.is_walkable(c.x, c.z) and c.distance_to(Vector3(size[0] * 0.6, 0, size[1] * 0.45)) < best:
+					best = c.distance_to(Vector3(size[0] * 0.6, 0, size[1] * 0.45))
+					spot = c
+		host.setup(resident, room, spot, Vector3(-0.5, 0, 1).normalized())
+		room.reserve(Vector2i(floori(spot.x), floori(spot.z)))
+		Game.npcs.append(host)
+		room.tree_exiting.connect(func(): Game.npcs.erase(host))
 	_home_uid = uid
 	_switch_world(room)
 	var spawn := room.data.spawn
@@ -447,6 +493,25 @@ func _run_demo() -> void:
 		Story.flags["tent_gift"] = true
 		Story.flags["house_day"] = GameClock.day_key() - 1
 		_check_house()
+	if Game.args["demo"] == "neighbours":
+		# Two plots staked out yesterday, so two neighbours have just moved in.
+		var placed := 0
+		for r in range(3, 16):
+			for dx: int in [-6, 4]:
+				var rect := Rect2i(spawn + Vector2i(dx, r), Vector2i(3, 3))
+				if placed < 2 and world.can_place(rect, player.position) and world.door_clear("plot_kit", rect, 0):
+					world.place_item("plot_kit", rect, 0)["plot_day"] = world.day_key - 1
+					placed += 1
+		_check_house()
+		var homes := world.objects().filter(func(o): return o.has("resident"))
+		if not homes.is_empty():
+			var at := world.outside_door(homes[0])
+			player.position = at["position"] + Vector3(0.6, 0, 1.8)
+			player.facing = Vector3(0, 0, -1)
+			camera_rig.snap()
+			if Game.args.has("visit"):
+				await _enter_home(homes[0]["uid"], true)
+		return
 	if Game.args["demo"] == "museum":
 		# As if Bramble arrived last night with the first specimens.
 		Story.flags["museum_gifts"] = ["sea_bass", "koi", "white_butterfly", "ladybug", "cicada"]
@@ -605,6 +670,22 @@ func _take_screenshot(path: String, frames: int) -> void:
 	image.save_png(path)
 	print("Saved screenshot to ", path)
 	get_tree().quit()
+
+
+## A neighbour's room the first time anyone visits: their wallpaper and flooring and a
+## room's worth of their favourite series.
+func _furnish_for(r: World, who: String) -> void:
+	var inside: Dictionary = NpcData.get_character(who).get("inside", {})
+	for part in ["wall", "floor"]:
+		if inside.has(part):
+			r.set_room_look(inside[part])
+	for entry in _series_layout(inside.get("series", "meadow"), inside.get("variant", "")):
+		var size: Array = ItemDB.placeable(entry[0])["footprint"]
+		var dims := Vector2i(size[0], size[1]) if entry[2] % 2 == 0 else Vector2i(size[1], size[0])
+		var rect := Rect2i(entry[1], dims)
+		var fits := r.can_place_rug(rect) if ItemDB.placeable(entry[0]).get("rug", false) else r.can_place(rect, Vector3(-10, 0, -10))
+		if fits:
+			r.place_item(entry[0], rect, entry[2])
 
 
 ## A room's worth of one furniture series for --demo=home: [item, tile, rotation] by kind.

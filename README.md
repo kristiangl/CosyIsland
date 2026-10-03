@@ -24,6 +24,10 @@ A cosy island life game about crafting and decorating, made with Godot 4.
 | --- | --- | --- |
 | ![](docs/screenshots/fishing.png) | ![](docs/screenshots/lucy_shop.png) | ![](docs/screenshots/journal.png) |
 
+| Neighbours | Visiting a neighbour | The museum |
+| --- | --- | --- |
+| ![](docs/screenshots/neighbours.png) | ![](docs/screenshots/neighbour_home.png) | ![](docs/screenshots/museum.png) |
+
 | Character creator | Island Phone | DIY workbench |
 | --- | --- | --- |
 | ![](docs/screenshots/creator.png) | ![](docs/screenshots/phone.png) | ![](docs/screenshots/crafting.png) |
@@ -91,6 +95,9 @@ On-screen hints follow whatever you last touched, keyboard or controller.
   by time of day. Cast near a fish's shadow and press when it bites; creep up on bugs
   with a net (running scares them off). Give Poppy five different ones and her friend
   Bramble, a naturalist, arrives with a museum tent; the journal keeps a critter log.
+- Neighbours: buy a plot from Poppy, stake it out, and one of eight animal neighbours
+  moves in the next day. They wander near home by day, chat in their own way and
+  sometimes give you furniture, and you can visit their furnished homes after six.
 - Chop wood, shake trees for fruit and branches (and the odd piece of furniture), hit
   rocks for stone, clay and iron (one rock a day gives acorns).
 - DIY workbench with 61 recipes: tools and furniture. Message bottles wash up each day

@@ -31,6 +31,7 @@ func _run() -> void:
 	_test_lucy_shop()
 	_test_critters()
 	_test_museum()
+	_test_neighbours()
 	print("\n%d checks, %d failures" % [_checks, _failures])
 	get_tree().quit(1 if _failures > 0 else 0)
 
@@ -819,3 +820,45 @@ func _test_museum() -> void:
 	w.free()
 	Journal.reset()
 	Story.flags = saved_flags
+
+
+func _test_neighbours() -> void:
+	check(NpcData.neighbours().size() >= 8, "there are neighbours who might move in")
+	for id: String in NpcData.neighbours():
+		var n := NpcData.get_character(id)
+		check(n.has("species") and n.has("home") and Story.NEIGHBOUR_TALK.has(n["personality"]), "%s is ready to move in" % id)
+		check(ItemDB.series.has(n["inside"]["series"]) and ItemDB.has_item(n["inside"]["wall"]) and ItemDB.has_item(n["inside"]["floor"]), "%s's home can be furnished" % id)
+	var d := IslandGenerator.generate(7)
+	var w := World.new()
+	add_child(w)
+	w.setup(d)
+	var spot := Rect2i()
+	for r in range(3, 20):
+		var rect := Rect2i(d.spawn + Vector2i(-6, r), Vector2i(3, 3))
+		if spot.size == Vector2i.ZERO and w.can_place(rect, Vector3(-10, 0, -10)) and w.door_clear("plot_kit", rect, 0):
+			spot = rect
+	var plot := w.place_item("plot_kit", spot, 0)
+	check(plot.get("plot_day", -1) == w.day_key, "a plot remembers the day it was staked out")
+	check(Story.move_in(w).is_empty(), "nobody moves in the same day")
+	w.day_key += 1
+	var arrived := Story.move_in(w)
+	check(arrived.size() == 1 and plot["item"] == "neighbour_house" and plot["resident"] == arrived[0], "someone moves in the next day")
+	check(w.building_of(arrived[0]) == plot and Models.key_for(plot) == "nhouse:" + arrived[0], "into a house in their own colours")
+	check(Models.get_mesh(Models.key_for(plot)).get_surface_count() > 0, "the house has a model")
+	check(Npc.out_at(10.0) and not Npc.out_at(20.0), "neighbours are out by day and home in the evening")
+	var room := World.new()
+	room.interior = true
+	room.visitor = true
+	add_child(room)
+	room.setup(IslandData.room(7, 6))
+	var chair := room.place_item("wooden_chair", Rect2i(1, 1, 1, 1), 0)
+	check(not room.pack_up(chair), "you can't take things from a neighbour's home")
+	room.free()
+	var npc := Npc.new()
+	w.add_child(npc)
+	npc.setup(arrived[0], w, w.outside_door(plot)["position"], Vector3(0, 0, 1))
+	npc.wanders = true
+	npc.home = npc.position
+	npc._pick_target()
+	check(w.is_walkable(npc._target.x, npc._target.z), "neighbours stroll to places they can stand")
+	w.free()

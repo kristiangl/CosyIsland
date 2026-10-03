@@ -48,6 +48,9 @@ func begin(slot: int) -> void:
 	var def := ItemDB.placeable(item)
 	if def.is_empty():
 		return
+	if world.visitor:
+		Events.toast.emit("Best not rearrange someone else's home!")
+		return
 	if world.interior and def.get("structure", false):
 		Events.toast.emit("That needs to go outside.")
 		return

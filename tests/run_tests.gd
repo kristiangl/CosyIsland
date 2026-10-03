@@ -32,6 +32,7 @@ func _run() -> void:
 	_test_critters()
 	_test_museum()
 	_test_neighbours()
+	_test_friendship()
 	print("\n%d checks, %d failures" % [_checks, _failures])
 	get_tree().quit(1 if _failures > 0 else 0)
 
@@ -862,3 +863,28 @@ func _test_neighbours() -> void:
 	npc._pick_target()
 	check(w.is_walkable(npc._target.x, npc._target.z), "neighbours stroll to places they can stand")
 	w.free()
+
+
+func _test_friendship() -> void:
+	var saved_flags := Story.flags.duplicate(true)
+	Story.flags.clear()
+	check(Story.hearts("biscuit") == 0, "new neighbours start as strangers")
+	Story.befriend("biscuit", 8)
+	check(Story.hearts("biscuit") == 2, "friendship fills hearts")
+	Story.befriend("biscuit", 100)
+	check(Story.hearts("biscuit") == 5, "up to five")
+	var asked := 0
+	for id: String in NpcData.neighbours():
+		var want := Story.request_for(id)
+		check(want == Story.request_for(id), "%s asks for the same thing all day" % id)
+		check(want == "" or ItemDB.has_item(want), "%s asks for a real item (%s)" % [id, want])
+		if want != "":
+			asked += 1
+	check(asked > 0 and asked < NpcData.neighbours().size(), "some neighbours ask for favours each day, not all (%d)" % asked)
+	for p: String in Story.LIKES:
+		for cat: String in Story.LIKES[p]:
+			check(ItemDB.items.values().any(func(d): return d.get("category", "") == cat), "%s neighbours like things that exist (%s)" % [p, cat])
+	for id: String in NpcData.neighbours():
+		var piece := Story._their_piece(NpcData.get_character(id))
+		check(ItemDB.has_item(piece) and ItemDB.get_item(piece).has("placeable"), "%s has furniture to give" % id)
+	Story.flags = saved_flags

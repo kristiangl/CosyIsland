@@ -22,7 +22,7 @@ extends Node3D
 ##   --demo=flowers     stand by some flowers, one picked, with a flower in your hair
 ##   --house            with --demo: the tent has already become a house
 ##   --series=ID        with --demo or --demo=home: furniture from one series (--variant=ID)
-##   --ui=pockets|pause|map|creator|crafting|customise|journal|exchange|critters|placing|intro|ask|lucy|sleep|shop|sell  (--tab=N picks a creator tab, --try=key:id,... dresses up, --closet=TEXT opens the wardrobe with clothes whose ids contain TEXT)  open a menu or mode (for screenshots)
+##   --ui=pockets|pause|map|creator|crafting|customise|journal|exchange|critters|friends|neighbour|placing|intro|ask|lucy|sleep|shop|sell  (--tab=N picks a creator tab, --try=key:id,... dresses up, --closet=TEXT opens the wardrobe with clothes whose ids contain TEXT)  open a menu or mode (for screenshots)
 
 const AUTOSAVE_SECONDS := 60.0
 
@@ -193,6 +193,28 @@ func _ready() -> void:
 			for id: String in ["sea_bass", "white_butterfly", "ladybug"]:
 				Journal.donate(id)
 			hud.journal.open("critters")
+		"neighbour":
+			# Chatting with a neighbour who's asked for a favour.
+			Story.flags["met_neighbours"] = ["biscuit"]
+			var rect := Rect2i(world.data.spawn + Vector2i(-6, 6), Vector2i(3, 3))
+			var house := world.place_item("plot_kit", rect, 0)
+			house["item"] = "neighbour_house"
+			house["resident"] = "biscuit"
+			_spawn_neighbour(house)
+			var npc := Story.npc("biscuit")
+			npc.wanders = false
+			npc.position = player.position + Vector3(1.0, 0, 0.2)
+			player.facing = Vector3(1, 0, 0)
+			Story.talk_to(npc)
+		"friends":
+			Story.flags["met_neighbours"] = ["biscuit", "maple"]
+			Story.flags["friendship"] = {"biscuit": 16, "maple": 4}
+			for i in 2:
+				var rect := Rect2i(world.data.spawn + Vector2i(-6 + i * 10, 6), Vector2i(3, 3))
+				var obj := world.place_item("plot_kit", rect, 0)
+				obj["item"] = "neighbour_house"
+				obj["resident"] = ["biscuit", "maple"][i]
+			hud.journal.open("neighbours")
 		"journal", "exchange":
 			Journal.add("wood", 12)
 			Journal.add("crafted", 2)

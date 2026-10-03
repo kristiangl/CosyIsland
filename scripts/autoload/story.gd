@@ -562,6 +562,64 @@ const NEIGHBOUR_TALK := {
 }
 
 
+## What each personality loves to be given (item categories).
+const LIKES := {
+	"cheerful": ["flower", "clothing"], "bookish": ["furniture", "bug"],
+	"sporty": ["fruit", "fish"], "sleepy": ["clothing", "furniture"],
+}
+## Friendship points for each heart (five hearts in all).
+const HEART_POINTS := [3, 8, 15, 24, 35]
+## Friendship gained from gifts each day, at most, per neighbour.
+const GIFT_POINTS_PER_DAY := 6
+
+
+func friendship(id: String) -> int:
+	return int(flags.get("friendship", {}).get(id, 0))
+
+
+func befriend(id: String, points: int) -> void:
+	var f: Dictionary = flags.get("friendship", {})
+	f[id] = int(f.get(id, 0)) + points
+	flags["friendship"] = f
+
+
+## 0 to 5 hearts.
+func hearts(id: String) -> int:
+	var n := 0
+	for p: int in HEART_POINTS:
+		if friendship(id) >= p:
+			n += 1
+	return n
+
+
+## Today's favour a neighbour would like (an item id), or "" if they don't need anything
+## today. About half of them ask for something each day.
+func request_for(id: String) -> String:
+	var day := GameClock.day_key()
+	var reqs: Dictionary = flags.get("requests", {})
+	var r: Dictionary = reqs.get(id, {})
+	if int(r.get("day", -1)) == day:
+		return "" if r.get("done", false) else String(r.get("item", ""))
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(id) + day * 7
+	var item := ""
+	if rng.randf() < 0.5:
+		var pool: Array = ["wood", "stone", "clay", "tree_branch"]
+		if Game.island:
+			var d := Game.island.data
+			pool.append(d.native_fruit)
+			for colour: String in ItemDB.flowers.get(d.native_flower, {}).get("colors", {}):
+				pool.append("%s_%s" % [d.native_flower, colour])
+		for c: Dictionary in ItemDB.fish.values() + ItemDB.bugs.values():
+			if int(c.get("weight", 1)) >= 8:
+				pool.append(c["id"])
+		pool.sort()
+		item = pool[rng.randi() % pool.size()]
+	reqs[id] = {"day": day, "item": item, "done": false}
+	flags["requests"] = reqs
+	return item
+
+
 func _neighbour(who: Npc) -> void:
 	var data := NpcData.get_character(who.id)
 	var catch: String = data.get("catchphrase", "")
@@ -569,28 +627,150 @@ func _neighbour(who: Npc) -> void:
 	if not who.id in met:
 		met.append(who.id)
 		flags["met_neighbours"] = met
+		befriend(who.id, 1)
 		who.hop()
 		await say(who.id, [("Oh, hello! I'm %s. I've just moved in, isn't it exciting? %s!" % [data["name"], catch.capitalize()]),
 			"Poppy told me all about you, {player}. I think we're going to be great friends.",
 			"Come and visit me in the evening. I'll be home after six!"])
 		return
+	# The first chat each day counts towards being friends.
+	var chatted: Dictionary = flags.get("chatted", {})
+	if int(chatted.get(who.id, -1)) != GameClock.day_key():
+		chatted[who.id] = GameClock.day_key()
+		flags["chatted"] = chatted
+		befriend(who.id, 1)
 	var lines: Array = NEIGHBOUR_TALK.get(data.get("personality", "cheerful"), NEIGHBOUR_TALK["cheerful"])
-	var line := String(_small_talk(who.id, lines)).replace("{catch}", catch)
-	await say(who.id, [line])
-	# Now and then, a little present (once a day at most).
+	var greeting := String(_small_talk(who.id, lines)).replace("{catch}", catch)
+	var wanted := request_for(who.id)
+	var options := ["Let's chat!", "I've got something for you", "Need anything?", "Bye!"]
+	if wanted != "" and Inventory.count_of(wanted) > 0:
+		options[2] = "Here's your %s!" % ItemDB.display_name(wanted).to_lower()
+	match await ask(who.id, greeting, options):
+		0:
+			await say(who.id, [_chat_line(who.id, data)])
+		1:
+			await _gift_to(who, data)
+		2:
+			await _favour(who, data, wanted)
+		_:
+			await say(who.id, ["See you around, {player}! %s!" % catch.capitalize()])
+			return
+	await _maybe_present(who, data)
+
+
+## Chatter that warms up as you become friends.
+func _chat_line(id: String, data: Dictionary) -> String:
+	var catch: String = data.get("catchphrase", "")
+	var h := hearts(id)
+	if h >= 4:
+		return String(_small_talk(id + "_close", [
+			"You know, {player}, I'm really glad I moved here. You're the best, %s." % catch,
+			"I told my old friends all about you. They're very jealous, %s!" % catch,
+			"Whenever I'm feeling down I think of our chats. Silly, isn't it? %s." % catch.capitalize(),
+		]))
+	if h >= 2:
+		return String(_small_talk(id + "_friend", [
+			"I keep a little list of things I like. You're on it, {player}! %s!" % catch.capitalize(),
+			"Have you been to see Bramble's collection? I go every week, %s." % catch,
+			"Let's go fishing together one day. You can do the catching, %s." % catch,
+		]))
+	var lines: Array = NEIGHBOUR_TALK.get(data.get("personality", "cheerful"), NEIGHBOUR_TALK["cheerful"])
+	return String(_small_talk(id + "_chat", lines)).replace("{catch}", catch)
+
+
+## Lets the player pick something from their pockets to give.
+func _gift_to(who: Npc, data: Dictionary) -> void:
+	var choices: Array[String] = []
+	for slot in Inventory.slots:
+		var id: String = slot.get("id", "")
+		if id != "" and not id in choices and not ItemDB.is_tool(id) and choices.size() < 5:
+			choices.append(id)
+	if choices.is_empty():
+		await say(who.id, ["Your pockets are empty! That's all right, the thought counts."])
+		return
+	var options: Array = choices.map(func(id): return ItemDB.display_name(id))
+	options.append("Never mind")
+	var pick := await ask("", "What shall I give %s?" % data["name"], options)
+	if pick >= choices.size():
+		return
+	var gift := choices[pick]
+	Inventory.remove_item(gift, 1)
+	Journal.add("gifts_given")
+	var liked: bool = ItemDB.get_item(gift).get("category", "") in LIKES.get(data.get("personality", ""), [])
+	var given: Dictionary = flags.get("gift_points", {})
+	var today: Dictionary = given.get(who.id, {})
+	if int(today.get("day", -1)) != GameClock.day_key():
+		today = {"day": GameClock.day_key(), "points": 0}
+	var points := mini(4 if liked else 2, GIFT_POINTS_PER_DAY - int(today["points"]))
+	if points > 0:
+		befriend(who.id, points)
+		today["points"] = int(today["points"]) + points
+	given[who.id] = today
+	flags["gift_points"] = given
+	var name := ItemDB.display_name(gift).to_lower()
+	if liked:
+		who.hop()
+		_npc_cheer(who.id)
+		await say(who.id, ["A %s? For me? Oh, {player}, I love it! %s!" % [name, String(data.get("catchphrase", "")).capitalize()]])
+	else:
+		await say(who.id, ["A %s! How kind of you. Thank you, {player}." % name])
+
+
+func _favour(who: Npc, data: Dictionary, wanted: String) -> void:
+	var catch: String = data.get("catchphrase", "")
+	if wanted == "":
+		await say(who.id, ["Not today, thanks! But it's sweet of you to ask, %s." % catch])
+		return
+	var name := ItemDB.display_name(wanted).to_lower()
+	if Inventory.count_of(wanted) == 0:
+		await say(who.id, ["Actually, yes! I'd love a %s. Could you bring me one today? %s!" % [name, catch.capitalize()]])
+		return
+	Inventory.remove_item(wanted, 1)
+	var reqs: Dictionary = flags["requests"]
+	reqs[who.id]["done"] = true
+	befriend(who.id, 3)
+	Journal.add("favours")
+	who.hop()
+	_npc_cheer(who.id)
+	await say(who.id, ["A %s! Just what I needed. You're a star, {player}!" % name])
+	# A thank-you: acorns, or something from home.
+	var piece := _their_piece(data)
+	if piece != "" and (GameClock.day_key() + hearts(who.id)) % 2 == 0:
+		await say(who.id, ["Here, have this. I made it myself, %s." % catch])
+		_give(piece)
+	else:
+		var acorns := 300 + hearts(who.id) * 100
+		Inventory.add_currency(acorns)
+		await say(who.id, ["Here's %d acorns for your trouble. No arguing!" % acorns])
+
+
+## A piece of furniture from the neighbour's favourite series (not a little one).
+func _their_piece(data: Dictionary) -> String:
+	var inside: Dictionary = data.get("inside", {})
+	var pieces: Array = ItemDB.items.keys().filter(func(id): return ItemDB.get_item(id).get("series", "") == inside.get("series", "") \
+		and ItemDB.get_item(id).has("placeable") and not ItemDB.get_item(id)["placeable"].get("small", false) \
+		and ItemDB.get_item(id).get("variant", "") == inside.get("variant", ""))
+	if pieces.is_empty():
+		return ""
+	pieces.sort()
+	return pieces[(GameClock.day_key() + friendship(String(data.get("name", "")))) % pieces.size()]
+
+
+## Now and then (more often as friends), a little present, once a day at most.
+func _maybe_present(who: Npc, data: Dictionary) -> void:
 	var gifts: Dictionary = flags.get("neighbour_gifts", {})
-	if int(gifts.get(who.id, -1)) != GameClock.day_key() and (GameClock.day_key() + who.id.length()) % 3 == 0:
-		gifts[who.id] = GameClock.day_key()
-		flags["neighbour_gifts"] = gifts
-		var inside: Dictionary = data.get("inside", {})
-		var pieces: Array = ItemDB.items.keys().filter(func(id): return ItemDB.get_item(id).get("series", "") == inside.get("series", "") \
-			and ItemDB.get_item(id).has("placeable") and ItemDB.get_item(id)["placeable"].get("small", false) == false \
-			and ItemDB.get_item(id).get("variant", "") == inside.get("variant", ""))
-		if not pieces.is_empty():
-			pieces.sort()
-			var gift: String = pieces[GameClock.day_key() % pieces.size()]
-			await say(who.id, ["Oh! I made one of these and I've no room for it. Would you like it? %s!" % catch.capitalize()])
-			_give(gift)
+	if int(gifts.get(who.id, -1)) == GameClock.day_key():
+		return
+	var every := maxi(1, 4 - hearts(who.id) / 2)
+	if (GameClock.day_key() + who.id.length()) % every != 0:
+		return
+	var piece := _their_piece(data)
+	if piece == "":
+		return
+	gifts[who.id] = GameClock.day_key()
+	flags["neighbour_gifts"] = gifts
+	await say(who.id, ["Oh! I made one of these and I've no room for it. Would you like it? %s!" % String(data.get("catchphrase", "")).capitalize()])
+	_give(piece)
 
 
 func _shop(mode: String) -> void:

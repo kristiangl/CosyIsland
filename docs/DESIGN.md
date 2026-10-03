@@ -152,6 +152,8 @@ Milestone 3b:
   a critter log in the journal
 - [x] Neighbours (data/neighbours.json): plots from Poppy, move-ins overnight, houses in
   their colours, wandering by day, personality chat and gifts, furnished homes to visit
+- [x] Friendship: daily chats, presents (each personality loves some kinds of thing) and
+  favours fill five hearts; closer friends chat warmly and give presents more often
 - [x] Flowers: picked blooms regrow overnight, worn in hair or put in vases; plants dug
   up with a shovel and replanted (breeding later)
 
@@ -159,7 +161,7 @@ Next milestones (suggested order):
 3c. Bigger house (more rooms) and outdoor house colours. Clothes as items instead of
    everything unlocked, sold by Lucy. Time travel moves out of the phone into an
    options menu.
-4. Daily visitors; more neighbour life (requests, friendship, moving out, more species);
+4. Daily visitors; more neighbour life (moving out, more species);
    the clothes shop run by Daisy and Morris.
 5. The museum building: Bramble's tent grows into a real museum with exhibits inside
    (materials project after enough donations).

@@ -2,9 +2,10 @@ class_name JournalMenu
 extends PanelContainer
 ## Poppy's Island Journal, from the phone. Four tabs (L/R, Q/E or click): Today's five
 ## tasks, Milestones, the stamp Exchange where A buys, and the Critters you've caught
-## (and given to the museum). B closes.
+## (and given to the museum), and your Neighbours: how good friends you are, what they
+## like and what they'd like today. B closes.
 
-const TABS := ["today", "milestones", "exchange", "critters"]
+const TABS := ["today", "milestones", "exchange", "critters", "neighbours"]
 
 var _tab := "today"
 var _tabs: Array[Button] = []
@@ -37,13 +38,14 @@ func _ready() -> void:
 	title_row.add_theme_constant_override("separation", 8)
 	left.add_child(title_row)
 	var title := Label.new()
-	title.text = "Island Journal"
-	title.add_theme_font_size_override("font_size", 28)
+	title.text = "Journal"
+	title.add_theme_font_size_override("font_size", 26)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title_row.add_child(title)
 	for tab: String in TABS:
 		var b := Button.new()
 		b.text = tab.capitalize()
+		b.add_theme_font_size_override("font_size", 16)
 		b.focus_mode = Control.FOCUS_NONE
 		b.toggle_mode = true
 		b.pressed.connect(_set_tab.bind(tab))
@@ -149,6 +151,11 @@ func _set_tab(tab: String) -> void:
 		"critters":
 			for c: Dictionary in ItemDB.fish.values() + ItemDB.bugs.values():
 				_add_row(JournalRow.new("critters", c))
+		"neighbours":
+			if Game.island:
+				for obj in Game.island.objects():
+					if obj.has("resident"):
+						_add_row(JournalRow.new("neighbours", {"id": obj["resident"]}))
 	if not _rows.is_empty():
 		var first: WeakRef = weakref(_rows[0])
 		(func():
@@ -199,6 +206,15 @@ func _show(row: JournalRow) -> void:
 			_desc.text = d["desc"]
 			var why := Journal.can_buy(d)
 			_detail.text = "%d stamps" % int(d["cost"]) + ("" if why == "" else "\n" + why)
+		"neighbours":
+			var n := NpcData.get_character(d["id"])
+			_name.text = n["name"]
+			var likes: Array = Story.LIKES.get(n.get("personality", ""), [])
+			_desc.text = "%s. Loves being given %s." % [String(n.get("personality", "")).capitalize(),
+				" and ".join(likes.map(func(c): return {"fish": "fish", "bug": "bugs", "fruit": "fruit", "flower": "flowers", "clothing": "clothes", "furniture": "furniture"}.get(c, c)))]
+			var wanted := Story.request_for(d["id"])
+			_detail.text = "%d of 5 hearts" % Story.hearts(d["id"]) + ("\nWould love a %s today" % ItemDB.display_name(wanted).to_lower() if wanted != "" \
+				and d["id"] in Story.flags.get("met_neighbours", []) else "")
 		"critters":
 			var seen: bool = d["id"] in Journal.caught
 			_icon.texture = Icons.get_icon(d["id"]) if seen else null
@@ -248,6 +264,12 @@ class JournalRow:
 	func _draw() -> void:
 		var font := get_theme_default_font()
 		var x := 16.0
+		if kind == "neighbours":
+			draw_string(font, Vector2(16, 34), NpcData.display_name(data["id"]), HORIZONTAL_ALIGNMENT_LEFT, size.x - 190, 20, UIStyle.BROWN)
+			for i in 5:
+				var c := Vector2(size.x - 120 + i * 22, size.y * 0.5)
+				UIIcons.draw(self, "heart", c, 22, Color("e0656b") if i < Story.hearts(data["id"]) else UIStyle.BROWN_LIGHT * Color(1, 1, 1, 0.35))
+			return
 		if kind == "critters":
 			var seen: bool = data["id"] in Journal.caught
 			var tex := Icons.get_icon(data["id"]) if seen else null

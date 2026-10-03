@@ -7,6 +7,8 @@
 		{"id": "angler", "name": "Angler", "stat": "fish", "text": "Catch {n} fish", "goals": [1, 20, 100, 500], "stamps": [150, 400, 1000, 2500]},
 		{"id": "bug_catcher", "name": "Bug Catcher", "stat": "bugs", "text": "Catch {n} bugs", "goals": [1, 20, 100, 500], "stamps": [150, 400, 1000, 2500]},
 		{"id": "curator", "name": "Museum Friend", "stat": "donated", "text": "Donate {n} fish or bugs", "goals": [5, 15, 30, 38], "stamps": [300, 800, 1500, 3000]},
+		{"id": "good_neighbour", "name": "Good Neighbour", "stat": "favours", "text": "Do {n} favours for neighbours", "goals": [1, 10, 50], "stamps": [200, 600, 1500]},
+		{"id": "generous", "name": "Generous", "stat": "gifts_given", "text": "Give {n} presents", "goals": [1, 10, 50], "stamps": [100, 400, 1000]},
 		{"id": "branch_collector", "name": "Twig Gatherer", "stat": "branches", "text": "Shake down {n} branches", "goals": [10, 50, 200], "stamps": [100, 300, 600]},
 		{"id": "maker", "name": "DIY Maker", "stat": "crafted", "text": "Make {n} things at the workbench", "goals": [1, 10, 50, 200], "stamps": [150, 300, 800, 2000]},
 		{"id": "decorator", "name": "Decorator", "stat": "placed", "text": "Place {n} pieces of furniture", "goals": [1, 10, 50, 200], "stamps": [100, 300, 800, 2000]},

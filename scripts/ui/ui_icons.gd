@@ -86,6 +86,10 @@ static func draw(c: CanvasItem, id: String, o: Vector2, s: float, col: Color) ->
 		"moon":
 			c.draw_circle(o, s * 0.34, col)
 			c.draw_circle(o + Vector2(s * 0.14, -s * 0.1), s * 0.28, light)
+		"heart":
+			c.draw_circle(o + Vector2(-s * 0.17, -s * 0.08), s * 0.2, col)
+			c.draw_circle(o + Vector2(s * 0.17, -s * 0.08), s * 0.2, col)
+			c.draw_colored_polygon(PackedVector2Array([o + Vector2(-s * 0.36, 0.0), o + Vector2(s * 0.36, 0.0), o + Vector2(0, s * 0.38)]), col)
 		"journal":
 			# A little book with a ribbon and a stamp.
 			c.draw_rect(Rect2(o + Vector2(-s * 0.32, -s * 0.36), Vector2(s * 0.64, s * 0.72)), col)

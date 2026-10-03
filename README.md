@@ -98,6 +98,8 @@ On-screen hints follow whatever you last touched, keyboard or controller.
 - Neighbours: buy a plot from Poppy, stake it out, and one of eight animal neighbours
   moves in the next day. They wander near home by day, chat in their own way and
   sometimes give you furniture, and you can visit their furnished homes after six.
+  Chat daily, give presents they like and do their favours to fill five hearts of
+  friendship (the journal's Neighbours page shows who likes what).
 - Chop wood, shake trees for fruit and branches (and the odd piece of furniture), hit
   rocks for stone, clay and iron (one rock a day gives acorns).
 - DIY workbench with 61 recipes: tools and furniture. Message bottles wash up each day

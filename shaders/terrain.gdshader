@@ -3,7 +3,8 @@ render_mode world_vertex_coords, specular_disabled;
 
 // Terrain surface. Vertex colour alpha picks the material:
 // 1.0 ground (red = grass weight, blending grass into sand; green = 0 at the foot of a
-// cliff for a little contact shade), 0.75 grass lip on a cliff
+// cliff for a little contact shade; blue = 0 along the top of one for a light rim),
+// 0.75 grass lip on a cliff
 // top, 0.5 cliff face, 0.25 river or pond bed.
 
 #include "res://shaders/include/world.gdshaderinc"
@@ -109,8 +110,10 @@ void fragment() {
 		float grass = smoothstep(0.47, 0.53, COLOR.r + wobble);
 		col = mix(sand_colour(xz, world_pos.y), grass_colour(xz), grass);
 		col = mix(col, paving_colour(xz), plaza_mask(xz));
-		// Soft shade at the foot of cliffs (vertex green is 0 next to a higher tile).
-		col *= mix(0.86, 1.0, smoothstep(0.0, 1.0, COLOR.g));
+		// Soft shade at the foot of cliffs (vertex green is 0 next to a higher tile), and
+		// a narrow light rim along their tops, so drops read from any side.
+		col *= mix(0.82, 1.0, smoothstep(0.0, 1.0, COLOR.g));
+		col = mix(col * 1.09 + vec3(0.015), col, smoothstep(0.12, 0.3, COLOR.b));
 	} else if (kind > 0.625) {
 		col = grass_colour(xz);
 	} else if (kind > 0.375) {

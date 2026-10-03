@@ -130,13 +130,13 @@ static func _cliff(k: MeshKit, a: Vector3, b: Vector3, low_a: float, low_b: floa
 		_wall(k, a, b, low_a, low_b, out, CLIFF_KIND)
 
 
-## Two values per tile corner: the fraction of grass among the land tiles around it (for
-## blending grass into sand along wobbly, rounded lines), and 0 if a tile around it rises
-## above the lowest one (contact shade at the foot of cliffs), else 1.
+## Three values per tile corner: the fraction of grass among the land tiles around it
+## (for blending grass into sand along wobbly, rounded lines), 0 if the tiles around it
+## are at different heights (a cliff edge) else 1, and the highest of them.
 static func _grass_weights(d: IslandData) -> PackedFloat32Array:
 	var w := d.width + 1
 	var out := PackedFloat32Array()
-	out.resize(w * (d.height + 1) * 2)
+	out.resize(w * (d.height + 1) * 3)
 	for cz in d.height + 1:
 		for cx in w:
 			var grass := 0
@@ -155,9 +155,10 @@ static func _grass_weights(d: IslandData) -> PackedFloat32Array:
 					var h := IslandData.tier_height(d.tier(tx, tz))
 					lowest = minf(lowest, h)
 					highest = maxf(highest, h)
-			var i := (cz * w + cx) * 2
+			var i := (cz * w + cx) * 3
 			out[i] = 1.0 if grass + sandy == 0 else float(grass) / (grass + sandy)
 			out[i + 1] = 0.0 if highest - lowest > 0.3 else 1.0
+			out[i + 2] = highest
 	return out
 
 
@@ -169,8 +170,17 @@ static func _top(k: MeshKit, a: Vector3, b: Vector3, c: Vector3, t: int, weights
 	for v in [a, b, c]:
 		var col := Color(1, 1, 1, BED_KIND)
 		if t != T.WATER:
-			var wi := int(round(v.z)) * (width + 1) + int(round(v.x))
-			col = Color(weights[wi * 2], weights[wi * 2 + 1], 1, SURFACE_KIND)
+			# At a cliff edge, the ground below gets a contact shade (green 0) and the
+			# top a light rim (blue 0), so a drop reads even when its wall faces away.
+			var wi := (int(round(v.z)) * (width + 1) + int(round(v.x))) * 3
+			var foot := 1.0
+			var rim := 1.0
+			if weights[wi + 1] < 0.5:
+				if v.y < weights[wi + 2] - 0.15:
+					foot = 0.0
+				else:
+					rim = 0.0
+			col = Color(weights[wi], foot, rim, SURFACE_KIND)
 		ids.append(k.vertex(v, n, col))
 	k.tri(ids[0], ids[1], ids[2], n)
 

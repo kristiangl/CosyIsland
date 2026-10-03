@@ -24,7 +24,8 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   (`-- --shadows`, checks the cel lighting maths).
 - Game screenshot options are listed at the top of `scripts/main.gd` (`--demo`,
   `--demo=decor|sit|home|door|shop|museum|neighbours|flowers|fishing|bugs` (`--house` builds the house first, `--series=id` furnishes
-  the home from one series),
+  the home from one series; `--built` turns the museum tent into the museum, `--visit`
+  goes inside the museum or a neighbour's home),
   `--ui=pockets|pause|map|creator|crafting|customise|placing|intro|ask|lucy|sleep|shop|sell`,
   `--tab=N` and `--try=key:id` for the creator, `--room=wallpaper,flooring`, `--gen=N`,
   `--at=X,Z`, `--hour`).
@@ -47,7 +48,8 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   spawned near the player by time of day; fishing (`cast`/`reel`) and `net`.
 - Neighbours (`data/neighbours.json`, read through `NpcData`): plots become their houses
   overnight (`Story.move_in`, placed objects with a "resident"); their rooms are visitor
-  `World`s (`visitor = true`: nothing can be moved).
+  `World`s (`visitor = true`: nothing can be moved). The museum's hall is a visitor room
+  rebuilt from `Journal.donated` on every visit (`main.gd` `fill_museum`), never saved.
 - `Story` (autoload) holds conversation progress and every character's lines;
   `DialogueBox` shows them. Await its `finished`/`picked` signals, not coroutines.
 - Island generation is versioned (`IslandGenerator.VERSION`, saved as "gen"): bump it

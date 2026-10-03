@@ -31,6 +31,7 @@ func _run() -> void:
 	_test_lucy_shop()
 	_test_critters()
 	_test_museum()
+	_test_museum_building()
 	_test_neighbours()
 	_test_friendship()
 	print("\n%d checks, %d failures" % [_checks, _failures])
@@ -819,6 +820,59 @@ func _test_museum() -> void:
 	check(Journal.donated.size() == 6, "donations are saved")
 	check(JournalMenu.hours_text([4, 21]) == "About from 4am to 9pm." and JournalMenu.hours_text([0, 24]) == "About all day.", "hours read nicely")
 	w.free()
+	Journal.reset()
+	Story.flags = saved_flags
+
+
+func _test_museum_building() -> void:
+	var saved_flags := Story.flags.duplicate(true)
+	Story.flags.clear()
+	Journal.reset()
+	var d := IslandGenerator.generate(7)
+	var w := World.new()
+	add_child(w)
+	w.setup(d)
+	Story.flags["museum_gifts"] = ["sea_bass", "koi", "white_butterfly", "ladybug", "cicada"]
+	Story.flags["museum_day"] = GameClock.day_key() - 1
+	Story.finish_museum(w)
+	check(not Story.museum_building_open(), "the tent will do for a while")
+	for id: String in ItemDB.fish.keys().slice(0, 10) + ItemDB.bugs.keys().slice(0, 10):
+		Journal.donate(id)
+	check(Story.museum_building_open(), "with %d donations Bramble wants a proper museum" % Story.MUSEUM_DONATIONS)
+	Inventory.reset()
+	Inventory.add_item("wood", 15)
+	var needs := Story.MUSEUM_MATERIALS.duplicate()
+	var gave := Story._take_materials(needs)
+	check(gave == {"wood": 15} and int(needs["wood"]) == 25 and Inventory.count_of("wood") == 0, "materials can come a few at a time")
+	Story.flags["museum_build_day"] = GameClock.day_key()
+	check(not Story.finish_museum_building(w), "it takes a night to build")
+	Story.flags["museum_build_day"] = GameClock.day_key() - 1
+	check(Story.finish_museum_building(w) and not w.building("museum").is_empty() and w.building("museum_tent").is_empty(), "the tent becomes the museum")
+	check(not Story.museum_building_open(), "and that's that")
+	check(not Story._has_home(), "the museum isn't a home")
+	var def := ItemDB.placeable("museum")
+	var size: Array = def["room"]["size"]
+	var hall := World.new()
+	hall.interior = true
+	hall.visitor = true
+	hall.room_style = def["room"]["style"]
+	add_child(hall)
+	hall.setup(IslandData.room(size[0], size[1]))
+	load("res://scripts/main.gd").fill_museum(hall)
+	var shown := {}
+	var full := 0
+	for obj in hall.objects():
+		if obj.get("item", "") in ["exhibit_tank", "exhibit_case"]:
+			shown[obj["item"]] = int(shown.get(obj["item"], 0)) + 1
+			if obj["exhibit"] != "":
+				full += 1
+				check(obj["exhibit"] in Journal.donated, "only donated creatures are on show")
+	check(int(shown.get("exhibit_tank", 0)) == ItemDB.fish.size(), "a tank for every fish")
+	check(int(shown.get("exhibit_case", 0)) == ItemDB.bugs.size(), "a case for every bug")
+	check(full == Journal.donated.size(), "every donation is on show")
+	hall.free()
+	w.free()
+	Inventory.reset()
 	Journal.reset()
 	Story.flags = saved_flags
 

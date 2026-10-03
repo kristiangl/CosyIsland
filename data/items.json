@@ -261,6 +261,63 @@
 				"museum": true
 			}
 		},
+		"museum": {
+			"name": "Museum",
+			"category": "building",
+			"stack": 1,
+			"price": 0,
+			"color": "#d8d2c4",
+			"desc": "The island museum: every fish and bug you've donated, on show.",
+			"placeable": {
+				"footprint": [
+					4,
+					3
+				],
+				"model": "museum",
+				"structure": true,
+				"rotatable": false,
+				"museum": true,
+				"room": {
+					"size": [
+						12,
+						9
+					],
+					"style": "museum"
+				}
+			}
+		},
+		"exhibit_tank": {
+			"name": "Fish Tank",
+			"category": "exhibit",
+			"stack": 1,
+			"price": 0,
+			"color": "#a9dce6",
+			"desc": "A fish in the museum's collection.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "exhibit",
+				"rotatable": true
+			}
+		},
+		"exhibit_case": {
+			"name": "Bug Case",
+			"category": "exhibit",
+			"stack": 1,
+			"price": 0,
+			"color": "#dff3e8",
+			"desc": "A bug in the museum's collection.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "exhibit",
+				"rotatable": true
+			}
+		},
 		"stone_axe": {
 			"name": "Stone Axe",
 			"category": "tool",

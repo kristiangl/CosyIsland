@@ -28,6 +28,10 @@ A cosy island life game about crafting and decorating, made with Godot 4.
 | --- | --- | --- |
 | ![](docs/screenshots/neighbours.png) | ![](docs/screenshots/neighbour_home.png) | ![](docs/screenshots/museum.png) |
 
+| The museum building | Inside the museum |
+| --- | --- |
+| ![](docs/screenshots/museum_building.png) | ![](docs/screenshots/museum_hall.png) |
+
 | Character creator | Island Phone | DIY workbench |
 | --- | --- | --- |
 | ![](docs/screenshots/creator.png) | ![](docs/screenshots/phone.png) | ![](docs/screenshots/crafting.png) |
@@ -95,6 +99,8 @@ On-screen hints follow whatever you last touched, keyboard or controller.
   by time of day. Cast near a fish's shadow and press when it bites; creep up on bugs
   with a net (running scares them off). Give Poppy five different ones and her friend
   Bramble, a naturalist, arrives with a museum tent; the journal keeps a critter log.
+  After 15 donations, bring him materials and the tent becomes a real museum, with a
+  tank or case for every creature that fills as you donate.
 - Neighbours: buy a plot from Poppy, stake it out, and one of eight animal neighbours
   moves in the next day. They wander near home by day, chat in their own way and
   sometimes give you furniture, and you can visit their furnished homes after six.

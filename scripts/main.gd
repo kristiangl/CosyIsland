@@ -16,7 +16,8 @@ extends Node3D
 ##   --demo=sit         same, and sit on the chair
 ##   --demo=home        pitch the tent, go inside and furnish it (--room=wallpaper,flooring)
 ##   --demo=door        pitch the tent and stand outside its door
-##   --demo=shop        Lucy's shop has been built; stand in front of it (--demo=museum: Bramble's)
+##   --demo=shop        Lucy's shop has been built; stand in front of it (--demo=museum: Bramble's,
+##                      --built for the finished museum, --visit to go in)
 ##   --demo=neighbours  two neighbours have just moved in (--visit: go inside one's home)
 ##   --demo=fishing     fishing off the beach with fish about (--demo=bugs: bugs nearby)
 ##   --demo=flowers     stand by some flowers, one picked, with a flower in your hair
@@ -268,7 +269,7 @@ func _on_creator_finished(look: Dictionary, player_name: String, island_name: St
 func save_game() -> void:
 	if Game.args.has("screenshot"):
 		return
-	if room:
+	if room and not ItemDB.placeable(world.get_object(_home_uid).get("item", "")).get("museum", false):
 		_rooms[str(_home_uid)] = room.to_save()
 	SaveGame.write({
 		"seed": _seed,
@@ -336,6 +337,8 @@ func _check_house() -> void:
 	if Story.finish_museum(world):
 		Events.toast.emit("Someone's put up a tent by the plaza. A museum?")
 		_place_bramble()
+	if Story.finish_museum_building(world):
+		Events.toast.emit("The museum is finished! Go and look inside.")
 	for who in Story.move_in(world):
 		Events.toast.emit("%s has moved in! Go and say hello." % NpcData.display_name(who))
 		_spawn_neighbour(world.building_of(who))
@@ -357,6 +360,8 @@ func _spawn_neighbour(house: Dictionary) -> void:
 ## Bramble comes to the island with his museum and stands at its door.
 func _place_bramble() -> void:
 	var museum := world.building("museum_tent")
+	if museum.is_empty():
+		museum = world.building("museum")
 	if museum.is_empty():
 		return
 	var bramble := Story.npc("bramble")
@@ -408,6 +413,7 @@ func _enter_home(uid: int, instant := false) -> void:
 	if _going_through_door or room != null or not def.has("room"):
 		return
 	var resident: String = home.get("resident", "")
+	var museum: bool = def.get("museum", false)
 	if resident != "" and Npc.out_at(GameClock.hour_float()):
 		Events.toast.emit("Nobody's home. %s is out and about until six." % NpcData.display_name(resident))
 		return
@@ -422,9 +428,11 @@ func _enter_home(uid: int, instant := false) -> void:
 	room.room_style = def["room"]["style"]
 	add_child(room)
 	var first_visit := not _rooms.has(str(uid))
-	room.visitor = resident != ""
-	room.setup(IslandData.room(size[0], size[1]), _rooms.get(str(uid), {}))
-	if first_visit and resident != "":
+	room.visitor = resident != "" or museum
+	room.setup(IslandData.room(size[0], size[1]), {} if museum else _rooms.get(str(uid), {}))
+	if museum:
+		fill_museum(room)
+	elif first_visit and resident != "":
 		_furnish_for(room, resident)
 	elif first_visit:
 		# Every new home comes with somewhere to sleep, against the back wall.
@@ -467,7 +475,8 @@ func _leave_home() -> void:
 	_going_through_door = true
 	Game.mode = Game.Mode.MENU
 	await hud.fade_out()
-	_rooms[str(_home_uid)] = room.to_save()
+	if not ItemDB.placeable(world.get_object(_home_uid).get("item", "")).get("museum", false):
+		_rooms[str(_home_uid)] = room.to_save()
 	room.queue_free()
 	room = null
 	_switch_world(world)
@@ -539,11 +548,21 @@ func _run_demo() -> void:
 		Story.flags["museum_gifts"] = ["sea_bass", "koi", "white_butterfly", "ladybug", "cicada"]
 		Story.flags["museum_day"] = GameClock.day_key() - 1
 		_check_house()
-		var museum := world.building("museum_tent")
+		if Game.args.has("built"):
+			# --built: the real museum, with half the collection donated.
+			var all: Array = ItemDB.fish.keys() + ItemDB.bugs.keys()
+			for i in all.size():
+				if i % 2 == 0:
+					Journal.donate(all[i])
+			Story.flags["museum_build_day"] = GameClock.day_key() - 1
+			_check_house()
+		var museum := world.building("museum" if Game.args.has("built") else "museum_tent")
 		if not museum.is_empty():
 			player.position = world.outside_door(museum)["position"] + Vector3(-1.2, 0, 2.0)
 			player.facing = Vector3(0.3, 0, -1).normalized()
 			camera_rig.snap()
+			if Game.args.has("visit"):
+				await _enter_home(museum["uid"], true)
 		return
 	if Game.args["demo"] == "shop":
 		# As if Lucy built her shop last night: stand in front of it.
@@ -692,6 +711,37 @@ func _take_screenshot(path: String, frames: int) -> void:
 	image.save_png(path)
 	print("Saved screenshot to ", path)
 	get_tree().quit()
+
+
+## The museum's hall: a fish tank for every fish round the walls and a glass case for
+## every bug down the middle, each empty until that creature is donated.
+static func fill_museum(r: World) -> void:
+	var w := r.data.width
+	var d := r.data.height - 1
+	var door := r.data.room_door()
+	var walls: Array[Vector2i] = []
+	for x in w:
+		walls.append(Vector2i(x, 0))
+	for z in range(1, d - 1):
+		walls.append(Vector2i(0, z))
+		walls.append(Vector2i(w - 1, z))
+	var middle: Array[Vector2i] = []
+	for z in range(2, d - 1, 2):
+		for x in range(2, w - 2):
+			if absi(x - door.x) > 0:
+				middle.append(Vector2i(x, z))
+	var fish: Array = ItemDB.fish.keys()
+	var bugs: Array = ItemDB.bugs.keys()
+	for i in mini(fish.size(), walls.size()):
+		var t: Vector2i = walls[i]
+		var rot := 0 if t.y == 0 else (1 if t.x == 0 else 3)
+		var obj := r.place_item("exhibit_tank", Rect2i(t, Vector2i.ONE), rot)
+		obj["exhibit"] = fish[i] if fish[i] in Journal.donated else ""
+		r.refresh_node(obj)
+	for i in mini(bugs.size(), middle.size()):
+		var obj := r.place_item("exhibit_case", Rect2i(middle[i], Vector2i.ONE), 0)
+		obj["exhibit"] = bugs[i] if bugs[i] in Journal.donated else ""
+		r.refresh_node(obj)
 
 
 ## A neighbour's room the first time anyone visits: their wallpaper and flooring and a

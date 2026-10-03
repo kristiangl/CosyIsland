@@ -14,6 +14,9 @@ const SHOP_MATERIALS := {"wood": 30, "stone": 20, "clay": 10}
 const MUSEUM_SPECIMENS := 5
 ## What Poppy charges for a neighbour's plot.
 const PLOT_COST := 2000
+## Donations before Bramble wants a proper building, and what it takes.
+const MUSEUM_DONATIONS := 15
+const MUSEUM_MATERIALS := {"wood": 40, "stone": 30, "iron_nugget": 10}
 var talking := false
 ## How many times each character has been chatted to today, to cycle their small talk.
 var _chats: Dictionary = {}
@@ -425,18 +428,95 @@ func _bramble(bramble: Npc) -> void:
 			"Every creature tells you something about the island. I intend to listen to all of them.",
 		])
 		return
+	if flags.get("museum_built", false) and not flags.get("museum_thanks", false):
+		flags["museum_thanks"] = true
+		bramble.hop()
+		await say("bramble", ["Isn't it splendid? A proper museum, with tanks and cases for everything!",
+			"Do go in and have a look. Every fish and bug you've brought me is on show."])
+		return
 	var options := ["I'd like to donate", "Tell me about something", "Bye!"]
-	match await ask("bramble", _small_talk("bramble_hello", [
+	var building := museum_building_open()
+	if building:
+		options.insert(2, "About a bigger museum..." if not flags.has("museum_needs") else "I've brought materials")
+	var pick := await ask("bramble", _small_talk("bramble_hello", [
 		"Welcome, welcome! What have you found today?",
 		"Ah, {player}. Come in, mind the jars.",
 		"Hello again! The collection grows, little by little.",
-	]), options):
+	]), options)
+	if building and pick == 2:
+		await _museum_building()
+		return
+	if building and pick > 2:
+		pick -= 1
+	match pick:
 		0:
 			await _donate()
 		1:
 			await say("bramble", [_creature_fact()])
 		_:
 			await say("bramble", ["Do come back. Nature never stops surprising."])
+
+
+## With enough donations, Bramble wants to build a real museum.
+func museum_building_open() -> bool:
+	return flags.get("museum_done", false) and not flags.get("museum_built", false) and not flags.has("museum_build_day") \
+		and (flags.has("museum_needs") or Journal.donated.size() >= MUSEUM_DONATIONS)
+
+
+func _museum_building() -> void:
+	if not flags.has("museum_needs"):
+		await say("bramble", ["The tent is bursting, {player}! Tanks under the table, beetles in my hat...",
+			"What we need is a proper museum, with room for every creature on the island.",
+			"I've drawn up plans. I'd need %s." % _list_needs(MUSEUM_MATERIALS)])
+		if await ask("bramble", "Would you help me gather them?", ["Of course!", "Maybe later"]) != 0:
+			await say("bramble", ["Whenever you're ready. The beetles and I will manage."])
+			return
+		flags["museum_needs"] = MUSEUM_MATERIALS.duplicate()
+		await say("bramble", ["Marvellous! Bring them a little at a time if you like."])
+		return
+	var needs: Dictionary = flags["museum_needs"]
+	var gave := _take_materials(needs)
+	if gave.is_empty():
+		await say("bramble", ["We still need %s." % _list_needs(needs)])
+		return
+	if needs.is_empty():
+		flags.erase("museum_needs")
+		flags["museum_build_day"] = GameClock.day_key()
+		_npc_cheer("bramble")
+		await say("bramble", ["That's everything! Lucy and I will build it tonight.",
+			"Come and see tomorrow. Do wear sensible shoes, it's a very big museum."])
+		return
+	await say("bramble", ["Thank you! That's %s. Still need %s." % [_list_needs(gave), _list_needs(needs)]])
+
+
+## Takes whatever's needed from the pockets, crossing it off. Returns what was taken.
+func _take_materials(needs: Dictionary) -> Dictionary:
+	var gave := {}
+	for mat: String in needs:
+		var n := mini(int(needs[mat]), Inventory.count_of(mat))
+		if n > 0:
+			Inventory.remove_item(mat, n)
+			needs[mat] = int(needs[mat]) - n
+			gave[mat] = n
+	for mat: String in needs.keys():
+		if int(needs[mat]) <= 0:
+			needs.erase(mat)
+	return gave
+
+
+## The tent becomes the museum the night after the materials are in.
+func finish_museum_building(island: World) -> bool:
+	if not flags.has("museum_build_day") or flags.get("museum_built", false):
+		return false
+	if GameClock.day_key() <= int(flags["museum_build_day"]):
+		return false
+	var tent := island.building("museum_tent")
+	if tent.is_empty():
+		return false
+	tent["item"] = "museum"
+	island.refresh_node(tent)
+	flags["museum_built"] = true
+	return true
 
 
 func _donate() -> void:
@@ -836,6 +916,7 @@ func _has_home() -> bool:
 	if Game.island == null:
 		return false
 	for obj in Game.island.objects():
-		if obj["kind"] == "placed" and ItemDB.placeable(obj["item"]).has("room") and not obj.has("resident"):
+		if obj["kind"] == "placed" and ItemDB.placeable(obj["item"]).has("room") and not obj.has("resident") \
+				and not ItemDB.placeable(obj["item"]).get("museum", false):
 			return true
 	return false

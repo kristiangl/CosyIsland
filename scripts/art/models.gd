@@ -76,6 +76,10 @@ static func get_mesh(key: String) -> ArrayMesh:
 			_lucy_shop(k)
 		"museum_tent":
 			_museum_tent(k)
+		"museum":
+			_museum(k)
+		"exhibit":
+			_exhibit(k, p[1] if p.size() > 1 else "tank", p[2] if p.size() > 2 else "")
 		"house":
 			_house(k)
 		"nhouse":
@@ -209,6 +213,8 @@ static func key_for(obj: Dictionary) -> String:
 		"drop":
 			return "drop:%s" % obj["item"]
 		"placed":
+			if obj.has("exhibit"):
+				return "exhibit:%s:%s" % ["tank" if obj["item"] == "exhibit_tank" else "case", obj["exhibit"]]
 			if obj.has("resident"):
 				return "nhouse:" + String(obj["resident"])
 			return ItemDB.placeable(obj["item"]).get("model", "drop:" + obj["item"])
@@ -743,6 +749,100 @@ static func _plot(k: MeshKit) -> void:
 	k.sphere(Vector3(0, 0.82, 1.3), Vector3(0.1, 0.1, 0.02), MeshKit.lin(Color("e0857a")), 3, 8)
 	for i in 4:
 		k.box(Vector3(-0.6, 0.05 + i * 0.07, -0.3 + (i % 2) * 0.05), Vector3(0.9, 0.06, 0.18), MeshKit.lin(PLANK if i % 2 == 0 else PLANK_DARK))
+
+
+## The museum: a stone hall with columns, steps, a pediment with a leaf emblem and
+## banners either side of tall doors.
+static func _museum(k: MeshKit) -> void:
+	var stone := MeshKit.lin(Color("e8e2d6"))
+	var stone_dark := MeshKit.lin(Color("cfc6b6"))
+	var roof := MeshKit.lin(Color("8fa86f"))
+	var w := 1.9
+	var d := 1.3
+	var wall_h := 1.9
+	k.box(Vector3(0, 0.07, 0), Vector3(w * 2 + 0.2, 0.14, d * 2 + 0.2), stone_dark)
+	k.box(Vector3(0, 0.2, d + 0.12), Vector3(1.6, 0.12, 0.3), stone_dark, stone)
+	k.box(Vector3(0, 0.14 + wall_h * 0.5, -0.05), Vector3(w * 2 - 0.2, wall_h, d * 2 - 0.3), stone)
+	# Columns along the front under a deep cornice.
+	for i in 6:
+		var x := lerpf(-w + 0.15, w - 0.15, i / 5.0)
+		k.cylinder(Vector3(x, 0.14, d - 0.05), Vector3(x, 0.14 + wall_h, d - 0.05), 0.12, 0.1, stone, 10, false)
+		k.box(Vector3(x, 0.2, d - 0.05), Vector3(0.3, 0.12, 0.3), stone_dark)
+		k.box(Vector3(x, 0.1 + wall_h, d - 0.05), Vector3(0.3, 0.1, 0.3), stone_dark)
+	var top := 0.14 + wall_h
+	k.box(Vector3(0, top + 0.1, 0), Vector3(w * 2 + 0.2, 0.2, d * 2 + 0.1), stone_dark, stone)
+	# A low green roof and a triangular pediment over the front.
+	for sx: float in [-1.0, 1.0]:
+		var n := Vector3(sx * 0.6, w, 0).normalized()
+		k.flat_quad(Vector3(sx * (w + 0.12), top + 0.2, -d - 0.08), Vector3(sx * (w + 0.12), top + 0.2, d + 0.08),
+			Vector3(0, top + 0.9, d + 0.08), Vector3(0, top + 0.9, -d - 0.08), n, roof)
+	var pn := Vector3.BACK
+	var pa := k.vertex(Vector3(-w - 0.1, top + 0.2, d + 0.09), pn, stone)
+	var pb := k.vertex(Vector3(w + 0.1, top + 0.2, d + 0.09), pn, stone)
+	var pc := k.vertex(Vector3(0, top + 0.88, d + 0.09), pn, stone)
+	k.tri(pa, pb, pc, pn)
+	k.leaf(Vector3(-0.05, top + 0.36, d + 0.11), Vector3(0.7, 1, 0.0), 0.32, 0.2, MeshKit.lin(Color("7cbb5c")))
+	k.leaf(Vector3(-0.05, top + 0.36, d + 0.11), Vector3(-0.8, 0.6, 0.0), 0.22, 0.14, MeshKit.lin(Color("9ad68a")))
+	# Tall doors and banners.
+	k.box(Vector3(0, 0.75, d - 0.17), Vector3(0.8, 1.2, 0.06), MeshKit.lin(Color("7a5532")))
+	k.cylinder(Vector3(0, 1.35, d - 0.15), Vector3(0, 1.35, d - 0.12), 0.4, 0.4, MeshKit.lin(Color("7a5532")), 14, true)
+	for sx: float in [-1.0, 1.0]:
+		k.box(Vector3(sx * 1.05, 1.15, d - 0.14), Vector3(0.36, 0.9, 0.03), roof)
+		k.sphere(Vector3(sx * 1.05, 1.2, d - 0.12), Vector3(0.1, 0.1, 0.02), MeshKit.lin(Color("f6d58c")), 3, 8)
+
+
+## A museum exhibit: a fish in a tank on a stand, or a bug under a glass dome on a
+## plinth. With no creature, an empty stand with a little card.
+static func _exhibit(k: MeshKit, kind: String, id: String) -> void:
+	var wood := MeshKit.lin(Color("a07858"))
+	var stone := MeshKit.lin(Color("dcd4c4"))
+	var card := MeshKit.lin(Color("fbf6ea"))
+	if kind == "tank":
+		k.box(Vector3(0, 0.25, 0), Vector3(0.8, 0.5, 0.7), wood, MeshKit.lin(Color("b48b66")))
+		if id == "":
+			k.box(Vector3(0, 0.55, 0.3), Vector3(0.3, 0.12, 0.02), card)
+			return
+		# Open at the front so the fish shows: blue water behind, a frame round it.
+		var water := MeshKit.lin(Color("9fd3e0"))
+		k.box(Vector3(0, 0.82, -0.31), Vector3(0.78, 0.6, 0.04), water)
+		for sx: float in [-1.0, 1.0]:
+			k.box(Vector3(sx * 0.37, 0.82, 0), Vector3(0.04, 0.6, 0.66), MeshKit.lin(Color("c9edf2")))
+		var frame := MeshKit.lin(Color("6f8a95"))
+		for sz: float in [-1.0, 1.0]:
+			k.box(Vector3(0, 1.13, sz * 0.32), Vector3(0.8, 0.04, 0.04), frame)
+		for sx: float in [-1.0, 1.0]:
+			k.box(Vector3(sx * 0.38, 1.13, 0), Vector3(0.04, 0.04, 0.68), frame)
+		for sx: float in [-1.0, 1.0]:
+			k.box(Vector3(sx * 0.39, 0.82, 0.32), Vector3(0.03, 0.62, 0.03), frame)
+		k.box(Vector3(0, 0.53, 0), Vector3(0.74, 0.05, 0.62), MeshKit.lin(Color("e6d6b0")))
+		for i in 3:
+			k.leaf(Vector3(-0.25 + i * 0.22, 0.55, -0.2), Vector3(0.1, 1, 0), 0.3 - i * 0.04, 0.07, MeshKit.lin(Color("7cbb5c"), 0.6))
+		var length: float = CreatureModels.SIZES.get(ItemDB.fish.get(id, {}).get("size", "small"), 0.2)
+		k.xform = Transform3D(Basis(Vector3.UP, 0.35).scaled(Vector3.ONE * clampf(0.5 / length, 1.2, 2.6)), Vector3(0, 0.72, 0.05))
+		CreatureModels.build(k, id)
+		k.xform = Transform3D.IDENTITY
+	else:
+		k.cylinder(Vector3.ZERO, Vector3(0, 0.6, 0), 0.25, 0.22, stone, 12, true)
+		k.cylinder(Vector3(0, 0.6, 0), Vector3(0, 0.65, 0), 0.28, 0.28, stone, 12, true)
+		if id == "":
+			k.box(Vector3(0, 0.67, 0.12), Vector3(0.22, 0.06, 0.1), card)
+			return
+		k.cylinder(Vector3(0, 0.65, 0), Vector3(-0.02, 0.8, 0.02), 0.012, 0.008, wood, 4, false)
+		k.leaf(Vector3(-0.02, 0.78, 0.02), Vector3(0.6, 0.4, 0.3), 0.14, 0.08, MeshKit.lin(Color("7cbb5c")))
+		k.xform = Transform3D(Basis().scaled(Vector3.ONE * 2.6), Vector3(0, 0.82, 0.02))
+		CreatureModels.build(k, id)
+		k.xform = Transform3D.IDENTITY
+		# A wire dome over it.
+		var wire := MeshKit.lin(Color("c8ccd2"))
+		for i in 3:
+			var a := PI * i / 3.0
+			var prev := Vector3(cos(a), 0, sin(a)) * 0.24 + Vector3(0, 0.65, 0)
+			for j in range(1, 7):
+				var t := PI * j / 6.0
+				var p := Vector3(cos(a) * cos(t) * 0.24, 0.65 + sin(t) * 0.32, sin(a) * cos(t) * 0.24)
+				k.cylinder(prev, p, 0.008, 0.008, wire, 3, false)
+				prev = p
+		k.sphere(Vector3(0, 0.98, 0), Vector3.ONE * 0.025, wire, 3, 5)
 
 
 static func _bridge(k: MeshKit, length: int) -> void:

@@ -150,6 +150,9 @@ Milestone 3b:
   to time, bugs by habitat and hour that flee from runners
 - [x] The museum: five specimens for Poppy bring Bramble and his museum tent; donations,
   a critter log in the journal
+- [x] The museum building: after 15 donations Bramble asks for wood, stone and iron, and
+  the tent becomes a stone museum overnight; inside, a tank for every fish round the walls
+  and a case for every bug, filled as they're donated
 - [x] Neighbours (data/neighbours.json): plots from Poppy, move-ins overnight, houses in
   their colours, wandering by day, personality chat and gifts, furnished homes to visit
 - [x] Friendship: daily chats, presents (each personality loves some kinds of thing) and
@@ -163,12 +166,10 @@ Next milestones (suggested order):
    options menu.
 4. Daily visitors; more neighbour life (moving out, more species);
    the clothes shop run by Daisy and Morris.
-5. The museum building: Bramble's tent grows into a real museum with exhibits inside
-   (materials project after enough donations).
-6. Island tours to random islands (reusing the generator with different seeds).
-7. Path tool, terraforming, waterscaping, rock moving.
-8. Weather and seasons; audio.
-9. Platform work: touch controls, performance passes, Switch porting.
+5. Island tours to random islands (reusing the generator with different seeds).
+6. Path tool, terraforming, waterscaping, rock moving.
+7. Weather and seasons; audio.
+8. Platform work: touch controls, performance passes, Switch porting.
 
 ## Characters
 

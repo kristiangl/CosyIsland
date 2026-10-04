@@ -68,6 +68,11 @@ var _sample_last := {}
 ## "fishing" or "sleeping": what the character is doing while standing (or lying) still.
 var mode := ""
 
+## How much thicker limbs and body are drawn than they're built (see _mesh).
+const LEG_BULK := Vector3(1.2, 1.0, 1.15)
+const ARM_BULK := Vector3(1.15, 1.0, 1.15)
+const BODY_BULK := Vector3(1.08, 1.0, 1.08)
+
 ## Actions: KayKit clip, the stretch of it used (seconds), and how long it plays here,
 ## so a swing lands when the game expects it to.
 const ACTIONS := {
@@ -495,6 +500,14 @@ func _mesh(mesh: ArrayMesh, material: Material, parent: Node3D) -> MeshInstance3
 	var mi := MeshInstance3D.new()
 	mi.mesh = mesh
 	mi.material_override = material
+	# Sturdy, KayKit-ish limbs and body: everything on them (skin, sleeves, trouser
+	# legs, shoes) thickened together so clothes still fit.
+	if parent in [_leg_l, _leg_r, _knee_l, _knee_r]:
+		mi.scale = LEG_BULK
+	elif parent in [_arm_l, _arm_r, _elbow_l, _elbow_r]:
+		mi.scale = ARM_BULK
+	elif parent == _body:
+		mi.scale = BODY_BULK
 	parent.add_child(mi)
 	return mi
 

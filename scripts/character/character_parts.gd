@@ -61,7 +61,9 @@ static func arm_skin() -> Dictionary:
 	var lower := MeshKit.new()
 	lower.sphere(Vector3.ZERO, Vector3.ONE * 0.053, PLAIN, 5, 10)
 	lower.cylinder(Vector3.ZERO, Vector3(0, -ARM_LOWER + 0.03, 0), 0.053, 0.05, PLAIN, 10, false)
-	lower.sphere(Vector3(0, -ARM_LOWER, 0), Vector3(0.062, 0.066, 0.06), PLAIN, 6, 10)
+	# A round mitten of a hand with a thumb.
+	lower.sphere(Vector3(0, -ARM_LOWER, 0), Vector3(0.07, 0.074, 0.068), PLAIN, 6, 10)
+	lower.sphere(Vector3(0, -ARM_LOWER + 0.015, 0.05), Vector3(0.026, 0.03, 0.026), PLAIN, 4, 6)
 	return {"upper": upper.commit(), "lower": lower.commit()}
 
 

@@ -175,9 +175,16 @@ Next milestones (suggested order):
 3c. Bigger house (more rooms) and outdoor house colours. Clothes as items instead of
    everything unlocked, sold by Lucy. Time travel moves out of the phone into an
    options menu.
-4. Daily visitors; more neighbour life (moving out);
-   the clothes shop run by Daisy and Morris.
-5. Island tours to random islands (reusing the generator with different seeds).
+4. The clothes shop run by Daisy and Morris. Daily visitors; more neighbour life
+   (moving out).
+4b. Building kits: every building (Lucy's shop, the museum, the clothes shop,
+   neighbours' houses, anything later) is placed by the player from a kit, choosing
+   where it goes, with KayKit scaffolding while it's built overnight.
+4c. Confirm before giving things away: materials for building projects and creatures
+   for the museum ask "Give them X?" first.
+5. Island tours, an airport-style dock: visit random islands (the generator with other
+   seeds) for other fruit and flowers, and to meet neighbours who might move in
+   ("villager hunting").
 6. Path tool, terraforming, waterscaping, rock moving.
 7. Weather and seasons; audio.
 8. Platform work: touch controls, performance passes, Switch porting.

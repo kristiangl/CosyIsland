@@ -37,9 +37,13 @@ uniform int nose_style = 0;
 uniform float nose_y = -0.085;
 uniform float nose_scale = 1.0;
 // Animal heads: 0 person, 1 cat (tabby forehead, pale muzzle, pink nose, whiskers),
-// 2 dog (patches over the eyes and ears with a pale blaze, pale muzzle).
+// 2 dog (patches over the eyes and ears with a pale blaze, pale muzzle), 3 rabbit
+// (puffy pale cheeks, pink nose, whiskers, buck teeth), 4 ferret (pale face, dark
+// mask round the eyes), 5 mouse (pale muzzle under its snout, whiskers), 6 bird (a
+// pale face disc with cheek spots in the third colour; its beak is a mesh).
 uniform int species = 0;
-// Second fur colour for markings (a cat's pale muzzle), and a cat's tabby stripes.
+// Second fur colour for markings (a cat's pale muzzle), and a third for a cat's tabby
+// stripes, a ferret's mask or a bird's cheek spots.
 uniform vec3 fur_b : source_color = vec3(1.0);
 uniform vec3 fur_c : source_color = vec3(1.0);
 // A cat's pale blaze from the nose up between the eyes.
@@ -221,8 +225,42 @@ vec3 markings(vec3 col, vec3 p) {
 			patch *= smoothstep(blaze - 0.008, blaze + 0.008, abs(p.x));
 		}
 		col = mix(col, fur_b, patch);
+	} else if (species == 3 && p.z > 0.1) {
+		// Rabbit: two puffy cheeks either side of the nose, and a pale chin.
+		float puff = sd_ellipse(vec2(abs(p.x) - 0.05, p.y + 0.15), vec2(0.075, 0.055));
+		puff = min(puff, sd_ellipse(p.xy - vec2(0.0, -0.2), vec2(0.06, 0.04)));
+		col = mix(col, fur_b, 1.0 - smoothstep(-0.01, 0.01, puff));
+	} else if (species == 4 && p.z > 0.05) {
+		// Ferret: a pale face, a dark mask round the eyes running down the nose, and pale
+		// brows above it.
+		float face = sd_ellipse(p.xy - vec2(0.0, -0.09), vec2(0.2, 0.13));
+		col = mix(col, fur_b, 1.0 - smoothstep(-0.012, 0.012, face));
+		float mask = sd_ellipse(vec2(abs(p.x) - 0.13, p.y + 0.03), vec2(0.105, 0.06));
+		mask = min(mask, sd_segment(p.xy, vec2(0.0, -0.01), vec2(0.0, -0.1)) - 0.025);
+		col = mix(col, fur_c, 1.0 - smoothstep(-0.01, 0.01, mask));
+		float brow = sd_ellipse(vec2(abs(p.x) - 0.12, p.y - 0.065), vec2(0.06, 0.028));
+		col = mix(col, fur_b, 1.0 - smoothstep(-0.01, 0.01, brow));
+	} else if (species == 5 && p.z > 0.1) {
+		// Mouse: a pale muzzle round the base of the snout.
+		float muzzle = sd_ellipse(p.xy - vec2(0.0, -0.13), vec2(0.13, 0.08));
+		col = mix(col, fur_b, 1.0 - smoothstep(-0.012, 0.012, muzzle));
+	} else if (species == 6 && p.z > 0.0) {
+		// Bird: a pale face round the eyes and beak, with round cheek spots.
+		float face = sd_ellipse(p.xy - vec2(0.0, -0.05), vec2(0.27, 0.19));
+		col = mix(col, fur_b, 1.0 - smoothstep(-0.015, 0.015, face));
+		float spot = length(vec2(abs(p.x) - 0.2, p.y + 0.12)) - 0.04;
+		col = mix(col, fur_c, 1.0 - smoothstep(-0.008, 0.008, spot));
 	}
 	return col;
+}
+
+// A rabbit's two front teeth, just under the mouth.
+vec3 buck_teeth(vec3 base, vec2 p, float aa) {
+	vec2 q = p - vec2(0.0, mouth_y - 0.024);
+	float d = sd_segment(q, vec2(0.0, 0.008), vec2(0.0, -0.006)) - 0.015;
+	base = paint(base, vec3(0.42, 0.3, 0.28), d - 0.004, aa);
+	base = paint(base, vec3(1.0), d, aa);
+	return paint(base, vec3(0.75, 0.7, 0.7), sd_segment(q, vec2(0.0, 0.012), vec2(0.0, -0.016)) - 0.0018, aa);
 }
 
 vec3 animal_nose(vec3 base, vec2 p, float aa) {
@@ -295,9 +333,16 @@ void fragment() {
 		if (species == 0) {
 			col = draw_nose(col, p, aa);
 		}
-		col = draw_mouth(col, p, aa);
-		if (species == 1) {
+		if (species != 6) {
+			col = draw_mouth(col, p, aa);
+		}
+		if (species == 3) {
+			col = buck_teeth(col, p, aa);
+		}
+		if (species == 1 || species == 3 || species == 5) {
 			col = whiskers(col, p, aa);
+		}
+		if (species == 1 || species == 3) {
 			col = animal_nose(col, p, aa);
 		}
 	}

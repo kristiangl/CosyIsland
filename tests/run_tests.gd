@@ -920,6 +920,16 @@ func _test_neighbours() -> void:
 		var n := NpcData.get_character(id)
 		check(n.has("species") and n.has("home") and Story.NEIGHBOUR_TALK.has(n["personality"]), "%s is ready to move in" % id)
 		check(ItemDB.series.has(n["inside"]["series"]) and ItemDB.has_item(n["inside"]["wall"]) and ItemDB.has_item(n["inside"]["floor"]), "%s's home can be furnished" % id)
+	var kinds := {}
+	for id: String in NpcData.neighbours():
+		kinds[NpcData.get_character(id)["species"]["kind"]] = id
+	for kind: String in CharacterModel.SPECIES:
+		check(kinds.has(kind), "there's a %s among the neighbours" % kind)
+		if kinds.has(kind):
+			var m := NpcData.model(kinds[kind])
+			add_child(m)
+			check(m.find_child("Tail", true, false) != null and m.find_child("Tail", true, false).get_child_count() > 0, "%s has a tail" % kind)
+			m.free()
 	var d := IslandGenerator.generate(7)
 	var w := World.new()
 	add_child(w)

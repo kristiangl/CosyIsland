@@ -18,7 +18,7 @@ extends Node3D
 ##   --demo=door        pitch the tent and stand outside its door
 ##   --demo=shop        Lucy's shop has been built; stand in front of it (--demo=museum: Bramble's,
 ##                      --built for the finished museum, --visit to go in)
-##   --demo=neighbours  two neighbours have just moved in (--visit: go inside one's home)
+##   --demo=neighbours  two neighbours have just moved in (--visit: go inside one's home, --who=id,id: who)
 ##   --demo=fishing     fishing off the beach with fish about (--demo=bugs: bugs nearby)
 ##   --demo=flowers     stand by some flowers, one picked, with a flower in your hair
 ##   --house            with --demo: the tent has already become a house
@@ -532,7 +532,16 @@ func _run_demo() -> void:
 			for dx: int in [-6, 4]:
 				var rect := Rect2i(spawn + Vector2i(dx, r), Vector2i(3, 3))
 				if placed < 2 and world.can_place(rect, player.position) and world.door_clear("plot_kit", rect, 0):
-					world.place_item("plot_kit", rect, 0)["plot_day"] = world.day_key - 1
+					var plot := world.place_item("plot_kit", rect, 0)
+					plot["plot_day"] = world.day_key - 1
+					# --who=id,id picks who moves in.
+					var who: PackedStringArray = Game.args.get("who", "").split(",", false)
+					if placed < who.size():
+						plot["item"] = "neighbour_house"
+						plot["resident"] = who[placed]
+						plot.erase("plot_day")
+						world.refresh_node(plot)
+						_spawn_neighbour(plot)
 					placed += 1
 		_check_house()
 		var homes := world.objects().filter(func(o): return o.has("resident"))

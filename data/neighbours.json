@@ -56,6 +56,62 @@
 			"look": {"eyes": "almond", "mouth": "smile", "cheeks": "none", "top": "turtleneck", "top_color": "charcoal", "top_color2": "white", "bottom": "trousers", "bottom_color": "grey", "glasses": "square"},
 			"home": {"wall": "e6e6ea", "roof": "4a5688", "door": "f2cf73"},
 			"inside": {"series": "driftwood", "variant": "grey", "wall": "striped_wallpaper", "floor": "cream_tile_flooring"}
+		},
+		"clover": {
+			"name": "Clover", "personality": "cheerful", "catchphrase": "hop hop",
+			"species": {"kind": "rabbit", "fur": "#f4eee4", "fur2": "#fffaf3", "eyes": "#7a4a3a", "inner_ear": "#f2b0b8", "nose": "#e88a98"},
+			"look": {"eyes": "sparkle", "mouth": "smile", "cheeks": "blush", "top": "dress", "top_color": "mint", "top_color2": "white", "top_pattern": "dots"},
+			"home": {"wall": "fff6ee", "roof": "8fc58a", "door": "f2a7b0"},
+			"inside": {"series": "meadow", "variant": "rose", "wall": "mint_dot_wallpaper", "floor": "wooden_flooring"}
+		},
+		"hazel": {
+			"name": "Hazel", "personality": "sleepy", "catchphrase": "snuggle",
+			"species": {"kind": "rabbit", "lop": true, "fur": "#a87a55", "fur2": "#f0e2cc", "eyes": "#3a2418", "inner_ear": "#d9a0a0", "nose": "#8a5a50"},
+			"look": {"eyes": "classic", "mouth": "smile", "cheeks": "blush", "top": "knit_jumper", "top_color": "rose", "top_color2": "cream", "bottom": "long_skirt", "bottom_color": "brown"},
+			"home": {"wall": "f4e6d6", "roof": "a8705a", "door": "e8c47a"},
+			"inside": {"series": "textiles", "variant": "cherry", "wall": "peach_dot_wallpaper", "floor": "woven_flooring"}
+		},
+		"sable": {
+			"name": "Sable", "personality": "sporty", "catchphrase": "zoom",
+			"species": {"kind": "ferret", "fur": "#8a6a50", "fur2": "#f4ead8", "stripes": "#5e4434", "eyes": "#2a1a14", "inner_ear": "#d8b0a8", "nose": "#d88a90"},
+			"look": {"eyes": "wide", "mouth": "grin", "cheeks": "none", "top": "hoodie", "top_color": "red", "top_color2": "white", "bottom": "cargo_shorts", "bottom_color": "olive"},
+			"home": {"wall": "efe6d8", "roof": "c8564a", "door": "4a6a8a"},
+			"inside": {"series": "lodge", "variant": "moss", "wall": "cabin_wall", "floor": "wooden_flooring"}
+		},
+		"pepper": {
+			"name": "Pepper", "personality": "bookish", "catchphrase": "quite so",
+			"species": {"kind": "ferret", "fur": "#d6bc9a", "fur2": "#fbf4e8", "stripes": "#a88664", "eyes": "#3a2418", "inner_ear": "#e8bcb4", "nose": "#e3a0a8"},
+			"look": {"eyes": "almond", "mouth": "smile", "cheeks": "none", "top": "waistcoat", "top_color": "navy", "top_color2": "cream", "bottom": "trousers", "bottom_color": "tan", "glasses": "round"},
+			"home": {"wall": "f3ecdf", "roof": "5a6a9a", "door": "c8a060"},
+			"inside": {"series": "lodge", "variant": "birch", "wall": "striped_wallpaper", "floor": "woven_flooring"}
+		},
+		"crumb": {
+			"name": "Crumb", "personality": "sleepy", "catchphrase": "squeak",
+			"species": {"kind": "mouse", "fur": "#aaa4a6", "fur2": "#efe8ea", "eyes": "#2a2024", "inner_ear": "#f0b4bc", "nose": "#e88a98"},
+			"look": {"eyes": "dots", "mouth": "o", "cheeks": "blush", "top": "nightgown", "top_color": "sky", "top_color2": "white", "top_pattern": "stars"},
+			"home": {"wall": "eef0f4", "roof": "8aa0c8", "door": "f2d68a"},
+			"inside": {"series": "starlight", "variant": "dawn", "wall": "sky_wallpaper", "floor": "rosy_carpet"}
+		},
+		"barley": {
+			"name": "Barley", "personality": "cheerful", "catchphrase": "nibble",
+			"species": {"kind": "mouse", "fur": "#c8a07a", "fur2": "#f6eadc", "eyes": "#2a1a14", "inner_ear": "#eeaab0", "nose": "#e0848e"},
+			"look": {"eyes": "happy", "mouth": "grin", "cheeks": "blush", "top": "pinafore", "top_color": "yellow", "top_color2": "white", "bottom": "shorts", "bottom_color": "brown"},
+			"home": {"wall": "fbf0dc", "roof": "d8a050", "door": "8fc58a"},
+			"inside": {"series": "mushroom", "variant": "golden", "wall": "peach_dot_wallpaper", "floor": "wooden_flooring"}
+		},
+		"rosie": {
+			"name": "Rosie", "personality": "sporty", "catchphrase": "chirp",
+			"species": {"kind": "bird", "fur": "#8c6c52", "fur2": "#ef8a5a", "stripes": "#f8e8d6", "crest": "#7a5c44", "beak": "#4a3a32", "eyes": "#1a1214"},
+			"look": {"eyes": "classic", "mouth": "smile", "cheeks": "none", "top": "tank", "top_color": "teal", "top_color2": "white", "bottom": "board_shorts", "bottom_color": "navy"},
+			"home": {"wall": "fbeee4", "roof": "d0604a", "door": "5f8fb8"},
+			"inside": {"series": "driftwood", "variant": "sandy", "wall": "sky_wallpaper", "floor": "cream_tile_flooring"}
+		},
+		"kiwi": {
+			"name": "Kiwi", "personality": "bookish", "catchphrase": "tweet",
+			"species": {"kind": "bird", "fur": "#86c860", "fur2": "#f6e27a", "stripes": "#3a66b0", "crest": "#f6e27a", "beak": "#c8844a", "eyes": "#1a1214"},
+			"look": {"eyes": "classic", "mouth": "smile", "cheeks": "none", "top": "collared", "top_color": "white", "top_color2": "sky", "bottom": "pleated_skirt", "bottom_color": "navy"},
+			"home": {"wall": "f2f6e4", "roof": "6aa04a", "door": "f2cf73"},
+			"inside": {"series": "mushroom", "variant": "teal", "wall": "mint_dot_wallpaper", "floor": "mint_tile_flooring"}
 		}
 	}
 }

@@ -12,7 +12,9 @@ const BODY_WRAP := 0.25
 
 static var _flat: ShaderMaterial
 var look: Dictionary = Appearance.DEFAULT.duplicate()
-## Animal characters: {"kind": "cat" or "dog", "fur": Color, "fur2": Color (markings),
+## Animal kinds, in the face shader's order (1 = cat).
+const SPECIES := ["cat", "dog", "rabbit", "ferret", "mouse", "bird"]
+## Animal characters: {"kind": one of SPECIES, "fur": Color, "fur2": Color (markings),
 ## "eyes": Color, "inner_ear": Color, "nose": Color}. Empty for people.
 var species: Dictionary = {}
 ## False for characters shown in menus, away from the island's world curvature.
@@ -210,34 +212,43 @@ func _apply_face_adjustments() -> void:
 	_face.set_shader_parameter("cheek_y", -0.11 + adj.call("cheek_y") * 0.01)
 
 
-## Ears, tail, snout or ruff, and the face shader's fur markings.
+## Ears, tail, snout, beak or ruff, and the face shader's fur markings.
 func _build_animal() -> void:
 	var kind: String = species["kind"]
 	var fur: Color = species["fur"]
 	var fur2: Color = species.get("fur2", fur)
-	_face.set_shader_parameter("species", 1 if kind == "cat" else 2)
+	var fur3: Color = species.get("stripes", fur2)
+	_face.set_shader_parameter("species", SPECIES.find(kind) + 1)
 	_face.set_shader_parameter("fur_b", fur2)
-	_face.set_shader_parameter("fur_c", species.get("stripes", fur2))
+	_face.set_shader_parameter("fur_c", fur3)
 	_face.set_shader_parameter("cat_blaze", species.get("blaze", false))
 	_face.set_shader_parameter("eye_colour", species.get("eyes", Color("6a4430")))
 	_face.set_shader_parameter("brow_style", 0)
 	_face.set_shader_parameter("nose_colour", species.get("nose", Color("d98f98")))
 	_face.set_shader_parameter("whisker_colour", fur2.lightened(0.45) if fur.get_luminance() < 0.4 else fur.darkened(0.45))
-	var ear_colour: Color = fur2 if kind == "dog" else fur
-	var ears := _mesh(AnimalParts.ears(kind), _cloth(ear_colour, species.get("inner_ear", Color("e3a5aa"))), _head)
-	ears.position = P.HEAD_CENTRE
-	if kind == "cat":
-		_face.set_shader_parameter("eye_y", -0.02)
-		_face.set_shader_parameter("mouth_y", -0.145)
-		var ruff := _mesh(AnimalParts.ruff(), _cloth(fur, fur2), _head)
-		ruff.position = P.HEAD_CENTRE
-	else:
-		_face.set_shader_parameter("eye_y", 0.0)
-		_face.set_shader_parameter("mouth_y", -0.2)
-		var snout := _mesh(AnimalParts.snout(), _cloth(fur, species.get("nose", Color("3a3236"))), _head)
-		snout.position = P.HEAD_CENTRE
+	# Where the eyes and mouth sit on each kind of face.
+	var face: Array = {"cat": [-0.02, -0.145], "dog": [0.0, -0.2], "rabbit": [-0.01, -0.165],
+		"ferret": [-0.03, -0.2], "mouse": [-0.01, -0.21], "bird": [0.01, -0.2]}[kind]
+	_face.set_shader_parameter("eye_y", face[0])
+	_face.set_shader_parameter("mouth_y", face[1])
+	if kind != "bird":
+		var ear_colour: Color = fur2 if kind == "dog" else fur
+		var ears := _mesh(AnimalParts.ears(kind, species.get("lop", false)), _cloth(ear_colour, species.get("inner_ear", Color("e3a5aa"))), _head)
+		ears.position = P.HEAD_CENTRE
+	match kind:
+		"cat":
+			var ruff := _mesh(AnimalParts.ruff(), _cloth(fur, fur2), _head)
+			ruff.position = P.HEAD_CENTRE
+		"dog", "ferret", "mouse":
+			var snout := _mesh(AnimalParts.snout(kind), _cloth(fur if kind == "dog" else fur2, species.get("nose", Color("3a3236"))), _head)
+			snout.position = P.HEAD_CENTRE
+		"bird":
+			var beak := _mesh(AnimalParts.beak(), _cloth(species.get("beak", Color("f2b14a")), species.get("crest", fur3)), _head)
+			beak.position = P.HEAD_CENTRE
 	_tail = _pivot("Tail", Vector3(0, P.HIP_Y - 0.02, -0.14), _hips)
-	_mesh(AnimalParts.tail(kind), _cloth(fur, fur2 if kind == "cat" else fur2), _tail)
+	# Second tail colour: a rabbit's pom-pom, a ferret's dark tail, a mouse's pink one.
+	var tail2: Color = {"ferret": fur3, "mouse": species.get("inner_ear", Color("e3a5aa")), "bird": fur3}.get(kind, fur2)
+	_mesh(AnimalParts.tail(kind), _cloth(fur, tail2), _tail)
 
 
 func set_look(appearance: Dictionary) -> void:
@@ -474,8 +485,9 @@ func _apply(t: Dictionary, delta: float) -> void:
 	_knee_r.rotation.x = _pose["knee_r"]
 	if _tail:
 		# Dogs wag quickly, cats swish slowly.
-		var dog: bool = species["kind"] == "dog"
-		_tail.rotation = Vector3(-_pose["body_pitch"] * 0.5, 0.0, sin(_time * (10.0 if dog else 1.7)) * (0.35 if dog else 0.2))
+		# Dogs wag; rabbits twitch; the rest sway slowly.
+		var wag: Array = {"dog": [10.0, 0.35], "rabbit": [6.0, 0.12], "bird": [3.0, 0.1]}.get(species["kind"], [1.7, 0.2])
+		_tail.rotation = Vector3(-_pose["body_pitch"] * 0.5, 0.0, sin(_time * float(wag[0])) * float(wag[1]))
 
 
 ## A little dust cloud left behind at the feet.

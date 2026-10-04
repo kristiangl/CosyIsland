@@ -18,7 +18,7 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   inferred-Variant types as errors, so type loop variables over literal arrays).
 - Art check scenes (render with `tools/screenshot_scene.sh out.png res://tools/<scene>`):
   `character_lineup.tscn` (`--seed`, `--angle`, `--vary=KEY`, `--base=k:v`, `--poses`,
-  `--npcs`, `--close`),
+  `--npcs[=id,id]` (`--angles=0,35`), `--close`),
   `model_gallery.tscn` (`--drops`, `--keys`, `--only=id,id`, `--series=id`, `--variant=id`), `effects_gallery.tscn`
   (`--night`, every particle effect), `calibrate.tscn`
   (`-- --shadows`, checks the cel lighting maths).
@@ -46,6 +46,8 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   and pays stamps for milestones and daily tasks; its exchange sells pocket upgrades etc.
 - `Critters` (a child of the island `World`, `data/creatures.json`): fish shadows and bugs
   spawned near the player by time of day; fishing (`cast`/`reel`) and `net`.
+- Animal kinds are `CharacterModel.SPECIES` (cat, dog, rabbit, ferret, mouse, bird): meshes in
+  `AnimalParts`, face markings in `face.gdshader` by the same index.
 - Neighbours (`data/neighbours.json`, read through `NpcData`): plots become their houses
   overnight (`Story.move_in`, placed objects with a "resident"); their rooms are visitor
   `World`s (`visitor = true`: nothing can be moved). The museum's hall is a visitor room

@@ -32,6 +32,10 @@ A cosy island life game about crafting and decorating, made with Godot 4.
 | --- | --- |
 | ![](docs/screenshots/museum_building.png) | ![](docs/screenshots/museum_hall.png) |
 
+| Rabbits, ferrets, mice and birds |
+| --- |
+| ![](docs/screenshots/new_neighbours.png) |
+
 | Character creator | Island Phone | DIY workbench |
 | --- | --- | --- |
 | ![](docs/screenshots/creator.png) | ![](docs/screenshots/phone.png) | ![](docs/screenshots/crafting.png) |
@@ -101,7 +105,8 @@ On-screen hints follow whatever you last touched, keyboard or controller.
   Bramble, a naturalist, arrives with a museum tent; the journal keeps a critter log.
   After 15 donations, bring him materials and the tent becomes a real museum, with a
   tank or case for every creature that fills as you donate.
-- Neighbours: buy a plot from Poppy, stake it out, and one of eight animal neighbours
+- Neighbours: buy a plot from Poppy, stake it out, and one of sixteen animal neighbours
+  (cats, dogs, rabbits, ferrets, mice and birds)
   moves in the next day. They wander near home by day, chat in their own way and
   sometimes give you furniture, and you can visit their furnished homes after six.
   Chat daily, give presents they like and do their favours to fill five hearts of

@@ -155,6 +155,8 @@ Milestone 3b:
   and a case for every bug, filled as they're donated
 - [x] Neighbours (data/neighbours.json): plots from Poppy, move-ins overnight, houses in
   their colours, wandering by day, personality chat and gifts, furnished homes to visit
+- [x] More species: rabbits (upright or lop ears), ferrets, mice and birds alongside the
+  cats and dogs, sixteen neighbours in all
 - [x] Friendship: daily chats, presents (each personality loves some kinds of thing) and
   favours fill five hearts; closer friends chat warmly and give presents more often
 - [x] Flowers: picked blooms regrow overnight, worn in hair or put in vases; plants dug
@@ -164,7 +166,7 @@ Next milestones (suggested order):
 3c. Bigger house (more rooms) and outdoor house colours. Clothes as items instead of
    everything unlocked, sold by Lucy. Time travel moves out of the phone into an
    options menu.
-4. Daily visitors; more neighbour life (moving out, more species);
+4. Daily visitors; more neighbour life (moving out);
    the clothes shop run by Daisy and Morris.
 5. Island tours to random islands (reusing the generator with different seeds).
 6. Path tool, terraforming, waterscaping, rock moving.

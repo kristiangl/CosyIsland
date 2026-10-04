@@ -1,7 +1,7 @@
 extends Node3D
 ## Renders a row of characters for checking the character art:
 ##   tools/screenshot_scene.sh out.png res://tools/character_lineup.tscn [--seed=N] [--angle=DEG]
-##     [--vary=KEY [--only=id,id]] [--base=key:id,key:id] [--npcs] [--close]
+##     [--vary=KEY [--only=id,id]] [--base=key:id,key:id] [--npcs[=id,id] [--angles=0,35]] [--close]
 ## Without --vary: the --base look (default look if none) and five random ones.
 ## With --vary: one character per option of KEY, all on the --base look.
 
@@ -32,6 +32,20 @@ func _ready() -> void:
 		base[kv[0]] = kv[1]
 	if Game.args.has("poses"):
 		_pose_sheet(base)
+		return
+	var npc_ids: PackedStringArray = str(Game.args.get("npcs", "")).split(",", false)
+	if npc_ids.size() > 0 and npc_ids[0] != "true":
+		# Chosen characters (--npcs=clover,sable), each from the front and three-quarters
+		# (--angles=0,35,180 to change).
+		var angles: PackedStringArray = Game.args.get("angles", "0,35").split(",")
+		var count := npc_ids.size() * angles.size()
+		var spacing := minf(1.1, 6.6 / count)
+		for i in count:
+			var m := NpcData.model(npc_ids[i / angles.size()])
+			m.position.x = (i - (count - 1) * 0.5) * spacing
+			m.rotation.y = deg_to_rad(float(angles[i % angles.size()]))
+			add_child(m)
+		_add_camera()
 		return
 	if Game.args.has("npcs"):
 		# The island's characters from the front, three-quarters and behind.

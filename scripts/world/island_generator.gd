@@ -19,6 +19,9 @@ const WORKBENCH_AT := Vector2i(5, 4)
 const VERSION := 3
 const ROCK_COUNT := 6
 const FRUIT_TREE_COUNT := 8
+## Tour islands are smaller.
+const TOUR_WIDTH := 64
+const TOUR_HEIGHT := 56
 
 ## Kept in sync with data/items.json (checked by the tests).
 const FRUITS := ["apple", "orange", "pear", "cherry", "peach", "plum"]
@@ -39,6 +42,9 @@ const T := IslandData.Tile
 
 var d: IslandData
 var version := VERSION
+## Tour islands: no plaza buildings, and natives other than these.
+var tour := false
+var avoid: Array = []
 var rng := RandomNumberGenerator.new()
 var ocean_dist: PackedInt32Array
 var beach_width: PackedInt32Array
@@ -52,6 +58,17 @@ static func generate(seed_value: int, w: int = WIDTH, h: int = HEIGHT, gen_versi
 	var g := IslandGenerator.new()
 	g.version = gen_version
 	return g._run(seed_value, w, h)
+
+
+## A small wild island for a tour: no plaza or office, and a different fruit and flower
+## from home's.
+static func generate_tour(seed_value: int, home_fruit: String, home_flower: String) -> IslandData:
+	var g := IslandGenerator.new()
+	g.tour = true
+	g.avoid = [home_fruit, home_flower]
+	var data := g._run(seed_value, TOUR_WIDTH, TOUR_HEIGHT)
+	data.plaza = Rect2i()
+	return data
 
 
 func _run(seed_value: int, w: int, h: int) -> IslandData:
@@ -75,11 +92,16 @@ func _run(seed_value: int, w: int, h: int) -> IslandData:
 	_compute_splits()
 	d.native_fruit = FRUITS[rng.randi() % FRUITS.size()]
 	d.native_flower = FLOWERS[rng.randi() % FLOWERS.size()]
+	while d.native_fruit in avoid:
+		d.native_fruit = FRUITS[rng.randi() % FRUITS.size()]
+	while d.native_flower in avoid:
+		d.native_flower = FLOWERS[rng.randi() % FLOWERS.size()]
 	_place_trees()
 	_place_palms()
 	_place_rocks()
 	_place_flowers()
-	_place_plaza()
+	if not tour:
+		_place_plaza()
 	if version >= 3:
 		_place_bushes()
 	return d

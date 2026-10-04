@@ -103,6 +103,8 @@ static func get_mesh(key: String) -> ArrayMesh:
 			Palette.repaint(k.colours, {"blue": _ramp(Color(home.get("roof", "e0857a"))), "white": _ramp(Color(home.get("wall", "fbf0d9")))})
 		"plot":
 			_plot(k)
+		"dock":
+			_dock(k)
 		"site":
 			_site(k, int(p[1]), int(p[2]), Color(p[3]))
 		"bridge":
@@ -744,6 +746,62 @@ static func _plot(k: MeshKit) -> void:
 		k.box(Vector3(-0.6, 0.05 + i * 0.07, -0.3 + (i % 2) * 0.05), Vector3(0.9, 0.06, 0.18), MeshKit.lin(PLANK if i % 2 == 0 else PLANK_DARK))
 
 
+## Marlow's ferry dock: a plank pier running out to sea from the beach (+Z), on posts,
+## with his little sailing boat tied up alongside and a sign at the landward end.
+static func _dock(k: MeshKit) -> void:
+	var post := MeshKit.lin(PLANK_DARK)
+	var top := 0.14
+	for i in 19:
+		var z := -0.85 + i * 0.3
+		k.box(Vector3(0, top - 0.05, z), Vector3(1.3, 0.1, 0.27), MeshKit.lin(PLANK if i % 3 != 1 else Color("c99a72")))
+	for z: float in [0.5, 2.0, 3.5, 4.55]:
+		for sx: float in [-0.68, 0.68]:
+			k.cylinder(Vector3(sx, -1.0, z), Vector3(sx, top + 0.22, z), 0.08, 0.08, post, 6, true)
+	# A bollard with a rope out to the boat, and a ferry sign by the beach.
+	k.cylinder(Vector3(0.5, top, 3.0), Vector3(0.5, top + 0.22, 3.0), 0.08, 0.1, MeshKit.lin(Color("6a7480")), 8, true)
+	k.cylinder(Vector3(0.5, top + 0.16, 3.0), Vector3(1.05, 0.3, 3.2), 0.02, 0.02, MeshKit.lin(Color("efe2c0")), 4, false)
+	k.cylinder(Vector3(-0.85, 0, -0.6), Vector3(-0.85, 1.25, -0.6), 0.045, 0.045, post, 5, true)
+	k.box(Vector3(-0.85, 1.12, -0.57), Vector3(0.7, 0.4, 0.06), MeshKit.lin(Color("fbf0d9")))
+	k.sphere(Vector3(-0.85, 1.13, -0.53), Vector3(0.12, 0.12, 0.02), MeshKit.lin(Color("6fa8d8")), 3, 8)
+	_boat(k, Vector3(1.32, -0.12, 3.6))
+
+
+## A little sailing boat, bow to +Z, sitting at `at` (its waterline).
+static func _boat(k: MeshKit, at: Vector3) -> void:
+	var hull := MeshKit.lin(Color("f6f1e6"))
+	var stripe := MeshKit.lin(Color("e0857a"))
+	var deck := MeshKit.lin(PLANK)
+	var w := 0.5
+	var lo := at.y - 0.2
+	var hi := at.y + 0.35
+	var back := at.z - 1.0
+	var front := at.z + 0.7
+	var bow := at.z + 1.35
+	k.box(Vector3(at.x, (lo + hi) * 0.5, (back + front) * 0.5), Vector3(w * 2, hi - lo, front - back), hull)
+	k.box(Vector3(at.x, hi - 0.1, (back + front) * 0.5), Vector3(w * 2 + 0.02, 0.08, front - back + 0.02), stripe)
+	# The bow: two slanted sides meeting at a point, decked over.
+	for sx: float in [-1.0, 1.0]:
+		var n := Vector3(sx * (bow - front), 0, w).normalized()
+		k.flat_quad(Vector3(at.x + sx * w, lo, front), Vector3(at.x, lo, bow), Vector3(at.x, hi, bow), Vector3(at.x + sx * w, hi, front), n, hull)
+	k.flat_quad(Vector3(at.x - w, hi, front), Vector3(at.x + w, hi, front), Vector3(at.x, hi, bow), Vector3(at.x, hi, bow), Vector3.UP, deck)
+	k.box(Vector3(at.x, hi + 0.01, (back + front) * 0.5), Vector3(w * 2 - 0.12, 0.02, front - back - 0.12), deck)
+	# A cabin at the stern, a mast and a striped sail.
+	k.box(Vector3(at.x, hi + 0.25, back + 0.4), Vector3(0.75, 0.5, 0.6), MeshKit.lin(Color("9cc4e4")), MeshKit.lin(Color("e0857a")))
+	k.box(Vector3(at.x, hi + 0.3, back + 0.71), Vector3(0.4, 0.18, 0.02), MeshKit.lin(Color("fbf6d8")))
+	var mast := Vector3(at.x, hi, at.z + 0.25)
+	k.cylinder(mast, mast + Vector3(0, 2.0, 0), 0.045, 0.035, MeshKit.lin(PLANK_DARK), 6, true)
+	for i in 3:
+		var y0 := 0.3 + i * 0.55
+		var y1 := y0 + 0.55
+		var z0 := 0.95 * (1.0 - (y0 - 0.3) / 1.65)
+		var z1 := 0.95 * (1.0 - (y1 - 0.3) / 1.65)
+		var c := MeshKit.lin(Color("fbf6ec") if i % 2 == 0 else Color("e0857a"))
+		for sx: float in [-1.0, 1.0]:
+			k.flat_quad(mast + Vector3(sx * 0.01, y0, 0.06), mast + Vector3(sx * 0.01, y0, 0.06 + z0),
+				mast + Vector3(sx * 0.01, y1, 0.06 + z1), mast + Vector3(sx * 0.01, y1, 0.06), Vector3(sx, 0, 0), c)
+	k.sphere(mast + Vector3(0, 2.05, 0), Vector3(0.06, 0.06, 0.06), MeshKit.lin(Color("f2c94c")), 3, 6)
+
+
 ## A building kit staked out and waiting to go up overnight: string round its
 ## footprint (w x d tiles), KayKit scaffolding at the back, a pile of timber and stone,
 ## and a sign in the building's colour by the door.
@@ -1037,6 +1095,15 @@ static func _drop(k: MeshKit, item: String) -> void:
 			k.box(Vector3(-0.06, 0.12, 0.095), Vector3(0.05, 0.1, 0.02), MeshKit.lin(Color("f2a7a0")))
 			k.cylinder(Vector3(-0.1, 0.17, -0.02), Vector3(0.04, 0.34, -0.06), 0.015, 0.015, MeshKit.lin(Color("c19a6e")), 5)
 			k.cylinder(Vector3(0.12, 0.06, 0.06), Vector3(0.12, 0.06, -0.14), 0.06, 0.06, MeshKit.lin(Color("9fd3c7")), 10, true, MeshKit.lin(Color("fff4e0")))
+		"tour_ticket":
+			# A paper ticket with a sea-blue band and a little sail, tilted up to read.
+			k.xform = Transform3D(Basis(Vector3.RIGHT, -0.5), Vector3(0, 0.12, 0))
+			k.box(Vector3(0, 0, 0), Vector3(0.36, 0.2, 0.015), MeshKit.lin(Color("fbf3e0")))
+			k.box(Vector3(0, -0.05, 0.009), Vector3(0.36, 0.06, 0.004), MeshKit.lin(Color("6fa8d8")))
+			k.flat_quad(Vector3(-0.1, -0.01, 0.012), Vector3(-0.02, -0.01, 0.012), Vector3(-0.06, 0.08, 0.012), Vector3(-0.06, 0.08, 0.012), Vector3.BACK, MeshKit.lin(Color("e0857a")))
+			k.box(Vector3(0.09, 0.04, 0.009), Vector3(0.1, 0.02, 0.004), MeshKit.lin(Color("c8b89a")))
+			k.box(Vector3(0.09, 0.0, 0.009), Vector3(0.1, 0.02, 0.004), MeshKit.lin(Color("c8b89a")))
+			k.xform = Transform3D.IDENTITY
 		"iron_nugget", "gold_nugget":
 			k.sphere(Vector3(0, 0.09, 0), Vector3(0.13, 0.1, 0.12), col, 3, 5, 0.3, 0.4, 5)
 		_:

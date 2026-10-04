@@ -143,5 +143,33 @@
 			"hat": "none",
 			"glasses": "round"
 		}
+	},
+	"marlow": {
+		"name": "Marlow",
+		"title": "Ferry",
+		"tag": "#9cc4e4",
+		"voice": 0.85,
+		"species": {
+			"kind": "bird",
+			"fur": "#f6f4f0",
+			"fur2": "#ffffff",
+			"stripes": "#e2e0dc",
+			"crest": "#eceae6",
+			"beak": "#f2b83a",
+			"eyes": "#1a1214"
+		},
+		"look": {
+			"eyes": "classic",
+			"mouth": "smile",
+			"cheeks": "none",
+			"top": "sailor_top",
+			"top_color": "white",
+			"top_color2": "navy",
+			"bottom": "trousers",
+			"bottom_color": "navy",
+			"shoes": "none",
+			"hat": "none",
+			"glasses": "none"
+		}
 	}
 }

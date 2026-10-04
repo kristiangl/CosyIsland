@@ -176,6 +176,10 @@ Milestone 3b:
   placed by the player from kits (`placeable.builds`), previewed as the building, asked
   about first, shown as a KayKit building site and built overnight; a staked kit can be
   picked up and moved until then, and a lost kit is replaced by whoever gave it
+- [x] Island tours: Marlow's ferry dock (placed on the beach, north shore first) and
+  tour tickets; tour islands are small generated islands (`IslandGenerator.generate_tour`)
+  with other natives, never saved; a neighbour sometimes camps there and can be invited
+  to move into the next plot
 - [x] Asking first: materials for building projects, Poppy's specimens, donations to
   the museum (all at once or one at a time) and favours ask "Give them X?" first
 
@@ -184,9 +188,8 @@ Next milestones (suggested order):
    everything unlocked, sold by Lucy. Time travel moves out of the phone into an
    options menu.
 4. Daily visitors; more neighbour life (moving out). A try-on mirror at the tailors.
-5. Island tours, an airport-style dock: visit random islands (the generator with other
-   seeds) for other fruit and flowers, and to meet neighbours who might move in
-   ("villager hunting").
+5. Planting fruit to grow fruit trees (so tour fruit can grow at home); more to find on
+   tours (rare islands, other residents' visits).
 6. Path tool, terraforming, waterscaping, rock moving.
 7. Weather and seasons; audio.
 8. Platform work: touch controls, performance passes, Switch porting.

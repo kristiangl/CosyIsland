@@ -22,7 +22,8 @@
 		{"id": "snacker", "name": "Snacker", "stat": "eaten", "text": "Eat {n} pieces of fruit", "goals": [5, 50, 300], "stamps": [100, 300, 800]},
 		{"id": "sleepyhead", "name": "Sleepyhead", "stat": "slept", "text": "Have {n} good sleeps", "goals": [1, 10, 50], "stamps": [100, 300, 800]},
 		{"id": "friendly", "name": "Friendly Face", "stat": "chats", "text": "Have {n} chats", "goals": [5, 50, 200], "stamps": [100, 300, 800]},
-		{"id": "saver", "name": "Acorn Saver", "stat": "acorns_earned", "text": "Earn {n} acorns", "goals": [1000, 10000, 100000], "stamps": [200, 600, 2000]}
+		{"id": "saver", "name": "Acorn Saver", "stat": "acorns_earned", "text": "Earn {n} acorns", "goals": [1000, 10000, 100000], "stamps": [200, 600, 2000]},
+		{"id": "voyager", "name": "Voyager", "stat": "tours", "text": "Take {n} island tours", "goals": [1, 10, 50], "stamps": [200, 600, 1500]}
 	],
 	"daily": [
 		{"id": "wood", "stat": "wood", "n": 5, "stamps": 60, "text": "Chop 5 pieces of wood"},
@@ -48,6 +49,7 @@
 		{"id": "recipe_card", "name": "Recipe Card", "desc": "A DIY recipe you don't know yet, picked at random.", "cost": 300, "recipe": true, "icon": "message_bottle"},
 		{"id": "kits", "name": "Customisation Kits x5", "desc": "Five kits for remaking things in new colours.", "cost": 250, "item": "customisation_kit", "count": 5, "icon": "customisation_kit"},
 		{"id": "furniture_box", "name": "Surprise Furniture", "desc": "A piece of furniture from Poppy's store room. Who knows which?", "cost": 400, "random": "furniture", "icon": "wooden_box"},
-		{"id": "clothes_box", "name": "Surprise Outfit Piece", "desc": "Something to wear, picked from the mail-order catalogue.", "cost": 350, "random": "clothing", "icon": "knit_jumper_cream"}
+		{"id": "clothes_box", "name": "Surprise Outfit Piece", "desc": "Something to wear, picked from the mail-order catalogue.", "cost": 350, "random": "clothing", "icon": "knit_jumper_cream"},
+		{"id": "tour_ticket", "name": "Tour Ticket", "desc": "A trip with Marlow to a little island nobody lives on.", "cost": 500, "item": "tour_ticket", "count": 1, "icon": "tour_ticket"}
 	]
 }

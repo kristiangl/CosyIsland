@@ -14,6 +14,8 @@ var mode: Mode = Mode.PLAY:
 var world: World
 ## The island itself, even while indoors.
 var island: World
+## The island visited on a tour, while there.
+var tour: World
 var player: Player
 var camera: CameraRig
 var dialogue: DialogueBox
@@ -22,6 +24,11 @@ var shop: ShopMenu
 var npcs: Array[Npc] = []
 var player_name := ""
 var island_name := ""
+
+## The island the player is out on: home, or a tour island.
+func outdoors() -> World:
+	return tour if tour else island
+
 
 ## Command-line arguments passed after `--`, as {"key": "value"}. Flags map to "".
 var args: Dictionary = {}

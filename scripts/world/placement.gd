@@ -52,6 +52,9 @@ func begin(slot: int) -> void:
 	if world.visitor:
 		Events.toast.emit("Best not rearrange someone else's home!")
 		return
+	if world.tour:
+		Events.toast.emit("Better save that for home.")
+		return
 	if world.interior and def.get("structure", false):
 		Events.toast.emit("That needs to go outside.")
 		return

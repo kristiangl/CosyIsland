@@ -36,6 +36,7 @@ func _run() -> void:
 	_test_museum_building()
 	_test_neighbours()
 	_test_friendship()
+	_test_tours()
 	print("\n%d checks, %d failures" % [_checks, _failures])
 	get_tree().quit(1 if _failures > 0 else 0)
 
@@ -1107,3 +1108,57 @@ func _test_friendship() -> void:
 		var piece := Story._their_piece(NpcData.get_character(id))
 		check(ItemDB.has_item(piece) and ItemDB.get_item(piece).has("placeable"), "%s has furniture to give" % id)
 	Story.flags = saved_flags
+
+
+func _test_tours() -> void:
+	var saved_flags := Story.flags.duplicate(true)
+	Story.flags.clear()
+	for seed_value in [3, 7, 42, 1234]:
+		var d := IslandGenerator.generate(seed_value)
+		var w := World.new()
+		add_child(w)
+		w.setup(d)
+		var dock := w.add_dock(d.spawn)
+		check(not dock.is_empty() and dock.get("fixed", false), "island %d has room for Marlow's dock" % seed_value)
+		if not dock.is_empty():
+			var spots := w.dock_spots(dock)
+			check(w.is_walkable(spots["skipper"].x, spots["skipper"].z) and w.is_walkable(spots["arrive"].x, spots["arrive"].z),
+				"Marlow and the ferry's passengers stand on open sand (island %d)" % seed_value)
+			check(w.add_dock(d.spawn) == dock, "and there's only one dock")
+		var t := IslandGenerator.generate_tour(seed_value * 7 + 1, d.native_fruit, d.native_flower)
+		check(t.native_fruit != d.native_fruit and t.native_flower != d.native_flower,
+			"a tour island grows other fruit and flowers (%s/%s vs %s/%s)" % [t.native_fruit, t.native_flower, d.native_fruit, d.native_flower])
+		check(t.plaza == Rect2i() and not t.objects.any(func(o): return o["kind"] == "placed"), "and has no plaza or office")
+		check(t.width < d.width and t.objects.any(func(o): return o["kind"] == "fruit_tree" and o["fruit"] == t.native_fruit), "it's small, with fruit trees")
+		var tw := World.new()
+		tw.tour = true
+		add_child(tw)
+		tw.setup(t)
+		check(not tw.add_dock(Vector2i(t.width / 2, t.height / 2)).is_empty(), "Marlow can land on tour island %d" % seed_value)
+		tw.free()
+		w.free()
+	var d := IslandGenerator.generate(7)
+	var w := World.new()
+	add_child(w)
+	w.setup(d)
+	check(not Story.finish_dock(w), "no ferry before you've arrived")
+	Story.flags["intro_done"] = true
+	check(not Story.finish_dock(w) and int(Story.flags["dock_from"]) == GameClock.day_key(), "nor on your first day")
+	Story.flags["dock_from"] = GameClock.day_key() - 1
+	check(Story.finish_dock(w) and not w.building("dock").is_empty(), "Marlow ties up the next day")
+	check(ItemDB.get_item("tour_ticket").get("price", 1) == 0, "tickets can't be sold on")
+	# Someone invited on a tour moves into the next plot.
+	var spot := Rect2i()
+	for r in range(3, 20):
+		var rect := Rect2i(d.spawn + Vector2i(-6, r), Vector2i(3, 3))
+		if spot.size == Vector2i.ZERO and w.can_place(rect, Vector3(-10, 0, -10)) and w.door_clear("plot_kit", rect, 0):
+			spot = rect
+	var free: Array = NpcData.neighbours().keys()
+	free.sort()
+	Story.flags["invited"] = free[-1]
+	var plot := w.place_item("plot_kit", spot, 0)
+	w.day_key += 1
+	check(Story.move_in(w) == [free[-1]] and plot["resident"] == free[-1] and not Story.flags.has("invited"), "the neighbour you invited moves in")
+	w.free()
+	Story.flags = saved_flags
+

@@ -16,6 +16,8 @@ var rest_facing := Vector3(0, 0, 1)
 ## Neighbours wander about near home by day (`home` is the spot outside their door) and
 ## are indoors in the evening and at night.
 var wanders := false
+## Wanders at any hour (someone camping on a tour island has no home to go to).
+var always_out := false
 var home := Vector3.ZERO
 const WALK := 1.1
 const ROAM := 7.0
@@ -46,7 +48,7 @@ func setup(character_id: String, w: World, spot: Vector3, facing: Vector3) -> vo
 func _process(delta: float) -> void:
 	var speed := 0.0
 	if wanders:
-		visible = out_at(GameClock.hour_float())
+		visible = always_out or out_at(GameClock.hour_float())
 		if not visible:
 			position = home
 			return

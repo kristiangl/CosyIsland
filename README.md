@@ -32,6 +32,10 @@ A cosy island life game about crafting and decorating, made with Godot 4.
 | --- | --- |
 | ![](docs/screenshots/tailors.png) | ![](docs/screenshots/building_site.png) |
 
+| Marlow's ferry | A tour island |
+| --- | --- |
+| ![](docs/screenshots/dock.png) | ![](docs/screenshots/tour.png) |
+
 | Neighbours | Visiting a neighbour | The museum |
 | --- | --- | --- |
 | ![](docs/screenshots/neighbours.png) | ![](docs/screenshots/neighbour_home.png) | ![](docs/screenshots/museum.png) |
@@ -118,6 +122,11 @@ On-screen hints follow whatever you last touched, keyboard or controller.
   the kit for her friend Bramble's museum tent; the journal keeps a critter log.
   After 15 donations, bring him materials and the tent becomes a real museum, with a
   tank or case for every creature that fills as you donate.
+- Island tours: Marlow, a seagull with a ferry, ties up at the beach on your second
+  day. A tour ticket (1,000 acorns, or stamps from the journal) takes you to a little
+  wild island, new every trip, with fruit and flowers that don't grow at home. Gather,
+  dig up flowers, fish and catch bugs, then sail home. Sometimes a neighbour is camping
+  there; invite them and they'll move into your next plot.
 - Neighbours: buy a plot from Poppy, stake it out, and one of sixteen animal neighbours
   (cats, dogs, rabbits, ferrets, mice and birds)
   moves in the next day. They wander near home by day, chat in their own way and

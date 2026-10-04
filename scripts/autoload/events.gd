@@ -17,3 +17,6 @@ signal home_entered(uid: int)
 signal home_left
 ## The player chose to sleep until this hour.
 signal sleep_requested(hour: float)
+## Marlow is setting sail for a tour island, or back home from one.
+signal tour_requested
+signal tour_ended

@@ -211,12 +211,12 @@ func _collect_markers() -> void:
 	_benches.clear()
 	_furniture.clear()
 	_bridges.clear()
-	if Game.island == null:
+	if Game.outdoors() == null:
 		return
-	for obj in Game.island.objects():
+	for obj in Game.outdoors().objects():
 		match obj["kind"]:
 			"bridge":
-				var tiles := Game.island.footprint(obj)
+				var tiles := Game.outdoors().footprint(obj)
 				var r := Rect2(Vector2(tiles[0]), Vector2.ONE)
 				for t in tiles:
 					r = r.expand(Vector2(t) + Vector2.ONE)
@@ -237,9 +237,9 @@ func _collect_markers() -> void:
 
 
 func _draw() -> void:
-	if Game.island == null:
+	if Game.outdoors() == null:
 		return
-	var data := Game.island.data
+	var data := Game.outdoors().data
 	var tex := terrain_texture(data)
 	if tex == null:
 		draw_rect(Rect2(Vector2.ZERO, size), OCEAN)
@@ -277,7 +277,7 @@ func _draw() -> void:
 	for r in _offices:
 		_draw_home(o + r.get_center() * s, icon * 1.3, OFFICE)
 	var player := Game.player
-	if player and player.world == Game.island:
+	if player and player.world == Game.outdoors():
 		_draw_player(o + Vector2(player.position.x, player.position.z) * s, Vector2(player.facing.x, player.facing.z), icon)
 
 

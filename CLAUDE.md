@@ -23,7 +23,7 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   (`--night`, every particle effect), `calibrate.tscn`
   (`-- --shadows`, checks the cel lighting maths).
 - Game screenshot options are listed at the top of `scripts/main.gd` (`--demo`,
-  `--demo=decor|sit|home|door|shop|site|tailors|museum|neighbours|flowers|fishing|bugs` (`--house` builds the house first, `--series=id` furnishes
+  `--demo=decor|sit|home|door|shop|site|tailors|museum|dock|tour|neighbours|flowers|fishing|bugs` (`--house` builds the house first, `--series=id` furnishes
   the home from one series; `--built` turns the museum tent into the museum, `--visit`
   goes inside the museum or a neighbour's home),
   `--ui=pockets|pause|map|creator|crafting|customise|placing|intro|ask|lucy|sleep|asleep|shop|sell|tailors` (`--place=id` picks what to place),
@@ -52,6 +52,10 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   overnight (`Story.move_in`, placed objects with a "resident"); their rooms are visitor
   `World`s (`visitor = true`: nothing can be moved). The museum's hall is a visitor room
   rebuilt from `Journal.donated` on every visit (`main.gd` `fill_museum`), never saved.
+- Island tours: `main.gd` swaps to a tour `World` (`tour = true`, `Game.tour`; nothing
+  can be placed) built from `IslandGenerator.generate_tour`, and frees it on the way home.
+  `Game.island` stays the home island; `Game.outdoors()` is whichever one you're on (the
+  map uses it). Marlow's dock is `World.add_dock` (`dock_spots` for where he stands).
 - Building kits (`placeable.builds`, category "kit"): placed like furniture, stamped with
   `plot_day`, and turned into their building the next night by `Story.build_kit`.
 - `Story` (autoload) holds conversation progress and every character's lines;

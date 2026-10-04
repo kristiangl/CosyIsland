@@ -82,6 +82,9 @@ func _render_queue() -> void:
 static func model_key(item_id: String) -> String:
 	var def := ItemDB.get_item(item_id)
 	if def.has("placeable"):
+		# A building kit shows the building it'll become.
+		if def["placeable"].has("ghost"):
+			return ItemDB.placeable(def["placeable"]["ghost"])["model"]
 		return def["placeable"]["model"]
 	if def.has("build"):
 		return "series:" + item_id

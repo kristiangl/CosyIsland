@@ -28,6 +28,8 @@ var grass: GrassField
 var critters: Critters
 ## A room in someone else's home: look, don't touch.
 var visitor := false
+## An island visited on a tour: gather all you like, but nothing gets built or saved.
+var tour := false
 
 var _objects: Dictionary = {}   # uid -> object dictionary
 var _nodes: Dictionary = {}     # uid -> Node3D
@@ -898,6 +900,84 @@ func building(item_id: String) -> Dictionary:
 
 func shop() -> Dictionary:
 	return building("lucy_shop")
+
+
+## Marlow's ferry dock: on flat sand a tile back from the sea, with open water ahead for
+## the pier and alongside it for the boat. The north shore if there's room (the pier
+## runs out to sea away from the camera), then east, west and south; nearest `near`.
+func add_dock(near: Vector2i) -> Dictionary:
+	var existing := building("dock")
+	if not existing.is_empty():
+		return existing
+	# rot 0 faces +Z (south), 3 faces +X, 1 faces -X, 2 faces -Z.
+	for rot: int in [2, 3, 1, 0]:
+		var best := Rect2i()
+		var best_dist := INF
+		for z in range(1, data.height - 2):
+			for x in range(1, data.width - 2):
+				var rect := Rect2i(x, z, 2, 2)
+				var dist := Vector2(rect.get_center()).distance_to(Vector2(near))
+				if dist < best_dist and _dock_fits(rect, rot):
+					best = rect
+					best_dist = dist
+		if best_dist < INF:
+			for obj in data.objects.duplicate():
+				if obj["kind"] in NATURAL_KINDS and best.grow(1).has_point(Vector2i(obj["x"], obj["z"])):
+					remove_object(obj["uid"])
+			var dock := place_item("dock", best, rot)
+			dock["fixed"] = true
+			return dock
+	return {}
+
+
+## A tile next to a 2x2 rect, seen from the dock: `side` across (0 and 1 are the
+## footprint, -1 left of it) and `ahead` out to sea (0 and 1 are the footprint).
+static func _dock_tile(rect: Rect2i, rot: int, side: int, ahead: int) -> Vector2i:
+	match rot:
+		3:
+			return rect.position + Vector2i(ahead, 1 - side)
+		1:
+			return rect.position + Vector2i(1 - ahead, side)
+		2:
+			return rect.position + Vector2i(1 - side, 1 - ahead)
+	return rect.position + Vector2i(side, ahead)
+
+
+func _dock_fits(rect: Rect2i, rot: int) -> bool:
+	# Flat sand under the dock, open ground beside it for Marlow and behind it to land on.
+	for t: Vector2i in [_dock_tile(rect, rot, 0, 0), _dock_tile(rect, rot, 1, 0), _dock_tile(rect, rot, 0, 1), _dock_tile(rect, rot, 1, 1)]:
+		if data.tile(t.x, t.y) != IslandData.Tile.SAND or not data.is_flat(t.x, t.y):
+			return false
+	for t: Vector2i in [_dock_tile(rect, rot, -1, 0), _dock_tile(rect, rot, 0, -1), _dock_tile(rect, rot, 1, -1)]:
+		# Beach or the grass just above it (not up a cliff).
+		if not data.is_land(t.x, t.y) or data.height_at(t.x + 0.5, t.y + 0.5) > IslandData.GRASS_HEIGHT + 0.05 \
+				or (_occupant.has(data.idx(t.x, t.y)) and not _objects.get(_occupant[data.idx(t.x, t.y)], {}).get("kind", "") in NATURAL_KINDS):
+			return false
+	if not _clearable(rect):
+		return false
+	# Beach or sea under the start of the pier, then open sea for the end of it and the
+	# boat beside it.
+	for ahead in range(2, 6):
+		for side in range(0, 3):
+			var t := _dock_tile(rect, rot, side, ahead)
+			var kind := data.tile(t.x, t.y) if data.in_bounds(t.x, t.y) else -1
+			var sea_needed := ahead >= 4 or (side == 2 and ahead >= 3)
+			if kind != IslandData.Tile.OCEAN and (sea_needed or kind != IslandData.Tile.SAND):
+				return false
+	return true
+
+
+## Where Marlow stands by the dock (on the sand to its left) and where you land from
+## the boat (in front, on the beach): {"skipper", "arrive": Vector3, "facing": inland}.
+func dock_spots(dock: Dictionary) -> Dictionary:
+	var rect := Rect2i(dock["x"], dock["z"], 2, 2)
+	var rot := int(dock.get("rot", 0))
+	var inland := Vector3(Vector2(_dock_tile(rect, rot, 0, -1) - _dock_tile(rect, rot, 0, 0)).x, 0,
+		Vector2(_dock_tile(rect, rot, 0, -1) - _dock_tile(rect, rot, 0, 0)).y)
+	var stand := Vector2(_dock_tile(rect, rot, -1, 0)) + Vector2(0.5, 0.5)
+	var land := (Vector2(_dock_tile(rect, rot, 0, -1)) + Vector2(_dock_tile(rect, rot, 1, -1))) * 0.5 + Vector2(0.5, 0.5)
+	return {"skipper": Vector3(stand.x, ground_height(stand.x, stand.y), stand.y),
+		"arrive": Vector3(land.x, ground_height(land.x, land.y), land.y), "facing": inland}
 
 
 ## Things that can be cleared away to make room for a building.

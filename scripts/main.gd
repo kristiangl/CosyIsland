@@ -18,6 +18,7 @@ extends Node3D
 ##   --demo=door        pitch the tent and stand outside its door
 ##   --demo=shop        Lucy's shop has been built; stand in front of it (--demo=museum: Bramble's,
 ##                      --built for the finished museum, --visit to go in)
+##   --demo=dock        Marlow's ferry dock (--demo=tour: off on a tour, --camper with someone camping there)
 ##   --demo=site        Lucy's shop kit staked out, waiting to be built
 ##   --demo=neighbours  two neighbours have just moved in (--visit: go inside one's home, --who=id,id: who)
 ##   --demo=fishing     fishing off the beach with fish about (--demo=bugs: bugs nearby)
@@ -39,6 +40,8 @@ var _gen_version := IslandGenerator.VERSION
 var _welcome_pending := false
 ## The room the player is in, or null outdoors.
 var room: World
+## The island visited on a tour, while there.
+var tour: World
 var _home_uid := -1
 ## Saved rooms by home uid (as a string, for JSON).
 var _rooms: Dictionary = {}
@@ -127,7 +130,9 @@ func _ready() -> void:
 	Events.home_entered.connect(_enter_home)
 	Events.home_left.connect(_leave_home)
 	Events.sleep_requested.connect(_sleep)
-	Events.day_changed.connect(func(_key): if room == null: _check_house())
+	Events.day_changed.connect(func(_key): if room == null and tour == null: _check_house())
+	Events.tour_requested.connect(func(): _start_tour.call_deferred())
+	Events.tour_ended.connect(func(): _end_tour.call_deferred())
 	_check_house()
 	# Back inside if that's where we saved.
 	var inside := int(saved.get("inside", -1))
@@ -140,7 +145,7 @@ func _ready() -> void:
 		await _run_demo()
 	match Game.args.get("ui", ""):
 		"pockets":
-			for id in ["wood", "stone", "clay", "iron_nugget", "tree_branch", "wooden_chair", "campfire", "apple", "tulip_red"]:
+			for id in ["wood", "stone", "clay", "iron_nugget", "tree_branch", "wooden_chair", "campfire", "apple", "tulip_red", "tour_ticket", "shop_kit"]:
 				Inventory.add_item(id, 3)
 			hud._pockets.open()
 		"pause":
@@ -283,6 +288,12 @@ func save_game() -> void:
 		return
 	if room and not ItemDB.placeable(world.get_object(_home_uid).get("item", "")).get("museum", false):
 		_rooms[str(_home_uid)] = room.to_save()
+	var me := player.to_save()
+	if tour:
+		# Tour islands aren't kept: a game saved on one carries on back at the dock.
+		var back: Vector3 = world.dock_spots(world.building("dock"))["arrive"]
+		me["x"] = back.x
+		me["z"] = back.z
 	SaveGame.write({
 		"seed": _seed,
 		"gen": _gen_version,
@@ -291,7 +302,7 @@ func save_game() -> void:
 		"rooms": _rooms,
 		"inside": _home_uid if room else -1,
 		"inventory": Inventory.to_save(),
-		"player": player.to_save(),
+		"player": me,
 		"recipes": Recipes.to_save(),
 		"story": Story.to_save(),
 		"journal": Journal.to_save(),
@@ -335,6 +346,7 @@ func _spawn_npcs() -> void:
 	_place_lucy()
 	_place_bramble()
 	_place_tailors()
+	_place_marlow(world)
 	for obj in world.objects():
 		if obj.has("resident"):
 			_spawn_neighbour(obj)
@@ -355,6 +367,9 @@ func _check_house() -> void:
 		_place_bramble()
 	if Story.finish_museum_building(world):
 		Events.toast.emit("The museum is finished! Go and look inside.")
+	if Story.finish_dock(world):
+		Events.toast.emit("A ferry has tied up at the beach! Go and say hello.")
+		_place_marlow(world)
 	for who in Story.move_in(world):
 		Events.toast.emit("%s has moved in! Go and say hello." % NpcData.display_name(who))
 		_spawn_neighbour(world.building_of(who))
@@ -392,6 +407,24 @@ func _place_bramble() -> void:
 	bramble.position.y = world.ground_height(bramble.position.x, bramble.position.z)
 	bramble.rest_facing = at["facing"]
 	world.reserve(Vector2i(floori(bramble.position.x), floori(bramble.position.z)))
+
+
+## Marlow stands by his dock, on the island or a tour island.
+func _place_marlow(w: World) -> Npc:
+	var dock := w.building("dock")
+	if dock.is_empty():
+		return null
+	for n in Game.npcs:
+		if n.id == "marlow" and n.world == w:
+			return n
+	var spots := w.dock_spots(dock)
+	var marlow := Npc.new()
+	w.add_child(marlow)
+	marlow.setup("marlow", w, spots["skipper"], spots["facing"])
+	w.reserve(Vector2i(floori(spots["skipper"].x), floori(spots["skipper"].z)))
+	Game.npcs.append(marlow)
+	marlow.tree_exiting.connect(func(): Game.npcs.erase(marlow))
+	return marlow
 
 
 ## Daisy and Morris stand either side of their shop door.
@@ -528,12 +561,114 @@ func _leave_home() -> void:
 	_going_through_door = false
 
 
+# --- Island tours --------------------------------------------------------------------
+
+## Sails to a new little island: generated fresh each trip, never saved.
+func _start_tour() -> void:
+	if tour != null or room != null:
+		return
+	Game.mode = Game.Mode.MENU
+	await hud.fade_out()
+	var trips := int(Story.flags.get("tours", 0)) + 1
+	Story.flags["tours"] = trips
+	var dock := {}
+	for attempt in 6:
+		var data := IslandGenerator.generate_tour(absi(hash([_seed, GameClock.day_key(), trips, attempt])) % 1000000,
+			world.data.native_fruit, world.data.native_flower)
+		tour = World.new()
+		tour.name = "Tour"
+		tour.tour = true
+		add_child(tour)
+		tour.setup(data)
+		dock = tour.add_dock(Vector2i(data.width / 2, data.height / 2))
+		if not dock.is_empty():
+			break
+		tour.free()
+		tour = null
+	if tour == null:
+		Events.toast.emit("Marlow couldn't find anywhere to land today. Sorry!")
+		Game.mode = Game.Mode.PLAY
+		await hud.fade_in()
+		return
+	_place_marlow(tour)
+	_add_camper(tour)
+	Game.tour = tour
+	_switch_world(tour)
+	var spots := tour.dock_spots(dock)
+	player.position = spots["arrive"]
+	player.facing = spots["facing"]
+	camera_rig.island_size = Vector2(tour.data.width, tour.data.height)
+	camera_rig.snap()
+	Events.placed_changed.emit()
+	Game.mode = Game.Mode.PLAY
+	await hud.fade_in()
+	Events.toast.emit("Land ho! Talk to Marlow when you're ready to sail home.")
+
+
+## Now and then someone's camping on a tour island who'd like a new home: one of the
+## neighbours who doesn't live on your island yet.
+func _add_camper(t: World) -> Npc:
+	var here: Array = []
+	for obj in world.objects():
+		if obj.has("resident"):
+			here.append(obj["resident"])
+	var free: Array = NpcData.neighbours().keys().filter(func(id): return not id in here)
+	if free.is_empty() or (t.data.seed_value % 3 == 0 and not Game.args.has("camper")):
+		return null
+	free.sort()
+	var who: String = free[t.data.seed_value % free.size()]
+	if Story.flags.get("invited", "") in free and t.data.seed_value % 2 == 0:
+		who = Story.flags["invited"]
+	# Somewhere open near the middle of the island.
+	var centre := Vector2(t.data.width, t.data.height) * 0.5
+	var spot := Vector3.ZERO
+	var best := INF
+	for z in t.data.height:
+		for x in t.data.width:
+			var c := Vector2(x + 0.5, z + 0.5)
+			if t.data.tile(x, z) == IslandData.Tile.GRASS and t.is_walkable(c.x, c.y) and t.object_at(x, z).is_empty() \
+					and c.distance_to(centre) < best:
+				best = c.distance_to(centre)
+				spot = Vector3(c.x, 0, c.y)
+	var camper := Npc.new()
+	t.add_child(camper)
+	camper.setup(who, t, spot, Vector3(0, 0, 1))
+	camper.wanders = true
+	camper.always_out = true
+	camper.home = camper.position
+	Game.npcs.append(camper)
+	camper.tree_exiting.connect(func(): Game.npcs.erase(camper))
+	return camper
+
+
+## Sails home to the dock, leaving the tour island behind.
+func _end_tour() -> void:
+	if tour == null:
+		return
+	Game.mode = Game.Mode.MENU
+	await hud.fade_out()
+	Game.tour = null
+	tour.queue_free()
+	tour = null
+	_switch_world(world)
+	_check_house()
+	var spots := world.dock_spots(world.building("dock"))
+	player.position = spots["arrive"]
+	player.facing = spots["facing"]
+	camera_rig.island_size = Vector2(world.data.width, world.data.height)
+	camera_rig.snap()
+	Events.placed_changed.emit()
+	Game.mode = Game.Mode.PLAY
+	await hud.fade_in()
+	save_game()
+
+
 ## Points the player, placement and UI at the island or a room, and swaps the
 ## outdoor-only bits (curvature, wind, sky) on or off.
 func _switch_world(to: World) -> void:
-	var outside := to == world
-	world.visible = outside
-	world.process_mode = Node.PROCESS_MODE_INHERIT if outside else Node.PROCESS_MODE_DISABLED
+	var outside := not to.interior
+	world.visible = to == world
+	world.process_mode = Node.PROCESS_MODE_INHERIT if to == world else Node.PROCESS_MODE_DISABLED
 	Game.world = to
 	player.world = to
 	placement.world = to
@@ -619,6 +754,27 @@ func _run_demo() -> void:
 			player.position = world.outside_door(shop)["position"] + Vector3(1.4, 0, 2.2)
 			player.facing = Vector3(-0.3, 0, -1).normalized()
 			camera_rig.snap()
+		return
+	if Game.args["demo"] in ["dock", "tour"]:
+		# Marlow's dock (tied up yesterday), or straight off on a tour (--camper: with someone camping).
+		Story.flags["intro_done"] = true
+		Story.flags["dock_from"] = GameClock.day_key() - 1
+		_check_house()
+		var dock := world.building("dock")
+		if dock.is_empty():
+			return
+		var spots := world.dock_spots(dock)
+		player.position = spots["arrive"] - spots["facing"] * 0.2 + Vector3(-spots["facing"].z, 0, spots["facing"].x) * 1.6
+		player.facing = -spots["facing"]
+		camera_rig.snap()
+		if Game.args["demo"] == "tour":
+			await _start_tour()
+			if Game.args.has("camper"):
+				for n in Game.npcs:
+					if n.world == tour and n.id != "marlow":
+						player.position = n.position + Vector3(0.8, 0, 1.6)
+						player.facing = Vector3(-0.4, 0, -1).normalized()
+						camera_rig.snap()
 		return
 	if Game.args["demo"] == "site":
 		# Lucy's shop kit staked out by the plaza, to be built tonight.

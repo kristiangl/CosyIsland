@@ -17,6 +17,8 @@ const PLOT_COST := 2000
 ## Donations before Bramble wants a proper building, and what it takes.
 const MUSEUM_DONATIONS := 15
 const MUSEUM_MATERIALS := {"wood": 40, "stone": 30, "iron_nugget": 10}
+## What Marlow charges for a tour ticket.
+const TICKET_COST := 1000
 var talking := false
 ## How many times each character has been chatted to today, to cycle their small talk.
 var _chats: Dictionary = {}
@@ -70,8 +72,12 @@ func talk_to(who: Npc) -> void:
 			await _bramble(who)
 		"daisy", "morris":
 			await _tailors(who)
+		"marlow":
+			await _marlow(who)
 		_:
-			if NpcData.is_neighbour(who.id):
+			if NpcData.is_neighbour(who.id) and who.world and who.world.tour:
+				await _tour_visitor(who)
+			elif NpcData.is_neighbour(who.id):
 				await _neighbour(who)
 	_end()
 
@@ -720,6 +726,96 @@ func _creature_fact() -> String:
 		ItemDB.display_name(id).to_lower(), ItemDB.WHERE_TEXT.get(c["where"], ""), when, int(c["price"])]
 
 
+# --- Island tours --------------------------------------------------------------------
+
+## Marlow ties up his ferry at the beach the day after you arrive.
+func finish_dock(island: World) -> bool:
+	if flags.get("dock_done", false) or not flags.get("intro_done", false):
+		return false
+	if not flags.has("dock_from"):
+		flags["dock_from"] = GameClock.day_key()
+	if GameClock.day_key() <= int(flags["dock_from"]):
+		return false
+	if island.add_dock(island.data.spawn).is_empty():
+		return false
+	flags["dock_done"] = true
+	return true
+
+
+func _marlow(who: Npc) -> void:
+	if who.world and who.world.tour:
+		if await ask("marlow", _small_talk("marlow_away", ["Ready to head home, {player}?",
+				"Found anything good? Ready to sail back?", "The tide's turning. Home?"]), ["Take me home", "Not yet"]) == 0:
+			await say("marlow", ["Righto! Hold on to your hat."])
+			Events.tour_ended.emit()
+		else:
+			await say("marlow", ["Take your time. I'll be right here, watching the gulls. The other gulls."])
+		return
+	if not flags.get("met_marlow", false):
+		flags["met_marlow"] = true
+		who.hop()
+		await say("marlow", ["Ahoy! Marlow's the name, ferrying's the game. Poppy said you might like to see a bit of the sea.",
+			"There are little islands all over these waters. Nobody lives on most of them, so everything there's up for grabs.",
+			"Fruit you've never tasted, flowers you've never seen, and now and then someone looking for a new home.",
+			"A trip costs a tour ticket. I sell them for %d acorns, and Poppy's journal has them for stamps." % TICKET_COST])
+		return
+	var greeting := _small_talk("marlow_hello", [
+		"Ahoy, {player}! Fancy a trip?",
+		"Lovely day for a sail. Where to? Oh, I choose. Somewhere nice!",
+		"The boat's ready when you are.",
+	])
+	match await ask("marlow", greeting, ["Let's go!", "Buy a ticket (%d acorns)" % TICKET_COST, "Not today"]):
+		0:
+			if Inventory.count_of("tour_ticket") == 0:
+				await say("marlow", ["You'll need a ticket first, I'm afraid. Rules of the sea. Well, my rules."])
+				return
+			if await ask("", "Use a tour ticket?", ["Yes", "Not now"]) != 0:
+				return
+			Inventory.remove_item("tour_ticket", 1)
+			Journal.add("tours")
+			await say("marlow", ["All aboard! Mind the step, it's mostly sea."])
+			Events.tour_requested.emit()
+		1:
+			if Inventory.currency < TICKET_COST:
+				await say("marlow", ["That's %d acorns, and you've %d. Lucy pays well for fruit, I hear." % [TICKET_COST, Inventory.currency]])
+				return
+			if await ask("", "Buy a tour ticket for %d acorns?" % TICKET_COST, ["Yes", "No thanks"]) != 0:
+				return
+			Inventory.add_currency(-TICKET_COST)
+			_give("tour_ticket")
+		_:
+			await say("marlow", [_small_talk("marlow", [
+				"Every island's different. Some have cherries, some have pears. One had nothing but a very cross crab.",
+				"Bring a shovel. Flowers dig up lovely, and they'll grow at home.",
+				"Fruit you plant at home grows into a tree, given time. So I'm told. I mostly eat it.",
+				"Sometimes there's someone camping out there who'd love a proper home. Worth a chat!",
+			])])
+
+
+## Someone camping on a tour island, who might move to yours.
+func _tour_visitor(who: Npc) -> void:
+	var data := NpcData.get_character(who.id)
+	var catch: String = data.get("catchphrase", "")
+	if flags.get("invited", "") == who.id:
+		await say(who.id, ["I'm packing already! See you on {island} Island. %s!" % catch.capitalize()])
+		return
+	who.hop()
+	await say(who.id, ["Oh! A visitor! I'm %s. I've been camping here a while. It's lovely, but awfully quiet, %s." % [data["name"], catch]])
+	if await ask(who.id, "Is your island nice? I've been thinking of moving somewhere friendlier.",
+			["Come and live on mine!", "Just visiting"]) != 0:
+		await say(who.id, ["Fair enough! Enjoy the island. Mind the crabs."])
+		return
+	flags["invited"] = who.id
+	who.cheer()
+	var waiting := false
+	if Game.island:
+		for obj in Game.island.objects():
+			waiting = waiting or (obj["kind"] == "placed" and obj["item"] == "plot_kit")
+	await say(who.id, ["Really? Oh, %s! Yes please!" % catch,
+		"I'll move into the plot you've staked out, first thing tomorrow!" if waiting
+			else "Stake out a plot from Poppy and I'll move in the very next day!"])
+
+
 # --- Neighbours ----------------------------------------------------------------------
 
 ## Poppy sells neighbour plots once your house is built, one at a time, until everyone
@@ -765,6 +861,10 @@ func move_in(island: World) -> Array[String]:
 			break
 		free.sort()
 		var who: String = free[(island.data.seed_value + island.day_key + here.size()) % free.size()]
+		# Someone you met on a tour and invited comes first.
+		if flags.get("invited", "") in free:
+			who = flags["invited"]
+			flags.erase("invited")
 		obj["item"] = "neighbour_house"
 		obj["resident"] = who
 		obj.erase("plot_day")

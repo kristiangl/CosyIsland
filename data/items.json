@@ -244,6 +244,14 @@
 				"builds": "museum_tent"
 			}
 		},
+		"tour_ticket": {
+			"name": "Tour Ticket",
+			"category": "ticket",
+			"stack": 10,
+			"price": 0,
+			"color": "#9cc4e4",
+			"desc": "Show it to Marlow at the dock for a trip to a little island nobody lives on."
+		},
 		"neighbour_house": {
 			"name": "Neighbour's House",
 			"category": "building",
@@ -284,6 +292,23 @@
 				"structure": true,
 				"rotatable": false,
 				"door": true
+			}
+		},
+		"dock": {
+			"name": "Ferry Dock",
+			"category": "building",
+			"stack": 1,
+			"price": 0,
+			"color": "#9cc4e4",
+			"desc": "Marlow's dock, where the ferry leaves for island tours.",
+			"placeable": {
+				"footprint": [
+					2,
+					2
+				],
+				"model": "dock",
+				"structure": true,
+				"rotatable": false
 			}
 		},
 		"lucy_shop": {

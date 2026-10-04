@@ -140,9 +140,9 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if Game.island:
+	if Game.outdoors():
 		# Collects the map painting as soon as it's ready, even with the minimap hidden.
-		IslandMap.terrain_texture(Game.island.data)
+		IslandMap.terrain_texture(Game.outdoors().data)
 	# Conversations get the bottom of the screen to themselves.
 	_tool_panel.visible = not dialogue.visible
 	_hint_panel.visible = not dialogue.visible
@@ -223,7 +223,7 @@ func _update_minimap() -> void:
 
 func open_map() -> void:
 	Game.mode = Game.Mode.MENU
-	_map_title.text = "%s Island" % Game.island_name if Game.island_name != "" else "Island Map"
+	_map_title.text = "A little island" if Game.tour else ("%s Island" % Game.island_name if Game.island_name != "" else "Island Map")
 	_map.visible = true
 	_map.reset_size()
 	_map.position = (_map.get_parent_area_size() - _map.size) * 0.5

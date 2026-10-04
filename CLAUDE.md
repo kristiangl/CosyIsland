@@ -18,7 +18,7 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   inferred-Variant types as errors, so type loop variables over literal arrays).
 - Art check scenes (render with `tools/screenshot_scene.sh out.png res://tools/<scene>`):
   `character_lineup.tscn` (`--seed`, `--angle`, `--vary=KEY`, `--base=k:v`, `--poses`,
-  `--npcs[=id,id]` (`--angles=0,35`), `--close`),
+  `--npcs[=id,id]` (`--angles=0,35`), `--close`, `--poses` (`--only=chop,sit,...`)),
   `model_gallery.tscn` (`--drops`, `--keys`, `--only=id,id`, `--series=id`, `--variant=id`), `effects_gallery.tscn`
   (`--night`, every particle effect), `calibrate.tscn`
   (`-- --shadows`, checks the cel lighting maths).
@@ -57,6 +57,11 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
 - `assets/kaykit/`: KayKit models (CC0) converted by `tools/kaykit_import.gd` from the list
   in `tools/kaykit.json` (needs the unpacked KayKit folder: `-- --src=DIR`). They load as
   `Models.get_mesh("kaykit:<name>")`; island trees, fruit trees, bushes and rocks use them.
+- Characters animate two ways: the hand-made walk and run in `character_model.gd`, and
+  KayKit's Rig_Medium clips (`assets/kaykit/rig_medium.res`, the clips listed under
+  "animations" in `tools/kaykit.json`) for idling, actions (`CharacterModel.ACTIONS`),
+  sitting, lying and fishing. `RigPose` copies a clip's bone rotations onto our pivots.
+  `tools/kaykit_preview.tscn` shows KayKit characters and clips (`--src=DIR`).
 - Island generation is versioned (`IslandGenerator.VERSION`, saved as "gen"): bump it
   for changes that would reshape existing islands, and keep the old behaviour behind it.
 - Worker-thread tasks must always be collected (`IslandMap.finish()`), or Godot

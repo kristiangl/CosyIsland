@@ -2,6 +2,7 @@ extends Node3D
 ## Renders a row of characters for checking the character art:
 ##   tools/screenshot_scene.sh out.png res://tools/character_lineup.tscn [--seed=N] [--angle=DEG]
 ##     [--vary=KEY [--only=id,id]] [--base=key:id,key:id] [--npcs[=id,id] [--angles=0,35]] [--close]
+##     [--poses [--only=chop,dig,...]]
 ## Without --vary: the --base look (default look if none) and five random ones.
 ## With --vary: one character per option of KEY, all on the --base look.
 
@@ -97,8 +98,13 @@ func _add_camera() -> void:
 ## One character per pose, frozen part-way through: idle, walk, run, chop, pickup, sit,
 ## cheer, shake. Each is stepped with fixed time steps to the interesting moment.
 func _pose_sheet(look: Dictionary) -> void:
-	var poses := [["idle", 0.0, 0.5], ["walk", 3.4, 0.33], ["run", 6.4, 0.3], ["chop", 0.0, 0.17],
-		["pickup", 0.0, 0.17], ["sit", 0.0, 0.5], ["cheer", 0.0, 0.35], ["shake", 0.0, 0.2], ["eat", 0.0, 0.55], ["craft", 0.0, 0.42]]
+	var poses := [["idle", 0.0, 0.5], ["walk", 3.4, 0.33], ["run", 6.4, 0.3], ["chop", 0.0, 0.2], ["dig", 0.0, 0.22],
+		["net", 0.0, 0.2], ["cast", 0.0, 0.25], ["fishing", 0.0, 1.0], ["pickup", 0.0, 0.25], ["sit", 0.0, 0.5],
+		["sleeping", 0.0, 0.5], ["cheer", 0.0, 0.6], ["shake", 0.0, 0.25], ["eat", 0.0, 0.5], ["craft", 0.0, 0.4], ["wave", 0.0, 0.6]]
+	var only: PackedStringArray = Game.args.get("only", "").split(",", false)
+	if not only.is_empty():
+		poses = poses.filter(func(p): return p[0] in only)
+	var tools := {"chop": "flimsy_axe", "dig": "flimsy_shovel", "net": "flimsy_net", "cast": "flimsy_rod", "fishing": "flimsy_rod"}
 	var spacing := minf(0.85, 7.0 / poses.size())
 	for i in poses.size():
 		var c := CharacterModel.new(look)
@@ -108,8 +114,12 @@ func _pose_sheet(look: Dictionary) -> void:
 		var pose: String = poses[i][0]
 		var speed: float = poses[i][1]
 		var time: float = poses[i][2]
-		if pose in ["chop", "pickup", "cheer", "shake", "eat", "craft"]:
+		if tools.has(pose):
+			c.set_tool(tools[pose])
+		if CharacterModel.ACTIONS.has(pose):
 			c.play(pose)
+		if pose in ["fishing", "sleeping"]:
+			c.mode = pose
 		if pose == "sit":
 			c.set_sitting(true)
 			c.position.y = 0.12

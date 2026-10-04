@@ -124,7 +124,8 @@ On-screen hints follow whatever you last touched, keyboard or controller.
 - Rugs (round, large and runners, in ten prints plus one per series) lie under your
   furniture, and curtains dress your home's windows. Sit on chairs and benches; put teapots, candles and plants on tables.
   Lanterns and campfires glow at night.
-- An animated player with knees and elbows: walking, running, chopping, sitting.
+- An animated player with knees and elbows: a hand-made walk and run, and KayKit's
+  animations for idling, chopping, digging, fishing, sitting, eating, crafting and cheering.
 - Minimap and a full island map.
 - Pockets with item icons, stacking and tools that wear out.
 - Poppy's Island Journal (a phone app): milestones and five daily tasks earn stamps,
@@ -136,6 +137,7 @@ See [docs/DESIGN.md](docs/DESIGN.md) for the full plan.
 
 ## Credits
 
-Trees, bushes and rocks are from the KayKit Forest Nature Pack by Kay Lousberg
-([www.kaylousberg.com](https://www.kaylousberg.com), CC0), recoloured for the island by
-`tools/kaykit_import.gd`. Everything else is built in code.
+Trees, bushes and rocks are from the KayKit Forest Nature Pack, and the characters'
+actions (chopping, digging, fishing, sitting, lying down, cheering...) from KayKit
+Character Animations, both by Kay Lousberg ([www.kaylousberg.com](https://www.kaylousberg.com),
+CC0), converted for the game by `tools/kaykit_import.gd`. Everything else is built in code.

@@ -199,7 +199,7 @@ func _use() -> void:
 			_swing_net()
 		"axe", "shovel":
 			_busy = SWING_TIME
-			model.play("chop")
+			model.play("chop" if tool_kind == "axe" else "dig")
 			await get_tree().create_timer(IMPACT_TIME).timeout
 			if kind == "bush":
 				world.shake(obj, position)
@@ -231,10 +231,11 @@ func _cast() -> void:
 		Events.toast.emit("Face the water to cast your line.")
 		return
 	_busy = 0.5
-	model.play("chop")
+	model.play("cast")
 	await get_tree().create_timer(0.3).timeout
 	world.critters.cast(spot)
 	fishing = true
+	model.mode = "fishing"
 	_line.visible = true
 	_update_line()
 
@@ -250,6 +251,7 @@ func _update_line() -> void:
 
 func _reel() -> void:
 	fishing = false
+	model.mode = ""
 	_line.visible = false
 	var id := world.critters.reel()
 	if id == "":
@@ -259,7 +261,7 @@ func _reel() -> void:
 
 func _swing_net() -> void:
 	_busy = SWING_TIME
-	model.play("chop")
+	model.play("net")
 	await get_tree().create_timer(IMPACT_TIME).timeout
 	var id := world.critters.net(position + facing * 0.9) if world.critters else ""
 	if id == "":

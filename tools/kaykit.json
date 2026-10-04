@@ -274,5 +274,40 @@
 				2.8
 			]
 		}
+	},
+	"animations": {
+		"KayKit_Character_Animations_1.1/Animations/gltf/Rig_Medium/Rig_Medium_General.glb": [
+			"Idle_A",
+			"Idle_B",
+			"Interact",
+			"PickUp",
+			"Use_Item",
+			"Throw"
+		],
+		"KayKit_Character_Animations_1.1/Animations/gltf/Rig_Medium/Rig_Medium_MovementBasic.glb": [
+			"Walking_A",
+			"Running_A",
+			"Jump_Full_Short"
+		],
+		"KayKit_Character_Animations_1.1/Animations/gltf/Rig_Medium/Rig_Medium_Tools.glb": [
+			"Chop",
+			"Dig",
+			"Hammering",
+			"Fishing_Cast",
+			"Fishing_Idle",
+			"Fishing_Bite",
+			"Fishing_Catch",
+			"Holding_A"
+		],
+		"KayKit_Character_Animations_1.1/Animations/gltf/Rig_Medium/Rig_Medium_Simulation.glb": [
+			"Cheering",
+			"Waving",
+			"Sit_Chair_Idle",
+			"Sit_Floor_Idle",
+			"Lie_Idle"
+		],
+		"KayKit_Character_Animations_1.1/Animations/gltf/Rig_Medium/Rig_Medium_CombatMelee.glb": [
+			"Melee_2H_Attack_Slice"
+		]
 	}
 }

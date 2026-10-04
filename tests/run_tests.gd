@@ -17,6 +17,7 @@ func _run() -> void:
 	_test_generation()
 	_test_world_rules()
 	_test_appearance()
+	_test_animation()
 	_test_crafting()
 	_test_rooms()
 	_test_story()
@@ -236,6 +237,37 @@ func _test_appearance() -> void:
 			add_child(model)
 			check(model.get_child_count() > 0, "character builds with %s = %s" % [key, opt["id"]])
 			model.free()
+
+
+func _test_animation() -> void:
+	check(RigPose.ready(), "KayKit's animations load")
+	for action: String in CharacterModel.ACTIONS:
+		var spec: Array = CharacterModel.ACTIONS[action]
+		check(RigPose.length(spec[0]) >= float(spec[2]) - 0.02, "%s plays a stretch of %s that exists" % [action, spec[0]])
+	for clip: String in ["Idle_A", "Sit_Chair_Idle", "Lie_Idle", "Fishing_Idle"]:
+		check(RigPose.length(clip) > 0.0, "the %s clip is there" % clip)
+	var m := CharacterModel.new(Appearance.DEFAULT)
+	add_child(m)
+	var arm: Node3D = m.find_child("ArmL", true, false)
+	for i in 30:
+		m.animate(0.01, 0.0)
+	var resting := arm.global_transform.basis.y
+	m.play("chop")
+	for i in 20:
+		m.animate(0.01, 0.0)
+	check(arm.global_transform.basis.y.dot(resting) < 0.5, "chopping swings the tool arm up")
+	for i in 60:
+		m.animate(0.01, 0.0)
+	check(m._action == "", "and the action ends")
+	for i in 60:
+		m.animate(0.01, 3.4)
+	var hips: Node3D = m.find_child("Hips", true, false)
+	check(m._layer == 0.0 and hips.rotation.is_zero_approx(), "walking hands back to the hand-made walk, nothing left over")
+	m.mode = "sleeping"
+	for i in 40:
+		m.animate(0.01, 0.0)
+	check(absf(hips.global_transform.basis.y.y) < 0.5, "sleeping lies down")
+	m.free()
 
 
 func _test_crafting() -> void:

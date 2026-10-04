@@ -43,7 +43,63 @@ func _init() -> void:
 		ResourceSaver.save(mesh, OUT_DIR + name + ".res", ResourceSaver.FLAG_COMPRESS)
 		done += 1
 	print("Imported %d models" % done)
+	if list.has("animations") and (only.is_empty() or "animations" in only):
+		var library := import_animations(src, list["animations"])
+		ResourceSaver.save(library, OUT_DIR + "rig_medium.res", ResourceSaver.FLAG_COMPRESS)
+		print("Imported %d animations" % library.get_animation_list().size())
 	quit()
+
+
+## KayKit's Rig_Medium animations, for RigPose: just the listed clips ({file: [names]},
+## files relative to --src) and just the bones RigPose reads, each track named after
+## its bone. The skeleton's rest pose goes in the library's "bones" meta:
+## {bone: [parent bone or "", rest Transform3D]}.
+static func import_animations(src: String, files: Dictionary) -> AnimationLibrary:
+	var library := AnimationLibrary.new()
+	var bones := {}
+	var keep := {}
+	for file: String in files:
+		var doc := GLTFDocument.new()
+		var state := GLTFState.new()
+		doc.append_from_file(src.path_join(file), state)
+		var scene := doc.generate_scene(state)
+		var skeleton: Skeleton3D = scene.find_children("*", "Skeleton3D", true, false)[0]
+		if bones.is_empty():
+			for pair: Array in RigPose.MAP:
+				var b := skeleton.find_bone(pair[1])
+				while b >= 0:
+					keep[skeleton.get_bone_name(b)] = true
+					b = skeleton.get_bone_parent(b)
+			for child: String in RigPose.CHILD.values():
+				if child != "":
+					keep[child] = true
+			keep[RigPose.SLOT] = true
+			for name: String in keep:
+				var b := skeleton.find_bone(name)
+				var parent := skeleton.get_bone_parent(b)
+				bones[name] = [skeleton.get_bone_name(parent) if parent >= 0 else "", skeleton.get_bone_rest(b)]
+		var player: AnimationPlayer = scene.find_children("*", "AnimationPlayer", true, false)[0]
+		var source := player.get_animation_library("")
+		for clip: String in files[file]:
+			var from := source.get_animation(clip)
+			var anim := Animation.new()
+			anim.length = from.length
+			anim.loop_mode = from.loop_mode
+			for t in from.get_track_count():
+				var bone := String(from.track_get_path(t).get_concatenated_subnames())
+				var kind := from.track_get_type(t)
+				if not keep.has(bone) or not kind in [Animation.TYPE_ROTATION_3D, Animation.TYPE_POSITION_3D]:
+					continue
+				if kind == Animation.TYPE_POSITION_3D and bone != "hips":
+					continue
+				var to := anim.add_track(kind)
+				anim.track_set_path(to, NodePath(bone))
+				for k in from.track_get_key_count(t):
+					anim.track_insert_key(to, from.track_get_key_time(t, k), from.track_get_key_value(t, k))
+			library.add_animation(clip, anim)
+		scene.free()
+	library.set_meta("bones", bones)
+	return library
 
 
 ## One glTF file as a single-surface mesh, scaled, centred and standing on y = 0.

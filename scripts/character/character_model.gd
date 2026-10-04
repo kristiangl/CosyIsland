@@ -54,6 +54,35 @@ var _glance := 0.0
 var _glance_timer := 4.0
 ## Current joint values, eased towards each frame's targets.
 var _pose := {}
+## KayKit clips (RigPose) over the hand-made walk: the clip playing, its time, and the
+## one it's fading from; how much the clips show (0 while walking, 1 standing still).
+var _clip := ""
+var _clip_t := 0.0
+var _last_clip := ""
+var _last_clip_t := 0.0
+var _fade := 1.0
+var _layer := 0.0
+var _rig: Array[Node3D] = []
+var _sample := {}
+var _sample_last := {}
+## "fishing" or "sleeping": what the character is doing while standing (or lying) still.
+var mode := ""
+
+## Actions: KayKit clip, the stretch of it used (seconds), and how long it plays here,
+## so a swing lands when the game expects it to.
+const ACTIONS := {
+	"chop": ["Chop", 0.25, 1.05, 0.42],
+	"dig": ["Dig", 0.4, 1.3, 0.42],
+	"net": ["Melee_2H_Attack_Slice", 0.2, 1.1, 0.42],
+	"shake": ["Interact", 0.0, 1.3, 0.5],
+	"pickup": ["PickUp", 0.1, 1.2, 0.5],
+	"cheer": ["Cheering", 0.0, 1.67, 1.3],
+	"eat": ["Use_Item", 0.0, 1.6, 1.6],
+	"craft": ["Hammering", 0.0, 2.67, 1.5],
+	"cast": ["Fishing_Cast", 0.6, 1.6, 0.5],
+	"reel": ["Fishing_Catch", 0.0, 1.6, 0.6],
+	"wave": ["Waving", 0.0, 2.13, 1.4],
+}
 
 static var _shaders: Dictionary = {}
 
@@ -86,11 +115,13 @@ func rebuild() -> void:
 	_arm_r = _pivot("ArmR", P.SHOULDER, _body)
 	_elbow_l = _pivot("ElbowL", Vector3(0, -P.ARM_UPPER, 0), _arm_l)
 	_elbow_r = _pivot("ElbowR", Vector3(0, -P.ARM_UPPER, 0), _arm_r)
-	_hand_r = _pivot("Hand", Vector3(0, -P.ARM_LOWER, 0), _elbow_r)
+	# The tool hand is the character's right (it faces +Z, so that's -X).
+	_hand_r = _pivot("Hand", Vector3(0, -P.ARM_LOWER, 0), _elbow_l)
+	_rig = [_hips, _waist, _head, _leg_l, _knee_l, _leg_r, _knee_r, _arm_l, _elbow_l, _arm_r, _elbow_r, _hand_r]
 	_pose.clear()
 	_tool = MeshInstance3D.new()
 	_tool.material_override = Models.material()
-	_tool.rotation_degrees = Vector3(90, 0, 0)
+	_tool.transform = RigPose.slot()
 	_hand_r.add_child(_tool)
 	set_tool(_tool_id)
 
@@ -263,12 +294,12 @@ func set_tool(item_id: String) -> void:
 		_tool.mesh = Models.get_mesh("tool:" + item_id) if item_id != "" else null
 
 
-## Plays a one-off action: "chop" (overhead swing), "shake" (both hands on a tree),
-## "pickup" (crouch and reach) or "cheer" (a happy hop, arms up).
+## Plays a one-off action from ACTIONS: "chop", "dig", "net", "shake", "pickup",
+## "cheer", "eat", "craft", "cast", "reel" or "wave".
 func play(action: String) -> void:
 	_action = action
 	_action_t = 0.0
-	_action_length = {"chop": 0.45, "shake": 0.5, "pickup": 0.35, "cheer": 0.9, "eat": 1.6, "craft": 1.5}.get(action, 0.4)
+	_action_length = ACTIONS[action][3] if ACTIONS.has(action) else 0.4
 	if action == "cheer" and _face:
 		_face.set_shader_parameter("eye_style", 2)
 
@@ -283,8 +314,7 @@ func hold(mesh: Mesh, seconds: float, size: float = 0.55) -> void:
 	_tool.scale = Vector3.ONE * size
 	await get_tree().create_timer(seconds).timeout
 	if is_instance_valid(_tool):
-		_tool.rotation_degrees = Vector3(90, 0, 0)
-		_tool.scale = Vector3.ONE
+		_tool.transform = RigPose.slot()
 		set_tool(_tool_id)
 
 
@@ -303,18 +333,66 @@ func animate(delta: float, speed: float, turn_rate: float = 0.0, accel: float = 
 	_animate_blink(delta)
 	var run := clampf((speed - 3.6) / 2.6, 0.0, 1.0)
 	var t := _idle_pose(delta)
-	if speed > 0.1 and not _sitting:
+	var moving := speed > 0.1 and not _sitting and mode == ""
+	if moving:
 		_phase += TAU * delta * speed / lerpf(1.15, 1.6, run)
 		_walk_pose(t, speed, run)
-	if _sitting:
-		_sit_pose(t)
-	if _action != "":
-		_action_pose(t, delta)
 	# Lean into acceleration and round corners.
 	t["body_roll"] += clampf(-turn_rate * 0.035 * minf(speed / 3.0, 1.0), -0.16, 0.16)
 	t["body_pitch"] += clampf(accel * 0.012, -0.1, 0.12)
 	t["head_yaw"] += clampf(turn_rate * 0.06, -0.3, 0.3)
 	_apply(t, delta)
+	_play_clips(delta, moving)
+
+
+## The KayKit layer: an action if one's playing, else sitting, lying, fishing or idling,
+## faded in over the walk when standing still.
+func _play_clips(delta: float, moving: bool) -> void:
+	if not RigPose.ready():
+		_action = ""
+		return
+	var clip := "Idle_A"
+	var time := _time
+	var loop := true
+	if _action != "":
+		var spec: Array = ACTIONS.get(_action, ACTIONS["chop"])
+		_action_t += delta / _action_length
+		clip = spec[0]
+		time = lerpf(spec[1], spec[2], clampf(_action_t, 0.0, 1.0))
+		loop = false
+		if _action_t >= 1.0:
+			if _action in ["cheer", "eat"] and _face:
+				_face.set_shader_parameter("eye_style", Appearance.index_of(look, "eyes"))
+			_action = ""
+	elif mode == "sleeping":
+		clip = "Lie_Idle"
+	elif _sitting:
+		clip = "Sit_Chair_Idle"
+	elif mode == "fishing":
+		clip = "Fishing_Idle"
+	if clip != _clip:
+		_last_clip = _clip
+		_last_clip_t = _clip_t
+		_fade = 0.0 if _clip != "" else 1.0
+		_clip = clip
+	_fade = minf(1.0, _fade + delta / 0.15)
+	var length := RigPose.length(clip)
+	_clip_t = fposmod(time, length) if loop else time
+	var want := 0.0 if moving and _action == "" else 1.0
+	_layer = move_toward(_layer, want, delta / 0.12)
+	if _layer <= 0.0:
+		return
+	RigPose.sample(_clip, _clip_t, _sample)
+	if _fade < 1.0 and _last_clip != "":
+		RigPose.sample(_last_clip, _last_clip_t, _sample_last)
+		RigPose.blend(_sample_last, _sample, _fade)
+		RigPose.apply(_rig, _sample_last, P.HIP_Y, 0.0 if _sitting else 1.0, _layer)
+	else:
+		RigPose.apply(_rig, _sample, P.HIP_Y, 0.0 if _sitting else 1.0, _layer)
+	# Clips don't squash; the walk does.
+	_waist.scale = _waist.scale.lerp(Vector3.ONE, _layer)
+	# The hand-made glance on top.
+	_head.rotate_object_local(Vector3.UP, _pose.get("head_yaw", 0.0) * _layer)
 
 
 func _idle_pose(delta: float) -> Dictionary:
@@ -363,128 +441,27 @@ func _walk_pose(t: Dictionary, speed: float, run: float) -> void:
 	_last_step = c
 
 
-func _sit_pose(t: Dictionary) -> void:
-	t["leg_l"] = -1.45
-	t["leg_r"] = -1.45
-	t["knee_l"] = 1.4
-	t["knee_r"] = 1.4
-	t["arm_l"] = -0.35
-	t["arm_r"] = -0.35
-	t["elbow_l"] = -0.9
-	t["elbow_r"] = -0.9
-	t["arm_l_out"] = 0.15
-	t["arm_r_out"] = 0.15
-	t["body_pitch"] = -0.05
-
-
-func _action_pose(t: Dictionary, delta: float) -> void:
-	_action_t += delta / _action_length
-	var a := clampf(_action_t, 0.0, 1.0)
-	match _action:
-		"chop":
-			if a < 0.4:
-				# Wind up: right arm back over the head, body twisting away.
-				var w := ease(a / 0.4, 0.5)
-				t["arm_r"] = lerpf(0.0, -2.7, w)
-				t["elbow_r"] = lerpf(-0.2, -0.9, w)
-				t["arm_l"] = lerpf(0.0, -1.2, w)
-				t["body_yaw"] = 0.25 * w
-				t["body_pitch"] = -0.08 * w
-				t["squash"] = 1.0 - 0.04 * w
-			elif a < 0.6:
-				# Strike forward and down.
-				var w := ease((a - 0.4) / 0.2, 0.3)
-				t["arm_r"] = lerpf(-2.7, -0.85, w)
-				t["elbow_r"] = lerpf(-0.9, -0.1, w)
-				t["arm_l"] = lerpf(-1.2, -0.7, w)
-				t["body_yaw"] = lerpf(0.25, -0.15, w)
-				t["body_pitch"] = lerpf(-0.08, 0.22, w)
-			else:
-				var w := (a - 0.6) / 0.4
-				t["arm_r"] = lerpf(-0.85, t["arm_r"], w)
-				t["arm_l"] = lerpf(-0.7, t["arm_l"], w)
-				t["body_pitch"] = lerpf(0.22, t["body_pitch"], w)
-		"shake":
-			var w := sin(a * PI)
-			t["arm_l"] = -1.45 * w
-			t["arm_r"] = -1.45 * w
-			t["elbow_l"] = -0.25
-			t["elbow_r"] = -0.25
-			t["body_roll"] = sin(a * TAU * 3.0) * 0.08 * w
-			t["body_pitch"] = 0.1 * w
-		"pickup":
-			var w := sin(a * PI)
-			t["body_y"] = -0.1 * w
-			t["body_pitch"] = 0.45 * w
-			t["leg_l"] = -0.55 * w
-			t["leg_r"] = -0.55 * w
-			t["knee_l"] = 1.0 * w
-			t["knee_r"] = 1.0 * w
-			t["arm_r"] = -1.1 * w
-			t["arm_l"] = -0.6 * w
-			t["elbow_r"] = -0.2
-		"cheer":
-			var w := sin(minf(a * 1.4, 1.0) * PI * 0.5)
-			t["arm_l"] = -2.8 * w
-			t["arm_r"] = -2.8 * w
-			t["arm_l_out"] = 0.45
-			t["arm_r_out"] = 0.45
-			t["elbow_l"] = -0.2
-			t["elbow_r"] = -0.2
-			t["body_y"] = maxf(0.0, sin(a * PI * 2.0)) * 0.12
-			t["head_pitch"] = -0.15 * w
-		"eat":
-			# Fruit up to the mouth, a few happy munches, a contented sigh.
-			var up := smoothstep(0.0, 0.15, a) * (1.0 - smoothstep(0.85, 1.0, a))
-			t["arm_r"] = -1.9 * up
-			t["elbow_r"] = -1.7 * up
-			t["arm_l"] = -1.3 * up
-			t["elbow_l"] = -1.6 * up
-			t["arm_l_out"] = -0.15 * up
-			var munch := sin(a * TAU * 5.0) * up * (1.0 if a > 0.2 else 0.0)
-			t["head_pitch"] = 0.12 * munch
-			t["squash"] = 1.0 - 0.03 * absf(munch)
-			if a > 0.8 and _face:
-				_face.set_shader_parameter("eye_style", 2)
-		"craft":
-			# Kneel at the bench and hammer away.
-			var down := smoothstep(0.0, 0.12, a) * (1.0 - smoothstep(0.88, 1.0, a))
-			t["body_y"] = -0.08 * down
-			t["body_pitch"] = 0.3 * down
-			t["leg_l"] = -0.4 * down
-			t["leg_r"] = -0.4 * down
-			t["knee_l"] = 0.8 * down
-			t["knee_r"] = 0.8 * down
-			t["arm_l"] = -1.0 * down
-			t["elbow_l"] = -0.3
-			var hit := maxf(0.0, sin(a * TAU * 4.0))
-			t["arm_r"] = lerpf(-0.9, -2.2, hit) * down
-			t["elbow_r"] = lerpf(-0.2, -0.8, hit) * down
-	if _action_t >= 1.0:
-		if _action in ["cheer", "eat"] and _face:
-			_face.set_shader_parameter("eye_style", Appearance.index_of(look, "eyes"))
-		_action = ""
-
-
 ## Eases every joint towards its target and writes it to the pivots.
 func _apply(t: Dictionary, delta: float) -> void:
 	var fast := 1.0 - exp(-delta * 22.0)
 	for key in t:
 		_pose[key] = lerpf(_pose.get(key, t[key]), t[key], fast)
-	_hips.position.y = _pose["body_y"]
+	# Every joint in full, so nothing a clip left behind lingers.
+	_hips.position = Vector3(0, _pose["body_y"], 0)
+	_hips.rotation = Vector3.ZERO
+	_hand_r.rotation = Vector3.ZERO
 	_waist.rotation = Vector3(_pose["body_pitch"], _pose["body_yaw"], _pose["body_roll"])
 	_waist.scale = Vector3(1.0 + (1.0 - _pose["squash"]) * 0.5, _pose["squash"], 1.0 + (1.0 - _pose["squash"]) * 0.5)
 	_head.rotation = Vector3(_pose["head_pitch"], _pose["head_yaw"], _pose["head_roll"])
 	_arm_l.rotation = Vector3(_pose["arm_l"], 0.0, -_pose["arm_l_out"])
 	_arm_r.rotation = Vector3(_pose["arm_r"], 0.0, _pose["arm_r_out"])
-	_elbow_l.rotation.x = _pose["elbow_l"]
-	_elbow_r.rotation.x = _pose["elbow_r"]
-	_leg_l.rotation.x = _pose["leg_l"]
-	_leg_r.rotation.x = _pose["leg_r"]
-	_knee_l.rotation.x = _pose["knee_l"]
-	_knee_r.rotation.x = _pose["knee_r"]
+	_elbow_l.rotation = Vector3(_pose["elbow_l"], 0, 0)
+	_elbow_r.rotation = Vector3(_pose["elbow_r"], 0, 0)
+	_leg_l.rotation = Vector3(_pose["leg_l"], 0, 0)
+	_leg_r.rotation = Vector3(_pose["leg_r"], 0, 0)
+	_knee_l.rotation = Vector3(_pose["knee_l"], 0, 0)
+	_knee_r.rotation = Vector3(_pose["knee_r"], 0, 0)
 	if _tail:
-		# Dogs wag quickly, cats swish slowly.
 		# Dogs wag; rabbits twitch; the rest sway slowly.
 		var wag: Array = {"dog": [10.0, 0.35], "rabbit": [6.0, 0.12], "bird": [3.0, 0.1]}.get(species["kind"], [1.7, 0.2])
 		_tail.rotation = Vector3(-_pose["body_pitch"] * 0.5, 0.0, sin(_time * float(wag[0])) * float(wag[1]))

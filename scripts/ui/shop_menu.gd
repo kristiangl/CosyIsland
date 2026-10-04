@@ -1,12 +1,15 @@
 class_name ShopMenu
 extends PanelContainer
-## Lucy's shop counter. Two tabs (switch with L/R, Q/E or by clicking): Buy shows
-## today's stock, Sell shows what's in your pockets. A buys or sells one, Y sells the
-## whole stack, B leaves. Emits closed so Lucy can say goodbye.
+## A shop counter: Lucy's ("lucy") or the tailors' ("tailors"). Lucy's has two tabs
+## (switch with L/R, Q/E or by clicking): Buy shows today's stock, Sell shows what's in
+## your pockets. A buys or sells one, Y sells the whole stack, B leaves. The tailors only
+## sell. Emits closed so the shopkeeper can say goodbye.
 
 signal closed
 
 var _mode := "buy"
+var keeper := "lucy"
+var _title: Label
 var _tabs: Array[Button] = []
 var _list: VBoxContainer
 var _icon: TextureRect
@@ -33,11 +36,10 @@ func _ready() -> void:
 	var title_row := HBoxContainer.new()
 	title_row.add_theme_constant_override("separation", 8)
 	left.add_child(title_row)
-	var title := Label.new()
-	title.text = "Lucy's Odds & Ends"
-	title.add_theme_font_size_override("font_size", 28)
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title_row.add_child(title)
+	_title = Label.new()
+	_title.add_theme_font_size_override("font_size", 28)
+	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title_row.add_child(_title)
 	for mode: String in ["buy", "sell"]:
 		var b := Button.new()
 		b.text = mode.capitalize()
@@ -95,7 +97,11 @@ func _ready() -> void:
 	Events.currency_changed.connect(func(_c): if visible: _show(_selected))
 
 
-func open(mode: String) -> void:
+func open(mode: String, shop_keeper: String = "lucy") -> void:
+	keeper = shop_keeper
+	_title.text = "Lucy's Odds & Ends" if keeper == "lucy" else "Daisy & Morris Tailoring"
+	for tab in _tabs:
+		tab.visible = keeper == "lucy"
 	visible = true
 	Game.mode = Game.Mode.MENU
 	_set_mode(mode)
@@ -112,7 +118,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("cancel"):
 		close()
-	elif event.is_action_pressed("tab_prev") or event.is_action_pressed("tab_next"):
+	elif (event.is_action_pressed("tab_prev") or event.is_action_pressed("tab_next")) and keeper == "lucy":
 		_set_mode("sell" if _mode == "buy" else "buy")
 	elif event.is_action_pressed("pickup") and _mode == "sell" and _selected >= 0:
 		_sell(_selected, 999)
@@ -125,7 +131,7 @@ func _set_mode(mode: String) -> void:
 	_mode = mode
 	_tabs[0].button_pressed = mode == "buy"
 	_tabs[1].button_pressed = mode == "sell"
-	var hint := "{ui_accept} buy   {tab_prev} {tab_next} sell   {ui_cancel} leave" if mode == "buy" \
+	var hint := ("{ui_accept} buy   {tab_prev} {tab_next} sell   {ui_cancel} leave" if keeper == "lucy" else "{ui_accept} buy   {ui_cancel} leave") if mode == "buy" \
 		else "{ui_accept} sell one   {pickup} sell all   {tab_prev} {tab_next} buy   {ui_cancel} leave"
 	_hint.text = Prompts.fill(hint)
 	_rebuild(0)
@@ -144,7 +150,7 @@ func _rebuild(focus_index: int) -> void:
 	if _mode == "buy":
 		var seed_value: int = Game.island.data.seed_value if Game.island else 0
 		var native: String = Game.island.data.native_flower if Game.island else ""
-		for id in Shop.stock(seed_value, _day(), native):
+		for id in Shop.stock(seed_value, _day(), native, keeper):
 			_add_row(ShopRow.new(id, -1, self))
 	else:
 		for i in Inventory.slots.size():
@@ -182,7 +188,7 @@ func _show(index: int) -> void:
 	_name.text = ItemDB.display_name(row.item_id)
 	_desc.text = ItemDB.get_item(row.item_id).get("desc", "")
 	if _mode == "buy":
-		_price.text = "Sold out" if Shop.is_sold_out(row.item_id, _day()) else "%d %s" % [Shop.buy_price(row.item_id), Game.CURRENCY_NAME]
+		_price.text = "Sold out" if Shop.is_sold_out(row.item_id, _day(), keeper) else "%d %s" % [Shop.buy_price(row.item_id), Game.CURRENCY_NAME]
 	else:
 		_price.text = "Lucy pays %d each" % Shop.sell_price(row.item_id)
 	for r in _rows:
@@ -196,7 +202,7 @@ func _update_acorns() -> void:
 func _activate(index: int) -> void:
 	if _mode == "buy":
 		var id := _rows[index].item_id
-		var problem := Shop.buy(id, _day())
+		var problem := Shop.buy(id, _day(), keeper)
 		if problem != "":
 			Events.toast.emit(problem)
 		else:
@@ -241,9 +247,9 @@ class ShopRow:
 		var day := GameClock.day_key()
 		var label := ItemDB.display_name(item_id)
 		var price := Shop.buy_price(item_id) if menu.is_buying() else Shop.sell_price(item_id)
-		var dim := menu.is_buying() and (Shop.is_sold_out(item_id, day) or Inventory.currency < price)
+		var dim := menu.is_buying() and (Shop.is_sold_out(item_id, day, menu.keeper) or Inventory.currency < price)
 		if slot >= 0:
 			label += "  x%d" % int(Inventory.slots[slot].get("count", 1))
 		draw_string(font, Vector2(66, 34), label, HORIZONTAL_ALIGNMENT_LEFT, size.x - 190, 20, UIStyle.BROWN_LIGHT if dim else UIStyle.BROWN)
-		var price_text := "Sold out" if menu.is_buying() and Shop.is_sold_out(item_id, day) else str(price)
+		var price_text := "Sold out" if menu.is_buying() and Shop.is_sold_out(item_id, day, menu.keeper) else str(price)
 		draw_string(font, Vector2(size.x - 120, 34), price_text, HORIZONTAL_ALIGNMENT_RIGHT, 106, 20, UIStyle.BROWN_LIGHT if dim else UIStyle.BROWN)

@@ -293,8 +293,8 @@ func _interact(obj: Dictionary) -> void:
 		Events.workbench_opened.emit()
 	elif def.has("room"):
 		Events.home_entered.emit(obj["uid"])
-	elif def.get("shopfront", false) and Story.npc("lucy"):
-		Story.talk_to(Story.npc("lucy"))
+	elif def.get("shopfront", false) and Story.npc(def.get("keeper", "lucy")):
+		Story.talk_to(Story.npc(def.get("keeper", "lucy")))
 	elif def.get("museum", false) and Story.npc("bramble"):
 		Story.talk_to(Story.npc("bramble"))
 	else:

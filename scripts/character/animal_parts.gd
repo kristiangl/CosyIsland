@@ -16,14 +16,20 @@ static func head() -> ArrayMesh:
 	return k.commit()
 
 
-## Ears for "cat" (upright, pink inside, with tufts), "dog" (folded button ears),
+## Ears for "cat" (upright, pink inside, with tufts; small and rounded if `short`), "dog" (folded button ears),
 ## "rabbit" (long and upright, or hanging down the sides if `lop`), "ferret" (small and
 ## round, pale rimmed) or "mouse" (big round ones). Birds have none.
 ## Material colours: fur, inner ear.
-static func ears(kind: String, lop := false) -> ArrayMesh:
+static func ears(kind: String, lop := false, short := false) -> ArrayMesh:
 	var k := MeshKit.new()
 	for s: float in [-1.0, 1.0]:
 		match kind:
+			"cat" when short:
+				# A British Shorthair's: small, round-tipped and set wide.
+				var base := Vector3(s * 0.25, 0.22, 0.0)
+				var tip := Vector3(s * 0.33, 0.4, 0.02)
+				_flap(k, base, tip, 0.26, 0.05, Vector3(0, 0.1, 1).normalized(), PLAIN)
+				_flap(k, base + Vector3(0, 0.02, 0.03), tip.lerp(base, 0.3) + Vector3(0, 0, 0.03), 0.15, 0.01, Vector3(0, 0.1, 1).normalized(), TRIM)
 			"cat":
 				var base := Vector3(s * 0.21, 0.25, 0.0)
 				var tip := Vector3(s * 0.33, 0.52, 0.03)

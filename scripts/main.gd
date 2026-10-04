@@ -151,6 +151,9 @@ func _ready() -> void:
 			for id in ["wood", "stone", "apple", "clay", "wooden_chair"]:
 				Inventory.add_item(id, 4)
 			hud.shop.open("buy" if Game.args["ui"] == "shop" else "sell")
+		"tailors":
+			Inventory.add_currency(9000)
+			hud.shop.open("buy", "tailors")
 		"sleep", "asleep":
 			# The bed question, or tucked up in bed, in the tent (use with --demo=home).
 			var beds := world_now().objects().filter(func(o): return o.get("item", "") == "sleeping_bag" or ItemDB.placeable(o.get("item", "")).get("bed", false))
@@ -329,6 +332,7 @@ func _spawn_npcs() -> void:
 		Game.npcs.append(npc)
 	_place_lucy()
 	_place_bramble()
+	_place_tailors()
 	for obj in world.objects():
 		if obj.has("resident"):
 			_spawn_neighbour(obj)
@@ -341,6 +345,9 @@ func _check_house() -> void:
 	if Story.finish_shop(world):
 		Events.toast.emit("Lucy's shop is open! Go and say hello.")
 		_place_lucy()
+	if Story.finish_tailors(world):
+		Events.toast.emit("Daisy and Morris's clothes shop has opened by the plaza!")
+		_place_tailors()
 	if Story.finish_museum(world):
 		Events.toast.emit("Someone's put up a tent by the plaza. A museum?")
 		_place_bramble()
@@ -383,6 +390,26 @@ func _place_bramble() -> void:
 	bramble.position.y = world.ground_height(bramble.position.x, bramble.position.z)
 	bramble.rest_facing = at["facing"]
 	world.reserve(Vector2i(floori(bramble.position.x), floori(bramble.position.z)))
+
+
+## Daisy and Morris stand either side of their shop door.
+func _place_tailors() -> void:
+	var shop := world.building("tailor_shop")
+	if shop.is_empty():
+		return
+	var at := world.outside_door(shop)
+	var side := Vector3(at["facing"].z, 0, -at["facing"].x)
+	for pair: Array in [["daisy", -0.7], ["morris", 0.7]]:
+		var npc := Story.npc(pair[0])
+		if npc == null:
+			npc = Npc.new()
+			world.add_child(npc)
+			npc.setup(pair[0], world, at["position"], at["facing"])
+			Game.npcs.append(npc)
+		npc.position = at["position"] + side * float(pair[1])
+		npc.position.y = world.ground_height(npc.position.x, npc.position.z)
+		npc.rest_facing = at["facing"]
+		world.reserve(Vector2i(floori(npc.position.x), floori(npc.position.z)))
 
 
 ## Lucy stands in front of her shop once it's built.
@@ -589,6 +616,19 @@ func _run_demo() -> void:
 		if not shop.is_empty():
 			player.position = world.outside_door(shop)["position"] + Vector3(1.4, 0, 2.2)
 			player.facing = Vector3(-0.3, 0, -1).normalized()
+			camera_rig.snap()
+		return
+	if Game.args["demo"] == "tailors":
+		# Lucy's shop and, the night after her news, Daisy and Morris's.
+		Story.flags["shop_day"] = GameClock.day_key() - 1
+		_check_house()
+		Story.flags["shop_thanks"] = true
+		Story.flags["tailors_day"] = GameClock.day_key() - 1
+		_check_house()
+		var tailors := world.building("tailor_shop")
+		if not tailors.is_empty():
+			player.position = world.outside_door(tailors)["position"] + Vector3(0.6, 0, 2.4)
+			player.facing = Vector3(-0.2, 0, -1).normalized()
 			camera_rig.snap()
 		return
 	if Game.args["demo"] in ["fishing", "bugs"]:

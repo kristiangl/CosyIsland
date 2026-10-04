@@ -1,30 +1,147 @@
 {
-	"_note": "Main island characters. look uses ids from appearance.json; species colours are hex (cats: fur, fur2 for the muzzle, bib and tail tip, stripes for tabby markings, blaze for a pale stripe up the nose).",
+	"_note": "Main island characters. look uses ids from appearance.json; species colours are hex (cats: fur, fur2 for the muzzle, bib and tail tip, stripes for tabby markings, blaze for a pale stripe up the nose, short for a British Shorthair's round face and small ears).",
 	"poppy": {
 		"name": "Poppy",
 		"title": "Island Office",
 		"tag": "#9fd3c7",
 		"voice": 1.15,
-		"species": {"kind": "cat", "fur": "#a8845a", "fur2": "#f6f1ea", "stripes": "#3a2c22", "blaze": true, "eyes": "#c9cf7a", "inner_ear": "#e3b0b4", "nose": "#e3a0a8"},
-		"look": {"eyes": "wide", "mouth": "cat", "cheeks": "blush", "top": "sweater", "top_color": "cream", "top_color2": "coral",
-			"top_pattern": "plain", "bottom": "long_skirt", "bottom_color": "teal", "shoes": "none", "hat": "none", "glasses": "round"}
+		"species": {
+			"kind": "cat",
+			"fur": "#a8845a",
+			"fur2": "#f6f1ea",
+			"stripes": "#3a2c22",
+			"blaze": true,
+			"eyes": "#c9cf7a",
+			"inner_ear": "#e3b0b4",
+			"nose": "#e3a0a8"
+		},
+		"look": {
+			"eyes": "wide",
+			"mouth": "cat",
+			"cheeks": "blush",
+			"top": "sweater",
+			"top_color": "cream",
+			"top_color2": "coral",
+			"top_pattern": "plain",
+			"bottom": "long_skirt",
+			"bottom_color": "teal",
+			"shoes": "none",
+			"hat": "none",
+			"glasses": "round"
+		}
 	},
 	"lucy": {
 		"name": "Lucy",
 		"title": "Odd jobs",
 		"tag": "#f4d672",
 		"voice": 1.35,
-		"species": {"kind": "dog", "fur": "#f6f1e8", "fur2": "#c98a52", "eyes": "#5a3826", "inner_ear": "#b97a45", "nose": "#3a3236"},
-		"look": {"eyes": "classic", "mouth": "grin", "cheeks": "blush", "top": "tee", "top_color": "red", "top_color2": "white",
-			"top_pattern": "stripes", "bottom": "overalls", "bottom_color": "blue", "shoes": "none", "hat": "none", "glasses": "none"}
+		"species": {
+			"kind": "dog",
+			"fur": "#f6f1e8",
+			"fur2": "#c98a52",
+			"eyes": "#5a3826",
+			"inner_ear": "#b97a45",
+			"nose": "#3a3236"
+		},
+		"look": {
+			"eyes": "classic",
+			"mouth": "grin",
+			"cheeks": "blush",
+			"top": "tee",
+			"top_color": "red",
+			"top_color2": "white",
+			"top_pattern": "stripes",
+			"bottom": "overalls",
+			"bottom_color": "blue",
+			"shoes": "none",
+			"hat": "none",
+			"glasses": "none"
+		}
 	},
 	"bramble": {
 		"name": "Bramble",
 		"title": "Museum",
 		"tag": "#b8cf9a",
 		"voice": 0.9,
-		"species": {"kind": "dog", "fur": "#8f7a64", "fur2": "#e2d6c2", "eyes": "#4a3020", "inner_ear": "#6f5a46", "nose": "#3a3236"},
-		"look": {"eyes": "sleepy", "mouth": "smile", "cheeks": "none", "top": "waistcoat", "top_color": "olive", "top_color2": "cream",
-			"top_pattern": "plain", "bottom": "trousers", "bottom_color": "brown", "shoes": "none", "hat": "none", "glasses": "square"}
+		"species": {
+			"kind": "dog",
+			"fur": "#8f7a64",
+			"fur2": "#e2d6c2",
+			"eyes": "#4a3020",
+			"inner_ear": "#6f5a46",
+			"nose": "#3a3236"
+		},
+		"look": {
+			"eyes": "sleepy",
+			"mouth": "smile",
+			"cheeks": "none",
+			"top": "waistcoat",
+			"top_color": "olive",
+			"top_color2": "cream",
+			"top_pattern": "plain",
+			"bottom": "trousers",
+			"bottom_color": "brown",
+			"shoes": "none",
+			"hat": "none",
+			"glasses": "square"
+		}
+	},
+	"daisy": {
+		"name": "Daisy",
+		"title": "Tailor",
+		"tag": "#e8b4c8",
+		"voice": 1.15,
+		"species": {
+			"kind": "cat",
+			"short": true,
+			"fur": "#6b4a3a",
+			"fur2": "#8a6450",
+			"stripes": "#6b4a3a",
+			"eyes": "#f2a43a",
+			"inner_ear": "#c49a90",
+			"nose": "#4a3028"
+		},
+		"look": {
+			"eyes": "lashes",
+			"mouth": "cat",
+			"cheeks": "blush",
+			"top": "folk_blouse",
+			"top_color": "cream",
+			"top_color2": "rose",
+			"bottom": "long_skirt",
+			"bottom_color": "rose",
+			"shoes": "none",
+			"hat": "none",
+			"glasses": "none"
+		}
+	},
+	"morris": {
+		"name": "Morris",
+		"title": "Tailor",
+		"tag": "#b4bccc",
+		"voice": 0.85,
+		"species": {
+			"kind": "cat",
+			"short": true,
+			"fur": "#8a909c",
+			"fur2": "#a3a9b4",
+			"stripes": "#8a909c",
+			"eyes": "#f09a2e",
+			"inner_ear": "#b9a0a6",
+			"nose": "#5d6170"
+		},
+		"look": {
+			"eyes": "almond",
+			"mouth": "smile",
+			"cheeks": "none",
+			"top": "waistcoat",
+			"top_color": "navy",
+			"top_color2": "white",
+			"bottom": "trousers",
+			"bottom_color": "grey",
+			"shoes": "none",
+			"hat": "none",
+			"glasses": "round"
+		}
 	}
 }

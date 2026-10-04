@@ -79,6 +79,10 @@ static func get_mesh(key: String) -> ArrayMesh:
 			_tent(k)
 		"office":
 			_office(k)
+		"tailor_shop":
+			# KayKit's tall cottage on its stone footing, in a tailor's lavender and cream.
+			k = _kit_from("hex_home_b")
+			Palette.repaint(k.colours, {"red": ["a58cc8", "bba4da", "d2c0ea"], "white": ["eee4dc", "f8f0ea", "fffaf4"]})
 		"lucy_shop":
 			# KayKit's market stall, its awning in Lucy's sunny yellow.
 			k = _kit_from("hex_market")

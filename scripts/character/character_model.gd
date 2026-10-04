@@ -15,7 +15,9 @@ var look: Dictionary = Appearance.DEFAULT.duplicate()
 ## Animal kinds, in the face shader's order (1 = cat).
 const SPECIES := ["cat", "dog", "rabbit", "ferret", "mouse", "bird"]
 ## Animal characters: {"kind": one of SPECIES, "fur": Color, "fur2": Color (markings),
-## "eyes": Color, "inner_ear": Color, "nose": Color}. Empty for people.
+## "stripes": Color, "eyes": Color, "inner_ear": Color, "nose": Color, and for some kinds
+## "short" (a British Shorthair cat), "lop" (rabbit), "beak", "crest" (bird)}. Empty for
+## people.
 var species: Dictionary = {}
 ## False for characters shown in menus, away from the island's world curvature.
 var curved := true
@@ -269,12 +271,18 @@ func _build_animal() -> void:
 	_face.set_shader_parameter("mouth_y", face[1])
 	if kind != "bird":
 		var ear_colour: Color = fur2 if kind == "dog" else fur
-		var ears := _mesh(AnimalParts.ears(kind, species.get("lop", false)), _cloth(ear_colour, species.get("inner_ear", Color("e3a5aa"))), _head)
+		var ears := _mesh(AnimalParts.ears(kind, species.get("lop", false), species.get("short", false)), _cloth(ear_colour, species.get("inner_ear", Color("e3a5aa"))), _head)
 		ears.position = P.HEAD_CENTRE
 	match kind:
 		"cat":
-			var ruff := _mesh(AnimalParts.ruff(), _cloth(fur, fur2), _head)
-			ruff.position = P.HEAD_CENTRE
+			if species.get("short", false):
+				# A British Shorthair: no ruff, and a round, chubby-cheeked face.
+				for child in _head.get_children():
+					if child is MeshInstance3D and child.material_override == _face:
+						child.scale = Vector3(1.1, 0.98, 1.03)
+			else:
+				var ruff := _mesh(AnimalParts.ruff(), _cloth(fur, fur2), _head)
+				ruff.position = P.HEAD_CENTRE
 		"dog", "ferret", "mouse":
 			var snout := _mesh(AnimalParts.snout(kind), _cloth(fur if kind == "dog" else fur2, species.get("nose", Color("3a3236"))), _head)
 			snout.position = P.HEAD_CENTRE

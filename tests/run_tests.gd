@@ -23,6 +23,7 @@ func _run() -> void:
 	_test_story()
 	_test_phone_and_sleep()
 	_test_shop_and_house()
+	_test_tailors()
 	_test_clothes()
 	_test_furniture_series()
 	_test_customising()
@@ -501,6 +502,39 @@ func _test_phone_and_sleep() -> void:
 	check(chosen[0] == "map" and not phone.visible and Game.mode == Game.Mode.PLAY, "the map app leaves the phone for the map")
 	phone.free()
 	check(ItemDB.placeable("sleeping_bag").get("bed", false), "sleeping bags are beds")
+
+
+func _test_tailors() -> void:
+	Inventory.reset()
+	var saved_flags := Story.flags.duplicate(true)
+	Story.flags.clear()
+	var rails := Shop.stock(42, 100, "", "tailors")
+	check(rails.size() == Shop.TAILOR_CLOTHES_PER_DAY and rails.all(func(id): return ItemDB.is_clothing(id)), "the tailors sell only clothes")
+	check(rails != Shop.stock(42, 101, "", "tailors"), "new clothes every day")
+	Inventory.add_currency(Shop.buy_price(rails[0]))
+	check(Shop.buy(rails[0], 100, "tailors") == "" and Shop.is_sold_out(rails[0], 100, "tailors"), "buying from the tailors")
+	check(not Shop.is_sold_out(rails[0], 100), "doesn't sell it out at Lucy's")
+	for id: String in ["daisy", "morris"]:
+		var m := NpcData.model(id)
+		add_child(m)
+		check(m.species.get("short", false) and m.find_child("Head", true, false) != null, "%s is a British Shorthair" % id)
+		m.free()
+	var d := IslandGenerator.generate(42)
+	var w := World.new()
+	add_child(w)
+	w.setup(d)
+	check(not Story.tailors_coming(), "no tailors before Lucy's shop")
+	Story.flags["shop_thanks"] = true
+	Story.flags["shop_open_day"] = GameClock.day_key() - 1
+	check(Story.tailors_coming(), "a day after Lucy's shop opens, she has news")
+	Story.flags["tailors_day"] = GameClock.day_key()
+	check(not Story.finish_tailors(w), "the shop takes a night")
+	Story.flags["tailors_day"] = GameClock.day_key() - 1
+	check(Story.finish_tailors(w) and not w.building("tailor_shop").is_empty(), "then Daisy and Morris's shop opens")
+	check(ItemDB.placeable("tailor_shop").get("keeper", "") == "daisy", "Daisy minds the shop")
+	w.free()
+	Inventory.reset()
+	Story.flags = saved_flags
 
 
 func _test_shop_and_house() -> void:

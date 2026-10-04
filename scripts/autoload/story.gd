@@ -68,6 +68,8 @@ func talk_to(who: Npc) -> void:
 			await _lucy(who)
 		"bramble":
 			await _bramble(who)
+		"daisy", "morris":
+			await _tailors(who)
 		_:
 			if NpcData.is_neighbour(who.id):
 				await _neighbour(who)
@@ -245,6 +247,14 @@ func _lucy(lucy: Npc) -> void:
 		])
 		lucy.cheer()
 		return
+	if tailors_coming():
+		flags["tailors_day"] = GameClock.day_key()
+		lucy.hop()
+		await say("lucy", ["{player}! Big news! Huge news! My friends Daisy and Morris want to come too!",
+			"They're tailors. Cats. Very fluffy, very fancy. They make the best clothes in the whole sea.",
+			"They're bringing a whole shop on the ferry tonight. Clothes! Hats! Little shoes!"])
+		lucy.cheer()
+		return
 	if flags.get("shop_done", false) and not flags.get("shop_thanks", false):
 		flags["shop_thanks"] = true
 		lucy.hop()
@@ -354,7 +364,68 @@ func finish_shop(island: World) -> bool:
 	if island.add_shop().is_empty():
 		return false
 	flags["shop_done"] = true
+	flags["shop_open_day"] = GameClock.day_key()
 	return true
+
+
+# --- The tailors ---------------------------------------------------------------------
+
+## A day after Lucy's shop opens, she has news: her friends the tailors want to come.
+func tailors_coming() -> bool:
+	return flags.get("shop_thanks", false) and not flags.has("tailors_day") and not flags.get("tailors_done", false) \
+		and GameClock.day_key() > int(flags.get("shop_open_day", -1))
+
+
+## The tailors' shop goes up the night after Lucy tells you they're coming.
+func finish_tailors(island: World) -> bool:
+	if not flags.has("tailors_day") or flags.get("tailors_done", false):
+		return false
+	if GameClock.day_key() <= int(flags["tailors_day"]):
+		return false
+	if island.add_building("tailor_shop").is_empty():
+		return false
+	flags["tailors_done"] = true
+	return true
+
+
+func _tailors(who: Npc) -> void:
+	if not flags.get("met_tailors", false):
+		flags["met_tailors"] = true
+		who.hop()
+		await say("daisy", ["Oh, you must be {player}! Lucy hasn't stopped talking about you.",
+			"I'm Daisy, and this is my brother Morris. We make clothes. Well, I make them. Morris makes them perfect."])
+		await say("morris", ["...Hello. Nice to meet you. Your collar's a bit wonky."])
+		await say("daisy", ["Morris! Sorry. He means well.",
+			"We'll have new things on the rails every day. Do come and have a look whenever you like!"])
+		return
+	var speaker := who.id
+	var greeting := _small_talk(speaker + "_hello", [
+		"Welcome to Daisy & Morris! Looking for something new?",
+		"Hello again! The rails are full today.",
+		"Oh, I love what you're wearing. Shall we find something to go with it?",
+	] if speaker == "daisy" else [
+		"...Welcome. Have a look.",
+		"Mm. You'd suit something in green.",
+		"Daisy chose today's things. I hemmed them.",
+	])
+	var pick := await ask(speaker, greeting, ["Let's see the clothes", "Just chatting", "Bye!"])
+	match pick:
+		0:
+			await _shop("buy", "tailors", speaker)
+		1:
+			await say(speaker, [_small_talk(speaker, [
+				"Lucy sold us our very first thimble, you know. She was six.",
+				"Morris can tell a fabric just by touching it. Blindfolded. Don't ask how I know.",
+				"A good outfit is like a good cup of tea. Warm, and exactly right.",
+				"Customise your clothes at the workbench with a kit! Morris approves. Mostly.",
+			] if speaker == "daisy" else [
+				"...I like buttons. Small ones.",
+				"Daisy talks. I sew. It works.",
+				"The light's good on this island. Good for choosing colours.",
+				"Stripes go with everything. Don't tell Daisy I said that.",
+			])])
+		_:
+			await say(speaker, ["Come back soon!" if speaker == "daisy" else "...Bye."])
 
 
 # --- The museum ----------------------------------------------------------------------
@@ -853,12 +924,15 @@ func _maybe_present(who: Npc, data: Dictionary) -> void:
 	_give(piece)
 
 
-func _shop(mode: String) -> void:
+func _shop(mode: String, keeper: String = "lucy", speaker: String = "lucy") -> void:
 	if Game.shop == null:
 		return
-	Game.shop.open(mode)
+	Game.shop.open(mode, keeper)
 	await Game.shop.closed
 	Game.mode = Game.Mode.MENU
+	if keeper == "tailors":
+		await say(speaker, ["Thank you! Wear it well!" if speaker == "daisy" else "...It'll suit you."])
+		return
 	await say("lucy", [_small_talk("lucy_bye", ["Thanks! Pleasure doing business!", "Come back tomorrow, I'll have new things!",
 		"Ka-ching! That's the sound of a happy shopkeeper."])])
 

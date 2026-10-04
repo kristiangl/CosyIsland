@@ -242,6 +242,26 @@
 				"shopfront": true
 			}
 		},
+		"tailor_shop": {
+			"name": "Daisy & Morris Tailoring",
+			"category": "building",
+			"stack": 1,
+			"price": 0,
+			"color": "#c9a8d8",
+			"desc": "Daisy and Morris's clothes shop. Something new to wear every day.",
+			"placeable": {
+				"footprint": [
+					3,
+					3
+				],
+				"model": "tailor_shop",
+				"structure": true,
+				"rotatable": false,
+				"door": true,
+				"shopfront": true,
+				"keeper": "daisy"
+			}
+		},
 		"museum_tent": {
 			"name": "Museum",
 			"category": "building",

@@ -28,6 +28,10 @@ A cosy island life game about crafting and decorating, made with Godot 4.
 | --- | --- | --- |
 | ![](docs/screenshots/fishing.png) | ![](docs/screenshots/lucy_shop.png) | ![](docs/screenshots/journal.png) |
 
+| Daisy & Morris Tailoring |
+| --- |
+| ![](docs/screenshots/tailors.png) |
+
 | Neighbours | Visiting a neighbour | The museum |
 | --- | --- | --- |
 | ![](docs/screenshots/neighbours.png) | ![](docs/screenshots/neighbour_home.png) | ![](docs/screenshots/museum.png) |
@@ -89,6 +93,8 @@ On-screen hints follow whatever you last touched, keyboard or controller.
 - Lucy's shop: sell her anything with a price, and buy from a new stock each day,
   including clothes. Bring her wood, stone and clay and she builds a real shop with
   twice the stock and flower plants from other islands.
+- Daisy & Morris Tailoring: a day after Lucy's shop opens, her friends the tailors (two
+  British Shorthair cats) arrive with a clothes shop; twelve new things on the rails a day.
 - 107 designed clothes (30 pieces in colourways, six themes: Cosy Knits, Rainy Day,
   Seaside, Garden and Work, Sleepy Time, Folk Festival). Wear them from your pockets and they stay in your
   wardrobe. The plan for scaling to thousands of items is in

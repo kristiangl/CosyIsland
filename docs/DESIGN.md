@@ -158,6 +158,8 @@ Milestone 3b:
 - [x] KayKit furniture: Comfy Home, Cosy Kitchen and Festive series in four colourways
   each, and 40 decorations (wood stove, guitars, plushies, pumpkins, snowman, crates of
   veg, kitchen bits, a festive fir...)
+- [x] Daisy & Morris Tailoring: a day after Lucy's shop opens she says her tailor friends
+  are coming, and their shop goes up overnight; twelve new clothes on the rails each day
 - [x] KayKit buildings: neighbours live in timbered cottages painted in their own roof
   and wall colours, Lucy's shop is a market stall, and a well and windmill can be placed
   (the player's house stays our own, to be customised)
@@ -175,8 +177,7 @@ Next milestones (suggested order):
 3c. Bigger house (more rooms) and outdoor house colours. Clothes as items instead of
    everything unlocked, sold by Lucy. Time travel moves out of the phone into an
    options menu.
-4. The clothes shop run by Daisy and Morris. Daily visitors; more neighbour life
-   (moving out).
+4. Daily visitors; more neighbour life (moving out). A try-on mirror at the tailors.
 4b. Building kits: every building (Lucy's shop, the museum, the clothes shop,
    neighbours' houses, anything later) is placed by the player from a kit, choosing
    where it goes, with KayKit scaffolding while it's built overnight.
@@ -199,8 +200,8 @@ Next milestones (suggested order):
   open the island's first shop.
 - **Bramble**: an elderly spaniel-ish naturalist in a waistcoat and glasses, Poppy's
   old friend. Comes to run the museum.
-- **Daisy and Morris** (planned): two British Shorthair cats, Daisy dark brown and Morris
-  grey, who run the island's clothes shop once it opens.
+- **Daisy and Morris**: British Shorthair cats, sister and brother, Daisy dark brown and
+  chatty, Morris grey, quiet and particular. They run the island's clothes shop.
 
 Characters are defined in `data/characters.json` (species, fur colours, outfit) and
 their lines live in `scripts/autoload/story.gd`, with progress flags saved in the game.

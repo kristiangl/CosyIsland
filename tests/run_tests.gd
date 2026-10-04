@@ -207,6 +207,21 @@ func _test_appearance() -> void:
 	check(creator._content.get_child_count() > 0, "every creator tab builds")
 	creator.choose("nose", "button")
 	check(creator.look["nose"] == "button" and creator._preview.look["nose"] == "button", "trying on an option updates the preview")
+	for i in CharacterCreator.TABS.size():
+		if CharacterCreator.TABS[i].has("colours"):
+			creator._select_tab(i)
+			break
+	var tile: CharacterCreator.OptionTile = null
+	for t in creator._content.find_children("*", "", true, false):
+		if t is CharacterCreator.OptionTile and t.swatch and not t.is_selected():
+			tile = t
+			break
+	var before := creator.look.duplicate()
+	tile.grab_focus()
+	check(creator.look == before, "moving onto a colour doesn't put it on")
+	tile.pressed.emit()
+	check(creator.look[tile.key] == tile.id, "pressing it does")
+	check(creator.thumb_base[tile.key] == before[tile.key], "and the pictures stay as they were until the tab changes")
 	creator.free()
 	Game.mode = Game.Mode.PLAY
 	# Every part option should build a mesh without errors.
@@ -413,6 +428,14 @@ func _test_story() -> void:
 	check(box._choices.get_child_count() == 2, "questions show their options")
 	box._choose(1)
 	check(picked[0] == 1, "picking an option reports it")
+	var heights: Array[float] = []
+	for i in 2:
+		box.ask("", "Sleep?", ["a", "b", "c", "d", "e", "f"])
+		box._typing = false
+		box._process(0.0)
+		heights.append(box._choices.size.y)
+		box._choose(0)
+	check(box._choices.get_child_count() == 6 and heights[1] == heights[0], "a menu asked again is the same height, not doubled")
 	box.free()
 	w.free()
 	Game.island = null

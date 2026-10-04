@@ -98,7 +98,12 @@ func _process(delta: float) -> void:
 	_tag.global_position = rect.position + Vector2(34, -_tag.size.y * 0.6)
 	_arrow.global_position = rect.end - Vector2(52, 34 - sin(_time * 6.0) * 3.0)
 	_arrow.visible = not _typing and not _choices.visible
-	_choices.global_position = Vector2(rect.end.x - _choices.size.x - 10, rect.position.y - _choices.size.y - 22)
+	# Above the panel's right end; beside it if there isn't room above.
+	var top := rect.position.y - _choices.size.y - 22
+	if top < 12.0:
+		_choices.global_position = Vector2(minf(rect.end.x + 16, size.x - _choices.size.x - 12), maxf(12.0, rect.end.y - _choices.size.y))
+	else:
+		_choices.global_position = Vector2(rect.end.x - _choices.size.x - 10, top)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -140,7 +145,10 @@ func ask(speaker: String, question: String, options: Array) -> void:
 
 
 func _show_choices() -> void:
+	# Taken out now, not just queued: they'd still count when the list is sized below,
+	# making it twice as tall as it should be (and off the top of the screen).
 	for child in _choices.get_children():
+		_choices.remove_child(child)
 		child.queue_free()
 	var first: Button = null
 	for i in _options.size():

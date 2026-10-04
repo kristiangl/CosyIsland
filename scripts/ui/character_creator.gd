@@ -57,7 +57,9 @@ var _title: Label
 var _naming := true
 var _spin := 0.0
 ## While true, moving the focus doesn't try things on.
-var quiet := false
+## The look the tab's pictures are drawn from, taken when the tab opens, so trying a
+## colour on doesn't redraw every picture.
+var thumb_base: Dictionary = {}
 
 
 func _ready() -> void:
@@ -137,7 +139,7 @@ func _ready() -> void:
 	done.pressed.connect(_done)
 	buttons.add_child(done)
 	var hint := Label.new()
-	Prompts.bind_label(hint, "{tab_prev} {tab_next} tabs   Move to try things on   Left/right to adjust   {pause} done")
+	Prompts.bind_label(hint, "{tab_prev} {tab_next} tabs   {ui_accept} try on   Left/right to adjust   {pause} done")
 	hint.add_theme_font_size_override("font_size", 16)
 	hint.add_theme_color_override("font_color", UIStyle.BROWN_LIGHT)
 	right.add_child(hint)
@@ -241,6 +243,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _select_tab(i: int) -> void:
 	_tab = i
 	thumbs.clear_queue()
+	thumb_base = look.duplicate()
 	for t in _tab_buttons.size():
 		_tab_buttons[t].selected = t == i
 		_tab_buttons[t].queue_redraw()
@@ -275,17 +278,13 @@ func _select_tab(i: int) -> void:
 	if _naming and i == 0:
 		_name_edit.grab_focus.call_deferred()
 	elif first:
-		_focus_quietly.call_deferred(_focus_selected(first))
+		_focus_later.call_deferred(_focus_selected(first))
 	_scroll.scroll_vertical = 0
 
 
-## Moves the focus without trying anything on.
-func _focus_quietly(target: Control) -> void:
-	if not is_instance_valid(target):
-		return
-	quiet = true
-	target.grab_focus()
-	quiet = false
+func _focus_later(target: Control) -> void:
+	if is_instance_valid(target):
+		target.grab_focus()
 
 
 ## The selected tile anywhere on the tab (or the grid's first), to start the focus on.
@@ -393,7 +392,7 @@ func changed() -> void:
 ## How an option's picture is drawn: the current look wearing it, simplified so the
 ## part shows (no hat over the hair, short hair for faces).
 func thumb_look(key: String, id: String, view: String) -> Dictionary:
-	var l := look.duplicate()
+	var l := thumb_base.duplicate()
 	l[key] = id
 	if key != "hat":
 		l["hat"] = "none"
@@ -457,7 +456,7 @@ class TabIcon:
 
 
 ## One option: a style shown as a picture of the character wearing it, or a colour
-## swatch. Focusing it (moving onto it) tries it on.
+## swatch. Moving onto it highlights it; pressing it (A, or a click) puts it on.
 class OptionTile:
 	extends Button
 	var creator: CharacterCreator
@@ -477,7 +476,8 @@ class OptionTile:
 		flat = true
 		tooltip_text = _name()
 		add_to_group("creator_tiles")
-		focus_entered.connect(func(): if not creator.quiet: creator.choose(key, id))
+		focus_entered.connect(queue_redraw)
+		focus_exited.connect(queue_redraw)
 		pressed.connect(func(): creator.choose(key, id))
 
 	func is_selected() -> bool:
@@ -526,7 +526,7 @@ class OptionTile:
 				return
 		var tex: Texture2D
 		if key == "item":
-			var l := creator.look.duplicate()
+			var l := creator.thumb_base.duplicate()
 			l.merge(ItemDB.get_item(id).get("wear", {}), true)
 			if not ItemDB.get_item(id).get("slot", "") == "hat":
 				l["hat"] = "none"

@@ -958,6 +958,7 @@ func _test_museum_building() -> void:
 	Inventory.reset()
 	Inventory.add_item("wood", 15)
 	var needs := Story.MUSEUM_MATERIALS.duplicate()
+	check(Story._offer(needs) == {"wood": 15}, "Bramble is offered only what's in your pockets")
 	var gave := Story._take_materials(needs)
 	check(gave == {"wood": 15} and int(needs["wood"]) == 25 and Inventory.count_of("wood") == 0, "materials can come a few at a time")
 	Story.flags["museum_build_day"] = GameClock.day_key()

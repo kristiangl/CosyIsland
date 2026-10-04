@@ -172,6 +172,8 @@ Milestone 3b:
   favours fill five hearts; closer friends chat warmly and give presents more often
 - [x] Flowers: picked blooms regrow overnight, worn in hair or put in vases; plants dug
   up with a shovel and replanted (breeding later)
+- [x] Asking first: materials for building projects, Poppy's specimens, donations to
+  the museum (all at once or one at a time) and favours ask "Give them X?" first
 
 Next milestones (suggested order):
 3c. Bigger house (more rooms) and outdoor house colours. Clothes as items instead of
@@ -181,8 +183,6 @@ Next milestones (suggested order):
 4b. Building kits: every building (Lucy's shop, the museum, the clothes shop,
    neighbours' houses, anything later) is placed by the player from a kit, choosing
    where it goes, with KayKit scaffolding while it's built overnight.
-4c. Confirm before giving things away: materials for building projects and creatures
-   for the museum ask "Give them X?" first.
 5. Island tours, an airport-style dock: visit random islands (the generator with other
    seeds) for other fruit and flowers, and to meet neighbours who might move in
    ("villager hunting").

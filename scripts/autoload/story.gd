@@ -319,19 +319,13 @@ func _shop_project() -> void:
 		await say("lucy", ["Yay! Bring them whenever you can, a bit at a time is fine!"])
 		return
 	var needs: Dictionary = flags["shop_needs"]
-	var gave := {}
-	for mat: String in needs:
-		var n := mini(int(needs[mat]), Inventory.count_of(mat))
-		if n > 0:
-			Inventory.remove_item(mat, n)
-			needs[mat] = int(needs[mat]) - n
-			gave[mat] = n
-	for mat: String in needs.keys():
-		if int(needs[mat]) <= 0:
-			needs.erase(mat)
-	if gave.is_empty():
+	if _offer(needs).is_empty():
 		await say("lucy", ["I still need %s. No rush! Well, a little rush. I'm very excited." % _list_needs(needs)])
 		return
+	if not await _confirm_giving("lucy", _offer(needs)):
+		await say("lucy", ["Okay! Whenever you're ready."])
+		return
+	var gave := _take_materials(needs)
 	if needs.is_empty():
 		flags.erase("shop_needs")
 		flags["shop_day"] = GameClock.day_key()
@@ -447,17 +441,23 @@ func _museum_project() -> void:
 		flags["museum_gifts"] = []
 		return
 	var gifts: Array = flags["museum_gifts"]
-	var given: Array = []
-	for i in Inventory.slots.size():
-		var slot := Inventory.slots[i]
+	var giving: Array[String] = []
+	for slot in Inventory.slots:
 		var id: String = slot.get("id", "")
-		if gifts.size() < MUSEUM_SPECIMENS and ItemDB.is_creature(id) and not id in gifts:
-			gifts.append(id)
-			given.append(ItemDB.display_name(id).to_lower())
-			Inventory.remove_from_slot(i)
-	if given.is_empty():
+		if gifts.size() + giving.size() < MUSEUM_SPECIMENS and ItemDB.is_creature(id) and not id in gifts and not id in giving:
+			giving.append(id)
+	if giving.is_empty():
 		await say("poppy", ["I've got %d so far. I need %d different ones, so bring me ones I haven't got!" % [gifts.size(), MUSEUM_SPECIMENS]])
 		return
+	var names: Array = giving.map(func(id): return "the " + ItemDB.display_name(id).to_lower())
+	if await ask("", "Give Poppy %s for Bramble?" % _and_list(names), ["Yes", "Not now"]) != 0:
+		await say("poppy", ["That's all right. Bring them by whenever you like!"])
+		return
+	var given: Array = []
+	for id in giving:
+		Inventory.remove_item(id, 1)
+		gifts.append(id)
+		given.append(ItemDB.display_name(id).to_lower())
 	if gifts.size() < MUSEUM_SPECIMENS:
 		await say("poppy", ["Ooh, %s! That's %d of %d." % [_and_list(given), gifts.size(), MUSEUM_SPECIMENS]])
 		return
@@ -546,10 +546,13 @@ func _museum_building() -> void:
 		await say("bramble", ["Marvellous! Bring them a little at a time if you like."])
 		return
 	var needs: Dictionary = flags["museum_needs"]
-	var gave := _take_materials(needs)
-	if gave.is_empty():
+	if _offer(needs).is_empty():
 		await say("bramble", ["We still need %s." % _list_needs(needs)])
 		return
+	if not await _confirm_giving("bramble", _offer(needs)):
+		await say("bramble", ["Of course. Whenever suits."])
+		return
+	var gave := _take_materials(needs)
 	if needs.is_empty():
 		flags.erase("museum_needs")
 		flags["museum_build_day"] = GameClock.day_key()
@@ -558,6 +561,21 @@ func _museum_building() -> void:
 			"Come and see tomorrow. Do wear sensible shoes, it's a very big museum."])
 		return
 	await say("bramble", ["Thank you! That's %s. Still need %s." % [_list_needs(gave), _list_needs(needs)]])
+
+
+## What the pockets could give towards `needs`: {material: count}.
+static func _offer(needs: Dictionary) -> Dictionary:
+	var out := {}
+	for mat: String in needs:
+		var n := mini(int(needs[mat]), Inventory.count_of(mat))
+		if n > 0:
+			out[mat] = n
+	return out
+
+
+## Asks before handing things over: "Give them 10 wood and 5 stone?"
+func _confirm_giving(to: String, things: Dictionary) -> bool:
+	return await ask("", "Give %s %s?" % [NpcData.display_name(to), _list_needs(things)], ["Yes", "Not now"]) == 0
 
 
 ## Takes whatever's needed from the pockets, crossing it off. Returns what was taken.
@@ -591,13 +609,34 @@ func finish_museum_building(island: World) -> bool:
 
 
 func _donate() -> void:
+	var new: Array[String] = []
+	for slot in Inventory.slots:
+		var id: String = slot.get("id", "")
+		if ItemDB.is_creature(id) and not id in Journal.donated and not id in new:
+			new.append(id)
+	# Ask first: you might want to keep one to sell.
+	var giving: Array[String] = []
+	if not new.is_empty():
+		var names: Array = new.map(func(id): return "the " + ItemDB.display_name(id).to_lower())
+		var options := ["Yes", "Not now"] if new.size() == 1 else ["All of them", "One at a time", "Not now"]
+		var pick := await ask("", "Donate %s to the museum?" % _and_list(names), options)
+		if new.size() == 1:
+			if pick == 0:
+				giving = new
+		elif pick == 0:
+			giving = new
+		elif pick == 1:
+			for id in new:
+				if await ask("", "Donate the %s?" % ItemDB.display_name(id).to_lower(), ["Yes", "Keep it"]) == 0:
+					giving.append(id)
+		if giving.is_empty():
+			await say("bramble", ["Quite all right. The collection will wait."])
+			return
 	var lines: Array = []
-	for i in Inventory.slots.size():
-		var id: String = Inventory.slots[i].get("id", "")
-		if ItemDB.is_creature(id) and not id in Journal.donated:
-			Journal.donate(id)
-			Inventory.remove_from_slot(i)
-			lines.append("A %s! %s" % [ItemDB.display_name(id).to_lower(), _thanks(id)])
+	for id in giving:
+		Journal.donate(id)
+		Inventory.remove_item(id, 1)
+		lines.append("A %s! %s" % [ItemDB.display_name(id).to_lower(), _thanks(id)])
 	if lines.is_empty():
 		await say("bramble", ["Hmm, nothing new for the collection there, I'm afraid.",
 			"We have %d of %d so far. Keep looking!" % [Journal.donated.size(), ItemDB.fish.size() + ItemDB.bugs.size()]])
@@ -875,6 +914,9 @@ func _favour(who: Npc, data: Dictionary, wanted: String) -> void:
 	var name := ItemDB.display_name(wanted).to_lower()
 	if Inventory.count_of(wanted) == 0:
 		await say(who.id, ["Actually, yes! I'd love a %s. Could you bring me one today? %s!" % [name, catch.capitalize()]])
+		return
+	if await ask("", "Give %s the %s?" % [data["name"], name], ["Yes", "Not now"]) != 0:
+		await say(who.id, ["Oh! Okay. Maybe later, %s." % catch])
 		return
 	Inventory.remove_item(wanted, 1)
 	var reqs: Dictionary = flags["requests"]

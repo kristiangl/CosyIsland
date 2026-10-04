@@ -43,6 +43,11 @@ static func get_mesh(key: String) -> ArrayMesh:
 		return _cache[key]
 	var p := key.split(":")
 	var k := MeshKit.new()
+	if p[0] == "kaykit":
+		# A model converted from KayKit by tools/kaykit_import.gd.
+		var converted: ArrayMesh = load("res://assets/kaykit/%s.res" % p[1])
+		_cache[key] = converted
+		return converted
 	if p[0] == "series":
 		var mesh := _series(p[1])
 		_cache[key] = mesh

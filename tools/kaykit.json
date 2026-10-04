@@ -1,0 +1,925 @@
+{
+	"_note": "KayKit models converted by tools/kaykit_import.gd into assets/kaykit/<name>.res. src is relative to the unpacked KayKit folder; scale or fit [width, height] is in game units (1 = a tile); palette moves colours onto the game's ramps.",
+	"palettes": {
+		"nature": {
+			"green": [
+				"4f8a58",
+				"6aac72",
+				"80c17e",
+				"9cd28f",
+				"b8e2a6"
+			],
+			"brown": [
+				"86604c",
+				"a87d62",
+				"c19a7c"
+			],
+			"grey": [
+				"98929f",
+				"bdb8cc",
+				"dcd8e6"
+			]
+		},
+		"furniture": {
+			"brown": [
+				"9a6f52",
+				"c49a72",
+				"e2c09a"
+			]
+		}
+	},
+	"models": {
+		"bush_1_a": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Bush_1_A_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				0.9,
+				0.7
+			],
+			"smooth": true
+		},
+		"bush_1_b": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Bush_1_B_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				0.9,
+				0.7
+			],
+			"smooth": true
+		},
+		"bush_1_c": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Bush_1_C_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				0.9,
+				0.7
+			],
+			"smooth": true
+		},
+		"bush_1_d": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Bush_1_D_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				0.9,
+				0.7
+			],
+			"smooth": true
+		},
+		"bush_1_e": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Bush_1_E_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				0.9,
+				0.7
+			],
+			"smooth": true
+		},
+		"bush_1_f": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Bush_1_F_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				0.9,
+				0.7
+			],
+			"smooth": true
+		},
+		"bush_1_g": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Bush_1_G_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				0.9,
+				0.7
+			],
+			"smooth": true
+		},
+		"bush_2_a": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Bush_2_A_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				0.9,
+				0.7
+			],
+			"smooth": true
+		},
+		"bush_2_b": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Bush_2_B_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				0.9,
+				0.7
+			],
+			"smooth": true
+		},
+		"bush_2_c": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Bush_2_C_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				0.9,
+				0.7
+			],
+			"smooth": true
+		},
+		"bush_2_d": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Bush_2_D_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				0.9,
+				0.7
+			],
+			"smooth": true
+		},
+		"bush_2_e": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Bush_2_E_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				0.9,
+				0.7
+			],
+			"smooth": true
+		},
+		"bush_2_f": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Bush_2_F_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				0.9,
+				0.7
+			],
+			"smooth": true
+		},
+		"bush_3_a": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Bush_3_A_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				0.9,
+				0.7
+			],
+			"smooth": true
+		},
+		"bush_3_b": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Bush_3_B_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				0.9,
+				0.7
+			],
+			"smooth": true
+		},
+		"bush_3_c": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Bush_3_C_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				0.9,
+				0.7
+			],
+			"smooth": true
+		},
+		"bush_4_a": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Bush_4_A_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				0.9,
+				0.7
+			],
+			"smooth": true
+		},
+		"bush_4_b": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Bush_4_B_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				0.9,
+				0.7
+			],
+			"smooth": true
+		},
+		"bush_4_c": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Bush_4_C_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				0.9,
+				0.7
+			],
+			"smooth": true
+		},
+		"bush_4_d": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Bush_4_D_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				0.9,
+				0.7
+			],
+			"smooth": true
+		},
+		"bush_4_e": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Bush_4_E_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				0.9,
+				0.7
+			],
+			"smooth": true
+		},
+		"bush_4_f": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Bush_4_F_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				0.9,
+				0.7
+			],
+			"smooth": true
+		},
+		"rock_1_a": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_1_A_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_1_b": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_1_B_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_1_c": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_1_C_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_1_d": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_1_D_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_1_e": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_1_E_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_1_f": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_1_F_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_1_g": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_1_G_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_1_h": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_1_H_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_1_i": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_1_I_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_1_j": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_1_J_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_1_k": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_1_K_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_1_l": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_1_L_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_1_m": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_1_M_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_1_n": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_1_N_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_1_o": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_1_O_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_1_p": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_1_P_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_1_q": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_1_Q_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_2_a": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_2_A_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_2_b": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_2_B_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_2_c": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_2_C_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_2_d": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_2_D_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_2_e": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_2_E_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_2_f": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_2_F_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_2_g": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_2_G_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_2_h": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_2_H_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_3_a": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_3_A_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_3_b": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_3_B_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_3_c": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_3_C_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_3_d": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_3_D_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_3_e": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_3_E_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_3_f": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_3_F_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_3_g": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_3_G_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_3_h": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_3_H_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_3_i": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_3_I_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_3_j": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_3_J_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_3_k": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_3_K_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_3_l": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_3_L_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_3_m": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_3_M_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_3_n": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_3_N_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_3_o": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_3_O_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_3_p": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_3_P_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_3_q": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_3_Q_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"rock_3_r": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_3_R_Color1.gltf",
+			"sway": "none",
+			"palette": "nature",
+			"fit": [
+				0.95,
+				0.85
+			]
+		},
+		"tree_1_a": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Tree_1_A_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				2.1,
+				2.8
+			],
+			"smooth": true
+		},
+		"tree_1_b": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Tree_1_B_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				2.1,
+				2.8
+			],
+			"smooth": true
+		},
+		"tree_1_c": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Tree_1_C_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				2.1,
+				2.8
+			],
+			"smooth": true
+		},
+		"tree_2_a": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Tree_2_A_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				2.1,
+				2.8
+			],
+			"smooth": true
+		},
+		"tree_2_b": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Tree_2_B_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				2.1,
+				2.8
+			],
+			"smooth": true
+		},
+		"tree_2_c": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Tree_2_C_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				2.1,
+				2.8
+			],
+			"smooth": true
+		},
+		"tree_2_d": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Tree_2_D_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				2.1,
+				2.8
+			],
+			"smooth": true
+		},
+		"tree_2_e": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Tree_2_E_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				2.1,
+				2.8
+			],
+			"smooth": true
+		},
+		"tree_3_a": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Tree_3_A_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				2.1,
+				2.8
+			],
+			"smooth": true
+		},
+		"tree_3_b": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Tree_3_B_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				2.1,
+				2.8
+			],
+			"smooth": true
+		},
+		"tree_3_c": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Tree_3_C_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				2.1,
+				2.8
+			],
+			"smooth": true
+		},
+		"tree_4_a": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Tree_4_A_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				2.1,
+				2.8
+			],
+			"smooth": true
+		},
+		"tree_4_b": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Tree_4_B_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				2.1,
+				2.8
+			],
+			"smooth": true
+		},
+		"tree_4_c": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Tree_4_C_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				2.1,
+				2.8
+			],
+			"smooth": true
+		},
+		"tree_bare_1_a": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Tree_Bare_1_A_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				1.4,
+				2.6
+			],
+			"smooth": true
+		},
+		"tree_bare_1_b": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Tree_Bare_1_B_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				1.4,
+				2.6
+			],
+			"smooth": true
+		},
+		"tree_bare_1_c": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Tree_Bare_1_C_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				1.4,
+				2.6
+			],
+			"smooth": true
+		},
+		"tree_bare_2_a": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Tree_Bare_2_A_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				1.4,
+				2.6
+			],
+			"smooth": true
+		},
+		"tree_bare_2_b": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Tree_Bare_2_B_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				1.4,
+				2.6
+			],
+			"smooth": true
+		},
+		"tree_bare_2_c": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Tree_Bare_2_C_Color1.gltf",
+			"sway": "foliage",
+			"palette": "nature",
+			"fit": [
+				1.4,
+				2.6
+			],
+			"smooth": true
+		},
+		"furn_armchair_pillows": {
+			"src": "KayKit_Furniture_Bits_1.0_FREE/Assets/gltf/armchair_pillows.gltf",
+			"scale": 0.66,
+			"palette": "furniture"
+		},
+		"furn_couch_pillows": {
+			"src": "KayKit_Furniture_Bits_1.0_FREE/Assets/gltf/couch_pillows.gltf",
+			"scale": 0.66,
+			"palette": "furniture"
+		},
+		"furn_bed_single_a": {
+			"src": "KayKit_Furniture_Bits_1.0_FREE/Assets/gltf/bed_single_A.gltf",
+			"scale": 0.66,
+			"palette": "furniture"
+		},
+		"furn_bed_double_a": {
+			"src": "KayKit_Furniture_Bits_1.0_FREE/Assets/gltf/bed_double_A.gltf",
+			"scale": 0.66,
+			"palette": "furniture"
+		},
+		"furn_chair_a": {
+			"src": "KayKit_Furniture_Bits_1.0_FREE/Assets/gltf/chair_A.gltf",
+			"scale": 0.66,
+			"palette": "furniture"
+		},
+		"furn_chair_a_wood": {
+			"src": "KayKit_Furniture_Bits_1.0_FREE/Assets/gltf/chair_A_wood.gltf",
+			"scale": 0.66,
+			"palette": "furniture"
+		},
+		"furn_table_medium": {
+			"src": "KayKit_Furniture_Bits_1.0_FREE/Assets/gltf/table_medium.gltf",
+			"scale": 0.66,
+			"palette": "furniture"
+		},
+		"furn_table_low": {
+			"src": "KayKit_Furniture_Bits_1.0_FREE/Assets/gltf/table_low.gltf",
+			"scale": 0.66,
+			"palette": "furniture"
+		},
+		"furn_lamp_standing": {
+			"src": "KayKit_Furniture_Bits_1.0_FREE/Assets/gltf/lamp_standing.gltf",
+			"scale": 0.66,
+			"palette": "furniture"
+		},
+		"furn_lamp_table": {
+			"src": "KayKit_Furniture_Bits_1.0_FREE/Assets/gltf/lamp_table.gltf",
+			"scale": 0.66,
+			"palette": "furniture"
+		},
+		"furn_shelf_b_large_decorated": {
+			"src": "KayKit_Furniture_Bits_1.0_FREE/Assets/gltf/shelf_B_large_decorated.gltf",
+			"scale": 0.66,
+			"palette": "furniture"
+		},
+		"furn_cabinet_medium_decorated": {
+			"src": "KayKit_Furniture_Bits_1.0_FREE/Assets/gltf/cabinet_medium_decorated.gltf",
+			"scale": 0.66,
+			"palette": "furniture"
+		},
+		"furn_rug_oval_a": {
+			"src": "KayKit_Furniture_Bits_1.0_FREE/Assets/gltf/rug_oval_A.gltf",
+			"scale": 0.66,
+			"palette": "furniture"
+		},
+		"furn_rug_rectangle_stripes_a": {
+			"src": "KayKit_Furniture_Bits_1.0_FREE/Assets/gltf/rug_rectangle_stripes_A.gltf",
+			"scale": 0.66,
+			"palette": "furniture"
+		},
+		"furn_pictureframe_large_a": {
+			"src": "KayKit_Furniture_Bits_1.0_FREE/Assets/gltf/pictureframe_large_A.gltf",
+			"scale": 0.66,
+			"palette": "furniture"
+		},
+		"furn_cactus_medium_a": {
+			"src": "KayKit_Furniture_Bits_1.0_FREE/Assets/gltf/cactus_medium_A.gltf",
+			"scale": 0.66,
+			"palette": "furniture"
+		},
+		"furn_book_set": {
+			"src": "KayKit_Furniture_Bits_1.0_FREE/Assets/gltf/book_set.gltf",
+			"scale": 0.66,
+			"palette": "furniture"
+		}
+	}
+}

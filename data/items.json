@@ -1715,6 +1715,38 @@
 				"rotatable": true
 			}
 		},
+		"village_well": {
+			"name": "Village Well",
+			"category": "furniture",
+			"stack": 1,
+			"price": 2400,
+			"color": "#798388",
+			"desc": "A little roofed well. Make a wish.",
+			"placeable": {
+				"footprint": [
+					2,
+					2
+				],
+				"model": "kaykit:hexagon_building_well_blue",
+				"rotatable": true
+			}
+		},
+		"windmill": {
+			"name": "Windmill",
+			"category": "furniture",
+			"stack": 1,
+			"price": 9800,
+			"color": "#8f4e3b",
+			"desc": "Its sails turn lazily in the breeze.",
+			"placeable": {
+				"footprint": [
+					3,
+					2
+				],
+				"model": "kaykit:hexagon_building_windmill_red",
+				"rotatable": true
+			}
+		},
 		"potted_cactus": {
 			"name": "Potted Cactus",
 			"category": "furniture",

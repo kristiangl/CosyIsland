@@ -158,6 +158,9 @@ Milestone 3b:
 - [x] KayKit furniture: Comfy Home, Cosy Kitchen and Festive series in four colourways
   each, and 40 decorations (wood stove, guitars, plushies, pumpkins, snowman, crates of
   veg, kitchen bits, a festive fir...)
+- [x] KayKit buildings: neighbours live in timbered cottages painted in their own roof
+  and wall colours, Lucy's shop is a market stall, and a well and windmill can be placed
+  (the player's house stays our own, to be customised)
 - [x] Lie down in bed to sleep
 - [x] KayKit nature: cube-cluster trees and pines, boulders, and bushes along the edges
   of the woods (island generation version 3), recoloured to the island palette

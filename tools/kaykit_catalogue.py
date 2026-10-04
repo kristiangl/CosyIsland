@@ -4,9 +4,9 @@
 
 Writes the model entries into tools/kaykit.json, the series into data/furniture/
 (comfy, kitchen, festive) and the decorations into data/items.json, with footprints
-and table heights measured from the models. Run it on a clean data/items.json (it
-refuses to overwrite an existing item), then tools/kaykit_import.gd to convert the
-models.
+and table heights measured from the models. Safe to run again (it replaces what it
+made before, and won't overwrite any other item); then run tools/kaykit_import.gd to
+convert the models.
 """
 import json, math, os, sys
 
@@ -18,6 +18,7 @@ PACKS = {
     "holiday": ("KayKit_Holiday_Bits_1.0_FREE/Assets/gltf/", 0.5),
     "mixed": ("KayKit_Mixed_Bag_1_FREE/Assets/gltf/", 0.5),
     "halloween": ("KayKit_HalloweenBits_1.0_FREE/Assets/gltf/", 0.5),
+    "hexagon": ("KayKit_Medieval_Hexagon_Pack_1.0_FREE/Assets/gltf/buildings/", 2.2),
 }
 
 def bounds(pack, model):
@@ -35,7 +36,7 @@ def bounds(pack, model):
 models = {}
 
 def model(pack, name, scale=None):
-    key = "%s_%s" % (pack, name.lower())
+    key = "%s_%s" % (pack, os.path.basename(name).lower())
     models[key] = {"src": PACKS[pack][0] + name + ".gltf", "scale": scale or PACKS[pack][1]}
     return key
 
@@ -193,6 +194,8 @@ PLAIN = [
     ("tomato_crate", "Crate of Tomatoes", "restaurant", "crate_tomatoes", 360, "Red and ripe.", {}),
     ("lettuce_crate", "Crate of Lettuce", "restaurant", "crate_lettuce", 360, "Crunchy.", {}),
     ("potato_crate", "Crate of Potatoes", "restaurant", "crate_potatoes", 360, "Mash, chips or roasties?", {}),
+    ("village_well", "Village Well", "hexagon", "blue/building_well_blue", 2400, "A little roofed well. Make a wish.", {}),
+    ("windmill", "Windmill", "hexagon", "red/building_windmill_red", 9800, "Its sails turn lazily in the breeze.", {"scale": 2.6}),
     ("potted_cactus", "Potted Cactus", "furniture", "cactus_medium_A", 280, "Prickly but friendly.", {"small": True}),
     ("book_pile", "Pile of Books", "furniture", "book_set", 220, "Bookmarks in every one.", {"small": True}),
     ("photo_frame", "Photo Frame", "furniture", "pictureframe_standing_A", 260, "A favourite memory.", {"small": True}),
@@ -230,6 +233,12 @@ def main():
             f.write('\t"pieces": [\n' + ",\n".join("\t\t" + json.dumps(p) for p in s["pieces"]) + "\n\t]\n}\n")
     items_path = REPO + "data/items.json"
     data = json.load(open(items_path))
+    # Start again from anything this script made last time.
+    ours = [p[0] for p in PLAIN] + ["festive_tree"]
+    for id in ours:
+        made = data["items"].get(id, {}).get("placeable", {}).get("model", "")
+        if made.startswith("kaykit:") or made == "festive_tree":
+            del data["items"][id]
     for id, name, pack, src, price, desc, extra in PLAIN:
         if id in data["items"]:
             sys.exit("%s is already an item" % id)

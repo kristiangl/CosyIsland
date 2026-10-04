@@ -12,6 +12,7 @@ extends SceneTree
 ##   palette  a set from the file's "palettes": colours are moved onto the game's own
 ##            ramps by kind (green, brown, grey...), darkest to lightest
 ##   recolour {"#from": "#to"} for single colours
+##   turn     degrees to turn the model about the vertical, so its front faces +Z
 ##   keep_origin true to keep the model's own origin (a tool's grip) instead of
 ##            standing it on the ground
 ##   smooth   true to round off hard edges (normals shared where vertices meet), so
@@ -131,6 +132,7 @@ static func import_model(path: String, entry: Dictionary, palette: Dictionary) -
 		while at >= 0:
 			xform = nodes[at].xform * xform
 			at = nodes[at].parent
+		xform = Transform3D(Basis(Vector3.UP, deg_to_rad(float(entry.get("turn", 0.0)))), Vector3.ZERO) * xform
 		var imesh: ImporterMesh = meshes[node.mesh].mesh
 		for s in imesh.get_surface_count():
 			var arrays := imesh.get_surface_arrays(s)

@@ -589,7 +589,9 @@ func _test_furniture_series() -> void:
 			var tris := 0
 			for s in mesh.get_surface_count():
 				tris += mesh.surface_get_array_index_len(s) / 3
-			check(tris > 0 and tris < 2500, "%s is cheap enough to place (%d triangles)" % [id, tris])
+			# Bigger things can have a bit more detail.
+			var size: Array = ItemDB.placeable(id)["footprint"]
+			check(tris > 0 and tris < maxi(2500, 900 * int(size[0]) * int(size[1])), "%s is cheap enough to place (%d triangles)" % [id, tris])
 	var pieces: Array = ItemDB.items.keys().filter(func(id): return ItemDB.get_item(id).has("series"))
 	check(pieces.size() >= 100, "series pieces come in variants (%d items)" % pieces.size())
 	for id: String in pieces:

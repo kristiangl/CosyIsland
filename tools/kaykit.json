@@ -574,6 +574,28 @@
 		"furniture_pictureframe_standing_a": {
 			"src": "KayKit_Furniture_Bits_1.0_FREE/Assets/gltf/pictureframe_standing_A.gltf",
 			"scale": 0.66
+		},
+		"hex_home_a": {
+			"src": "KayKit_Medieval_Hexagon_Pack_1.0_FREE/Assets/gltf/buildings/blue/building_home_A_blue.gltf",
+			"fit": [
+				2.85,
+				3.6
+			]
+		},
+		"hex_market": {
+			"src": "KayKit_Medieval_Hexagon_Pack_1.0_FREE/Assets/gltf/buildings/yellow/building_market_yellow.gltf",
+			"fit": [
+				3.9,
+				3.0
+			]
+		},
+		"hexagon_building_well_blue": {
+			"src": "KayKit_Medieval_Hexagon_Pack_1.0_FREE/Assets/gltf/buildings/blue/building_well_blue.gltf",
+			"scale": 2.2
+		},
+		"hexagon_building_windmill_red": {
+			"src": "KayKit_Medieval_Hexagon_Pack_1.0_FREE/Assets/gltf/buildings/red/building_windmill_red.gltf",
+			"scale": 2.6
 		}
 	},
 	"animations": {

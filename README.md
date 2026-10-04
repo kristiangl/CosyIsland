@@ -143,7 +143,8 @@ See [docs/DESIGN.md](docs/DESIGN.md) for the full plan.
 
 Trees, bushes and rocks are from the KayKit Forest Nature Pack; the Comfy Home, Cosy
 Kitchen and Festive sets and many decorations from KayKit's Furniture, Restaurant,
-Holiday, Halloween and Mixed Bag packs; and the characters'
+Holiday, Halloween and Mixed Bag packs; neighbours' cottages, Lucy's market stall, the
+well and the windmill from the Medieval Hexagon Pack; and the characters'
 actions (chopping, digging, fishing, sitting, lying down, cheering...) from KayKit
 Character Animations, both by Kay Lousberg ([www.kaylousberg.com](https://www.kaylousberg.com),
 CC0), converted for the game by `tools/kaykit_import.gd`. Everything else is built in code.

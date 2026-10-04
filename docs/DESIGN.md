@@ -180,6 +180,9 @@ Milestone 3b:
   tour tickets; tour islands are small generated islands (`IslandGenerator.generate_tour`)
   with other natives, never saved; a neighbour sometimes camps there and can be invited
   to move into the next plot
+- [x] Fruit planting: plant a fruit on open grass at home and it grows into a fruit
+  tree over `World.GROW_DAYS` nights (saplings scale up); fruit from other islands sells
+  for three times as much
 - [x] Asking first: materials for building projects, Poppy's specimens, donations to
   the museum (all at once or one at a time) and favours ask "Give them X?" first
 
@@ -188,8 +191,8 @@ Next milestones (suggested order):
    everything unlocked, sold by Lucy. Time travel moves out of the phone into an
    options menu.
 4. Daily visitors; more neighbour life (moving out). A try-on mirror at the tailors.
-5. Planting fruit to grow fruit trees (so tour fruit can grow at home); more to find on
-   tours (rare islands, other residents' visits).
+5. More to find on tours: rare islands (other trees, rare bugs), visitors from tours
+   stopping by.
 6. Path tool, terraforming, waterscaping, rock moving.
 7. Weather and seasons; audio.
 8. Platform work: touch controls, performance passes, Switch porting.

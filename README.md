@@ -32,9 +32,9 @@ A cosy island life game about crafting and decorating, made with Godot 4.
 | --- | --- |
 | ![](docs/screenshots/tailors.png) | ![](docs/screenshots/building_site.png) |
 
-| Marlow's ferry | A tour island |
-| --- | --- |
-| ![](docs/screenshots/dock.png) | ![](docs/screenshots/tour.png) |
+| Marlow's ferry | A tour island | Planted apple trees growing |
+| --- | --- | --- |
+| ![](docs/screenshots/dock.png) | ![](docs/screenshots/tour.png) | ![](docs/screenshots/orchard.png) |
 
 | Neighbours | Visiting a neighbour | The museum |
 | --- | --- | --- |
@@ -135,6 +135,8 @@ On-screen hints follow whatever you last touched, keyboard or controller.
   friendship (the journal's Neighbours page shows who likes what).
 - Chop wood, shake trees for fruit and branches (and the odd piece of furniture), hit
   rocks for stone, clay and iron (one rock a day gives acorns).
+- Plant fruit on open grass and it grows into a fruit tree over four nights. Fruit
+  that isn't native to your island sells to Lucy for three times as much.
 - DIY workbench with 61 recipes: tools and furniture. Message bottles wash up each day
   with new recipes.
 - 302 pieces of furniture to place anywhere on the grid with a preview, rotate and pick

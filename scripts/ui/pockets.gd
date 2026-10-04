@@ -172,12 +172,34 @@ func _use_slot(i: int) -> void:
 		Events.toast.emit("The room looks lovely!")
 		_refresh()
 	elif def.get("category", "") == "fruit":
-		Inventory.remove_from_slot(i)
-		close()
-		Game.player.eat(id)
-		Events.toast.emit("Mmm, delicious!")
+		_use_fruit(i)
 	else:
 		_drop_slot(i)
+
+
+## Fruit: eat it, or (facing open grass at home) plant it to grow a tree.
+func _use_fruit(i: int) -> void:
+	var id: String = Inventory.slots[i]["id"]
+	var here: World = Game.world
+	var front := Game.player.target_tile()
+	close()
+	var plant := false
+	if here.can_plant_tree(front):
+		Game.mode = Game.Mode.MENU
+		Game.dialogue.ask("", "What shall I do with the %s?" % ItemDB.display_name(id).to_lower(), ["Eat it", "Plant it", "Never mind"])
+		var pick: int = await Game.dialogue.picked
+		Game.mode = Game.Mode.PLAY
+		if pick == 2:
+			return
+		plant = pick == 1
+	Inventory.remove_from_slot(i)
+	if plant:
+		here.plant_fruit(id, front)
+		Game.player.model.play("dig")
+		Events.toast.emit("Planted! It'll grow into a tree in a few days.")
+	else:
+		Game.player.eat(id)
+		Events.toast.emit("Mmm, delicious!")
 
 
 ## A picked flower: wear it in your hair, or stand it in a vase somewhere.

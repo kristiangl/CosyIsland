@@ -23,7 +23,7 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   (`--night`, every particle effect), `calibrate.tscn`
   (`-- --shadows`, checks the cel lighting maths).
 - Game screenshot options are listed at the top of `scripts/main.gd` (`--demo`,
-  `--demo=decor|sit|home|door|shop|site|tailors|museum|dock|tour|neighbours|flowers|fishing|bugs` (`--house` builds the house first, `--series=id` furnishes
+  `--demo=decor|sit|home|door|shop|site|tailors|museum|dock|tour|orchard|neighbours|flowers|fishing|bugs` (`--house` builds the house first, `--series=id` furnishes
   the home from one series; `--built` turns the museum tent into the museum, `--visit`
   goes inside the museum or a neighbour's home),
   `--ui=pockets|pause|map|creator|crafting|customise|placing|intro|ask|lucy|sleep|asleep|shop|sell|tailors` (`--place=id` picks what to place),

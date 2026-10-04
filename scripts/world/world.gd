@@ -290,6 +290,8 @@ func _spawn_node(obj: Dictionary) -> void:
 			node.rotation.y = fposmod(obj["uid"] * 2.399, TAU)
 			if obj["kind"] == "flower":
 				node.scale = Vector3.ONE * 1.4
+			elif obj.has("planted"):
+				node.scale = Vector3.ONE * growth_scale(obj)
 	node.position = Vector3(centre.x, y, centre.y)
 	if obj["kind"] == "placed" and ItemDB.placeable(obj["item"]).get("light", false):
 		var lamp := OmniLight3D.new()
@@ -326,6 +328,8 @@ func refresh_node(obj: Dictionary) -> void:
 	elif node:
 		var mesh: MeshInstance3D = node.get_child(0)
 		mesh.mesh = Models.get_mesh(Models.key_for(obj))
+		if obj["kind"] == "fruit_tree":
+			node.scale = Vector3.ONE * growth_scale(obj)
 
 
 func node_of(uid: int) -> Node3D:
@@ -368,6 +372,10 @@ func can_step(from: Vector3, px: float, pz: float) -> bool:
 # --- Island rules --------------------------------------------------------------------
 
 func chop(obj: Dictionary, player_pos: Vector3) -> void:
+	if obj.has("planted"):
+		_wiggle(obj, 2.0)
+		Events.toast.emit("It's only little! Give it time to grow.")
+		return
 	_wiggle(obj, 5.0)
 	_burst_towards(obj, player_pos, "chips", 0.55)
 	if obj.get("wood_left", 0) <= 0:
@@ -395,6 +403,9 @@ func strike_rock(obj: Dictionary, player_pos: Vector3) -> bool:
 
 
 func shake(obj: Dictionary, player_pos: Vector3) -> void:
+	if obj.has("planted"):
+		_wiggle(obj, 2.0)
+		return
 	_wiggle(obj, 3.0)
 	var node := node_of(obj["uid"])
 	if node:
@@ -511,6 +522,36 @@ func dig_up(obj: Dictionary) -> bool:
 ## Whether a flower can be planted on this tile: open ground outdoors.
 func can_plant(tile: Vector2i) -> bool:
 	return not interior and data.in_bounds(tile.x, tile.y) and _can_hold_drop(tile.x, tile.y) and not _rugs.has(data.idx(tile.x, tile.y))
+
+
+## Whether a fruit can be planted here to grow a tree: open grass outdoors at home,
+## with nothing tall right next to it.
+func can_plant_tree(tile: Vector2i) -> bool:
+	if tour or not can_plant(tile) or data.tile(tile.x, tile.y) != IslandData.Tile.GRASS or not data.is_flat(tile.x, tile.y) \
+			or Rect2i(data.plaza).grow(1).has_point(tile):
+		return false
+	for dz in range(-1, 2):
+		for dx in range(-1, 2):
+			var near := object_at(tile.x + dx, tile.y + dz)
+			if near.get("kind", "") in ["tree", "fruit_tree", "palm", "placed"]:
+				return false
+	return true
+
+
+## Plants a fruit, which grows into a tree of that fruit over GROW_DAYS nights.
+func plant_fruit(fruit_id: String, tile: Vector2i) -> Dictionary:
+	var obj := add_object({"kind": "fruit_tree", "x": tile.x, "z": tile.y, "fruit": fruit_id, "fruit_count": 0,
+		"planted": day_key, "wood_left": 0})
+	_pop_in(obj)
+	Journal.add("trees_planted")
+	return obj
+
+
+## How big a growing tree is: a sapling the day it's planted, nearly full size the
+## night before it's grown.
+func growth_scale(obj: Dictionary) -> float:
+	var days := clampi(day_key - int(obj.get("planted", day_key - GROW_DAYS)), 0, GROW_DAYS)
+	return lerpf(0.22, 0.85, days / float(GROW_DAYS - 1)) if days < GROW_DAYS else 1.0
 
 
 ## Plants a dug-up flower (an item "<species>_<colour>_plant") on a tile.
@@ -773,7 +814,13 @@ func _on_day_changed(key: int) -> void:
 				obj["wood_left"] = WOOD_PER_DAY
 			"fruit_tree":
 				obj["wood_left"] = WOOD_PER_DAY
-				if obj.get("fruit_count", 0) == 0 and key - obj.get("picked_day", key) >= FRUIT_REGROW_DAYS:
+				if obj.has("planted"):
+					# A planted tree grows a bit each night, and fruits once it's grown.
+					if key - int(obj["planted"]) >= GROW_DAYS:
+						obj.erase("planted")
+						obj["fruit_count"] = 3
+					refresh_node(obj)
+				elif obj.get("fruit_count", 0) == 0 and key - obj.get("picked_day", key) >= FRUIT_REGROW_DAYS:
 					obj["fruit_count"] = 3
 					refresh_node(obj)
 			"rock":
@@ -979,6 +1026,9 @@ func dock_spots(dock: Dictionary) -> Dictionary:
 	return {"skipper": Vector3(stand.x, ground_height(stand.x, stand.y), stand.y),
 		"arrive": Vector3(land.x, ground_height(land.x, land.y), land.y), "facing": inland}
 
+
+## Nights a planted fruit takes to grow into a tree that bears fruit.
+const GROW_DAYS := 4
 
 ## Things that can be cleared away to make room for a building.
 const NATURAL_KINDS := ["tree", "fruit_tree", "palm", "bush", "flower", "drop"]

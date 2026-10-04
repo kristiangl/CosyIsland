@@ -23,8 +23,16 @@ static func buy_price(id: String) -> int:
 	return maxi(40, int(ItemDB.get_item(id).get("price", 0)) * BUY_MARKUP)
 
 
+## Fruit that doesn't grow on your island sells for this many times as much.
+const FOREIGN_FRUIT := 3
+
+
 static func sell_price(id: String) -> int:
-	return int(ItemDB.get_item(id).get("price", 0))
+	var def := ItemDB.get_item(id)
+	var price := int(def.get("price", 0))
+	if def.get("category", "") == "fruit" and Game.island and id != Game.island.data.native_fruit:
+		price *= FOREIGN_FRUIT
+	return price
 
 
 static func can_sell(id: String) -> bool:

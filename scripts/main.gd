@@ -19,6 +19,7 @@ extends Node3D
 ##   --demo=shop        Lucy's shop has been built; stand in front of it (--demo=museum: Bramble's,
 ##                      --built for the finished museum, --visit to go in)
 ##   --demo=dock        Marlow's ferry dock (--demo=tour: off on a tour, --camper with someone camping there)
+##   --demo=orchard     a row of planted fruit trees, one at each stage of growing
 ##   --demo=site        Lucy's shop kit staked out, waiting to be built
 ##   --demo=neighbours  two neighbours have just moved in (--visit: go inside one's home, --who=id,id: who)
 ##   --demo=fishing     fishing off the beach with fish about (--demo=bugs: bugs nearby)
@@ -775,6 +776,28 @@ func _run_demo() -> void:
 						player.position = n.position + Vector3(0.8, 0, 1.6)
 						player.facing = Vector3(-0.4, 0, -1).normalized()
 						camera_rig.snap()
+		return
+	if Game.args["demo"] == "orchard":
+		# Fruit planted over the last few days, one tree at each stage of growing.
+		var fruit: String = IslandGenerator.FRUITS.filter(func(f): return f != world.data.native_fruit)[0]
+		var row := 0
+		for z in range(spawn.y + 4, world.data.height):
+			for x in range(spawn.x - 8, spawn.x + 8):
+				var ok := true
+				for i in World.GROW_DAYS + 1:
+					ok = ok and world.can_plant_tree(Vector2i(x + i * 2, z))
+				if ok and row == 0:
+					for i in World.GROW_DAYS + 1:
+						var tree := world.plant_fruit(fruit, Vector2i(x + i * 2, z))
+						tree["planted"] = world.day_key - i
+						if i == World.GROW_DAYS:
+							tree.erase("planted")
+							tree["fruit_count"] = 3
+						world.refresh_node(tree)
+					player.position = Vector3(x + World.GROW_DAYS + 0.5, 0, z + 3.5)
+					player.facing = Vector3(0, 0, -1)
+					camera_rig.snap()
+					row = 1
 		return
 	if Game.args["demo"] == "site":
 		# Lucy's shop kit staked out by the plaza, to be built tonight.

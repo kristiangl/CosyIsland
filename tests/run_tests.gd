@@ -37,6 +37,7 @@ func _run() -> void:
 	_test_neighbours()
 	_test_friendship()
 	_test_tours()
+	_test_fruit_planting()
 	print("\n%d checks, %d failures" % [_checks, _failures])
 	get_tree().quit(1 if _failures > 0 else 0)
 
@@ -1161,4 +1162,46 @@ func _test_tours() -> void:
 	check(Story.move_in(w) == [free[-1]] and plot["resident"] == free[-1] and not Story.flags.has("invited"), "the neighbour you invited moves in")
 	w.free()
 	Story.flags = saved_flags
+
+
+func _test_fruit_planting() -> void:
+	var d := IslandGenerator.generate(7)
+	var w := World.new()
+	add_child(w)
+	w.setup(d)
+	var spot := Vector2i(-1, -1)
+	for z in range(d.spawn.y + 6, d.height):
+		for x in range(4, d.width - 4):
+			if spot.x < 0 and w.can_plant_tree(Vector2i(x, z)):
+				spot = Vector2i(x, z)
+	check(spot.x >= 0, "there's somewhere to plant a tree")
+	var foreign: String = IslandGenerator.FRUITS.filter(func(f): return f != d.native_fruit)[0]
+	var tree := w.plant_fruit(foreign, spot)
+	check(tree["kind"] == "fruit_tree" and tree["fruit"] == foreign and tree.has("planted"), "a planted fruit becomes a sapling")
+	check(not w.can_plant_tree(spot + Vector2i(1, 0)), "trees need a little room")
+	check(is_equal_approx(w.node_of(tree["uid"]).scale.x, w.growth_scale(tree)) and w.growth_scale(tree) < 0.3, "it starts small")
+	w.shake(tree, Vector3.ZERO)
+	check(int(tree["fruit_count"]) == 0, "and has nothing to shake down yet")
+	var key := w.day_key
+	for n in World.GROW_DAYS - 1:
+		w._on_day_changed(key + n + 1)
+	check(tree.has("planted") and w.node_of(tree["uid"]).scale.x > 0.6, "it grows a bit each night")
+	w._on_day_changed(key + World.GROW_DAYS)
+	check(not tree.has("planted") and int(tree["fruit_count"]) == 3 and is_equal_approx(w.node_of(tree["uid"]).scale.x, 1.0),
+		"after %d nights it's a full tree with fruit" % World.GROW_DAYS)
+	var saved_island := Game.island
+	Game.island = w
+	check(Shop.sell_price(foreign) == Shop.sell_price(d.native_fruit) * Shop.FOREIGN_FRUIT, "fruit from elsewhere sells for more")
+	Game.island = saved_island
+	var t := World.new()
+	t.tour = true
+	add_child(t)
+	t.setup(IslandGenerator.generate_tour(5, d.native_fruit, d.native_flower))
+	var anywhere := false
+	for z in t.data.height:
+		for x in t.data.width:
+			anywhere = anywhere or t.can_plant_tree(Vector2i(x, z))
+	check(not anywhere, "nothing gets planted on a tour island")
+	t.free()
+	w.free()
 

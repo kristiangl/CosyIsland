@@ -8,12 +8,7 @@ extends RefCounted
 
 const BARK := Color("a87d62")
 const BARK_LIGHT := Color("c19a7c")
-const LEAF_DARK := Color("6aac72")
-const LEAF_MID := Color("80c17e")
-const LEAF_LIGHT := Color("9cd28f")
-const FRUIT_LEAF := Color("7fbf80")
 const PALM_LEAF := Color("78bd7a")
-const ROCK := Color("bdb8cc")
 const WOOD_END := Color("f6dcb4")
 const FABRIC := Color("7fc6b8")
 const FABRIC_DARK := Color("4f9488")
@@ -54,13 +49,16 @@ static func get_mesh(key: String) -> ArrayMesh:
 		return mesh
 	match p[0]:
 		"tree":
-			_tree(k, int(p[1]), "", 0)
+			k = _kit_from(TREES[int(p[1]) % TREES.size()])
 		"fruit_tree":
-			_tree(k, int(p[1]), p[2], int(p[3]))
+			k = _kit_from(FRUIT_TREES[int(p[1]) % FRUIT_TREES.size()])
+			_fruit_tree(k, p[2], int(p[3]))
 		"palm":
 			_palm(k, int(p[1]))
+		"bush":
+			k = _kit_from(BUSHES[int(p[1]) % BUSHES.size()])
 		"rock":
-			_rock(k, int(p[1]))
+			k = _kit_from(ROCKS[int(p[1]) % ROCKS.size()])
 		"flower":
 			_flower_clump(k, p[1], p[2], p.size() > 3 and p[3] == "picked")
 		"creature":
@@ -204,13 +202,15 @@ static func fabric_material(spec: Array, icon: bool = false) -> ShaderMaterial:
 static func key_for(obj: Dictionary) -> String:
 	match obj["kind"]:
 		"tree":
-			return "tree:%d" % obj.get("variant", 0)
+			return "tree:%d" % _pick(obj, TREES.size())
 		"fruit_tree":
-			return "fruit_tree:%d:%s:%d" % [obj.get("variant", 0), obj["fruit"], obj.get("fruit_count", 0)]
+			return "fruit_tree:%d:%s:%d" % [_pick(obj, FRUIT_TREES.size()), obj["fruit"], obj.get("fruit_count", 0)]
 		"palm":
 			return "palm:%d" % obj.get("variant", 0)
 		"rock":
-			return "rock:%d" % obj.get("variant", 0)
+			return "rock:%d" % _pick(obj, ROCKS.size())
+		"bush":
+			return "bush:%d" % _pick(obj, BUSHES.size())
 		"flower":
 			return "flower:%s:%s%s" % [obj["species"], obj["color"], ":picked" if obj.get("picked", false) else ""]
 		"bridge":
@@ -226,55 +226,70 @@ static func key_for(obj: Dictionary) -> String:
 	return "unknown"
 
 
+## Which of `count` models a tree or rock uses: its saved variant mixed with its uid, so
+## neighbours differ.
+static func _pick(obj: Dictionary, count: int) -> int:
+	return (int(obj.get("uid", 0)) * 7 + int(obj.get("variant", 0))) % count
+
+
 static func _shade(c: Color, f: float) -> Color:
 	return Color(c.r * f, c.g * f, c.b * f, c.a)
 
 
 # --- Nature --------------------------------------------------------------------------
 
-## Trees in the Animal Crossing manner: a short trunk under stacked, rounded tiers of
-## leaves, each a ring of soft puffs, so the cel lighting picks out every layer.
-static func _tree(k: MeshKit, variant: int, fruit: String, fruit_count: int) -> void:
-	var rng := RandomNumberGenerator.new()
-	rng.seed = variant * 7919 + 17
-	var bark := MeshKit.lin(BARK, 0.12)
-	var lean := Vector3(rng.randf_range(-0.06, 0.06), 0, rng.randf_range(-0.06, 0.06))
-	k.cylinder(Vector3.ZERO, Vector3(0, 0.7, 0) + lean * 0.5, 0.17, 0.13, bark, 8, false)
-	k.cylinder(Vector3(0, 0.7, 0) + lean * 0.5, Vector3(0, 1.45, 0) + lean, 0.13, 0.09, bark, 8, false, MeshKit.lin(BARK_LIGHT, 0.3))
-	for i in 3:
-		var a := TAU * i / 3.0 + rng.randf() * 0.8
-		var dir := Vector3(cos(a), 0.0, sin(a))
-		k.cylinder(dir * 0.05 + Vector3(0, 0.26, 0), dir * 0.3, 0.08, 0.035, bark, 5, false)
-	var fruity := fruit != ""
-	var leaf := FRUIT_LEAF if fruity else LEAF_MID
-	var colours := [leaf.darkened(0.16), leaf.lightened(0.04), leaf.lightened(0.2)]
-	# Tier: [height, radius, thickness, puffs]
-	var tiers := [[1.3, 1.02, 0.3, 9], [1.86, 0.8, 0.28, 8], [2.36, 0.5, 0.26, 6]]
-	if fruity:
-		tiers = [[1.3, 0.98, 0.32, 8], [1.84, 0.7, 0.3, 7], [2.28, 0.38, 0.26, 5]]
-	for t in tiers.size():
-		var tier: Array = tiers[t]
-		var y: float = tier[0]
-		var r: float = tier[1]
-		var thick: float = tier[2]
-		var puffs: int = tier[3]
-		var col := MeshKit.lin(colours[t], 1.0)
-		var centre := Vector3(0, y, 0) + lean
-		# A domed middle with a scalloped rim of puffs drooping a little at the edge.
-		k.sphere(centre + Vector3(0, thick * 0.25, 0), Vector3(r * 0.72, thick * 1.1, r * 0.72), col, 8, 14, 0.6, 0.06, variant * 7 + t)
-		var turn := rng.randf() * TAU
-		for i in puffs:
-			var a := turn + TAU * i / puffs + rng.randf_range(-0.12, 0.12)
-			var pr := r * rng.randf_range(0.34, 0.4)
-			var off := Vector3(cos(a) * r * 0.68, -thick * 0.25 + rng.randf_range(-0.03, 0.03), sin(a) * r * 0.68)
-			k.sphere(centre + off, Vector3(pr, thick * 0.8, pr), col, 7, 10, 0.6, 0.08, variant * 31 + t * 7 + i)
-	if fruity and fruit_count > 0:
-		var fruit_col := MeshKit.lin(ItemDB.color_of(fruit), 1.0)
-		var spots := [Vector3(-0.55, 1.02, 0.6), Vector3(0.55, 1.05, 0.58), Vector3(0.0, 0.98, 0.82)]
-		for i in mini(fruit_count, spots.size()):
-			var s: Vector3 = spots[i] + lean
-			k.sphere(s, Vector3.ONE * 0.13, fruit_col, 6, 9, 0.3)
-			k.cylinder(s + Vector3(0, 0.1, 0), s + Vector3(0.02, 0.2, 0), 0.015, 0.01, MeshKit.lin(BARK, 1.0), 4, false)
+## Island trees and rocks, from KayKit's Forest Nature pack (tools/kaykit.json): cube
+## cluster trees and pines, and faceted boulders.
+const TREES := ["tree_2_a", "tree_2_b", "tree_2_c", "tree_2_d", "tree_2_e", "tree_4_a", "tree_4_b", "tree_4_c"]
+## The cube trees with room on their canopy for fruit.
+const FRUIT_TREES := ["tree_2_a", "tree_2_b", "tree_2_d", "tree_2_e"]
+## Bushes: cube clusters and angular ones.
+const BUSHES := ["bush_2_a", "bush_2_b", "bush_2_c", "bush_2_d", "bush_2_e", "bush_2_f", "bush_4_a", "bush_4_b", "bush_4_c", "bush_4_d", "bush_4_e", "bush_4_f"]
+const ROCKS := ["rock_3_a", "rock_3_b", "rock_3_c", "rock_3_d", "rock_3_e", "rock_3_f", "rock_3_g", "rock_3_h"]
+
+
+## A converted KayKit mesh as a MeshKit, to add more to it.
+static func _kit_from(name: String) -> MeshKit:
+	var k := MeshKit.new()
+	var mesh: ArrayMesh = load("res://assets/kaykit/%s.res" % name)
+	var arrays := mesh.surface_get_arrays(0)
+	k.verts = arrays[Mesh.ARRAY_VERTEX]
+	k.normals = arrays[Mesh.ARRAY_NORMAL]
+	k.colours = arrays[Mesh.ARRAY_COLOR]
+	k.indices = arrays[Mesh.ARRAY_INDEX]
+	k.uvs.resize(k.verts.size())
+	return k
+
+
+## A cube tree with fruit tucked into the sides of its canopy, spread round it at
+## different heights.
+static func _fruit_tree(k: MeshKit, fruit: String, fruit_count: int) -> void:
+	if fruit_count <= 0:
+		return
+	var leaves: Array[int] = []
+	var low := INF
+	var high := -INF
+	for i in k.verts.size():
+		var c := k.colours[i]
+		if c.g > c.r:
+			leaves.append(i)
+			low = minf(low, k.verts[i].y)
+			high = maxf(high, k.verts[i].y)
+	var fruit_col := MeshKit.lin(ItemDB.color_of(fruit), 1.0)
+	var stem := MeshKit.lin(BARK, 1.0)
+	for f in mini(fruit_count, 3):
+		var dir := Vector3(cos(TAU * f / 3.0 + 0.5), 0, sin(TAU * f / 3.0 + 0.5))
+		var y := lerpf(low, high, [0.3, 0.5, 0.4][f])
+		# The leafy spot furthest out that way, near that height.
+		var best := -1
+		for i in leaves:
+			if absf(k.verts[i].y - y) < (high - low) * 0.15 and (best < 0 or k.verts[i].dot(dir) > k.verts[best].dot(dir)):
+				best = i
+		if best < 0:
+			continue
+		var at := Vector3(k.verts[best].x, y, k.verts[best].z) - dir * 0.04
+		k.sphere(at, Vector3.ONE * 0.16, fruit_col, 6, 9, 0.3)
+		k.cylinder(at + Vector3(0, 0.13, 0), at + Vector3(0.02, 0.24, 0), 0.016, 0.011, stem, 4, false)
 
 
 static func _palm(k: MeshKit, variant: int) -> void:
@@ -298,12 +313,6 @@ static func _palm(k: MeshKit, variant: int) -> void:
 	for i in 3:
 		var a := TAU * i / 3.0
 		k.sphere(top + Vector3(cos(a) * 0.14, -0.14, sin(a) * 0.14), Vector3.ONE * 0.12, MeshKit.lin(Color("a07858"), 0.6), 4, 7)
-
-
-static func _rock(k: MeshKit, variant: int) -> void:
-	var col := MeshKit.lin(_shade(ROCK, 0.95 + variant * 0.03), 0.0)
-	k.sphere(Vector3(0, 0.3, 0), Vector3(0.5, 0.42, 0.46), col, 6, 9, 0.45, 0.3, variant + 3)
-	k.sphere(Vector3(0.28, 0.15, 0.2), Vector3(0.24, 0.2, 0.22), MeshKit.lin(_shade(ROCK, 0.9)), 4, 7, 0.4, 0.3, variant + 8)
 
 
 ## A clump of flowers: a rosette of leaves and four or five stems of different heights,

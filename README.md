@@ -133,3 +133,9 @@ On-screen hints follow whatever you last touched, keyboard or controller.
   now) a time travel app. Autosave.
 
 See [docs/DESIGN.md](docs/DESIGN.md) for the full plan.
+
+## Credits
+
+Trees, bushes and rocks are from the KayKit Forest Nature Pack by Kay Lousberg
+([www.kaylousberg.com](https://www.kaylousberg.com), CC0), recoloured for the island by
+`tools/kaykit_import.gd`. Everything else is built in code.

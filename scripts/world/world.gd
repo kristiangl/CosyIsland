@@ -10,7 +10,7 @@ const ROCK_COUNT := 6
 const FRUIT_REGROW_DAYS := 3
 const BRANCHES_PER_TREE := 2
 const GIFT_TREES := 2
-const BLOCKING_KINDS := ["tree", "fruit_tree", "palm", "rock", "placed"]
+const BLOCKING_KINDS := ["tree", "fruit_tree", "palm", "rock", "bush", "placed"]
 const ROCK_TABLE := [["stone", 60], ["clay", 25], ["iron_nugget", 14], ["gold_nugget", 1]]
 
 var data: IslandData
@@ -49,7 +49,7 @@ func setup(island: IslandData, saved: Dictionary = {}) -> void:
 		data.objects.clear()
 		for obj in saved["objects"]:
 			# Natural things left in the water by a change to the island's shape are gone.
-			if obj["kind"] in ["tree", "palm", "rock", "flower", "drop"] and not interior \
+			if obj["kind"] in ["tree", "palm", "rock", "bush", "flower", "drop"] and not interior \
 					and not island.is_land(int(obj["x"]), int(obj["z"])):
 				continue
 			data.objects.append(_ints(obj))
@@ -284,7 +284,7 @@ func _spawn_node(obj: Dictionary) -> void:
 			node.rotation.y = -PI * 0.5 * obj.get("rot", 0)
 			if obj.has("on"):
 				y += ItemDB.placeable(_objects.get(obj["on"], {}).get("item", "")).get("surface", 0.0)
-		"tree", "fruit_tree", "palm", "rock", "flower":
+		"tree", "fruit_tree", "palm", "rock", "bush", "flower":
 			node.rotation.y = fposmod(obj["uid"] * 2.399, TAU)
 			if obj["kind"] == "flower":
 				node.scale = Vector3.ONE * 1.4
@@ -396,7 +396,7 @@ func shake(obj: Dictionary, player_pos: Vector3) -> void:
 	_wiggle(obj, 3.0)
 	var node := node_of(obj["uid"])
 	if node:
-		Effects.burst("leaves", node.global_position + Vector3(0, 1.9 if obj["kind"] != "palm" else 2.4, 0))
+		Effects.burst("leaves", node.global_position + Vector3(0, {"palm": 2.4, "bush": 0.6}.get(obj["kind"], 1.9), 0))
 	if obj["kind"] == "fruit_tree" and obj.get("fruit_count", 0) > 0:
 		for i in obj["fruit_count"]:
 			_drop_near(obj, player_pos, {"item": obj["fruit"], "count": 1})
@@ -899,7 +899,7 @@ func shop() -> Dictionary:
 
 
 ## Things that can be cleared away to make room for a building.
-const NATURAL_KINDS := ["tree", "fruit_tree", "palm", "flower", "drop"]
+const NATURAL_KINDS := ["tree", "fruit_tree", "palm", "bush", "flower", "drop"]
 
 
 ## Whether a rect would be free to build on once trees, flowers and drops are cleared.

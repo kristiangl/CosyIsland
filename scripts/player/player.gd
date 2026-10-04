@@ -201,7 +201,9 @@ func _use() -> void:
 			_busy = SWING_TIME
 			model.play("chop")
 			await get_tree().create_timer(IMPACT_TIME).timeout
-			if kind in ["tree", "fruit_tree", "palm"]:
+			if kind == "bush":
+				world.shake(obj, position)
+			elif kind in ["tree", "fruit_tree", "palm"]:
 				if tool_kind == "axe":
 					world.chop(obj, position)
 					Inventory.wear_equipped()
@@ -215,7 +217,7 @@ func _use() -> void:
 				if world.dig_up(obj):
 					Inventory.wear_equipped()
 		_:
-			if kind in ["tree", "fruit_tree", "palm"]:
+			if kind in ["tree", "fruit_tree", "palm", "bush"]:
 				_busy = SWING_TIME
 				model.play("shake")
 				world.shake(obj, position)

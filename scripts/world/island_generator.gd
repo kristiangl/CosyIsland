@@ -15,7 +15,8 @@ const WORKBENCH_AT := Vector2i(5, 4)
 ## Bumped when a change to generation would alter existing islands. Saves remember the
 ## version their island was made with, so old islands keep their shape.
 ##   1: first release. 2: rivers cross the beach instead of running along it.
-const VERSION := 2
+##   3: bushes along the edges of the woods.
+const VERSION := 3
 const ROCK_COUNT := 6
 const FRUIT_TREE_COUNT := 8
 
@@ -79,6 +80,8 @@ func _run(seed_value: int, w: int, h: int) -> IslandData:
 	_place_rocks()
 	_place_flowers()
 	_place_plaza()
+	if version >= 3:
+		_place_bushes()
 	return d
 
 
@@ -808,6 +811,35 @@ func _place_flowers() -> void:
 				planted += 1
 		if planted > 0:
 			clusters -= 1
+
+
+## Bushes along the edges of the woods, alone or in twos and threes, never boxing
+## anything in: each needs open ground all round apart from its own cluster.
+func _place_bushes() -> void:
+	var near_trees := {}
+	for obj in d.objects:
+		if obj["kind"] in ["tree", "fruit_tree"]:
+			for dz in range(-3, 4):
+				for dx in range(-3, 4):
+					near_trees[Vector2i(obj["x"] + dx, obj["z"] + dz)] = true
+	var spots: Array[Vector2i] = []
+	for z in d.height:
+		for x in d.width:
+			if near_trees.has(Vector2i(x, z)) and _open_spot(x, z, T.GRASS):
+				spots.append(Vector2i(x, z))
+	_shuffle(spots)
+	var wanted := rng.randi_range(14, 22)
+	for p in spots:
+		if wanted <= 0:
+			break
+		if not _open_spot(p.x, p.y, T.GRASS):
+			continue
+		_add_object({"kind": "bush", "x": p.x, "z": p.y, "variant": rng.randi() % 4})
+		wanted -= 1
+		# Sometimes a second one alongside.
+		var side: Vector2i = p + (Vector2i(1, 0) if rng.randf() < 0.5 else Vector2i(0, 1))
+		if rng.randf() < 0.4 and d.tile(side.x, side.y) == T.GRASS and not d.is_ramp(side.x, side.y) and _free(side.x, side.y):
+			_add_object({"kind": "bush", "x": side.x, "z": side.y, "variant": rng.randi() % 4})
 
 
 ## The plaza starts with the island office and a DIY workbench everyone can use.

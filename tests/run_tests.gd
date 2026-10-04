@@ -79,6 +79,7 @@ func _test_generation() -> void:
 		check(counts.get("fruit_tree", 0) == IslandGenerator.FRUIT_TREE_COUNT, "seed %d has fruit trees" % s)
 		check(counts.get("tree", 0) >= 60, "seed %d has a decent forest (%d trees)" % [s, counts.get("tree", 0)])
 		check(counts.get("flower", 0) >= 10, "seed %d has flowers" % s)
+		check(counts.get("bush", 0) >= 10, "seed %d has bushes by the woods" % s)
 		check(d.tile(d.spawn.x, d.spawn.y) == IslandData.Tile.GRASS, "seed %d spawn is on grass" % s)
 		check(counts.get("bridge", 0) >= 1, "seed %d has a river with a bridge" % s)
 		check(d.tiles.count(IslandData.Tile.WATER) >= 50, "seed %d has rivers and ponds" % s)
@@ -93,6 +94,8 @@ func _test_generation() -> void:
 			if old.tiles[i] == IslandData.Tile.WATER and old.tiers[i] == 0:
 				beach_water += 1
 		check(beach_water == 0, "seed %d (version 1) has no river water on the beach" % s)
+	var before_bushes := IslandGenerator.generate(10, IslandGenerator.WIDTH, IslandGenerator.HEIGHT, 2)
+	check(not before_bushes.objects.any(func(o): return o["kind"] == "bush"), "islands from before bushes don't sprout any")
 
 
 ## Fraction of walkable land the player can reach from the spawn point on foot.

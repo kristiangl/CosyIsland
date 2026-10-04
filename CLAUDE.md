@@ -54,6 +54,9 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   rebuilt from `Journal.donated` on every visit (`main.gd` `fill_museum`), never saved.
 - `Story` (autoload) holds conversation progress and every character's lines;
   `DialogueBox` shows them. Await its `finished`/`picked` signals, not coroutines.
+- `assets/kaykit/`: KayKit models (CC0) converted by `tools/kaykit_import.gd` from the list
+  in `tools/kaykit.json` (needs the unpacked KayKit folder: `-- --src=DIR`). They load as
+  `Models.get_mesh("kaykit:<name>")`; island trees, fruit trees, bushes and rocks use them.
 - Island generation is versioned (`IslandGenerator.VERSION`, saved as "gen"): bump it
   for changes that would reshape existing islands, and keep the old behaviour behind it.
 - Worker-thread tasks must always be collected (`IslandMap.finish()`), or Godot

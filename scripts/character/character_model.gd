@@ -479,6 +479,14 @@ func _puff(offset: Vector3) -> void:
 	Effects.burst("step", global_transform * offset)
 
 func _animate_blink(delta: float) -> void:
+	if _tool:
+		_tool.visible = mode != "sleeping"
+	if mode == "sleeping":
+		# Eyes shut, fast asleep.
+		_face.set_shader_parameter("blink", 1.0)
+		_blink = 0.0
+		_blink_timer = 1.0
+		return
 	_blink_timer -= delta
 	if _blink_timer <= 0.0:
 		_blink = 1.0

@@ -23,7 +23,7 @@ extends Node3D
 ##   --demo=flowers     stand by some flowers, one picked, with a flower in your hair
 ##   --house            with --demo: the tent has already become a house
 ##   --series=ID        with --demo or --demo=home: furniture from one series (--variant=ID)
-##   --ui=pockets|pause|map|creator|crafting|customise|journal|exchange|critters|friends|neighbour|placing|intro|ask|lucy|sleep|shop|sell  (--tab=N picks a creator tab, --try=key:id,... dresses up, --closet=TEXT opens the wardrobe with clothes whose ids contain TEXT)  open a menu or mode (for screenshots)
+##   --ui=pockets|pause|map|creator|crafting|customise|journal|exchange|critters|friends|neighbour|placing|intro|ask|lucy|sleep|asleep|shop|sell  (--tab=N picks a creator tab, --try=key:id,... dresses up, --closet=TEXT opens the wardrobe with clothes whose ids contain TEXT)  open a menu or mode (for screenshots)
 
 const AUTOSAVE_SECONDS := 60.0
 
@@ -151,11 +151,17 @@ func _ready() -> void:
 			for id in ["wood", "stone", "apple", "clay", "wooden_chair"]:
 				Inventory.add_item(id, 4)
 			hud.shop.open("buy" if Game.args["ui"] == "shop" else "sell")
-		"sleep":
-			# The bed question, in the tent (use with --demo=home).
-			for obj in world_now().objects():
-				if obj.get("item", "") == "sleeping_bag":
-					player._bed(obj)
+		"sleep", "asleep":
+			# The bed question, or tucked up in bed, in the tent (use with --demo=home).
+			var beds := world_now().objects().filter(func(o): return o.get("item", "") == "sleeping_bag" or ItemDB.placeable(o.get("item", "")).get("bed", false))
+			beds.sort_custom(func(a, b): return a["item"] != "sleeping_bag" and b["item"] == "sleeping_bag")
+			for obj in beds:
+					if Game.args["ui"] == "asleep":
+						player._lie_in(obj)
+						camera_rig.snap()
+					else:
+						player._bed(obj)
+					break
 		"intro", "ask", "lucy":
 			# Poppy's welcome (or Lucy's first chat) part-way through, for screenshots.
 			Game.player_name = "Sam"
@@ -398,6 +404,7 @@ func _sleep(hour: float) -> void:
 	var hours := GameClock.sleep_until(hour)
 	Journal.add("slept")
 	await get_tree().create_timer(0.6).timeout
+	player.get_up()
 	await hud.fade_in()
 	Game.mode = Game.Mode.PLAY
 	player.model.play("cheer")

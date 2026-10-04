@@ -26,7 +26,7 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   `--demo=decor|sit|home|door|shop|museum|neighbours|flowers|fishing|bugs` (`--house` builds the house first, `--series=id` furnishes
   the home from one series; `--built` turns the museum tent into the museum, `--visit`
   goes inside the museum or a neighbour's home),
-  `--ui=pockets|pause|map|creator|crafting|customise|placing|intro|ask|lucy|sleep|shop|sell`,
+  `--ui=pockets|pause|map|creator|crafting|customise|placing|intro|ask|lucy|sleep|asleep|shop|sell`,
   `--tab=N` and `--try=key:id` for the creator, `--room=wallpaper,flooring`, `--gen=N`,
   `--at=X,Z`, `--hour`).
 

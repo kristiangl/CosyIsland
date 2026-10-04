@@ -316,6 +316,7 @@ func _bed(obj: Dictionary) -> void:
 	var pick: int = await Game.dialogue.picked
 	Game.mode = Game.Mode.PLAY
 	if pick < SLEEPS.size():
+		_lie_in(obj)
 		Events.sleep_requested.emit(SLEEPS[pick][1])
 	elif pick == SLEEPS.size():
 		_sit_on(obj)
@@ -338,6 +339,30 @@ func _sit_on(obj: Dictionary) -> void:
 	tw.tween_property(model, "position:y", spot["height"] - CharacterParts.HIP_Y + 0.05, 0.22)
 	model.rotation.y = atan2(facing.x, facing.z)
 	model.set_sitting(true)
+
+
+## Climbs into bed: lying on the back, head on the pillow at the headboard end.
+func _lie_in(obj: Dictionary) -> void:
+	var node := world.node_of(obj["uid"])
+	if node == null:
+		return
+	_stand_spot = position
+	_busy = 0.3
+	var height: float = ItemDB.placeable(obj["item"]).get("seat", 0.3)
+	position = node.global_transform * Vector3(0, 0, 0.15)
+	facing = node.global_basis * Vector3.BACK
+	model.rotation.y = atan2(facing.x, facing.z)
+	model.position.y = maxf(height - 0.12, 0.0)
+	model.mode = "sleeping"
+
+
+## Gets out of bed and stands beside it, back where we got in.
+func get_up() -> void:
+	if model.mode != "sleeping":
+		return
+	model.mode = ""
+	model.position.y = 0.0
+	position = _stand_spot
 
 
 func _stand_up() -> void:

@@ -181,6 +181,69 @@
 				"plot": true
 			}
 		},
+		"shop_kit": {
+			"name": "Shop Kit",
+			"category": "kit",
+			"stack": 1,
+			"price": 0,
+			"color": "#f2cc6a",
+			"desc": "Lucy's shop, ready to build. Stake it out and it goes up overnight.",
+			"placeable": {
+				"footprint": [
+					4,
+					3
+				],
+				"model": "site:4:3:f2cc6a",
+				"ghost": "lucy_shop",
+				"structure": true,
+				"rotatable": false,
+				"door": true,
+				"plot": true,
+				"builds": "lucy_shop"
+			}
+		},
+		"tailor_kit": {
+			"name": "Tailor's Shop Kit",
+			"category": "kit",
+			"stack": 1,
+			"price": 0,
+			"color": "#bba4da",
+			"desc": "Daisy and Morris's clothes shop, ready to build. Stake it out and it goes up overnight.",
+			"placeable": {
+				"footprint": [
+					3,
+					3
+				],
+				"model": "site:3:3:bba4da",
+				"ghost": "tailor_shop",
+				"structure": true,
+				"rotatable": false,
+				"door": true,
+				"plot": true,
+				"builds": "tailor_shop"
+			}
+		},
+		"museum_kit": {
+			"name": "Museum Tent Kit",
+			"category": "kit",
+			"stack": 1,
+			"price": 0,
+			"color": "#8fa86f",
+			"desc": "Bramble's museum tent. Stake it out and he'll put it up overnight.",
+			"placeable": {
+				"footprint": [
+					4,
+					3
+				],
+				"model": "site:4:3:8fa86f",
+				"ghost": "museum_tent",
+				"structure": true,
+				"rotatable": false,
+				"door": true,
+				"plot": true,
+				"builds": "museum_tent"
+			}
+		},
 		"neighbour_house": {
 			"name": "Neighbour's House",
 			"category": "building",

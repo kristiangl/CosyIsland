@@ -23,10 +23,10 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   (`--night`, every particle effect), `calibrate.tscn`
   (`-- --shadows`, checks the cel lighting maths).
 - Game screenshot options are listed at the top of `scripts/main.gd` (`--demo`,
-  `--demo=decor|sit|home|door|shop|tailors|museum|neighbours|flowers|fishing|bugs` (`--house` builds the house first, `--series=id` furnishes
+  `--demo=decor|sit|home|door|shop|site|tailors|museum|neighbours|flowers|fishing|bugs` (`--house` builds the house first, `--series=id` furnishes
   the home from one series; `--built` turns the museum tent into the museum, `--visit`
   goes inside the museum or a neighbour's home),
-  `--ui=pockets|pause|map|creator|crafting|customise|placing|intro|ask|lucy|sleep|asleep|shop|sell|tailors`,
+  `--ui=pockets|pause|map|creator|crafting|customise|placing|intro|ask|lucy|sleep|asleep|shop|sell|tailors` (`--place=id` picks what to place),
   `--tab=N` and `--try=key:id` for the creator, `--room=wallpaper,flooring`, `--gen=N`,
   `--at=X,Z`, `--hour`).
 
@@ -52,6 +52,8 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   overnight (`Story.move_in`, placed objects with a "resident"); their rooms are visitor
   `World`s (`visitor = true`: nothing can be moved). The museum's hall is a visitor room
   rebuilt from `Journal.donated` on every visit (`main.gd` `fill_museum`), never saved.
+- Building kits (`placeable.builds`, category "kit"): placed like furniture, stamped with
+  `plot_day`, and turned into their building the next night by `Story.build_kit`.
 - `Story` (autoload) holds conversation progress and every character's lines;
   `DialogueBox` shows them. Await its `finished`/`picked` signals, not coroutines.
 - `assets/kaykit/`: KayKit models (CC0) converted by `tools/kaykit_import.gd` from the list

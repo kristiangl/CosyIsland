@@ -427,7 +427,9 @@ func pack_up(obj: Dictionary) -> bool:
 	if visitor:
 		Events.toast.emit("That's not yours to take!")
 		return false
-	if obj.get("fixed", false) or ItemDB.placeable(obj["item"]).get("structure", false):
+	# A staked-out kit can still be moved until it's built that night.
+	var staked: bool = obj.has("plot_day") and ItemDB.get_item(obj["item"]).get("category", "") == "kit"
+	if obj.get("fixed", false) or (ItemDB.placeable(obj["item"]).get("structure", false) and not staked):
 		Events.toast.emit("That's staying right where it is.")
 		return false
 	for tile in footprint(obj):

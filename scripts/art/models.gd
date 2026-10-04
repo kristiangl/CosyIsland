@@ -103,6 +103,8 @@ static func get_mesh(key: String) -> ArrayMesh:
 			Palette.repaint(k.colours, {"blue": _ramp(Color(home.get("roof", "e0857a"))), "white": _ramp(Color(home.get("wall", "fbf0d9")))})
 		"plot":
 			_plot(k)
+		"site":
+			_site(k, int(p[1]), int(p[2]), Color(p[3]))
 		"bridge":
 			_bridge(k, int(p[1]))
 		"drop":
@@ -740,6 +742,44 @@ static func _plot(k: MeshKit) -> void:
 	k.sphere(Vector3(0, 0.82, 1.3), Vector3(0.1, 0.1, 0.02), MeshKit.lin(Color("e0857a")), 3, 8)
 	for i in 4:
 		k.box(Vector3(-0.6, 0.05 + i * 0.07, -0.3 + (i % 2) * 0.05), Vector3(0.9, 0.06, 0.18), MeshKit.lin(PLANK if i % 2 == 0 else PLANK_DARK))
+
+
+## A building kit staked out and waiting to go up overnight: string round its
+## footprint (w x d tiles), KayKit scaffolding at the back, a pile of timber and stone,
+## and a sign in the building's colour by the door.
+static func _site(k: MeshKit, w: int, d: int, colour: Color) -> void:
+	var stake := MeshKit.lin(PLANK_DARK)
+	var string := MeshKit.lin(Color("f6f1e0"))
+	var hx := w * 0.5 - 0.2
+	var hz := d * 0.5 - 0.35
+	var corners := [Vector3(-hx, 0, -hz), Vector3(hx, 0, -hz), Vector3(hx, 0, hz), Vector3(-hx, 0, hz)]
+	for i in 4:
+		var a: Vector3 = corners[i]
+		var b: Vector3 = corners[(i + 1) % 4]
+		k.cylinder(a, a + Vector3(0, 0.45, 0), 0.04, 0.035, stake, 5, true)
+		k.cylinder(a + Vector3(0, 0.38, 0), b + Vector3(0, 0.38, 0), 0.008, 0.008, string, 3, false)
+	_paste(k, "hex_scaffolding", Transform3D(Basis().scaled(Vector3.ONE * 0.62), Vector3(-hx * 0.35, 0, -hz * 0.3)))
+	_paste(k, "hex_stage_a", Transform3D(Basis(Vector3.UP, 0.4).scaled(Vector3.ONE * 0.42), Vector3(hx * 0.55, 0, hz * 0.35)))
+	var sign_at := Vector3(-hx * 0.6, 0, hz + 0.1)
+	k.cylinder(sign_at, sign_at + Vector3(0, 0.8, 0), 0.035, 0.035, stake, 5, true)
+	k.box(sign_at + Vector3(0, 0.8, 0.02), Vector3(0.6, 0.36, 0.05), MeshKit.lin(Color("fbf0d9")))
+	k.sphere(sign_at + Vector3(0, 0.82, 0.05), Vector3(0.1, 0.1, 0.02), MeshKit.lin(colour), 3, 8)
+
+
+## Copies a converted KayKit mesh into this kit, moved by `xform`.
+static func _paste(k: MeshKit, name: String, xform: Transform3D) -> void:
+	var arrays := (load("res://assets/kaykit/%s.res" % name) as ArrayMesh).surface_get_arrays(0)
+	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var normals: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+	var colours: PackedColorArray = arrays[Mesh.ARRAY_COLOR]
+	var base := k.verts.size()
+	for i in verts.size():
+		k.verts.append(xform * verts[i])
+		k.normals.append((xform.basis * normals[i]).normalized())
+		k.colours.append(colours[i])
+		k.uvs.append(Vector2.ZERO)
+	for idx: int in arrays[Mesh.ARRAY_INDEX]:
+		k.indices.append(base + idx)
 
 
 ## The museum: a stone hall with columns, steps, a pediment with a leaf emblem and

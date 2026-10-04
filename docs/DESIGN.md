@@ -172,6 +172,10 @@ Milestone 3b:
   favours fill five hearts; closer friends chat warmly and give presents more often
 - [x] Flowers: picked blooms regrow overnight, worn in hair or put in vases; plants dug
   up with a shovel and replanted (breeding later)
+- [x] Building kits: Lucy's shop, the tailors, the museum tent and neighbour plots are
+  placed by the player from kits (`placeable.builds`), previewed as the building, asked
+  about first, shown as a KayKit building site and built overnight; a staked kit can be
+  picked up and moved until then, and a lost kit is replaced by whoever gave it
 - [x] Asking first: materials for building projects, Poppy's specimens, donations to
   the museum (all at once or one at a time) and favours ask "Give them X?" first
 
@@ -180,9 +184,6 @@ Next milestones (suggested order):
    everything unlocked, sold by Lucy. Time travel moves out of the phone into an
    options menu.
 4. Daily visitors; more neighbour life (moving out). A try-on mirror at the tailors.
-4b. Building kits: every building (Lucy's shop, the museum, the clothes shop,
-   neighbours' houses, anything later) is placed by the player from a kit, choosing
-   where it goes, with KayKit scaffolding while it's built overnight.
 5. Island tours, an airport-style dock: visit random islands (the generator with other
    seeds) for other fruit and flowers, and to meet neighbours who might move in
    ("villager hunting").

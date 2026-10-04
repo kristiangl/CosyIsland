@@ -18,6 +18,7 @@ var _rug := false
 var _on_table := false
 var _rect := Rect2i()
 var _valid := false
+var _asking := false
 var _ghost: MeshInstance3D
 var _footprint: MeshInstance3D
 var _material: ShaderMaterial
@@ -61,7 +62,11 @@ func begin(slot: int) -> void:
 	_small = def.get("small", false)
 	_rug = def.get("rug", false)
 	_rot = 0
-	_ghost.mesh = Models.get_mesh(def.get("model", "drop:" + item))
+	# Building kits show the building itself, to see how it'll sit.
+	var ghost: String = def.get("model", "drop:" + item)
+	if def.has("ghost"):
+		ghost = ItemDB.placeable(def["ghost"]).get("model", ghost)
+	_ghost.mesh = Models.get_mesh(ghost)
 	visible = true
 	Game.mode = Game.Mode.PLACING
 	Events.toast.emit(Prompts.fill("Where should it go? {use} to place, {rotate} to turn, {cancel} to put it away."))
@@ -100,18 +105,24 @@ func _process(_delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if Game.mode != Game.Mode.PLACING:
+	if Game.mode != Game.Mode.PLACING or _asking:
 		return
 	if event.is_action_pressed("use"):
 		get_viewport().set_input_as_handled()
 		if _valid:
+			var builds: String = ItemDB.placeable(_item).get("builds", "")
+			if builds != "" and not await _confirm(builds):
+				return
 			if _on_table:
 				world.place_on_surface(_item, _rect.position, _rot)
 			else:
 				world.place_item(_item, _rect, _rot)
 			Inventory.remove_from_slot(_slot)
 			Journal.add("placed")
-			Events.toast.emit("Perfect spot!" if _item != "tent_kit" else "Your tent is up! Welcome home.")
+			if builds != "":
+				Events.toast.emit("Staked out! It'll be built tonight.")
+			else:
+				Events.toast.emit("Perfect spot!" if _item != "tent_kit" else "Your tent is up! Welcome home.")
 			_end()
 		else:
 			Events.toast.emit("It won't fit there. Try a flat, clear spot.")
@@ -120,6 +131,17 @@ func _unhandled_input(event: InputEvent) -> void:
 		_end()
 	elif event.is_action_pressed("rotate") and _rotatable:
 		_rot = (_rot + 1) % 4
+
+
+## Buildings are there to stay, so check first. Returns true to build here.
+func _confirm(builds: String) -> bool:
+	_asking = true
+	Game.mode = Game.Mode.MENU
+	Game.dialogue.ask("", "Build %s here?" % ItemDB.display_name(builds), ["Build it here", "Somewhere else"])
+	var pick: int = await Game.dialogue.picked
+	Game.mode = Game.Mode.PLACING
+	_asking = false
+	return pick == 0
 
 
 func _end() -> void:

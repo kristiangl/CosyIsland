@@ -843,7 +843,45 @@ func _test_lucy_shop() -> void:
 	check(plants.size() == Shop.PLANTS_PER_DAY and plants.all(func(id): return ItemDB.get_item(id)["species"] != d.native_flower), "and flower plants from other islands")
 	check(Story._list_needs({"wood": 3, "stone": 2}) == "3 wood and 2 stone", "Lucy lists what she needs")
 	w.free()
+	_test_building_kits()
 	Story.flags = saved_flags
+
+
+func _test_building_kits() -> void:
+	for kit: String in ["shop_kit", "tailor_kit", "museum_kit"]:
+		var def := ItemDB.placeable(kit)
+		var builds := ItemDB.placeable(def["builds"])
+		check(def["footprint"] == builds["footprint"] and def.get("door", false) == builds.get("door", false),
+			"the %s stakes out the same ground as the building" % kit)
+		check(Models.get_mesh(def["model"]).get_surface_count() > 0, "the %s has a building site" % kit)
+	Story.flags.clear()
+	Inventory.reset()
+	var d := IslandGenerator.generate(7)
+	var w := World.new()
+	add_child(w)
+	w.setup(d)
+	var spot := Rect2i()
+	for r in range(3, 20):
+		var rect := Rect2i(d.spawn + Vector2i(-6, r), Vector2i(4, 3))
+		if spot.size == Vector2i.ZERO and w.can_place(rect, Vector3(-10, 0, -10)) and w.door_clear("shop_kit", rect, 0):
+			spot = rect
+	Story.flags["shop_kit"] = true
+	check(Story.kit_missing(w, "shop_kit"), "a kit that's nowhere is missing")
+	Inventory.add_item("shop_kit")
+	check(not Story.kit_missing(w, "shop_kit"), "but not while it's in your pockets")
+	check(not Story.finish_shop(w), "no shop before the kit's staked out")
+	Inventory.reset()
+	var site := w.place_item("shop_kit", spot, 0)
+	check(site.get("plot_day", -1) == w.day_key and not Story.kit_missing(w, "shop_kit"), "the kit is staked out")
+	check(w.pack_up(site) and Inventory.count_of("shop_kit") == 1, "and can be moved until it's built")
+	Inventory.reset()
+	site = w.place_item("shop_kit", spot, 0)
+	check(not Story.finish_shop(w), "it goes up overnight")
+	w.day_key += 1
+	check(Story.finish_shop(w) and site["item"] == "lucy_shop" and site.get("fixed", false) and not site.has("plot_day"),
+		"Lucy's shop stands where you staked it out")
+	check(not w.pack_up(site), "and stays there")
+	w.free()
 
 
 func _test_critters() -> void:

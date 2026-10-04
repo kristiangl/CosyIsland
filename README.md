@@ -28,9 +28,9 @@ A cosy island life game about crafting and decorating, made with Godot 4.
 | --- | --- | --- |
 | ![](docs/screenshots/fishing.png) | ![](docs/screenshots/lucy_shop.png) | ![](docs/screenshots/journal.png) |
 
-| Daisy & Morris Tailoring |
-| --- |
-| ![](docs/screenshots/tailors.png) |
+| Daisy & Morris Tailoring | A shop kit, staked out |
+| --- | --- |
+| ![](docs/screenshots/tailors.png) | ![](docs/screenshots/building_site.png) |
 
 | Neighbours | Visiting a neighbour | The museum |
 | --- | --- | --- |
@@ -91,10 +91,13 @@ On-screen hints follow whatever you last touched, keyboard or controller.
   have things to say every day.
 - A paved plaza with the office marquee and the DIY workbench.
 - Lucy's shop: sell her anything with a price, and buy from a new stock each day,
-  including clothes. Bring her wood, stone and clay and she builds a real shop with
-  twice the stock and flower plants from other islands.
+  including clothes. Bring her wood, stone and clay and she hands you the kit for a real
+  shop, with twice the stock and flower plants from other islands.
+- Building kits: Lucy's shop, the tailors, the museum tent and neighbours' plots come
+  as kits. Choose the spot (a see-through preview shows the building), stake it out
+  and it goes up overnight; until then you can pick the site up and move it.
 - Daisy & Morris Tailoring: a day after Lucy's shop opens, her friends the tailors (two
-  British Shorthair cats) arrive with a clothes shop; twelve new things on the rails a day.
+  British Shorthair cats) send their clothes shop ahead in a kit; twelve new things on the rails a day.
 - 107 designed clothes (30 pieces in colourways, six themes: Cosy Knits, Rainy Day,
   Seaside, Garden and Work, Sleepy Time, Folk Festival). Wear them from your pockets and they stay in your
   wardrobe. The plan for scaling to thousands of items is in
@@ -111,8 +114,8 @@ On-screen hints follow whatever you last touched, keyboard or controller.
   a vase, or dig the whole plant up with a shovel and replant it.
 - Fishing and bug catching: 21 fish (sea, rivers, ponds) and 17 bugs that come and go
   by time of day. Cast near a fish's shadow and press when it bites; creep up on bugs
-  with a net (running scares them off). Give Poppy five different ones and her friend
-  Bramble, a naturalist, arrives with a museum tent; the journal keeps a critter log.
+  with a net (running scares them off). Give Poppy five different ones and she hands you
+  the kit for her friend Bramble's museum tent; the journal keeps a critter log.
   After 15 donations, bring him materials and the tent becomes a real museum, with a
   tank or case for every creature that fills as you donate.
 - Neighbours: buy a plot from Poppy, stake it out, and one of sixteen animal neighbours
@@ -150,7 +153,7 @@ See [docs/DESIGN.md](docs/DESIGN.md) for the full plan.
 Trees, bushes and rocks are from the KayKit Forest Nature Pack; the Comfy Home, Cosy
 Kitchen and Festive sets and many decorations from KayKit's Furniture, Restaurant,
 Holiday, Halloween and Mixed Bag packs; neighbours' cottages, Lucy's market stall, the
-well and the windmill from the Medieval Hexagon Pack; and the characters'
+well, the windmill and building sites from the Medieval Hexagon Pack; and the characters'
 actions (chopping, digging, fishing, sitting, lying down, cheering...) from KayKit
 Character Animations, both by Kay Lousberg ([www.kaylousberg.com](https://www.kaylousberg.com),
 CC0), converted for the game by `tools/kaykit_import.gd`. Everything else is built in code.

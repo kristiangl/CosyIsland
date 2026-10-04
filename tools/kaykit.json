@@ -603,6 +603,20 @@
 				2.85,
 				3.8
 			]
+		},
+		"hex_scaffolding": {
+			"src": "KayKit_Medieval_Hexagon_Pack_1.0_FREE/Assets/gltf/buildings/neutral/building_scaffolding.gltf",
+			"fit": [
+				2.85,
+				3.0
+			]
+		},
+		"hex_stage_a": {
+			"src": "KayKit_Medieval_Hexagon_Pack_1.0_FREE/Assets/gltf/buildings/neutral/building_stage_A.gltf",
+			"fit": [
+				2.85,
+				3.0
+			]
 		}
 	},
 	"animations": {

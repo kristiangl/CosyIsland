@@ -18,12 +18,13 @@ extends Node3D
 ##   --demo=door        pitch the tent and stand outside its door
 ##   --demo=shop        Lucy's shop has been built; stand in front of it (--demo=museum: Bramble's,
 ##                      --built for the finished museum, --visit to go in)
+##   --demo=site        Lucy's shop kit staked out, waiting to be built
 ##   --demo=neighbours  two neighbours have just moved in (--visit: go inside one's home, --who=id,id: who)
 ##   --demo=fishing     fishing off the beach with fish about (--demo=bugs: bugs nearby)
 ##   --demo=flowers     stand by some flowers, one picked, with a flower in your hair
 ##   --house            with --demo: the tent has already become a house
 ##   --series=ID        with --demo or --demo=home: furniture from one series (--variant=ID)
-##   --ui=pockets|pause|map|creator|crafting|customise|journal|exchange|critters|friends|neighbour|placing|intro|ask|lucy|sleep|asleep|shop|sell  (--tab=N picks a creator tab, --try=key:id,... dresses up, --closet=TEXT opens the wardrobe with clothes whose ids contain TEXT)  open a menu or mode (for screenshots)
+##   --ui=pockets|pause|map|creator|crafting|customise|journal|exchange|critters|friends|neighbour|placing (--place=ID)|intro|ask|lucy|sleep|asleep|shop|sell  (--tab=N picks a creator tab, --try=key:id,... dresses up, --closet=TEXT opens the wardrobe with clothes whose ids contain TEXT)  open a menu or mode (for screenshots)
 
 const AUTOSAVE_SECONDS := 60.0
 
@@ -238,8 +239,9 @@ func _ready() -> void:
 			hud.crafting.open("customise")
 			hud.crafting.cycle(hud.crafting._rows[0], 1)
 		"placing":
-			Inventory.add_item("wooden_table")
-			placement.begin(Inventory.slots.find_custom(func(s): return s.get("id", "") == "wooden_table"))
+			var item: String = Game.args.get("place", "wooden_table")
+			Inventory.add_item(item)
+			placement.begin(Inventory.slots.find_custom(func(s): return s.get("id", "") == item))
 	if Game.args.has("screenshot"):
 		_take_screenshot(Game.args["screenshot"], int(Game.args.get("frames", "45")))
 	else:
@@ -346,10 +348,10 @@ func _check_house() -> void:
 		Events.toast.emit("Lucy's shop is open! Go and say hello.")
 		_place_lucy()
 	if Story.finish_tailors(world):
-		Events.toast.emit("Daisy and Morris's clothes shop has opened by the plaza!")
+		Events.toast.emit("Daisy and Morris's clothes shop is open!")
 		_place_tailors()
 	if Story.finish_museum(world):
-		Events.toast.emit("Someone's put up a tent by the plaza. A museum?")
+		Events.toast.emit("Bramble has put up his museum tent! Go and say hello.")
 		_place_bramble()
 	if Story.finish_museum_building(world):
 		Events.toast.emit("The museum is finished! Go and look inside.")
@@ -615,6 +617,18 @@ func _run_demo() -> void:
 		var shop := world.shop()
 		if not shop.is_empty():
 			player.position = world.outside_door(shop)["position"] + Vector3(1.4, 0, 2.2)
+			player.facing = Vector3(-0.3, 0, -1).normalized()
+			camera_rig.snap()
+		return
+	if Game.args["demo"] == "site":
+		# Lucy's shop kit staked out by the plaza, to be built tonight.
+		var site := world.add_building("lucy_shop")
+		if not site.is_empty():
+			site["item"] = "shop_kit"
+			site["plot_day"] = world.day_key
+			site.erase("fixed")
+			world.refresh_node(site)
+			player.position = world.outside_door(site)["position"] + Vector3(1.4, 0, 2.2)
 			player.facing = Vector3(-0.3, 0, -1).normalized()
 			camera_rig.snap()
 		return

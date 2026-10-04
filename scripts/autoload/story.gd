@@ -131,6 +131,8 @@ func _poppy(poppy: Npc) -> void:
 		await say("poppy", ["Your house is coming along nicely! Lucy's been hammering since breakfast.",
 			"It'll be ready tomorrow. Sleep well tonight, it's your last night under canvas!"])
 		return
+	if await _spare_kit("poppy", "museum_kit", flags.get("museum_kit", false) and not flags.get("museum_done", false)):
+		return
 	if flags.get("house_done", false) and not flags.get("house_thanks", false):
 		flags["house_thanks"] = true
 		poppy.hop()
@@ -249,11 +251,18 @@ func _lucy(lucy: Npc) -> void:
 		return
 	if tailors_coming():
 		flags["tailors_day"] = GameClock.day_key()
+		flags["tailors_kit"] = true
 		lucy.hop()
 		await say("lucy", ["{player}! Big news! Huge news! My friends Daisy and Morris want to come too!",
 			"They're tailors. Cats. Very fluffy, very fancy. They make the best clothes in the whole sea.",
-			"They're bringing a whole shop on the ferry tonight. Clothes! Hats! Little shoes!"])
+			"They posted their shop ahead in a kit! Clothes! Hats! Little shoes! Well, the shop for them."])
+		_give("tailor_kit")
+		await say("lucy", ["Stake it out wherever you think they'd like, and they'll put it up that night!"])
 		lucy.cheer()
+		return
+	if await _spare_kit("lucy", "shop_kit", flags.get("shop_kit", false) and not flags.get("shop_done", false)):
+		return
+	if await _spare_kit("lucy", "tailor_kit", flags.get("tailors_kit", false) and not flags.get("tailors_done", false)):
 		return
 	if flags.get("shop_done", false) and not flags.get("shop_thanks", false):
 		flags["shop_thanks"] = true
@@ -300,7 +309,7 @@ func _lucy(lucy: Npc) -> void:
 ## Lucy's shop project: open once you've a home and have done a bit of trading (or a
 ## day has passed), until the materials are in.
 func shop_project_open() -> bool:
-	if flags.get("shop_done", false) or flags.has("shop_day") or not _has_home():
+	if flags.get("shop_done", false) or flags.has("shop_day") or flags.has("shop_kit") or not _has_home():
 		return false
 	return flags.has("shop_needs") or int(Journal.stats.get("sold", 0)) >= 5 \
 		or GameClock.day_key() > int(flags.get("lucy_met_day", GameClock.day_key()))
@@ -328,16 +337,50 @@ func _shop_project() -> void:
 	var gave := _take_materials(needs)
 	if needs.is_empty():
 		flags.erase("shop_needs")
-		flags["shop_day"] = GameClock.day_key()
+		flags["shop_kit"] = true
 		lucy_cheer()
-		await say("lucy", ["That's everything! I'll build it tonight. Poppy's lending me her hammer!",
-			"Come and see it tomorrow. It's going to be the best shop. The only shop, but the best!"])
+		await say("lucy", ["That's everything! I've packed it all into a kit. It's the whole shop, folded up!"])
+		_give("shop_kit")
+		await say("lucy", ["Stake it out wherever you like and I'll build it that very night. Poppy's lending me her hammer!",
+			"Near the plaza would be nice. Or the beach! Or... you choose!"])
 		return
 	await say("lucy", ["Thank you! That's %s. Still need %s." % [_list_needs(gave), _list_needs(needs)]])
 
 
 func lucy_cheer() -> void:
 	_npc_cheer("lucy")
+
+
+## Puts up the building a staked-out kit is for, once a night has passed since it was
+## staked. Returns the building, or {} if no kit is ready.
+static func build_kit(island: World, kit: String) -> Dictionary:
+	for obj in island.objects():
+		if obj["kind"] == "placed" and obj["item"] == kit and int(obj.get("plot_day", island.day_key)) < island.day_key:
+			obj["item"] = ItemDB.placeable(kit)["builds"]
+			obj["fixed"] = true
+			obj.erase("plot_day")
+			island.refresh_node(obj)
+			return obj
+	return {}
+
+
+## Whether a kit someone gave you has gone missing: not in your pockets, not staked out
+## and not lying on the ground (sold, perhaps). They always have a spare.
+static func kit_missing(island: World, kit: String) -> bool:
+	if island == null or Inventory.count_of(kit) > 0:
+		return false
+	for obj in island.objects():
+		if obj["kind"] in ["placed", "drop"] and obj["item"] == kit:
+			return false
+	return true
+
+
+func _spare_kit(speaker: String, kit: String, waiting: bool) -> bool:
+	if not waiting or not kit_missing(Game.island, kit):
+		return false
+	await say(speaker, ["Lost the %s? Don't worry, I've got a spare. Here!" % ItemDB.display_name(kit).to_lower()])
+	_give(kit)
+	return true
 
 
 static func _list_needs(needs: Dictionary) -> String:
@@ -351,11 +394,13 @@ static func _list_needs(needs: Dictionary) -> String:
 
 ## Builds Lucy's shop once the night has passed. Returns true if it happened just now.
 func finish_shop(island: World) -> bool:
-	if not flags.has("shop_day") or flags.get("shop_done", false):
+	if flags.get("shop_done", false):
 		return false
-	if GameClock.day_key() <= int(flags["shop_day"]):
-		return false
-	if island.add_shop().is_empty():
+	if flags.get("shop_kit", false):
+		if build_kit(island, "shop_kit").is_empty():
+			return false
+	elif not flags.has("shop_day") or GameClock.day_key() <= int(flags["shop_day"]) or island.add_shop().is_empty():
+		# (Saves from before kits, where Lucy picked the spot herself.)
 		return false
 	flags["shop_done"] = true
 	flags["shop_open_day"] = GameClock.day_key()
@@ -374,9 +419,10 @@ func tailors_coming() -> bool:
 func finish_tailors(island: World) -> bool:
 	if not flags.has("tailors_day") or flags.get("tailors_done", false):
 		return false
-	if GameClock.day_key() <= int(flags["tailors_day"]):
-		return false
-	if island.add_building("tailor_shop").is_empty():
+	if flags.get("tailors_kit", false):
+		if build_kit(island, "tailor_kit").is_empty():
+			return false
+	elif GameClock.day_key() <= int(flags["tailors_day"]) or island.add_building("tailor_shop").is_empty():
 		return false
 	flags["tailors_done"] = true
 	return true
@@ -462,9 +508,12 @@ func _museum_project() -> void:
 		await say("poppy", ["Ooh, %s! That's %d of %d." % [_and_list(given), gifts.size(), MUSEUM_SPECIMENS]])
 		return
 	flags["museum_day"] = GameClock.day_key()
+	flags["museum_kit"] = true
 	_npc_cheer("poppy")
 	await say("poppy", ["That's all %d! I'll pack them up carefully and post them to Bramble tonight." % MUSEUM_SPECIMENS,
-		"I wouldn't be surprised if he turned up tomorrow with a tent and a magnifying glass."])
+		"And between you and me, he sent me this ages ago, just in case. His museum tent, in a kit!"])
+	_give("museum_kit")
+	await say("poppy", ["Find it a nice spot. Once it's staked out, I'm sure he'll come and put it up that night."])
 
 
 static func _and_list(names: Array) -> String:
@@ -478,9 +527,10 @@ static func _and_list(names: Array) -> String:
 func finish_museum(island: World) -> bool:
 	if not flags.has("museum_day") or flags.get("museum_done", false):
 		return false
-	if GameClock.day_key() <= int(flags["museum_day"]):
-		return false
-	if island.add_building("museum_tent").is_empty():
+	if flags.get("museum_kit", false):
+		if build_kit(island, "museum_kit").is_empty():
+			return false
+	elif GameClock.day_key() <= int(flags["museum_day"]) or island.add_building("museum_tent").is_empty():
 		return false
 	for id: String in flags.get("museum_gifts", []):
 		Journal.donate(id)

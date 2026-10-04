@@ -96,7 +96,11 @@ static func get_mesh(key: String) -> ArrayMesh:
 		"drop":
 			_drop(k, p[1])
 		"tool":
-			_tool(k, p[1])
+			if ItemDB.tool_type(p[1]) in ["axe", "shovel"]:
+				k = _kit_from("tool_" + ItemDB.tool_type(p[1]))
+				_tint_metal(k, ItemDB.color_of(p[1]))
+			else:
+				_tool(k, p[1])
 		"furniture":
 			FurnitureModels.build(k, p[1])
 			if p.size() > 2:
@@ -1025,6 +1029,16 @@ static func _drop(k: MeshKit, item: String) -> void:
 		_:
 			# Generic parcel, like a wrapped leaf.
 			k.leaf(Vector3(-0.15, 0.05, 0.0), Vector3(1, 0.2, 0), 0.32, 0.26, MeshKit.lin(Color("9bbf5a")))
+
+
+## Gives a KayKit tool's metal (its blue-grey parts, not the wooden handle) the item's
+## colour, keeping the shading.
+static func _tint_metal(k: MeshKit, colour: Color) -> void:
+	for i in k.colours.size():
+		var c := k.colours[i]
+		if c.s < 0.18 or (c.h > 0.4 and c.h < 0.75):
+			var t := Color.from_hsv(colour.h, colour.s * 0.8, clampf(c.v * colour.v / 0.7, 0.0, 1.0))
+			k.colours[i] = Color(t, c.a)
 
 
 static func _tool(k: MeshKit, item: String) -> void:

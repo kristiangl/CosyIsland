@@ -12,6 +12,8 @@ extends SceneTree
 ##   palette  a set from the file's "palettes": colours are moved onto the game's own
 ##            ramps by kind (green, brown, grey...), darkest to lightest
 ##   recolour {"#from": "#to"} for single colours
+##   keep_origin true to keep the model's own origin (a tool's grip) instead of
+##            standing it on the ground
 ##   smooth   true to round off hard edges (normals shared where vertices meet), so
 ##            canopies and bushes shade like soft puffs under the cel lighting
 ## KayKit models colour each face from a small palette texture, so sampling the
@@ -172,6 +174,8 @@ static func import_model(path: String, entry: Dictionary, palette: Dictionary) -
 		var size := hi - lo
 		scale = minf(float(fit[0]) / maxf(size.x, size.z), float(fit[1]) / size.y)
 	var shift := Vector3(-(lo.x + hi.x) * 0.5, -lo.y, -(lo.z + hi.z) * 0.5)
+	if entry.get("keep_origin", false):
+		shift = Vector3.ZERO
 	var height := maxf(hi.y - lo.y, 0.001)
 	for v in verts.size():
 		var up := clampf((verts[v].y - lo.y) / height, 0.0, 1.0)

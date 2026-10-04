@@ -19,6 +19,13 @@
 				"bdb8cc",
 				"dcd8e6"
 			]
+		},
+		"tools": {
+			"brown": [
+				"9a7450",
+				"c19a6e",
+				"dcbb90"
+			]
 		}
 	},
 	"models": {
@@ -273,6 +280,24 @@
 				2.1,
 				2.8
 			]
+		},
+		"tool_axe": {
+			"src": "KayKit_RPGToolsBits_1.0_FREE/Assets/gltf/axe.gltf",
+			"fit": [
+				0.38,
+				0.6
+			],
+			"palette": "tools",
+			"keep_origin": true
+		},
+		"tool_shovel": {
+			"src": "KayKit_RPGToolsBits_1.0_FREE/Assets/gltf/shovel.gltf",
+			"fit": [
+				0.34,
+				0.88
+			],
+			"palette": "tools",
+			"keep_origin": true
 		}
 	},
 	"animations": {

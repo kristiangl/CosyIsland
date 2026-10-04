@@ -582,6 +582,14 @@ func _test_clothes() -> void:
 
 func _test_furniture_series() -> void:
 	check(ItemDB.series.size() >= 6, "there are furniture series (%d)" % ItemDB.series.size())
+	for id: String in ItemDB.items:
+		var model: String = ItemDB.placeable(id).get("model", "")
+		if model.begins_with("kaykit:") or model == "festive_tree":
+			var mesh := Models.get_mesh(model)
+			var tris := 0
+			for s in mesh.get_surface_count():
+				tris += mesh.surface_get_array_index_len(s) / 3
+			check(tris > 0 and tris < 2500, "%s is cheap enough to place (%d triangles)" % [id, tris])
 	var pieces: Array = ItemDB.items.keys().filter(func(id): return ItemDB.get_item(id).has("series"))
 	check(pieces.size() >= 100, "series pieces come in variants (%d items)" % pieces.size())
 	for id: String in pieces:
@@ -591,7 +599,7 @@ func _test_furniture_series() -> void:
 		for s in mesh.get_surface_count():
 			tris += mesh.surface_get_array_index_len(s) / 3
 		check(tris > 0 and tris < 1500, "%s has a model within budget (%d triangles)" % [id, tris])
-		if def["build"]["kind"] in ["rug", "curtains", "sofa", "bed", "armchair"]:
+		if def["build"]["kind"] in ["rug", "curtains", "sofa", "bed", "armchair"] and def["build"].get("kaykit", "") == "":
 			check(mesh.has_meta("fabric"), "%s knows its fabric" % id)
 	check(ItemDB.placeable("meadow_chair_sage").get("seat", 0.0) > 0.0, "series chairs can be sat on")
 	check(ItemDB.placeable("lodge_table_walnut").get("surface", 0.0) > 0.0, "series tables hold things")

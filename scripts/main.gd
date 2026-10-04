@@ -792,7 +792,9 @@ func _series_layout(series_id: String, variant: String) -> Array:
 	for entry: Array in [["rug", Vector2i(2, 2), 0], ["bed", Vector2i(1, 0), 0], ["bookcase", Vector2i(3, 0), 0], ["table", Vector2i(3, 2), 0],
 			["chair", Vector2i(3, 3), 2], ["stool", Vector2i(4, 3), 2], ["floor_lamp", Vector2i(5, 0), 0],
 			["sofa", Vector2i(0, 3), 1], ["bench", Vector2i(0, 3), 1], ["armchair", Vector2i(5, 4), 3],
-			["side_table", Vector2i(5, 2), 0], ["dresser", Vector2i(1, 5), 0], ["crate", Vector2i(5, 0), 0]]:
+			["side_table", Vector2i(5, 2), 0], ["dresser", Vector2i(1, 5), 0], ["crate", Vector2i(5, 0), 0],
+			["fridge", Vector2i(0, 0), 0], ["counter", Vector2i(1, 0), 0], ["stove", Vector2i(2, 0), 0], ["sink", Vector2i(3, 0), 0],
+			["oven", Vector2i(4, 0), 0], ["cupboard", Vector2i(5, 0), 0], ["round_table", Vector2i(2, 3), 0], ["tree", Vector2i(4, 0), 0]]:
 		if by_kind.has(entry[0]):
 			var at: Vector2i = entry[1]
 			# Seats go in front of the table, however deep it is.

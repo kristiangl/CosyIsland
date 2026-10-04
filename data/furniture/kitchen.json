@@ -1,0 +1,22 @@
+{
+	"id": "kitchen",
+	"name": "Cosy Kitchen",
+	"desc": "Retro appliances and tiled counters for a kitchen that's always baking.",
+	"_note": "KayKit pieces (CC0): each is a KayKit model (tools/kaykit.json) repainted by the variant's paint, colour family by colour family (Palette).",
+	"variants": [
+		{"id": "mint", "name": "Mint", "wood": "7fd3b5", "trim": "5fbf9f", "fabric": ["e8a273", "7fd3b5", "plain"], "paint": {"green": ["5fbf9f", "7fd3b5", "a6e4cd"], "orange": ["d98a5a", "e8a273", "f2bd92"], "red": ["e0605a", "ec7d76", "f4a19b"], "wood": ["a8754f", "c4946a", "dcb48a"]}},
+		{"id": "butter", "name": "Butter", "wood": "f2d47e", "trim": "e8c45f", "fabric": ["c8936b", "f2d47e", "plain"], "paint": {"green": ["e8c45f", "f2d47e", "f8e3a5"], "orange": ["b07a55", "c8936b", "dcad85"], "red": ["e0905a", "eca878", "f4c49a"], "wood": ["a8754f", "c4946a", "dcb48a"]}},
+		{"id": "rose", "name": "Rose", "wood": "efa9b6", "trim": "e68fa0", "fabric": ["dbb795", "efa9b6", "plain"], "paint": {"green": ["e68fa0", "efa9b6", "f6c6cf"], "orange": ["c9a07c", "dbb795", "ebcfb1"], "red": ["d86a7a", "e68896", "f0aab4"], "wood": ["d9c6b4", "ebddcf", "f8f1ea"]}},
+		{"id": "sky", "name": "Sky", "wood": "98bde4", "trim": "7aa7d8", "fabric": ["eeebe4", "98bde4", "plain"], "paint": {"green": ["7aa7d8", "98bde4", "bcd5ef"], "orange": ["e3e0d8", "eeebe4", "f7f5f0"], "red": ["6f86c9", "8aa0d6", "a9bbe4"], "wood": ["8c6a4e", "a8835f", "c29d76"]}}
+	],
+	"pieces": [
+		{"id": "kitchen_fridge", "name": "Kitchen Fridge", "kind": "fridge", "kaykit": "restaurant_fridge_a", "footprint": [1, 1], "price": 1600, "desc": "A big round-shouldered fridge."},
+		{"id": "kitchen_stove", "name": "Kitchen Stove", "kind": "stove", "kaykit": "restaurant_stove_single", "footprint": [1, 1], "price": 1400, "desc": "Four rings and an oven underneath.", "surface": 0.6},
+		{"id": "kitchen_oven", "name": "Kitchen Oven", "kind": "oven", "kaykit": "restaurant_oven", "footprint": [1, 1], "price": 1200, "desc": "For bread, pies and the odd cake.", "surface": 1.02},
+		{"id": "kitchen_counter", "name": "Kitchen Counter", "kind": "counter", "kaykit": "restaurant_kitchencounter_straight_a", "footprint": [1, 1], "price": 700, "desc": "A tiled worktop with cupboards below.", "surface": 0.5},
+		{"id": "kitchen_sink", "name": "Kitchen Sink", "kind": "sink", "kaykit": "restaurant_kitchencounter_sink", "footprint": [1, 1], "price": 900, "desc": "A deep sink and a shiny tap."},
+		{"id": "kitchen_cupboard", "name": "Kitchen Cupboard", "kind": "cupboard", "kaykit": "restaurant_kitchencabinet_half", "footprint": [1, 1], "price": 640, "desc": "Plates in here, biscuits up top.", "surface": 0.5},
+		{"id": "kitchen_round_table", "name": "Kitchen Round Table", "kind": "round_table", "kaykit": "restaurant_table_round_a_small", "footprint": [1, 1], "price": 600, "desc": "A little round table for breakfast.", "surface": 0.5},
+		{"id": "kitchen_shelf", "name": "Kitchen Shelf", "kind": "shelf", "kaykit": "restaurant_shelf_papertowel_decorated", "footprint": [1, 1], "price": 520, "desc": "Kitchen roll and spices, ready to hand."}
+	]
+}

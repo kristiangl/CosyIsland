@@ -108,7 +108,8 @@ func _load_clothing() -> void:
 
 
 ## Furniture series (data/furniture/*.json): every piece comes in each of its series'
-## variants, as an item "<piece>_<variant>" built by SeriesModels from its "build" entry.
+## variants, as an item "<piece>_<variant>" built by SeriesModels from its "build" entry,
+## or, for a piece with "kaykit", that KayKit model repainted by the variant's "paint".
 func _load_furniture() -> void:
 	var files := Array(DirAccess.get_files_at(FURNITURE_DIR))
 	files.sort()
@@ -126,7 +127,8 @@ func _load_furniture() -> void:
 					"price": piece["price"], "color": "#" + v["wood"], "desc": piece.get("desc", ""),
 					"series": data["id"], "base": piece["id"], "variant": v["id"],
 					"swatch": ["#" + v["wood"], "#" + _bolder(v["fabric"][0], v["fabric"][1])],
-					"build": {"kind": piece["kind"], "params": piece.get("params", {}), "variant": v, "footprint": footprint},
+					"build": {"kind": piece.get("kind", "kaykit"), "params": piece.get("params", {}), "variant": v, "footprint": footprint,
+						"kaykit": piece.get("kaykit", "")},
 				}
 				if piece.has("room"):
 					# Dresses the room, like wallpaper (curtains on the windows).

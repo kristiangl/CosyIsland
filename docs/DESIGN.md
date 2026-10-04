@@ -155,6 +155,10 @@ Milestone 3b:
   and a case for every bug, filled as they're donated
 - [x] Neighbours (data/neighbours.json): plots from Poppy, move-ins overnight, houses in
   their colours, wandering by day, personality chat and gifts, furnished homes to visit
+- [x] KayKit furniture: Comfy Home, Cosy Kitchen and Festive series in four colourways
+  each, and 40 decorations (wood stove, guitars, plushies, pumpkins, snowman, crates of
+  veg, kitchen bits, a festive fir...)
+- [x] Lie down in bed to sleep
 - [x] KayKit nature: cube-cluster trees and pines, boulders, and bushes along the edges
   of the woods (island generation version 3), recoloured to the island palette
 - [x] More species: rabbits (upright or lop ears), ferrets, mice and birds alongside the

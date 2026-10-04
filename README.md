@@ -16,6 +16,10 @@ A cosy island life game about crafting and decorating, made with Godot 4.
 | --- | --- | --- |
 | ![](docs/screenshots/series_meadow.png) | ![](docs/screenshots/series_lodge.png) | ![](docs/screenshots/series_driftwood.png) |
 
+| Comfy Home (KayKit) | Decorations (KayKit) |
+| --- | --- |
+| ![](docs/screenshots/series_comfy.png) | ![](docs/screenshots/decorations.png) |
+
 | Mushroom Grove | Starlight (at night) |
 | --- | --- |
 | ![](docs/screenshots/series_mushroom.png) | ![](docs/screenshots/series_starlight.png) |
@@ -137,7 +141,9 @@ See [docs/DESIGN.md](docs/DESIGN.md) for the full plan.
 
 ## Credits
 
-Trees, bushes and rocks are from the KayKit Forest Nature Pack, and the characters'
+Trees, bushes and rocks are from the KayKit Forest Nature Pack; the Comfy Home, Cosy
+Kitchen and Festive sets and many decorations from KayKit's Furniture, Restaurant,
+Holiday, Halloween and Mixed Bag packs; and the characters'
 actions (chopping, digging, fishing, sitting, lying down, cheering...) from KayKit
 Character Animations, both by Kay Lousberg ([www.kaylousberg.com](https://www.kaylousberg.com),
 CC0), converted for the game by `tools/kaykit_import.gd`. Everything else is built in code.

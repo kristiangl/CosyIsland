@@ -1050,6 +1050,738 @@
 				"a": "efc9c6",
 				"b": "e0b0ac"
 			}
+		},
+		"woodstove": {
+			"name": "Wood Stove",
+			"category": "furniture",
+			"stack": 1,
+			"price": 1500,
+			"color": "#526776",
+			"desc": "A pot-bellied stove that keeps the whole room warm.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:mixed_woodstove",
+				"rotatable": true,
+				"light": true,
+				"effects": [
+					{
+						"kind": "smoke",
+						"at": [
+							0,
+							1.4,
+							0
+						]
+					}
+				]
+			}
+		},
+		"guitar_pink": {
+			"name": "Pink Guitar",
+			"category": "furniture",
+			"stack": 1,
+			"price": 1200,
+			"color": "#5c717f",
+			"desc": "Three chords and the truth.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:mixed_guitar_a",
+				"rotatable": true
+			}
+		},
+		"guitar_blue": {
+			"name": "Blue Guitar",
+			"category": "furniture",
+			"stack": 1,
+			"price": 1200,
+			"color": "#5c717f",
+			"desc": "Plugged into nothing, still rocks.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:mixed_guitar_b",
+				"rotatable": true
+			}
+		},
+		"chicken_plushie": {
+			"name": "Chicken Plushie",
+			"category": "furniture",
+			"stack": 1,
+			"price": 420,
+			"color": "#a88e6e",
+			"desc": "A very soft chicken.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:mixed_chicken_plushie_a",
+				"rotatable": true,
+				"small": true
+			}
+		},
+		"brown_hen_plushie": {
+			"name": "Brown Hen Plushie",
+			"category": "furniture",
+			"stack": 1,
+			"price": 420,
+			"color": "#86614d",
+			"desc": "A very soft hen.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:mixed_chicken_plushie_b",
+				"rotatable": true,
+				"small": true
+			}
+		},
+		"instant_camera": {
+			"name": "Instant Camera",
+			"category": "furniture",
+			"stack": 1,
+			"price": 560,
+			"color": "#42484c",
+			"desc": "Click, whirr, a picture appears.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:mixed_instantcamera",
+				"rotatable": true,
+				"small": true
+			}
+		},
+		"puzzle_cube": {
+			"name": "Puzzle Cube",
+			"category": "furniture",
+			"stack": 1,
+			"price": 260,
+			"color": "#383838",
+			"desc": "Solved! Don't touch it.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:mixed_puzzlecube_complete",
+				"rotatable": true,
+				"small": true
+			}
+		},
+		"comic_box": {
+			"name": "Box of Comics",
+			"category": "furniture",
+			"stack": 1,
+			"price": 380,
+			"color": "#c2ccd0",
+			"desc": "Every issue, in order.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:mixed_comicbox_filled",
+				"rotatable": true,
+				"small": true
+			}
+		},
+		"roller_skates": {
+			"name": "Roller Skates",
+			"category": "furniture",
+			"stack": 1,
+			"price": 480,
+			"color": "#6f838e",
+			"desc": "Wheee.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:mixed_rollerskate_pair",
+				"rotatable": true,
+				"small": true
+			}
+		},
+		"trophy": {
+			"name": "Little Trophy",
+			"category": "furniture",
+			"stack": 1,
+			"price": 600,
+			"color": "#7d5a49",
+			"desc": "For being a good egg.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:mixed_idol_a",
+				"rotatable": true,
+				"small": true
+			}
+		},
+		"pumpkin": {
+			"name": "Pumpkin",
+			"category": "furniture",
+			"stack": 1,
+			"price": 300,
+			"color": "#ce6a33",
+			"desc": "A fat orange pumpkin.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:halloween_pumpkin_orange",
+				"rotatable": true
+			}
+		},
+		"yellow_pumpkin": {
+			"name": "Yellow Pumpkin",
+			"category": "furniture",
+			"stack": 1,
+			"price": 300,
+			"color": "#dba64d",
+			"desc": "A plump yellow pumpkin.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:halloween_pumpkin_yellow",
+				"rotatable": true
+			}
+		},
+		"little_pumpkin": {
+			"name": "Little Pumpkin",
+			"category": "furniture",
+			"stack": 1,
+			"price": 180,
+			"color": "#974328",
+			"desc": "Small and round.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:halloween_pumpkin_orange_small",
+				"rotatable": true,
+				"small": true
+			}
+		},
+		"jack_o_lantern": {
+			"name": "Jack-o'-Lantern",
+			"category": "furniture",
+			"stack": 1,
+			"price": 600,
+			"color": "#a8502c",
+			"desc": "A grinning pumpkin with a candle inside.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:halloween_pumpkin_orange_jackolantern",
+				"rotatable": true,
+				"light": true,
+				"effects": [
+					{
+						"kind": "candle",
+						"at": [
+							0,
+							0.3,
+							0
+						]
+					}
+				]
+			}
+		},
+		"standing_lantern": {
+			"name": "Standing Lantern",
+			"category": "furniture",
+			"stack": 1,
+			"price": 520,
+			"color": "#fcc75e",
+			"desc": "A little lantern for the garden path.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:halloween_lantern_standing",
+				"rotatable": true,
+				"light": true
+			}
+		},
+		"triple_candle": {
+			"name": "Candle Cluster",
+			"category": "furniture",
+			"stack": 1,
+			"price": 300,
+			"color": "#61534b",
+			"desc": "Three candles in a huddle.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:halloween_candle_triple",
+				"rotatable": true,
+				"small": true,
+				"light": true,
+				"effects": [
+					{
+						"kind": "candle",
+						"at": [
+							0,
+							0.42,
+							0
+						]
+					}
+				]
+			}
+		},
+		"garden_bench": {
+			"name": "Garden Bench",
+			"category": "furniture",
+			"stack": 1,
+			"price": 680,
+			"color": "#6f6056",
+			"desc": "A plain wooden bench.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:halloween_bench",
+				"rotatable": true,
+				"seat": 0.24
+			}
+		},
+		"autumn_fir": {
+			"name": "Autumn Fir",
+			"category": "furniture",
+			"stack": 1,
+			"price": 900,
+			"color": "#aa522c",
+			"desc": "A little fir in its autumn coat.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:halloween_tree_pine_orange_small",
+				"rotatable": true
+			}
+		},
+		"golden_fir": {
+			"name": "Golden Fir",
+			"category": "furniture",
+			"stack": 1,
+			"price": 900,
+			"color": "#584b45",
+			"desc": "A little fir gone gold.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:halloween_tree_pine_yellow_small",
+				"rotatable": true
+			}
+		},
+		"snowman": {
+			"name": "Snowman",
+			"category": "furniture",
+			"stack": 1,
+			"price": 900,
+			"color": "#ffffff",
+			"desc": "He'll be fine as long as it stays chilly.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:holiday_snowman_a",
+				"rotatable": true
+			}
+		},
+		"present_red": {
+			"name": "Present (Red)",
+			"category": "furniture",
+			"stack": 1,
+			"price": 300,
+			"color": "#f4e7db",
+			"desc": "What could it be?",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:holiday_present_a_red",
+				"rotatable": true,
+				"small": true
+			}
+		},
+		"present_blue": {
+			"name": "Present (Blue)",
+			"category": "furniture",
+			"stack": 1,
+			"price": 300,
+			"color": "#cd2740",
+			"desc": "What could it be?",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:holiday_present_a_blue",
+				"rotatable": true,
+				"small": true
+			}
+		},
+		"present_stack": {
+			"name": "Stack of Presents",
+			"category": "furniture",
+			"stack": 1,
+			"price": 500,
+			"color": "#f6c067",
+			"desc": "So many presents.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:holiday_present_d_green",
+				"rotatable": true
+			}
+		},
+		"hot_chocolate": {
+			"name": "Hot Chocolate",
+			"category": "furniture",
+			"stack": 1,
+			"price": 240,
+			"color": "#ec8533",
+			"desc": "With marshmallows, obviously.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:holiday_hot_chocolate_decorated",
+				"rotatable": true,
+				"small": true
+			}
+		},
+		"cookie_plate": {
+			"name": "Plate of Cookies",
+			"category": "furniture",
+			"stack": 1,
+			"price": 280,
+			"color": "#e7cdb4",
+			"desc": "Fresh from the oven.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:holiday_plate_decorated_a",
+				"rotatable": true,
+				"small": true
+			}
+		},
+		"festive_bell": {
+			"name": "Festive Bell",
+			"category": "furniture",
+			"stack": 1,
+			"price": 320,
+			"color": "#c42740",
+			"desc": "Ding!",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:holiday_bell_decorated",
+				"rotatable": true,
+				"small": true
+			}
+		},
+		"snowball_pile": {
+			"name": "Snowball Pile",
+			"category": "furniture",
+			"stack": 1,
+			"price": 200,
+			"color": "#a6d5eb",
+			"desc": "Ready for a snowball fight.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:holiday_snowball_pile",
+				"rotatable": true
+			}
+		},
+		"stew_pot": {
+			"name": "Stew Pot",
+			"category": "furniture",
+			"stack": 1,
+			"price": 360,
+			"color": "#828c91",
+			"desc": "Something delicious bubbling away.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:restaurant_pot_a_stew",
+				"rotatable": true,
+				"small": true
+			}
+		},
+		"frying_pan": {
+			"name": "Frying Pan",
+			"category": "furniture",
+			"stack": 1,
+			"price": 260,
+			"color": "#889398",
+			"desc": "For pancakes on Sundays.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:restaurant_pan_a",
+				"rotatable": true,
+				"small": true
+			}
+		},
+		"dish_rack": {
+			"name": "Dish Rack",
+			"category": "furniture",
+			"stack": 1,
+			"price": 300,
+			"color": "#d8dfe1",
+			"desc": "Plates drying in a row.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:restaurant_dishrack_plates",
+				"rotatable": true,
+				"small": true
+			}
+		},
+		"jam_jar": {
+			"name": "Jam Jar",
+			"category": "furniture",
+			"stack": 1,
+			"price": 180,
+			"color": "#77bcdf",
+			"desc": "Homemade, with a gingham lid.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:restaurant_jar_a_large",
+				"rotatable": true,
+				"small": true
+			}
+		},
+		"cutting_board": {
+			"name": "Cutting Board",
+			"category": "furniture",
+			"stack": 1,
+			"price": 200,
+			"color": "#dfb788",
+			"desc": "Well used and well loved.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:restaurant_cuttingboard",
+				"rotatable": true,
+				"small": true
+			}
+		},
+		"dinner_plate": {
+			"name": "Dinner for One",
+			"category": "furniture",
+			"stack": 1,
+			"price": 320,
+			"color": "#f5852c",
+			"desc": "A hearty dinner on a plate.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:restaurant_food_dinner",
+				"rotatable": true,
+				"small": true
+			}
+		},
+		"burger_plate": {
+			"name": "Burger",
+			"category": "furniture",
+			"stack": 1,
+			"price": 280,
+			"color": "#d8dfe1",
+			"desc": "Stacked high.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:restaurant_food_burger",
+				"rotatable": true,
+				"small": true
+			}
+		},
+		"carrot_crate": {
+			"name": "Crate of Carrots",
+			"category": "furniture",
+			"stack": 1,
+			"price": 360,
+			"color": "#f89f35",
+			"desc": "Fresh from someone's garden.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:restaurant_crate_carrots",
+				"rotatable": true
+			}
+		},
+		"tomato_crate": {
+			"name": "Crate of Tomatoes",
+			"category": "furniture",
+			"stack": 1,
+			"price": 360,
+			"color": "#e74f2b",
+			"desc": "Red and ripe.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:restaurant_crate_tomatoes",
+				"rotatable": true
+			}
+		},
+		"lettuce_crate": {
+			"name": "Crate of Lettuce",
+			"category": "furniture",
+			"stack": 1,
+			"price": 360,
+			"color": "#939714",
+			"desc": "Crunchy.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:restaurant_crate_lettuce",
+				"rotatable": true
+			}
+		},
+		"potato_crate": {
+			"name": "Crate of Potatoes",
+			"category": "furniture",
+			"stack": 1,
+			"price": 360,
+			"color": "#d59d49",
+			"desc": "Mash, chips or roasties?",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:restaurant_crate_potatoes",
+				"rotatable": true
+			}
+		},
+		"potted_cactus": {
+			"name": "Potted Cactus",
+			"category": "furniture",
+			"stack": 1,
+			"price": 280,
+			"color": "#bf6231",
+			"desc": "Prickly but friendly.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:furniture_cactus_medium_a",
+				"rotatable": true,
+				"small": true
+			}
+		},
+		"book_pile": {
+			"name": "Pile of Books",
+			"category": "furniture",
+			"stack": 1,
+			"price": 220,
+			"color": "#fbbf5a",
+			"desc": "Bookmarks in every one.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:furniture_book_set",
+				"rotatable": true,
+				"small": true
+			}
+		},
+		"photo_frame": {
+			"name": "Photo Frame",
+			"category": "furniture",
+			"stack": 1,
+			"price": 260,
+			"color": "#aa684e",
+			"desc": "A favourite memory.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:furniture_pictureframe_standing_a",
+				"rotatable": true,
+				"small": true
+			}
+		},
+		"festive_tree": {
+			"name": "Festive Tree",
+			"category": "furniture",
+			"stack": 1,
+			"price": 2400,
+			"color": "#57a874",
+			"desc": "Baubles, a star, and a twinkle at night.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "festive_tree",
+				"rotatable": true,
+				"light": true
+			}
 		}
 	},
 	"fruits": {

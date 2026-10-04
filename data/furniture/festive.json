@@ -1,0 +1,18 @@
+{
+	"id": "festive",
+	"name": "Festive",
+	"desc": "Wingback chairs and twinkling things for the cosiest time of year.",
+	"_note": "KayKit pieces (CC0): each is a KayKit model (tools/kaykit.json) repainted by the variant's paint, colour family by colour family (Palette).",
+	"variants": [
+		{"id": "berry", "name": "Berry", "wood": "dc6464", "trim": "c94a4a", "fabric": ["dc6464", "fff4e0", "plain"], "paint": {"red": ["c94a4a", "dc6464", "ec8a86"]}},
+		{"id": "pine", "name": "Pine", "wood": "57a874", "trim": "3f8f5f", "fabric": ["57a874", "fff4e0", "plain"], "paint": {"red": ["3f8f5f", "57a874", "7cc391"]}},
+		{"id": "frost", "name": "Frost", "wood": "7b9fd6", "trim": "5b84c4", "fabric": ["7b9fd6", "fff4e0", "plain"], "paint": {"red": ["5b84c4", "7b9fd6", "a3bfe6"]}},
+		{"id": "cocoa", "name": "Cocoa", "wood": "a5755c", "trim": "8a5a44", "fabric": ["a5755c", "fff4e0", "plain"], "paint": {"red": ["8a5a44", "a5755c", "bf9176"]}}
+	],
+	"pieces": [
+		{"id": "festive_wingback", "name": "Wingback Chair", "kind": "armchair", "kaykit": "holiday_chair_large_red", "footprint": [1, 1], "price": 1400, "desc": "A tall, buttoned chair by the fire.", "seat": 0.34},
+		{"id": "festive_footstool", "name": "Footstool", "kind": "stool", "kaykit": "holiday_footstool_red", "footprint": [1, 1], "price": 360, "desc": "For warm feet.", "seat": 0.18},
+		{"id": "festive_rug", "name": "Festive Round Rug", "kind": "rug", "kaykit": "holiday_carpet_round_large", "footprint": [2, 2], "price": 680, "desc": "A round rug, warm as toast.", "rug": true},
+		{"id": "festive_lamp_post", "name": "Festive Lamp Post", "kind": "lamp_post", "kaykit": "holiday_lantern_decorated", "footprint": [1, 1], "price": 1100, "desc": "A lamp post with a holly wreath.", "light": true}
+	]
+}

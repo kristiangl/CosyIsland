@@ -298,6 +298,282 @@
 			],
 			"palette": "tools",
 			"keep_origin": true
+		},
+		"furniture_armchair_pillows": {
+			"src": "KayKit_Furniture_Bits_1.0_FREE/Assets/gltf/armchair_pillows.gltf",
+			"scale": 0.66
+		},
+		"furniture_couch_pillows": {
+			"src": "KayKit_Furniture_Bits_1.0_FREE/Assets/gltf/couch_pillows.gltf",
+			"scale": 0.66
+		},
+		"furniture_bed_double_a": {
+			"src": "KayKit_Furniture_Bits_1.0_FREE/Assets/gltf/bed_double_A.gltf",
+			"scale": 0.66
+		},
+		"furniture_bed_single_a": {
+			"src": "KayKit_Furniture_Bits_1.0_FREE/Assets/gltf/bed_single_A.gltf",
+			"scale": 0.66
+		},
+		"furniture_chair_a": {
+			"src": "KayKit_Furniture_Bits_1.0_FREE/Assets/gltf/chair_A.gltf",
+			"scale": 0.66
+		},
+		"furniture_chair_stool": {
+			"src": "KayKit_Furniture_Bits_1.0_FREE/Assets/gltf/chair_stool.gltf",
+			"scale": 0.66
+		},
+		"furniture_table_medium": {
+			"src": "KayKit_Furniture_Bits_1.0_FREE/Assets/gltf/table_medium.gltf",
+			"scale": 0.66
+		},
+		"furniture_table_medium_long": {
+			"src": "KayKit_Furniture_Bits_1.0_FREE/Assets/gltf/table_medium_long.gltf",
+			"scale": 0.66
+		},
+		"furniture_table_low": {
+			"src": "KayKit_Furniture_Bits_1.0_FREE/Assets/gltf/table_low.gltf",
+			"scale": 0.66
+		},
+		"furniture_table_small": {
+			"src": "KayKit_Furniture_Bits_1.0_FREE/Assets/gltf/table_small.gltf",
+			"scale": 0.66
+		},
+		"furniture_cabinet_medium": {
+			"src": "KayKit_Furniture_Bits_1.0_FREE/Assets/gltf/cabinet_medium.gltf",
+			"scale": 0.66
+		},
+		"furniture_shelf_b_large_decorated": {
+			"src": "KayKit_Furniture_Bits_1.0_FREE/Assets/gltf/shelf_B_large_decorated.gltf",
+			"scale": 0.66
+		},
+		"furniture_lamp_standing": {
+			"src": "KayKit_Furniture_Bits_1.0_FREE/Assets/gltf/lamp_standing.gltf",
+			"scale": 0.66
+		},
+		"furniture_lamp_table": {
+			"src": "KayKit_Furniture_Bits_1.0_FREE/Assets/gltf/lamp_table.gltf",
+			"scale": 0.66
+		},
+		"furniture_rug_rectangle_stripes_a": {
+			"src": "KayKit_Furniture_Bits_1.0_FREE/Assets/gltf/rug_rectangle_stripes_A.gltf",
+			"scale": 0.66
+		},
+		"furniture_rug_oval_a": {
+			"src": "KayKit_Furniture_Bits_1.0_FREE/Assets/gltf/rug_oval_A.gltf",
+			"scale": 0.66
+		},
+		"restaurant_fridge_a": {
+			"src": "KayKit_Restaurant_Bits_1.0_FREE/Assets/gltf/fridge_A.gltf",
+			"scale": 0.42
+		},
+		"restaurant_stove_single": {
+			"src": "KayKit_Restaurant_Bits_1.0_FREE/Assets/gltf/stove_single.gltf",
+			"scale": 0.5
+		},
+		"restaurant_oven": {
+			"src": "KayKit_Restaurant_Bits_1.0_FREE/Assets/gltf/oven.gltf",
+			"scale": 0.5
+		},
+		"restaurant_kitchencounter_straight_a": {
+			"src": "KayKit_Restaurant_Bits_1.0_FREE/Assets/gltf/kitchencounter_straight_A.gltf",
+			"scale": 0.5
+		},
+		"restaurant_kitchencounter_sink": {
+			"src": "KayKit_Restaurant_Bits_1.0_FREE/Assets/gltf/kitchencounter_sink.gltf",
+			"scale": 0.5
+		},
+		"restaurant_kitchencabinet_half": {
+			"src": "KayKit_Restaurant_Bits_1.0_FREE/Assets/gltf/kitchencabinet_half.gltf",
+			"scale": 0.5
+		},
+		"restaurant_table_round_a_small": {
+			"src": "KayKit_Restaurant_Bits_1.0_FREE/Assets/gltf/table_round_A_small.gltf",
+			"scale": 0.5
+		},
+		"restaurant_shelf_papertowel_decorated": {
+			"src": "KayKit_Restaurant_Bits_1.0_FREE/Assets/gltf/shelf_papertowel_decorated.gltf",
+			"scale": 0.5
+		},
+		"holiday_chair_large_red": {
+			"src": "KayKit_Holiday_Bits_1.0_FREE/Assets/gltf/chair_large_red.gltf",
+			"scale": 0.5
+		},
+		"holiday_footstool_red": {
+			"src": "KayKit_Holiday_Bits_1.0_FREE/Assets/gltf/footstool_red.gltf",
+			"scale": 0.5
+		},
+		"holiday_carpet_round_large": {
+			"src": "KayKit_Holiday_Bits_1.0_FREE/Assets/gltf/carpet_round_large.gltf",
+			"scale": 0.5
+		},
+		"holiday_lantern_decorated": {
+			"src": "KayKit_Holiday_Bits_1.0_FREE/Assets/gltf/lantern_decorated.gltf",
+			"scale": 0.5
+		},
+		"mixed_woodstove": {
+			"src": "KayKit_Mixed_Bag_1_FREE/Assets/gltf/woodstove.gltf",
+			"scale": 0.5
+		},
+		"mixed_guitar_a": {
+			"src": "KayKit_Mixed_Bag_1_FREE/Assets/gltf/guitar_A.gltf",
+			"scale": 0.5
+		},
+		"mixed_guitar_b": {
+			"src": "KayKit_Mixed_Bag_1_FREE/Assets/gltf/guitar_B.gltf",
+			"scale": 0.5
+		},
+		"mixed_chicken_plushie_a": {
+			"src": "KayKit_Mixed_Bag_1_FREE/Assets/gltf/chicken_plushie_A.gltf",
+			"scale": 0.5
+		},
+		"mixed_chicken_plushie_b": {
+			"src": "KayKit_Mixed_Bag_1_FREE/Assets/gltf/chicken_plushie_B.gltf",
+			"scale": 0.5
+		},
+		"mixed_instantcamera": {
+			"src": "KayKit_Mixed_Bag_1_FREE/Assets/gltf/instantcamera.gltf",
+			"scale": 0.5
+		},
+		"mixed_puzzlecube_complete": {
+			"src": "KayKit_Mixed_Bag_1_FREE/Assets/gltf/puzzlecube_complete.gltf",
+			"scale": 0.5
+		},
+		"mixed_comicbox_filled": {
+			"src": "KayKit_Mixed_Bag_1_FREE/Assets/gltf/comicbox_filled.gltf",
+			"scale": 0.5
+		},
+		"mixed_rollerskate_pair": {
+			"src": "KayKit_Mixed_Bag_1_FREE/Assets/gltf/rollerskate_pair.gltf",
+			"scale": 0.5
+		},
+		"mixed_idol_a": {
+			"src": "KayKit_Mixed_Bag_1_FREE/Assets/gltf/idol_A.gltf",
+			"scale": 0.5
+		},
+		"halloween_pumpkin_orange": {
+			"src": "KayKit_HalloweenBits_1.0_FREE/Assets/gltf/pumpkin_orange.gltf",
+			"scale": 0.5
+		},
+		"halloween_pumpkin_yellow": {
+			"src": "KayKit_HalloweenBits_1.0_FREE/Assets/gltf/pumpkin_yellow.gltf",
+			"scale": 0.5
+		},
+		"halloween_pumpkin_orange_small": {
+			"src": "KayKit_HalloweenBits_1.0_FREE/Assets/gltf/pumpkin_orange_small.gltf",
+			"scale": 0.5
+		},
+		"halloween_pumpkin_orange_jackolantern": {
+			"src": "KayKit_HalloweenBits_1.0_FREE/Assets/gltf/pumpkin_orange_jackolantern.gltf",
+			"scale": 0.5
+		},
+		"halloween_lantern_standing": {
+			"src": "KayKit_HalloweenBits_1.0_FREE/Assets/gltf/lantern_standing.gltf",
+			"scale": 0.5
+		},
+		"halloween_candle_triple": {
+			"src": "KayKit_HalloweenBits_1.0_FREE/Assets/gltf/candle_triple.gltf",
+			"scale": 0.5
+		},
+		"halloween_bench": {
+			"src": "KayKit_HalloweenBits_1.0_FREE/Assets/gltf/bench.gltf",
+			"scale": 0.5
+		},
+		"halloween_tree_pine_orange_small": {
+			"src": "KayKit_HalloweenBits_1.0_FREE/Assets/gltf/tree_pine_orange_small.gltf",
+			"scale": 0.42
+		},
+		"halloween_tree_pine_yellow_small": {
+			"src": "KayKit_HalloweenBits_1.0_FREE/Assets/gltf/tree_pine_yellow_small.gltf",
+			"scale": 0.42
+		},
+		"holiday_snowman_a": {
+			"src": "KayKit_Holiday_Bits_1.0_FREE/Assets/gltf/snowman_A.gltf",
+			"scale": 0.5
+		},
+		"holiday_present_a_red": {
+			"src": "KayKit_Holiday_Bits_1.0_FREE/Assets/gltf/present_A_red.gltf",
+			"scale": 0.5
+		},
+		"holiday_present_a_blue": {
+			"src": "KayKit_Holiday_Bits_1.0_FREE/Assets/gltf/present_A_blue.gltf",
+			"scale": 0.5
+		},
+		"holiday_present_d_green": {
+			"src": "KayKit_Holiday_Bits_1.0_FREE/Assets/gltf/present_D_green.gltf",
+			"scale": 0.5
+		},
+		"holiday_hot_chocolate_decorated": {
+			"src": "KayKit_Holiday_Bits_1.0_FREE/Assets/gltf/hot_chocolate_decorated.gltf",
+			"scale": 0.5
+		},
+		"holiday_plate_decorated_a": {
+			"src": "KayKit_Holiday_Bits_1.0_FREE/Assets/gltf/plate_decorated_A.gltf",
+			"scale": 0.5
+		},
+		"holiday_bell_decorated": {
+			"src": "KayKit_Holiday_Bits_1.0_FREE/Assets/gltf/bell_decorated.gltf",
+			"scale": 0.5
+		},
+		"holiday_snowball_pile": {
+			"src": "KayKit_Holiday_Bits_1.0_FREE/Assets/gltf/snowball_pile.gltf",
+			"scale": 0.5
+		},
+		"restaurant_pot_a_stew": {
+			"src": "KayKit_Restaurant_Bits_1.0_FREE/Assets/gltf/pot_A_stew.gltf",
+			"scale": 0.5
+		},
+		"restaurant_pan_a": {
+			"src": "KayKit_Restaurant_Bits_1.0_FREE/Assets/gltf/pan_A.gltf",
+			"scale": 0.5
+		},
+		"restaurant_dishrack_plates": {
+			"src": "KayKit_Restaurant_Bits_1.0_FREE/Assets/gltf/dishrack_plates.gltf",
+			"scale": 0.5
+		},
+		"restaurant_jar_a_large": {
+			"src": "KayKit_Restaurant_Bits_1.0_FREE/Assets/gltf/jar_A_large.gltf",
+			"scale": 0.5
+		},
+		"restaurant_cuttingboard": {
+			"src": "KayKit_Restaurant_Bits_1.0_FREE/Assets/gltf/cuttingboard.gltf",
+			"scale": 0.5
+		},
+		"restaurant_food_dinner": {
+			"src": "KayKit_Restaurant_Bits_1.0_FREE/Assets/gltf/food_dinner.gltf",
+			"scale": 0.5
+		},
+		"restaurant_food_burger": {
+			"src": "KayKit_Restaurant_Bits_1.0_FREE/Assets/gltf/food_burger.gltf",
+			"scale": 0.5
+		},
+		"restaurant_crate_carrots": {
+			"src": "KayKit_Restaurant_Bits_1.0_FREE/Assets/gltf/crate_carrots.gltf",
+			"scale": 0.5
+		},
+		"restaurant_crate_tomatoes": {
+			"src": "KayKit_Restaurant_Bits_1.0_FREE/Assets/gltf/crate_tomatoes.gltf",
+			"scale": 0.5
+		},
+		"restaurant_crate_lettuce": {
+			"src": "KayKit_Restaurant_Bits_1.0_FREE/Assets/gltf/crate_lettuce.gltf",
+			"scale": 0.5
+		},
+		"restaurant_crate_potatoes": {
+			"src": "KayKit_Restaurant_Bits_1.0_FREE/Assets/gltf/crate_potatoes.gltf",
+			"scale": 0.5
+		},
+		"furniture_cactus_medium_a": {
+			"src": "KayKit_Furniture_Bits_1.0_FREE/Assets/gltf/cactus_medium_A.gltf",
+			"scale": 0.66
+		},
+		"furniture_book_set": {
+			"src": "KayKit_Furniture_Bits_1.0_FREE/Assets/gltf/book_set.gltf",
+			"scale": 0.66
+		},
+		"furniture_pictureframe_standing_a": {
+			"src": "KayKit_Furniture_Bits_1.0_FREE/Assets/gltf/pictureframe_standing_A.gltf",
+			"scale": 0.66
 		}
 	},
 	"animations": {

@@ -1,0 +1,30 @@
+{
+	"id": "comfy",
+	"name": "Comfy Home",
+	"desc": "Squashy sofas, chunky wood and big soft cushions.",
+	"_note": "KayKit pieces (CC0): each is a KayKit model (tools/kaykit.json) repainted by the variant's paint, colour family by colour family (Palette).",
+	"variants": [
+		{"id": "sunny", "name": "Sunny", "wood": "c4946a", "trim": "a8754f", "fabric": ["f6c46f", "9cc0e4", "plain"], "paint": {"wood": ["a8754f", "c4946a", "dcb48a"], "orange": ["eea85a", "f6c46f", "fbdc96"], "blue": ["7fa9d6", "9cc0e4", "bcd6ef"]}},
+		{"id": "rose", "name": "Rose", "wood": "ebddcf", "trim": "d9c6b4", "fabric": ["eeaab3", "d6a9c6", "plain"], "paint": {"wood": ["d9c6b4", "ebddcf", "f8f1ea"], "orange": ["e2909b", "eeaab3", "f7cbd0"], "blue": ["c48fb3", "d6a9c6", "e8c8dc"]}},
+		{"id": "sage", "name": "Sage", "wood": "a8835f", "trim": "8c6a4e", "fabric": ["b6d19c", "99c4b0", "plain"], "paint": {"wood": ["8c6a4e", "a8835f", "c29d76"], "orange": ["9fbe86", "b6d19c", "cfe3ba"], "blue": ["7fae9a", "99c4b0", "b8dccb"]}},
+		{"id": "midnight", "name": "Midnight", "wood": "735448", "trim": "5a4038", "fabric": ["7787bf", "e8c878", "plain"], "paint": {"wood": ["5a4038", "735448", "8c6a5a"], "orange": ["5f6fa8", "7787bf", "93a2d4"], "blue": ["d8b25c", "e8c878", "f4dc9a"]}}
+	],
+	"pieces": [
+		{"id": "comfy_armchair", "name": "Comfy Armchair", "kind": "armchair", "kaykit": "furniture_armchair_pillows", "footprint": [1, 1], "price": 1100, "desc": "Deep, squashy and very hard to leave.", "seat": 0.36},
+		{"id": "comfy_sofa", "name": "Comfy Sofa", "kind": "sofa", "kaykit": "furniture_couch_pillows", "footprint": [2, 1], "price": 1800, "desc": "Big enough for a nap and a half.", "seat": 0.36},
+		{"id": "comfy_bed", "name": "Comfy Bed", "kind": "bed", "kaykit": "furniture_bed_double_a", "footprint": [2, 2], "price": 1800, "desc": "A double bed with fat pillows.", "seat": 0.4, "bed": true},
+		{"id": "comfy_single_bed", "name": "Comfy Single Bed", "kind": "single_bed", "kaykit": "furniture_bed_single_a", "footprint": [1, 2], "price": 1200, "desc": "Snug, with a chunky wooden frame.", "seat": 0.4, "bed": true},
+		{"id": "comfy_chair", "name": "Comfy Chair", "kind": "chair", "kaykit": "furniture_chair_a", "footprint": [1, 1], "price": 480, "desc": "A wooden chair with a padded seat.", "seat": 0.4},
+		{"id": "comfy_stool", "name": "Comfy Stool", "kind": "stool", "kaykit": "furniture_chair_stool", "footprint": [1, 1], "price": 300, "desc": "A sturdy little stool.", "seat": 0.36},
+		{"id": "comfy_table", "name": "Comfy Table", "kind": "table", "kaykit": "furniture_table_medium", "footprint": [2, 2], "price": 760, "desc": "A square table for meals and jigsaws.", "surface": 0.66},
+		{"id": "comfy_long_table", "name": "Comfy Long Table", "kind": "long_table", "kaykit": "furniture_table_medium_long", "footprint": [2, 2], "price": 980, "desc": "Room for the whole family.", "surface": 0.66},
+		{"id": "comfy_coffee_table", "name": "Comfy Coffee Table", "kind": "coffee_table", "kaykit": "furniture_table_low", "footprint": [2, 1], "price": 560, "desc": "Low and wide, for mugs and magazines.", "surface": 0.33},
+		{"id": "comfy_side_table", "name": "Comfy Side Table", "kind": "side_table", "kaykit": "furniture_table_small", "footprint": [1, 1], "price": 380, "desc": "A little table with a drawer.", "surface": 0.66},
+		{"id": "comfy_cabinet", "name": "Comfy Cabinet", "kind": "dresser", "kaykit": "furniture_cabinet_medium", "footprint": [2, 1], "price": 900, "desc": "Drawers and cupboards, and a top for treasures.", "surface": 0.66},
+		{"id": "comfy_bookshelf", "name": "Comfy Bookshelf", "kind": "bookcase", "kaykit": "furniture_shelf_b_large_decorated", "footprint": [2, 1], "price": 980, "desc": "Books, a plant and a photo or two."},
+		{"id": "comfy_floor_lamp", "name": "Comfy Floor Lamp", "kind": "floor_lamp", "kaykit": "furniture_lamp_standing", "footprint": [1, 1], "price": 720, "desc": "A tall lamp with a soft shade.", "light": true},
+		{"id": "comfy_table_lamp", "name": "Comfy Table Lamp", "kind": "table_lamp", "kaykit": "furniture_lamp_table", "footprint": [1, 1], "price": 420, "desc": "A little lamp for a table top.", "light": true, "small": true},
+		{"id": "comfy_rug", "name": "Comfy Striped Rug", "kind": "rug", "kaykit": "furniture_rug_rectangle_stripes_a", "footprint": [2, 2], "price": 640, "desc": "A big striped rug.", "rug": true},
+		{"id": "comfy_oval_rug", "name": "Comfy Oval Rug", "kind": "oval_rug", "kaykit": "furniture_rug_oval_a", "footprint": [2, 2], "price": 560, "desc": "Soft underfoot.", "rug": true}
+	]
+}

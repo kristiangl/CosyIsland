@@ -43,6 +43,10 @@ static func get_mesh(key: String) -> ArrayMesh:
 		var converted: ArrayMesh = load("res://assets/kaykit/%s.res" % p[1])
 		_cache[key] = converted
 		return converted
+	if p[0] == "festive_tree":
+		var tree := _festive_tree()
+		_cache[key] = tree
+		return tree
 	if p[0] == "series":
 		var mesh := _series(p[1])
 		_cache[key] = mesh
@@ -120,6 +124,10 @@ static func get_mesh(key: String) -> ArrayMesh:
 ## any, in a surface that lights up at night. Show it with `dress`.
 static func _series(id: String) -> ArrayMesh:
 	var spec: Dictionary = ItemDB.get_item(id).get("build", {})
+	if spec.get("kaykit", "") != "":
+		var kit := _kit_from(spec["kaykit"])
+		Palette.repaint(kit.colours, spec["variant"].get("paint", {}))
+		return kit.commit()
 	var k := MeshKit.new()
 	var fabric := MeshKit.new()
 	var glow := MeshKit.new()
@@ -263,6 +271,38 @@ static func _kit_from(name: String) -> MeshKit:
 	k.indices = arrays[Mesh.ARRAY_INDEX]
 	k.uvs.resize(k.verts.size())
 	return k
+
+
+## A little fir dressed for the holidays: three tiers of branches, baubles round each
+## tier and a star on top, the baubles and star in a glow surface to shine at night.
+static func _festive_tree() -> ArrayMesh:
+	var k := MeshKit.new()
+	k.cylinder(Vector3.ZERO, Vector3(0, 0.35, 0), 0.08, 0.07, MeshKit.lin(BARK), 6, false)
+	k.cylinder(Vector3(0, 0.0, 0), Vector3(0, 0.12, 0), 0.22, 0.2, MeshKit.lin(Color("c8574f")), 8, true)
+	var greens := [Color("4f8a58"), Color("5f9e64"), Color("6aac72")]
+	var glow := MeshKit.new()
+	var baubles := [Color("e86a6a"), Color("f2c94c"), Color("7fa9e6"), Color("f4f0e6")]
+	# Tier: [bottom, height, radius, baubles]
+	var tiers := [[0.3, 0.75, 0.62, 7], [0.78, 0.62, 0.48, 6], [1.18, 0.55, 0.32, 4]]
+	for t in tiers.size():
+		var tier: Array = tiers[t]
+		var y: float = tier[0]
+		var r: float = tier[2]
+		k.cone(Vector3(0, y, 0), Vector3(0, y + float(tier[1]), 0), r, MeshKit.lin(greens[t]), 10)
+		for b in int(tier[3]):
+			var a := TAU * b / float(tier[3]) + t * 0.7
+			var at := Vector3(cos(a) * r * 0.82, y + 0.1, sin(a) * r * 0.82)
+			glow.sphere(at, Vector3.ONE * 0.055, MeshKit.lin(baubles[(b + t) % baubles.size()]), 4, 6)
+	var tip := 1.18 + 0.55
+	var star := MeshKit.lin(Color("ffd95a"))
+	for a in 5:
+		var d := Vector3(cos(TAU * a / 5.0 + PI * 0.5), sin(TAU * a / 5.0 + PI * 0.5), 0)
+		glow.cone(Vector3(0, tip + 0.1, 0), Vector3(0, tip + 0.1, 0) + d * 0.13, 0.05, star, 4)
+	glow.sphere(Vector3(0, tip + 0.1, 0), Vector3.ONE * 0.05, star, 4, 6)
+	var mesh := k.commit()
+	mesh.set_meta("glow_surface", mesh.get_surface_count())
+	glow.commit(mesh)
+	return mesh
 
 
 ## A cube tree with fruit tucked into the sides of its canopy, spread round it at

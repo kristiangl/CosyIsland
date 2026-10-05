@@ -6,6 +6,7 @@ signal place_requested(slot: int)
 signal save_requested
 signal quit_requested
 signal title_requested
+signal sos_requested
 signal wardrobe_requested
 
 var _time_label: Label
@@ -286,3 +287,5 @@ func _on_phone_app(app: String) -> void:
 			quit_requested.emit()
 		"title":
 			title_requested.emit()
+		"sos":
+			sos_requested.emit()

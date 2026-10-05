@@ -123,9 +123,8 @@ func _check_doors(dir: Vector3) -> void:
 
 
 func _clear(px: float, pz: float) -> bool:
-	for off in [Vector2.ZERO, Vector2(RADIUS, 0), Vector2(-RADIUS, 0), Vector2(0, RADIUS), Vector2(0, -RADIUS)]:
-		if not world.can_step(position, px + off.x, pz + off.y):
-			return false
+	if not world.can_move(position, px, pz, RADIUS):
+		return false
 	for npc in Game.npcs:
 		if npc.world == world and npc.blocks(px, pz) and not npc.blocks(position.x, position.z):
 			return false
@@ -363,6 +362,14 @@ func _lie_in(obj: Dictionary) -> void:
 
 
 ## Gets out of bed and stands beside it, back where we got in.
+## Off the seat or out of bed, ready to go (before being fetched by SOS).
+func stand() -> void:
+	if _seat_uid >= 0:
+		_seat_uid = -1
+		model.set_sitting(false)
+	get_up()
+
+
 func get_up() -> void:
 	if model.mode != "sleeping":
 		return

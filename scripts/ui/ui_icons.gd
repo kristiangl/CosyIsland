@@ -83,6 +83,12 @@ static func draw(c: CanvasItem, id: String, o: Vector2, s: float, col: Color) ->
 		"back":
 			c.draw_colored_polygon(PackedVector2Array([o + Vector2(-s * 0.32, 0), o + Vector2(0, -s * 0.28), o + Vector2(0, s * 0.28)]), col)
 			c.draw_rect(Rect2(o + Vector2(-s * 0.02, -s * 0.1), Vector2(s * 0.34, s * 0.2)), col)
+		"sos":
+			# A lifebuoy: a ring with four bands.
+			c.draw_arc(o, s * 0.27, 0.0, TAU, 32, col, s * 0.16)
+			for k in 4:
+				var a := PI * 0.25 + k * PI * 0.5
+				c.draw_arc(o, s * 0.27, a - 0.28, a + 0.28, 6, Color(0.95, 0.36, 0.32), s * 0.16)
 		"moon":
 			c.draw_circle(o, s * 0.34, col)
 			c.draw_circle(o + Vector2(s * 0.14, -s * 0.1), s * 0.28, light)

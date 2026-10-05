@@ -42,6 +42,7 @@ func _run() -> void:
 	_test_fruit_planting()
 	_test_save_slots()
 	_test_music()
+	_test_ramps_and_sos()
 	print("\n%d checks, %d failures" % [_checks, _failures])
 	get_tree().quit(1 if _failures > 0 else 0)
 
@@ -1378,3 +1379,66 @@ func _test_music() -> void:
 			all_load = all_load and load(path) is AudioStream
 	check(all_load, "every piece of music loads")
 	check(not Music.enabled, "and none plays in headless runs")
+
+
+## Walks a player-sized point from `start` along `dir` for `frames` frames at walking pace.
+func _walk(w: World, start: Vector2, dir: Vector2, frames: int) -> Vector3:
+	var pos := Vector3(start.x, w.ground_height(start.x, start.y), start.y)
+	for i in frames:
+		var step := dir * Player.WALK_SPEED / 60.0
+		if w.can_move(pos, pos.x + step.x, pos.z, Player.RADIUS):
+			pos.x += step.x
+		if w.can_move(pos, pos.x, pos.z + step.y, Player.RADIUS):
+			pos.z += step.y
+		pos.y = w.ground_height(pos.x, pos.z)
+	return pos
+
+
+func _test_ramps_and_sos() -> void:
+	var climbs := 0
+	var stuck := 0
+	for seed_value in [3, 7, 42]:
+		var d := IslandGenerator.generate(seed_value)
+		var w := World.new()
+		add_child(w)
+		w.setup(d)
+		for i: int in d.ramps:
+			var up: Vector2i = d.ramps[i]["up"]
+			var tile := Vector2i(i % d.width, i / d.width)
+			if d.ramps.has(d.idx(tile.x - up.x, tile.y - up.y)):
+				continue
+			# The ramp's foot: up it from anywhere across its width, straight or a bit slanted.
+			var top: float = d.ramps[i]["high"] * 2.0 - d.ramps[i]["low"]
+			var side := Vector2(up.y, up.x)
+			for lat: float in [-0.3, -0.15, 0.0, 0.15, 0.3]:
+				for slant: float in [0.0, 0.2, -0.2]:
+					var start := Vector2(tile) + Vector2(0.5, 0.5) - Vector2(up) * 0.6 + side * lat
+					var end := _walk(w, start, (Vector2(up) + side * slant).normalized(), 90)
+					climbs += 1
+					stuck += 1 if end.y < top - 0.05 else 0
+		if seed_value == 7:
+			var spot := Main.rescue_spot(w)
+			check(w.is_walkable(spot.x, spot.z) and Rect2(d.plaza.grow(3)).has_point(Vector2(spot.x, spot.z))
+				and w.object_at(floori(spot.x), floori(spot.z)).is_empty(), "SOS brings you to open ground by the plaza")
+			# Off the cliff edge onto a ledge you can't leave: SOS still finds the plaza.
+			check(w.can_move(Vector3(spot.x, w.ground_height(spot.x, spot.z), spot.z), spot.x + 0.05, spot.z, Player.RADIUS)
+				or w.can_move(Vector3(spot.x, w.ground_height(spot.x, spot.z), spot.z), spot.x, spot.z + 0.05, Player.RADIUS),
+				"and you can walk away from there")
+		w.free()
+	check(climbs > 30 and stuck == 0, "every ramp can be walked up, even off-centre (%d of %d got stuck)" % [stuck, climbs])
+	# A cliff is still a cliff.
+	var d := IslandGenerator.generate(7)
+	var w := World.new()
+	add_child(w)
+	w.setup(d)
+	var blocked := 0
+	var edges := 0
+	for z in range(1, d.height - 1):
+		for x in range(1, d.width - 1):
+			if edges < 40 and d.tier(x, z) == 2 and d.tier(x, z + 1) == 1 and not d.is_ramp(x, z) and not d.is_ramp(x, z + 1) \
+					and d.tile(x, z) == IslandData.Tile.GRASS and d.tile(x, z + 1) == IslandData.Tile.GRASS and w.is_walkable(x + 0.5, z + 0.5):
+				edges += 1
+				var end := _walk(w, Vector2(x + 0.5, z + 0.5), Vector2(0, 1), 40)
+				blocked += 1 if end.y > IslandData.tier_height(2) - 0.05 else 0
+	check(edges > 5 and blocked == edges, "but you can't walk off a cliff (%d of %d held)" % [blocked, edges])
+	w.free()

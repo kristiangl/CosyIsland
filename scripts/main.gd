@@ -1,3 +1,4 @@
+class_name Main
 extends Node3D
 ## Game root. Loads or creates an island and builds the world, player, camera and UI.
 ##
@@ -131,6 +132,7 @@ func _ready() -> void:
 		save_game()
 		get_tree().quit())
 	hud.title_requested.connect(quit_to_title)
+	hud.sos_requested.connect(sos)
 	hud.wardrobe_requested.connect(func(): hud.creator.open(player.model.look, false))
 	add_child(hud)
 	hud.creator.finished.connect(_on_creator_finished)
@@ -320,6 +322,47 @@ func save_game() -> void:
 		"day": GameClock.day_key(),
 		"started_day": _started_day,
 	})
+
+
+## The phone's SOS: stuck somewhere, you're fetched back to open ground. On the island
+## that's by the plaza, on a tour by Marlow's boat, indoors the doormat.
+func sos() -> void:
+	if _going_through_door:
+		return
+	Game.mode = Game.Mode.MENU
+	await hud.fade_out()
+	player.stand()
+	var w := world_now() if tour == null else tour
+	var spot := rescue_spot(w)
+	player.position = Vector3(spot.x, w.ground_height(spot.x, spot.z), spot.z)
+	player.facing = Vector3(0, 0, 1)
+	camera_rig.snap()
+	Game.mode = Game.Mode.PLAY
+	await hud.fade_in()
+	Events.toast.emit("Rescued! Poppy brought you back to the plaza." if w == world else "Rescued! Back on safe ground.")
+
+
+## Where SOS takes you on `w`: the open tile nearest its doormat, Marlow's boat or the
+## middle of the plaza.
+static func rescue_spot(w: World) -> Vector3:
+	var from := Vector2(w.data.spawn) + Vector2(0.5, 0.5)
+	if w.interior:
+		var door := w.data.room_door()
+		from = Vector2(door.x + 0.5, door.y - 0.5)
+	elif w.tour:
+		var arrive: Vector3 = w.dock_spots(w.building("dock"))["arrive"]
+		from = Vector2(arrive.x, arrive.z)
+	var best := Vector3(from.x, 0, from.y)
+	var best_d := INF
+	for dz in range(-8, 9):
+		for dx in range(-8, 9):
+			var c := Vector2(floorf(from.x) + dx + 0.5, floorf(from.y) + dz + 0.5)
+			var tile := Vector2i(floori(c.x), floori(c.y))
+			if w.is_walkable(c.x, c.y) and w.object_at(tile.x, tile.y).is_empty() and w.can_move(
+					Vector3(c.x, w.ground_height(c.x, c.y), c.y), c.x, c.y, Player.RADIUS) and c.distance_to(from) < best_d:
+				best_d = c.distance_to(from)
+				best = Vector3(c.x, 0, c.y)
+	return best
 
 
 ## Saves and goes back to the title screen.

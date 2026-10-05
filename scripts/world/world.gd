@@ -369,6 +369,28 @@ func can_step(from: Vector3, px: float, pz: float) -> bool:
 	return is_walkable(px, pz) and absf(ground_height(px, pz) - from.y) <= IslandData.MAX_STEP
 
 
+## True if something `radius` round standing at `from` can move its middle to (px, pz):
+## the middle must step there, and four points round its edge must each land somewhere
+## walkable, level either with where that same point is now or with where the middle is
+## going. (Going up a ramp, a point over the ground beside it stays level while the middle
+## climbs; at the top it meets the cliff alongside, level with the middle. Neither should
+## stop you; walking off a cliff still does, as both the middle and that point drop.)
+func can_move(from: Vector3, px: float, pz: float, radius: float) -> bool:
+	if not can_step(from, px, pz):
+		return false
+	var middle := ground_height(px, pz)
+	for off: Vector2 in [Vector2(radius, 0), Vector2(-radius, 0), Vector2(0, radius), Vector2(0, -radius)]:
+		var x := px + off.x
+		var z := pz + off.y
+		if not is_walkable(x, z):
+			return false
+		var h := ground_height(x, z)
+		var here := ground_height(from.x + off.x, from.z + off.y)
+		if absf(h - here) > IslandData.MAX_STEP and absf(h - middle) > IslandData.MAX_STEP:
+			return false
+	return true
+
+
 # --- Island rules --------------------------------------------------------------------
 
 func chop(obj: Dictionary, player_pos: Vector3) -> void:

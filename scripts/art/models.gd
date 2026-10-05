@@ -1186,5 +1186,10 @@ static func _tool(k: MeshKit, item: String) -> void:
 		"net":
 			k.cylinder(Vector3(0, -0.1, 0), Vector3(0, 0.62, 0), 0.025, 0.025, handle, 5)
 			_net_head(k, Vector3(0, 0.79, 0), 0.17)
+		"pole":
+			# A long pole, taller than its owner, with painted bands.
+			k.cylinder(Vector3(0, -0.45, 0), Vector3(0, 1.55, 0), 0.026, 0.022, head, 6)
+			for y: float in [-0.35, 1.4]:
+				k.cylinder(Vector3(0, y, 0), Vector3(0, y + 0.08, 0), 0.03, 0.03, MeshKit.lin(Color("e0685a")), 6)
 		_:
 			k.cylinder(Vector3(0, -0.1, 0), Vector3(0, 0.5, 0), 0.03, 0.03, handle, 5)

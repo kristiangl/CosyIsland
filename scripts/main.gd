@@ -29,7 +29,7 @@ extends Node3D
 ##   --demo=flowers     stand by some flowers, one picked, with a flower in your hair
 ##   --house            with --demo: the tent has already become a house
 ##   --series=ID        with --demo or --demo=home: furniture from one series (--variant=ID)
-##   --ui=pockets|pause|map|creator|crafting|customise|journal|exchange|critters|friends|neighbour|placing (--place=ID)|intro|ask|lucy|sleep|asleep|shop|sell  (--tab=N picks a creator tab, --try=key:id,... dresses up, --closet=TEXT opens the wardrobe with clothes whose ids contain TEXT)  open a menu or mode (for screenshots)
+##   --ui=pockets|pause|map|creator|crafting|customise|journal|exchange|critters|friends|neighbour|placing (--place=ID)|intro|ask|lucy|sleep|asleep|shop|sell (--sold: just sold one)  (--tab=N picks a creator tab, --try=key:id,... dresses up, --closet=TEXT opens the wardrobe with clothes whose ids contain TEXT)  open a menu or mode (for screenshots)
 
 const AUTOSAVE_SECONDS := 60.0
 
@@ -168,6 +168,10 @@ func _ready() -> void:
 			for id in ["wood", "stone", "apple", "clay", "wooden_chair"]:
 				Inventory.add_item(id, 4)
 			hud.shop.open("buy" if Game.args["ui"] == "shop" else "sell")
+			if Game.args.has("sold"):
+				# Just sold one (--sold): the line flashes and Lucy's thanks show on top.
+				await get_tree().process_frame
+				hud.shop._sell(1, 1)
 		"tailors":
 			Inventory.add_currency(9000)
 			hud.shop.open("buy", "tailors")

@@ -33,6 +33,13 @@
 			},
 			"known": true
 		},
+		"vaulting_pole": {
+			"materials": {
+				"tree_branch": 4,
+				"wood": 4
+			},
+			"known": true
+		},
 		"stone_axe": {
 			"materials": {
 				"flimsy_axe": 1,

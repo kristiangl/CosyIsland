@@ -18,12 +18,14 @@ const APPS := [
 	["title", "Title screen", "back", "cfe6e0"],
 	["quit", "Save & quit", "door", "f2c6a8"],
 ]
-const PHONE_SIZE := Vector2(360, 540)
+const PHONE_SIZE := Vector2(360, 590)
 
 var _body: PanelContainer
 var _time: Label
 var _date: Label
 var _island: Label
+var _acorns: Label
+var _acorn_icon: TextureRect
 var _pages: Dictionary = {}
 var _page := "home"
 var _speed_button: Button
@@ -81,6 +83,11 @@ func _ready() -> void:
 	_island.add_theme_font_size_override("font_size", 16)
 	_island.add_theme_color_override("font_color", UIStyle.BROWN_LIGHT)
 	status.add_child(_island)
+	var pill := UIStyle.acorn_pill(17)
+	pill.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	stack.add_child(pill)
+	_acorns = pill.get_meta("label")
+	_acorn_icon = pill.get_meta("icon")
 
 	var pages := Control.new()
 	pages.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -170,6 +177,9 @@ func _page_title(text: String) -> Label:
 func open() -> void:
 	Game.mode = Game.Mode.MENU
 	_island.text = "%s Island" % Game.island_name if Game.island_name != "" else "Island Phone"
+	_acorns.text = UIStyle.acorns(Inventory.currency)
+	if _acorn_icon.texture == null:
+		_acorn_icon.texture = Icons.get_icon("acorn_pouch")
 	visible = true
 	_show_page("home")
 	# Slide up from below the screen.
@@ -224,6 +234,8 @@ func _process(_delta: float) -> void:
 		return
 	_time.text = GameClock.time_string()
 	_date.text = GameClock.date_string()
+	if _acorn_icon.texture == null:
+		_acorn_icon.texture = Icons.get_icon("acorn_pouch")
 	if _page == "time":
 		_travel_note.text = "For trying things out. In the game proper, a good sleep in bed moves time along." \
 			+ ("" if GameClock.offset_seconds == 0 else "\nYou've travelled %+.1f hours." % (GameClock.offset_seconds / 3600.0))

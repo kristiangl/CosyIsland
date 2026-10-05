@@ -391,6 +391,45 @@ func can_move(from: Vector3, px: float, pz: float, radius: float) -> bool:
 	return true
 
 
+## Where a vault with the pole from `from` facing `dir` lands: {"to": Vector3} across a
+## river or pond (straight ahead along the nearest of the four directions, up to
+## VAULT_WATER of water), or {"why": what's wrong} if there's no such hop.
+const VAULT_WATER := 4.5
+
+
+func vault_landing(from: Vector3, dir: Vector3) -> Dictionary:
+	if interior:
+		return {"why": "There's no room to vault in here!"}
+	var step := Vector3(signf(dir.x), 0, 0) if absf(dir.x) > absf(dir.z) else Vector3(0, 0, signf(dir.z))
+	var water := 0.0
+	var at := 0.3
+	while at < 1.5 + VAULT_WATER:
+		var p := from + step * at
+		var tile := data.tile(floori(p.x), floori(p.z))
+		if tile == T.OCEAN or not data.in_bounds(floori(p.x), floori(p.z)):
+			return {"why": "That's the sea! The pole's for rivers and ponds."}
+		if is_walkable(p.x, p.z):
+			if water > 0.0:
+				# Land: come down a little way in from the bank.
+				var to := p + step * 0.55
+				var h := ground_height(to.x, to.z)
+				if h > from.y + IslandData.MAX_STEP:
+					return {"why": "The bank over there is too high to land on."}
+				if not can_move(Vector3(to.x, h, to.z), to.x, to.z, Player.RADIUS):
+					return {"why": "There's nowhere to land over there."}
+				return {"to": Vector3(to.x, h, to.z)}
+			if at > 1.3:
+				break
+		elif tile == T.WATER:
+			water += 0.1
+			if water > VAULT_WATER:
+				return {"why": "Too far to vault across."}
+		elif water == 0.0 and at > 1.3:
+			break
+		at += 0.1
+	return {"why": "Face a river or pond, right at the edge, to vault across."}
+
+
 # --- Island rules --------------------------------------------------------------------
 
 func chop(obj: Dictionary, player_pos: Vector3) -> void:
@@ -989,6 +1028,17 @@ func add_dock(near: Vector2i) -> Dictionary:
 	var existing := building("dock")
 	if not existing.is_empty():
 		return existing
+	# On a tour, Marlow lands on the main island, not a strip of beach cut off from it.
+	var labels := IslandGenerator.regions(data) if tour else PackedInt32Array()
+	var main := -1
+	if tour:
+		var sizes := {}
+		for l in labels:
+			if l >= 0:
+				sizes[l] = sizes.get(l, 0) + 1
+		for l: int in sizes:
+			if main < 0 or sizes[l] > sizes[main]:
+				main = l
 	# rot 0 faces +Z (south), 3 faces +X, 1 faces -X, 2 faces -Z.
 	for rot: int in [2, 3, 1, 0]:
 		var best := Rect2i()
@@ -997,6 +1047,9 @@ func add_dock(near: Vector2i) -> Dictionary:
 			for x in range(1, data.width - 2):
 				var rect := Rect2i(x, z, 2, 2)
 				var dist := Vector2(rect.get_center()).distance_to(Vector2(near))
+				var land := _dock_tile(rect, rot, 0, -1)
+				if tour and (not data.in_bounds(land.x, land.y) or labels[data.idx(land.x, land.y)] != main):
+					continue
 				if dist < best_dist and _dock_fits(rect, rot):
 					best = rect
 					best_dist = dist

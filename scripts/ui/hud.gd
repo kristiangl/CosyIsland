@@ -15,6 +15,7 @@ var _tool_label: Label
 var _tool_panel: PanelContainer
 var _hint_panel: PanelContainer
 var _toast_panel: PanelContainer
+var _tour_border: ColorRect
 var _toast_label: Label
 var _toast_queue: Array[String] = []
 var _toast_timer := 0.0
@@ -42,6 +43,17 @@ func _ready() -> void:
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.theme = UIStyle.theme()
 	add_child(root)
+
+	# A sandy border round the screen while off on a tour island.
+	_tour_border = ColorRect.new()
+	_tour_border.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_tour_border.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var border_mat := ShaderMaterial.new()
+	border_mat.shader = load("res://shaders/tour_border.gdshader")
+	_tour_border.material = border_mat
+	_tour_border.visible = false
+	root.add_child(_tour_border)
+	_tour_border.resized.connect(func(): border_mat.set_shader_parameter("screen", _tour_border.size))
 
 	# Clock, top left.
 	var clock := PanelContainer.new()
@@ -136,6 +148,8 @@ func _ready() -> void:
 	_fade.modulate.a = 0.0
 	root.add_child(_fade)
 
+	# Toasts go in front of everything, menus included (so a sale shows over the shop).
+	root.move_child(_toast_panel, -1)
 	Events.toast.connect(_on_toast)
 	Events.equipped_changed.connect(_on_equipped)
 	_on_equipped(Inventory.equipped_id())
@@ -256,6 +270,7 @@ func _on_toast(text: String) -> void:
 
 
 func _update_toast(delta: float) -> void:
+	_tour_border.visible = Game.tour != null
 	_toast_timer -= delta
 	if _toast_timer > 0.3:
 		_toast_panel.modulate.a = minf(1.0, _toast_panel.modulate.a + delta * 6.0)

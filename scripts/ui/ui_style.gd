@@ -53,3 +53,43 @@ static func theme() -> Theme:
 	t.set_stylebox("focus", "Button", focus)
 	t.set_stylebox("panel", "PanelContainer", panel())
 	return t
+
+
+## "1,250 Acorns": a count of acorns with thousands marked.
+static func acorns(n: int) -> String:
+	var digits := str(absi(n))
+	var out := ""
+	for i in digits.length():
+		if i > 0 and (digits.length() - i) % 3 == 0:
+			out += ","
+		out += digits[i]
+	return ("-" if n < 0 else "") + out + " " + Game.CURRENCY_NAME
+
+
+## A little pill with the acorn pouch and the player's acorns; call set_text on the
+## label it returns (its "label" meta) to update it.
+static func acorn_pill(font_size: int = 20) -> PanelContainer:
+	var pill := PanelContainer.new()
+	var sb := panel(CREAM_DARK, 16)
+	sb.shadow_size = 0
+	sb.content_margin_left = 8
+	sb.content_margin_right = 12
+	sb.content_margin_top = 2
+	sb.content_margin_bottom = 2
+	pill.add_theme_stylebox_override("panel", sb)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 4)
+	pill.add_child(row)
+	var icon := TextureRect.new()
+	icon.texture = Icons.get_icon("acorn_pouch")
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.custom_minimum_size = Vector2(font_size + 10, font_size + 10)
+	row.add_child(icon)
+	var label := Label.new()
+	label.add_theme_font_size_override("font_size", font_size)
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	row.add_child(label)
+	pill.set_meta("label", label)
+	pill.set_meta("icon", icon)
+	return pill

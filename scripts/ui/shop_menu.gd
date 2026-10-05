@@ -17,6 +17,8 @@ var _name: Label
 var _desc: Label
 var _price: Label
 var _acorns: Label
+## What the last sale or purchase did to the acorns, shown beside them for a moment.
+var _change := 0
 var _hint: Label
 var _rows: Array[ShopRow] = []
 var _selected := -1
@@ -197,6 +199,8 @@ func _show(index: int) -> void:
 
 func _update_acorns() -> void:
 	_acorns.text = "%d %s" % [Inventory.currency, Game.CURRENCY_NAME]
+	if _change != 0:
+		_acorns.text += "  (%+d)" % _change
 
 
 func _activate(index: int) -> void:
@@ -207,6 +211,8 @@ func _activate(index: int) -> void:
 			Events.toast.emit(problem)
 		else:
 			Events.toast.emit("You bought %s!" % ItemDB.display_name(id).to_lower())
+			_rows[index].flash()
+			_pop_acorns(-Shop.buy_price(id))
 		_show(index)
 	else:
 		_sell(index, 1)
@@ -214,11 +220,34 @@ func _activate(index: int) -> void:
 
 func _sell(index: int, count: int) -> void:
 	var row := _rows[index]
-	var earned := Shop.sell(row.slot, count)
+	var pocket := row.slot
+	var earned := Shop.sell(pocket, count)
 	if earned > 0:
 		Events.toast.emit("Lucy gave you %d %s." % [earned, Game.CURRENCY_NAME.to_lower()])
 	# The slot may be empty now, so list the pockets again and stay about here.
-	_rebuild(index if not Inventory.slots[row.slot].is_empty() else index)
+	_rebuild(index)
+	if earned > 0:
+		# The line flashes (if there are more of them) and the acorns jump up.
+		for r in _rows:
+			if r.slot == pocket:
+				r.flash()
+		_pop_acorns(earned)
+
+
+## The acorn count flashes and shows what just changed, "+120" or "-400".
+func _pop_acorns(change: int) -> void:
+	_change = change
+	_update_acorns()
+	_acorns.pivot_offset = _acorns.size * Vector2(1.0, 0.5)
+	var tween := create_tween()
+	_acorns.scale = Vector2.ONE * 1.25
+	_acorns.add_theme_color_override("font_color", UIStyle.GREEN.darkened(0.25) if change > 0 else Color("c0604a"))
+	tween.tween_property(_acorns, "scale", Vector2.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_interval(0.9)
+	tween.tween_callback(func():
+		_change = 0
+		_acorns.remove_theme_color_override("font_color")
+		_update_acorns())
 
 
 func is_buying() -> bool:
@@ -239,7 +268,25 @@ class ShopRow:
 		custom_minimum_size = Vector2(440, 54)
 		focus_mode = Control.FOCUS_ALL
 
+	## A quick glow over the line, when it's just been bought or sold.
+	var _glow := 0.0
+
+	func flash() -> void:
+		_glow = 1.0
+		set_process(true)
+
+	func _process(delta: float) -> void:
+		_glow = maxf(0.0, _glow - delta * 1.4)
+		queue_redraw()
+		if _glow <= 0.0:
+			set_process(false)
+
 	func _draw() -> void:
+		if _glow > 0.0:
+			var sb := StyleBoxFlat.new()
+			sb.set_corner_radius_all(16)
+			sb.bg_color = Color(UIStyle.GREEN, 0.55 * absf(sin(_glow * PI * 2.0)) + 0.15 * _glow)
+			draw_style_box(sb, Rect2(Vector2.ZERO, size))
 		var tex := Icons.get_icon(item_id)
 		if tex:
 			draw_texture_rect(tex, Rect2(8, 3, 48, 48), false)

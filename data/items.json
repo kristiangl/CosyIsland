@@ -114,6 +114,15 @@
 			"color": "#f4f0e6",
 			"desc": "Creep up on bugs and swing. Running scares them off."
 		},
+		"vaulting_pole": {
+			"name": "Vaulting Pole",
+			"category": "tool",
+			"tool": "pole",
+			"stack": 1,
+			"price": 400,
+			"color": "#a8784a",
+			"desc": "Face a river or pond, plant it and hop across. It never wears out."
+		},
 		"tent_kit": {
 			"name": "Tent Kit",
 			"category": "kit",

@@ -195,6 +195,9 @@ Milestone 3b:
   about one tour in three lands somewhere special: an orchard of every fruit, a flower
   meadow with rare colours (pink, orange, purple, blue; never sold), a rocky island with
   iron and gold, and bug and fishing islands with creatures found nowhere else
+- [x] Vaulting pole: hop over rivers and ponds (made at the workbench, never wears out);
+  tour islands always have a way across their rivers, and a sandy border round the
+  screen while you're on one
 - [x] SOS on the phone: fetches you back to open ground by the plaza (by Marlow's boat on
   a tour, the doormat indoors) if you ever get stuck
 - [x] Title screen: a splash, then Continue and three save files (play, start over or

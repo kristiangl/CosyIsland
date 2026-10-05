@@ -21,6 +21,11 @@ var _stand_spot := Vector3.ZERO
 ## True while the line is out.
 var fishing := false
 var _line: MeshInstance3D
+## A vault with the pole under way: from, to, and how far through (0 to 1; -1 if not).
+var _vault_from := Vector3.ZERO
+var _vault_to := Vector3.ZERO
+var _vault_t := -1.0
+const VAULT_TIME := 0.9
 
 
 func setup(w: World, start: Vector3, look: Dictionary) -> void:
@@ -53,6 +58,9 @@ func _physics_process(delta: float) -> void:
 		if input.length() > 0.5 or (active and Input.is_action_just_pressed("cancel")):
 			_stand_up()
 		model.animate(delta, 0.0)
+		return
+	if _vault_t >= 0.0:
+		_vault(delta)
 		return
 	if _busy > 0.0:
 		_busy -= delta
@@ -196,6 +204,8 @@ func _use() -> void:
 			_cast()
 		"net":
 			_swing_net()
+		"pole":
+			_start_vault()
 		"axe", "shovel", "pickaxe":
 			# Each tool has one job: the axe chops trees, the pickaxe breaks rocks and the
 			# shovel digs up flowers. Anything else just gets a bump.
@@ -226,6 +236,33 @@ func _use() -> void:
 				_busy = SWING_TIME
 				model.play("shake")
 				world.shake(obj, position)
+
+
+# --- Vaulting -------------------------------------------------------------------------
+
+## Plants the pole at the water's edge and hops over to the other bank.
+func _start_vault() -> void:
+	var landing := world.vault_landing(position, facing)
+	if landing.has("why"):
+		Events.toast.emit(landing["why"])
+		return
+	_vault_from = position
+	_vault_to = landing["to"]
+	_vault_t = 0.0
+	_speed = 0.0
+	model.play("chop")
+
+
+func _vault(delta: float) -> void:
+	_vault_t = minf(1.0, _vault_t + delta / VAULT_TIME)
+	# A smooth arc over the water, highest in the middle.
+	var t := smoothstep(0.0, 1.0, _vault_t)
+	position = _vault_from.lerp(_vault_to, t) + Vector3(0, sin(_vault_t * PI) * 1.4, 0)
+	model.animate(delta, 0.0)
+	if _vault_t >= 1.0:
+		_vault_t = -1.0
+		position = _vault_to
+		Effects.burst("step", position)
 
 
 # --- Fishing and bugs ----------------------------------------------------------------

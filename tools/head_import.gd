@@ -27,7 +27,7 @@ const SIZES := {"dog": 1.2, "dog_upright": 0.9, "rabbit": 0.92, "rabbit_lop": 1.
 ## Where the eyes go, as a share of the way up the middle of the head from chin to crown
 ## (--eyes). The face shader draws them at EYE_Y, with the face's surface beside the
 ## muzzle or beak at FACE_Z, so every head's eyes sit alike.
-const EYES := {"cat": 0.42, "bird": 0.4}
+const EYES := {"cat": 0.42, "bird": 0.4, "dog_upright": 0.56}
 const DEFAULT_EYES := 0.45
 const EYE_X := 0.125
 const EYE_Y := 0.0

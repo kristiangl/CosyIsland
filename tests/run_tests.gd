@@ -43,6 +43,7 @@ func _run() -> void:
 	_test_save_slots()
 	_test_music()
 	_test_ramps_and_sos()
+	_test_tour_crossings_and_pole()
 	print("\n%d checks, %d failures" % [_checks, _failures])
 	get_tree().quit(1 if _failures > 0 else 0)
 
@@ -1442,3 +1443,66 @@ func _test_ramps_and_sos() -> void:
 				blocked += 1 if end.y > IslandData.tier_height(2) - 0.05 else 0
 	check(edges > 5 and blocked == edges, "but you can't walk off a cliff (%d of %d held)" % [blocked, edges])
 	w.free()
+
+
+func _test_tour_crossings_and_pole() -> void:
+	# Tour islands: no big patch of land is cut off from the rest by a river.
+	var cut_off := 0
+	var tours := 0
+	for n in range(1, 41):
+		var t := IslandGenerator.generate_tour(n * 7919, "apple", "tulip")
+		var labels := IslandGenerator.regions(t)
+		var sizes := {}
+		for l in labels:
+			if l >= 0:
+				sizes[l] = sizes.get(l, 0) + 1
+		var big := sizes.values().filter(func(v): return v >= 120)
+		tours += 1
+		cut_off += 1 if big.size() > 1 else 0
+		if n <= 8:
+			# Marlow lands on the biggest piece.
+			var w := World.new()
+			w.tour = true
+			add_child(w)
+			w.setup(t)
+			var dock := w.add_dock(Vector2i(t.width / 2, t.height / 2))
+			if not dock.is_empty():
+				var arrive: Vector3 = w.dock_spots(dock)["arrive"]
+				var main := -1
+				for l: int in sizes:
+					if main < 0 or sizes[l] > sizes[main]:
+						main = l
+				var at := labels[t.idx(floori(arrive.x), floori(arrive.z))]
+				check(at == main or at < 0, "Marlow lands on the main part of tour island %d" % n)
+			w.free()
+	check(cut_off <= 2, "tour islands aren't cut in two by rivers (%d of %d were)" % [cut_off, tours])
+	# The vaulting pole: across a river, not over the sea.
+	check(ItemDB.tool_type("vaulting_pole") == "pole" and not ItemDB.get_item("vaulting_pole").has("durability")
+		and Recipes.recipes.has("vaulting_pole"), "there's a vaulting pole to make, and it never wears out")
+	var d := IslandGenerator.generate(7)
+	var w := World.new()
+	add_child(w)
+	w.setup(d)
+	var vaults := 0
+	var good := 0
+	for z in range(2, d.height - 2):
+		for x in range(2, d.width - 2):
+			if vaults >= 12 or d.tile(x, z) != IslandData.Tile.WATER or d.tile(x, z - 1) != IslandData.Tile.GRASS:
+				continue
+			var from := Vector3(x + 0.5, w.ground_height(x + 0.5, z - 0.6), z - 0.6)
+			if not w.is_walkable(from.x, from.z):
+				continue
+			var landing := w.vault_landing(from, Vector3(0, 0, 1))
+			vaults += 1
+			if landing.has("to"):
+				var to: Vector3 = landing["to"]
+				good += 1 if to.z > z + 0.9 and w.is_walkable(to.x, to.z) and to.y <= from.y + IslandData.MAX_STEP else 0
+	check(vaults > 3 and good > 0, "the pole vaults from a riverbank to the far side (%d of %d spots)" % [good, vaults])
+	var beach := Vector3.ZERO
+	for z in range(d.height - 1, 0, -1):
+		if beach == Vector3.ZERO and d.tile(d.width / 2, z) == IslandData.Tile.SAND and d.tile(d.width / 2, z + 1) == IslandData.Tile.OCEAN:
+			beach = Vector3(d.width / 2 + 0.5, w.ground_height(d.width / 2 + 0.5, z + 0.5), z + 0.5)
+	check(w.vault_landing(beach, Vector3(0, 0, 1)).has("why"), "but not out to sea")
+	w.free()
+	check(UIStyle.acorns(1250) == "1,250 Acorns" and UIStyle.acorns(7) == "7 Acorns" and UIStyle.acorns(1000000) == "1,000,000 Acorns",
+		"acorns are counted with commas")

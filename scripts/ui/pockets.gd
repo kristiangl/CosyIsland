@@ -11,6 +11,7 @@ var _grid: GridContainer
 var _name_label: Label
 var _desc_label: Label
 var _currency_label: Label
+var _currency_icon: TextureRect
 var _buttons: Array[SlotButton] = []
 var _selected := 0
 
@@ -36,8 +37,10 @@ func _ready() -> void:
 	_name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	header.add_child(_name_label)
-	_currency_label = Label.new()
-	header.add_child(_currency_label)
+	var pill := UIStyle.acorn_pill(20)
+	header.add_child(pill)
+	_currency_label = pill.get_meta("label")
+	_currency_icon = pill.get_meta("icon")
 	_grid = GridContainer.new()
 	_grid.columns = COLUMNS
 	_grid.add_theme_constant_override("h_separation", 6)
@@ -104,7 +107,10 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _refresh() -> void:
-	_currency_label.text = "%d %s" % [Inventory.currency, Game.CURRENCY_NAME]
+	_currency_label.text = UIStyle.acorns(Inventory.currency)
+	# The icon renders in the background the first time.
+	if _currency_icon.texture == null:
+		_currency_icon.texture = Icons.get_icon("acorn_pouch")
 	for b in _buttons:
 		b.queue_redraw()
 	_on_focus(_selected)

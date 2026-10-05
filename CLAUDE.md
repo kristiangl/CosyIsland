@@ -71,8 +71,15 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   map uses it). Marlow's dock is `World.add_dock` (`dock_spots` for where he stands).
   Some tours land on rare kinds of island (`data/tour_islands.json`, read by `TourKinds`;
   `IslandData.kind`): the generator, rock loot and `Critters` read the kind, and creatures
-  with "islands" only live there. Campers you've met (`Story.flags["met"]`) visit your
+  with "islands" only live there. Tour islands are checked for land cut off by rivers or
+  cliffs (`IslandGenerator.regions`) and get extra bridges or ramps; the dock always lands
+  on the biggest piece. The HUD draws a sandy border round the screen while on a tour
+  (`shaders/tour_border.gdshader`). Campers you've met (`Story.flags["met"]`) visit your
   plaza some days (`Story.visitor_today`, `Npc.visiting`, `main.gd` `_check_visitor`).
+- Movement: `World.can_move` (the middle steps; edge points must land level with
+  themselves or the middle, so ramps never snag). The vaulting pole (tool "pole")
+  hops rivers and ponds via `World.vault_landing`; the phone's SOS (`Main.rescue_spot`)
+  fetches you back to the plaza.
 - Building kits (`placeable.builds`, category "kit"): placed like furniture, stamped with
   `plot_day`, and turned into their building the next night by `Story.build_kit`.
 - `Story` (autoload) holds conversation progress and every character's lines;

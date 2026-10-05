@@ -97,6 +97,8 @@ func _run(seed_value: int, w: int, h: int) -> IslandData:
 	_make_ramps()
 	_compute_corners()
 	_compute_splits()
+	if tour:
+		_connect_regions()
 	d.native_fruit = FRUITS[rng.randi() % FRUITS.size()]
 	d.native_flower = FLOWERS[rng.randi() % FLOWERS.size()]
 	while d.native_fruit in avoid:
@@ -496,6 +498,142 @@ func _place_bridge(path: Array[Vector2i]) -> void:
 		reserved[d.idx(q.x, q.y)] = 1
 
 
+## Every part of a tour island can be walked to: while a sizeable patch of land is cut
+## off from the biggest (by a river with no bridge, only one bridge for a river and its
+## branch, or a cliff with no ramp), bridge the narrowest stretch of water between them,
+## or else run a ramp down the cliff between them.
+func _connect_regions() -> void:
+	for attempt in 8:
+		var labels := regions(d)
+		var sizes := {}
+		for i in labels.size():
+			if labels[i] >= 0:
+				sizes[labels[i]] = sizes.get(labels[i], 0) + 1
+		if sizes.size() <= 1:
+			return
+		var main: int = sizes.keys().reduce(func(a, b): return a if sizes[a] >= sizes[b] else b)
+		var best := {}
+		var best_score := INF
+		for z in d.height:
+			for x in d.width:
+				for axis: Vector2i in [Vector2i(1, 0), Vector2i(0, 1)]:
+					var before := Vector2i(x, z)
+					if not d.is_land(x, z) or d.tile(x + axis.x, z + axis.y) != T.WATER:
+						continue
+					var length := 0
+					while length < 6 and d.tile(x + axis.x * (length + 1), z + axis.y * (length + 1)) == T.WATER:
+						length += 1
+					var after := before + axis * (length + 1)
+					# River mouths can be wide; up to five planks.
+					if length < 1 or length > 5 or not d.in_bounds(after.x, after.y) or not d.is_land(after.x, after.y):
+						continue
+					var la := labels[d.idx(before.x, before.y)]
+					var lb := labels[d.idx(after.x, after.y)]
+					# One end on the main island, the other on a big enough patch.
+					if la == lb or la < 0 or lb < 0 or (la != main and lb != main):
+						continue
+					var other: int = lb if la == main else la
+					if sizes[other] < 12 or d.tier(before.x, before.y) != d.tier(after.x, after.y) \
+							or reserved[d.idx(before.x, before.y)] == 1 or reserved[d.idx(after.x, after.y)] == 1:
+						continue
+					# Shortest first; prefer straight reaches with water either side.
+					var side := Vector2i(axis.y, axis.x)
+					var score := float(length)
+					for k in range(1, length + 1):
+						var w := before + axis * k
+						if d.tile(w.x + side.x, w.y + side.y) != T.WATER or d.tile(w.x - side.x, w.y - side.y) != T.WATER:
+							score += 2.0
+					if score < best_score:
+						best_score = score
+						best = {"x": before.x + axis.x, "z": before.y + axis.y, "length": length, "axis": "x" if axis.x == 1 else "z"}
+		if best.is_empty():
+			if not _ramp_between(labels, sizes, main):
+				return
+			_compute_corners()
+			_compute_splits()
+			continue
+		best["uid"] = d.new_uid()
+		best["kind"] = "bridge"
+		d.objects.append(best)
+		var axis_v := Vector2i(1, 0) if best["axis"] == "x" else Vector2i(0, 1)
+		for k in range(-1, int(best["length"]) + 1):
+			var q := Vector2i(best["x"], best["z"]) + axis_v * k
+			reserved[d.idx(q.x, q.y)] = 1
+
+
+## A ramp down a cliff from a patch cut off from the main island to it (or up to it).
+## False if there's nowhere one fits.
+func _ramp_between(labels: PackedInt32Array, sizes: Dictionary, main: int) -> bool:
+	for z in d.height:
+		for x in d.width:
+			var u := Vector2i(x, z)
+			var level := d.tier(x, z)
+			var top_label := labels[d.idx(x, z)]
+			if level < 2 or top_label < 0 or d.tile(x, z) != T.GRASS:
+				continue
+			for dir in DIRS:
+				var foot: Vector2i = u + dir * 3
+				if not d.in_bounds(foot.x, foot.y):
+					continue
+				var foot_label := labels[d.idx(foot.x, foot.y)]
+				if foot_label < 0 or foot_label == top_label or (foot_label != main and top_label != main):
+					continue
+				var other: int = foot_label if top_label == main else top_label
+				if sizes[other] >= 12 and _ramp_fits(u, dir, level):
+					_place_ramp(u, dir, level)
+					return true
+	return false
+
+
+## Which patch of walkable land each tile belongs to (-1 for water and sea): tiles are
+## joined when they're side by side without a cliff between them (ramps and gentle
+## slopes are fine), and bridges join the banks they span.
+static func regions(data: IslandData) -> PackedInt32Array:
+	var heights := PackedFloat32Array()
+	heights.resize(data.width * data.height)
+	var open := PackedByteArray()
+	open.resize(data.width * data.height)
+	for z in data.height:
+		for x in data.width:
+			var i := data.idx(x, z)
+			open[i] = 1 if data.is_land(x, z) else 0
+			heights[i] = data.height_at(x + 0.5, z + 0.5)
+	for obj in data.objects:
+		if obj.get("kind", "") != "bridge":
+			continue
+		var axis := Vector2i(1, 0) if obj["axis"] == "x" else Vector2i(0, 1)
+		var start := Vector2i(obj["x"], obj["z"])
+		var deck := heights[data.idx(start.x - axis.x, start.y - axis.y)]
+		for k in int(obj["length"]):
+			var q := start + axis * k
+			open[data.idx(q.x, q.y)] = 1
+			heights[data.idx(q.x, q.y)] = deck
+	var labels := PackedInt32Array()
+	labels.resize(data.width * data.height)
+	labels.fill(-1)
+	var next := 0
+	for i in labels.size():
+		if open[i] == 0 or labels[i] >= 0:
+			continue
+		labels[i] = next
+		var stack: Array[int] = [i]
+		while not stack.is_empty():
+			var at: int = stack.pop_back()
+			var ax := at % data.width
+			var az := at / data.width
+			for dir in DIRS:
+				var nx := ax + dir.x
+				var nz := az + dir.y
+				if not data.in_bounds(nx, nz):
+					continue
+				var n := data.idx(nx, nz)
+				if open[n] == 1 and labels[n] < 0 and absf(heights[n] - heights[at]) <= 0.7:
+					labels[n] = next
+					stack.append(n)
+		next += 1
+	return labels
+
+
 func _good_bridge_end(p: Vector2i) -> bool:
 	return d.is_land(p.x, p.y) and reserved[d.idx(p.x, p.y)] == 0
 
@@ -563,22 +701,26 @@ func _add_ramps_to(comp: Dictionary, level: int, wanted: int) -> void:
 				far_enough = false
 		if not far_enough or not _ramp_fits(c["top"], c["dir"], level):
 			continue
-		var dir: Vector2i = c["dir"]
-		var a: Vector2i = c["top"] + dir
-		var b: Vector2i = c["top"] + dir * 2
-		var high := IslandData.tier_height(level)
-		var low := IslandData.tier_height(level - 1)
-		var mid := (high + low) * 0.5
-		d.ramps[d.idx(a.x, a.y)] = {"up": -dir, "high": high, "low": mid}
-		d.ramps[d.idx(b.x, b.y)] = {"up": -dir, "high": mid, "low": low}
-		for k in range(0, 4):
-			var q: Vector2i = c["top"] + dir * k
-			var side := Vector2i(dir.y, dir.x)
-			for s in [-1, 0, 1]:
-				var r: Vector2i = q + side * s
-				if d.in_bounds(r.x, r.y):
-					reserved[d.idx(r.x, r.y)] = 1
+		_place_ramp(c["top"], c["dir"], level)
 		placed.append(c["top"])
+
+
+## A two-tile ramp down from the cliff top `top`, heading `dir`.
+func _place_ramp(top: Vector2i, dir: Vector2i, level: int) -> void:
+	var a: Vector2i = top + dir
+	var b: Vector2i = top + dir * 2
+	var high := IslandData.tier_height(level)
+	var low := IslandData.tier_height(level - 1)
+	var mid := (high + low) * 0.5
+	d.ramps[d.idx(a.x, a.y)] = {"up": -dir, "high": high, "low": mid}
+	d.ramps[d.idx(b.x, b.y)] = {"up": -dir, "high": mid, "low": low}
+	for k in range(0, 4):
+		var q: Vector2i = top + dir * k
+		var side := Vector2i(dir.y, dir.x)
+		for s in [-1, 0, 1]:
+			var r: Vector2i = q + side * s
+			if d.in_bounds(r.x, r.y):
+				reserved[d.idx(r.x, r.y)] = 1
 
 
 func _ramp_fits(u: Vector2i, dir: Vector2i, level: int) -> bool:

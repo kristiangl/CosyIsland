@@ -34,10 +34,26 @@ uniform float hip_y = 0.37;
 uniform float knee_y = 0.21;
 uniform float ankle_y = 0.1;
 
+// Checking a rig: colour each vertex by the bone that moves it most.
+uniform bool show_bones = false;
+
 varying vec3 rest;
+// 0 body, 1 arm, 2 tail (see tools/character_import.gd).
+varying float part;
+varying vec3 bone_colour;
 
 void vertex() {
 	rest = vec3(UV, UV2.x);
+	part = UV2.y;
+	if (show_bones) {
+		uint best = BONE_INDICES.x;
+		float w = BONE_WEIGHTS.x;
+		if (BONE_WEIGHTS.y > w) { best = BONE_INDICES.y; w = BONE_WEIGHTS.y; }
+		if (BONE_WEIGHTS.z > w) { best = BONE_INDICES.z; w = BONE_WEIGHTS.z; }
+		if (BONE_WEIGHTS.w > w) { best = BONE_INDICES.w; }
+		float h = fract(float(best) * 0.618);
+		bone_colour = clamp(abs(mod(h * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.0) - 1.0, 0.0, 1.0) * 0.8 + 0.2;
+	}
 	vec3 world = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	if (curved) {
 		VERTEX += (inverse(MODEL_MATRIX) * vec4(curve_world(world) - world, 0.0)).xyz;
@@ -47,11 +63,13 @@ void vertex() {
 void fragment() {
 	vec3 col = skin;
 	float ax = abs(rest.x);
-	// Arms stick out sideways in the rest pose, above the waist.
-	bool arm = ax > shoulder_x && rest.y > hip_y + 0.12;
+	bool arm = part > 0.5 && part < 1.5;
+	// Tails stay furry.
+	bool tail = part > 1.5;
 	float waist = hip_y + 0.05;
 	float top_end = mix(waist, knee_y + 0.02, hem);
-	if (arm) {
+	if (tail) {
+	} else if (arm) {
 		float sleeve_end = sleeves == 0 ? shoulder_x : (sleeves == 1 ? mix(shoulder_x, elbow_x, 0.55) : wrist_x - 0.01);
 		if (ax < sleeve_end) {
 			vec2 uv = vec2(ax, atan(rest.y - arm_y, rest.z) * 0.05);
@@ -66,10 +84,10 @@ void fragment() {
 			col = bottom_colour;
 		}
 	}
-	if (shoes && rest.y < ankle_y + 0.012 && !arm) {
+	if (shoes && rest.y < ankle_y + 0.012 && !arm && !tail) {
 		col = shoe_colour;
 	}
-	ALBEDO = col;
+	ALBEDO = show_bones ? bone_colour : col;
 	ROUGHNESS = 1.0;
 	EMISSION = cel_ambient(ALBEDO);
 }

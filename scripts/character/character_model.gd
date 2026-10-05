@@ -43,6 +43,8 @@ var _tool: MeshInstance3D
 var _skinned: SkinnedBody
 ## Wear generated base bodies where they exist (off: the procedural bodies throughout).
 static var use_base_models := true
+## Colour base bodies by bone (--bones), for checking a rig.
+static var show_bones := false
 var _face: ShaderMaterial
 var _tool_id := ""
 
@@ -165,15 +167,18 @@ func rebuild() -> void:
 	_apply_face_adjustments()
 	var head_parent := _head
 	_skinned = null
-	if not animal and use_base_models and SkinnedBody.has_model("human"):
-		# A generated base body with its clothes painted on.
+	_tail = null
+	var base: String = species.get("kind", "") if animal else ""
+	if base != "" and use_base_models and SkinnedBody.has_model(base):
+		# A generated base body (ears, muzzle and tail and all) with its clothes painted on.
+		_tail = _pivot("Tail", Vector3(0, P.HIP_Y - 0.02, -0.14), _hips)
 		_skinned = SkinnedBody.new()
 		_skinned.name = "Base"
 		add_child(_skinned)
-		_skinned.setup("human", {"hips": _hips, "waist": _waist, "body": _body, "head": _head, "arm_l": _arm_l,
+		_skinned.setup(base, {"hips": _hips, "waist": _waist, "body": _body, "head": _head, "arm_l": _arm_l,
 			"arm_r": _arm_r, "elbow_l": _elbow_l, "elbow_r": _elbow_r, "hand": _hand_r, "leg_l": _leg_l,
-			"leg_r": _leg_r, "knee_l": _knee_l, "knee_r": _knee_r}, _base_body_material("human", skin_colour), _face)
-		var shape := SkinnedBody.head_shape("human")
+			"leg_r": _leg_r, "knee_l": _knee_l, "knee_r": _knee_r, "tail": _tail}, _base_body_material(base, skin_colour), _face)
+		var shape := SkinnedBody.head_shape(base)
 		_face.set_shader_parameter("rest_space", true)
 		_face.set_shader_parameter("head_centre", shape["centre"])
 		_face.set_shader_parameter("head_scale", P.HEAD_RADIUS / shape["radius"])
@@ -211,7 +216,6 @@ func rebuild() -> void:
 					_mesh(bottom["shin"], bottom_mat, side[1])
 		var head_mesh := _mesh(AnimalParts.head() if animal else P.head(), _face, _head)
 		head_mesh.position = P.HEAD_CENTRE
-	_tail = null
 	# Animals have fur instead of hair, and their ears get in the way of hats.
 	var hat_style: String = "none" if animal else look["hat"]
 	if animal:
@@ -275,6 +279,7 @@ func _apply_face_adjustments() -> void:
 ## Ears, tail, snout, beak or ruff, and the face shader's fur markings.
 func _build_animal() -> void:
 	var kind: String = species["kind"]
+	var base := _skinned != null
 	var fur: Color = species["fur"]
 	var fur2: Color = species.get("fur2", fur)
 	var fur3: Color = species.get("stripes", fur2)
@@ -291,6 +296,9 @@ func _build_animal() -> void:
 		"ferret": [-0.03, -0.2], "mouse": [-0.01, -0.21], "bird": [0.01, -0.2]}[kind]
 	_face.set_shader_parameter("eye_y", face[0])
 	_face.set_shader_parameter("mouth_y", face[1])
+	if base:
+		# The base model has its own ears, muzzle and tail.
+		return
 	if kind != "bird":
 		var ear_colour: Color = fur2 if kind == "dog" else fur
 		var ears := _mesh(AnimalParts.ears(kind, species.get("lop", false), species.get("short", false)), _cloth(ear_colour, species.get("inner_ear", Color("e3a5aa"))), _head)
@@ -561,6 +569,7 @@ func _base_body_material(kind: String, skin_colour: Color) -> ShaderMaterial:
 	for key: String in lay:
 		mat.set_shader_parameter(key, lay[key])
 	mat.set_shader_parameter("skin", skin_colour)
+	mat.set_shader_parameter("show_bones", show_bones)
 	mat.set_shader_parameter("light_wrap", BODY_WRAP)
 	mat.set_shader_parameter("curved", curved)
 	mat.set_shader_parameter("fixed_tints", fixed_light)

@@ -1,7 +1,7 @@
 extends Node3D
 ## Shows a rigged glTF character (from assets/characters/src) lit like the island:
 ##   tools/screenshot_scene.sh out.png res://tools/skinned_preview.tscn --file=human.glb
-##     [--anim=NAME --time=SECONDS] [--angles=0,35,90]
+##     [--anim=NAME --time=SECONDS] [--angles=0,35,90] [--textured (its own material)]
 
 
 func _ready() -> void:
@@ -29,8 +29,9 @@ func _ready() -> void:
 		add_child(scene)
 		scene.position = Vector3((i - (angles.size() - 1) * 0.5) * 1.3, 0, 0)
 		scene.rotation_degrees.y = float(angles[i])
-		for mi: MeshInstance3D in scene.find_children("*", "MeshInstance3D", true, false):
-			mi.material_override = Models.material()
+		if not Game.args.has("textured"):
+			for mi: MeshInstance3D in scene.find_children("*", "MeshInstance3D", true, false):
+				mi.material_override = Models.material()
 		var player: AnimationPlayer = scene.find_children("*", "AnimationPlayer", true, false).pop_front()
 		if player and Game.args.has("anim"):
 			player.play(Game.args["anim"])

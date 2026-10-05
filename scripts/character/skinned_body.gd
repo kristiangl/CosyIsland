@@ -17,7 +17,11 @@ const FOLLOW := {
 	"RightShoulder": "body", "RightArm": "arm_l", "RightForeArm": "elbow_l", "RightHand": "hand",
 	"LeftUpLeg": "leg_r", "LeftLeg": "knee_r", "LeftFoot": "knee_r", "LeftToeBase": "knee_r",
 	"RightUpLeg": "leg_l", "RightLeg": "knee_l", "RightFoot": "knee_l", "RightToeBase": "knee_l",
+	"Tail1": "tail",
 }
+## Each tail bone after the first bends this much of the way the first does, so a
+## wag curls along the tail.
+const TAIL_CURL := 0.6
 ## Arm bones lie along X in the T-pose; the pivots hang down.
 const ARM_TURN := {"Left": -PI * 0.5, "Right": PI * 0.5}
 
@@ -35,6 +39,7 @@ var _turn: Array[Basis] = []
 var _parents: Array = []
 var _rests: Array = []
 var _globals: Array[Basis] = []
+var _tail_first := -1
 
 
 ## Whether there's a base model for this kind of character ("human", "cat"...).
@@ -86,6 +91,7 @@ func setup(kind: String, pivots: Dictionary, body_material: Material, head_mater
 		var arm: bool = side != "" and (names[i].contains("Arm") or names[i].contains("Hand"))
 		_turn.append(Basis(Vector3.BACK, ARM_TURN[side]) if arm else Basis())
 		_globals.append(Basis())
+	_tail_first = names.find("Tail1")
 	skeleton.reset_bone_poses()
 	mesh = MeshInstance3D.new()
 	mesh.mesh = m
@@ -115,12 +121,21 @@ func setup(kind: String, pivots: Dictionary, body_material: Material, head_mater
 
 ## Poses the bones from their pivots (call after the pivots have moved).
 func drive() -> void:
+	if Game.args.has("tpose"):
+		# Checking a rig: leave it in its rest pose.
+		return
 	var to_model: Transform3D = (get_parent() as Node3D).global_transform.affine_inverse()
 	for i in _parents.size():
 		var pivot := _pivot_of[i]
 		var parent: int = _parents[i]
 		var parent_global := _globals[parent] if parent >= 0 else Basis()
 		var g := parent_global
+		if pivot == null and _tail_first >= 0 and i > _tail_first:
+			# Later tail bones curl after the first.
+			var curl := Quaternion.IDENTITY.slerp(skeleton.get_bone_pose_rotation(_tail_first), TAIL_CURL)
+			skeleton.set_bone_pose_rotation(i, curl)
+			_globals[i] = parent_global * Basis(curl)
+			continue
 		if pivot:
 			var rel: Transform3D = to_model * pivot.global_transform
 			g = rel.basis.orthonormalized() * _turn[i]

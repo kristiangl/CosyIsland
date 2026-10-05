@@ -262,24 +262,32 @@ func _test_animation() -> void:
 	for i in 60:
 		m.animate(0.01, 0.0)
 	check(m._action == "", "and the action ends")
-	# The generated base body: the player wears it, and its arm follows the pivot.
-	check(SkinnedBody.has_model("human") and SkinnedBody.mesh_for("human").get_surface_count() == 2, "the human base model is there, with its head apart")
-	var lay := SkinnedBody.layout("human")
+	# Generated base bodies: cats wear one (auto-rigged, tail and all); people keep the
+	# procedural body.
+	check(m._skinned == null, "people keep the procedural body")
+	check(SkinnedBody.has_model("cat") and SkinnedBody.mesh_for("cat").get_surface_count() == 2, "the cat base model is there, with its head apart")
+	var lay := SkinnedBody.layout("cat")
 	check(lay["ankle_y"] < lay["knee_y"] and lay["knee_y"] < lay["hip_y"] and lay["hip_y"] < lay["neck_y"]
 		and lay["shoulder_x"] < lay["elbow_x"] and lay["elbow_x"] < lay["wrist_x"], "its joints are where a body's are")
-	check(m._skinned != null and m._skinned.skeleton.get_bone_count() == 22, "the player wears it")
-	var skel: Skeleton3D = m._skinned.skeleton
+	var names: Array = SkinnedBody.mesh_for("cat").get_meta("bones")
+	check(names.has("Tail1") and names.has("Tail4"), "its tail is rigged")
+	var cat := NpcData.model("maple")
+	add_child(cat)
+	check(cat._skinned != null and cat.find_child("Tail", true, false) != null, "a cat neighbour wears it")
+	var skel: Skeleton3D = cat._skinned.skeleton
 	var hand := skel.find_bone("RightHand")
+	for i in 30:
+		cat.animate(0.01, 0.0)
 	var at_rest := skel.get_bone_global_pose(hand).origin
-	m.play("chop")
-	for i in 20:
-		m.animate(0.01, 0.0)
-	check(skel.get_bone_global_pose(hand).origin.distance_to(at_rest) > 0.1, "and its tool hand moves with the chop")
-	check(m._tool.get_parent() == m._skinned.grip, "holding the tool in the bone's hand")
+	cat.play("cheer")
+	for i in 40:
+		cat.animate(0.01, 0.0)
+	check(skel.get_bone_global_pose(hand).origin.distance_to(at_rest) > 0.05, "and its arms move with the clips")
 	CharacterModel.use_base_models = false
-	m.rebuild()
-	check(m._skinned == null and m.find_child("Base", true, false) == null, "the procedural body is still there to fall back on")
+	cat.rebuild()
+	check(cat._skinned == null and cat.find_child("Base", true, false) == null, "the procedural body is still there to fall back on")
 	CharacterModel.use_base_models = true
+	cat.free()
 	for i in 60:
 		m.animate(0.01, 3.4)
 	var hips: Node3D = m.find_child("Hips", true, false)
@@ -1071,7 +1079,7 @@ func _test_neighbours() -> void:
 		if kinds.has(kind):
 			var m := NpcData.model(kinds[kind])
 			add_child(m)
-			check(m.find_child("Tail", true, false) != null and m.find_child("Tail", true, false).get_child_count() > 0, "%s has a tail" % kind)
+			check(m.find_child("Tail", true, false) != null and (m.find_child("Tail", true, false).get_child_count() > 0 or m._skinned != null), "%s has a tail" % kind)
 			m.free()
 	var d := IslandGenerator.generate(7)
 	var w := World.new()

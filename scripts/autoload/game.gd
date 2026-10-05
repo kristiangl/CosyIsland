@@ -40,6 +40,7 @@ func _enter_tree() -> void:
 		args[parts[0]] = parts[1] if parts.size() > 1 else ""
 	# --procedural: the hand-built character bodies instead of the generated base models.
 	CharacterModel.use_base_models = not args.has("procedural")
+	CharacterModel.show_bones = args.has("bones")
 	InputSetup.register()
 
 

@@ -606,20 +606,18 @@ func _start_tour() -> void:
 	Events.toast.emit("Land ho! Talk to Marlow when you're ready to sail home.")
 
 
-## Now and then someone's camping on a tour island who'd like a new home: one of the
-## neighbours who doesn't live on your island yet.
+## Someone's camping on each tour island who'd like a new home: one of the neighbours
+## who doesn't live on your island and isn't already on their way.
 func _add_camper(t: World) -> Npc:
-	var here: Array = []
+	var here: Array = Story.invited().duplicate()
 	for obj in world.objects():
 		if obj.has("resident"):
 			here.append(obj["resident"])
 	var free: Array = NpcData.neighbours().keys().filter(func(id): return not id in here)
-	if free.is_empty() or (t.data.seed_value % 3 == 0 and not Game.args.has("camper")):
+	if free.is_empty():
 		return null
 	free.sort()
 	var who: String = free[t.data.seed_value % free.size()]
-	if Story.flags.get("invited", "") in free and t.data.seed_value % 2 == 0:
-		who = Story.flags["invited"]
 	# Somewhere open near the middle of the island.
 	var centre := Vector2(t.data.width, t.data.height) * 0.5
 	var spot := Vector3.ZERO
@@ -757,7 +755,7 @@ func _run_demo() -> void:
 			camera_rig.snap()
 		return
 	if Game.args["demo"] in ["dock", "tour"]:
-		# Marlow's dock (tied up yesterday), or straight off on a tour (--camper: with someone camping).
+		# Marlow's dock (tied up yesterday), or straight off on a tour (--camper: stand by the camper).
 		Story.flags["intro_done"] = true
 		Story.flags["dock_from"] = GameClock.day_key() - 1
 		_check_house()

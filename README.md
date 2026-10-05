@@ -126,15 +126,17 @@ On-screen hints follow whatever you last touched, keyboard or controller.
   day. A tour ticket (1,000 acorns, or stamps from the journal) takes you to a little
   wild island, new every trip, with fruit and flowers that don't grow at home. Gather,
   dig up flowers, fish and catch bugs, then sail home. Sometimes a neighbour is camping
-  there; invite them and they'll move into your next plot.
-- Neighbours: buy a plot from Poppy, stake it out, and one of sixteen animal neighbours
-  (cats, dogs, rabbits, ferrets, mice and birds)
-  moves in the next day. They wander near home by day, chat in their own way and
+  there; invite them and they'll move into one of your plots. Your first ticket is free.
+- Neighbours: Poppy gives you three plots on your first day (and sells more later).
+  Stake them out, then find someone to live there on an island tour: one of sixteen
+  animal neighbours (cats, dogs, rabbits, ferrets, mice and birds) is camping on each
+  tour island, and if you invite them they move into a plot the next day. They wander near home by day, chat in their own way and
   sometimes give you furniture, and you can visit their furnished homes after six.
   Chat daily, give presents they like and do their favours to fill five hearts of
   friendship (the journal's Neighbours page shows who likes what).
-- Chop wood, shake trees for fruit and branches (and the odd piece of furniture), hit
-  rocks for stone, clay and iron (one rock a day gives acorns).
+- Chop wood with an axe, shake trees for fruit and branches (and the odd piece of
+  furniture), break rocks with a pickaxe for stone, clay and iron (one rock a day gives
+  acorns), and dig up flowers with a shovel to replant them.
 - Plant fruit on open grass and it grows into a fruit tree over four nights. Fruit
   that isn't native to your island sells to Lucy for three times as much.
 - DIY workbench with 61 recipes: tools and furniture. Message bottles wash up each day

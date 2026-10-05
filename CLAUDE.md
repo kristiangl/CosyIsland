@@ -48,8 +48,9 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   spawned near the player by time of day; fishing (`cast`/`reel`) and `net`.
 - Animal kinds are `CharacterModel.SPECIES` (cat, dog, rabbit, ferret, mouse, bird): meshes in
   `AnimalParts`, face markings in `face.gdshader` by the same index.
-- Neighbours (`data/neighbours.json`, read through `NpcData`): plots become their houses
-  overnight (`Story.move_in`, placed objects with a "resident"); their rooms are visitor
+- Neighbours (`data/neighbours.json`, read through `NpcData`): Poppy gives three plots at
+  the start; a plot only becomes a house when someone invited on a tour moves in overnight
+  (`Story.invited()`, `Story.move_in`; placed objects with a "resident"); their rooms are visitor
   `World`s (`visitor = true`: nothing can be moved). The museum's hall is a visitor room
   rebuilt from `Journal.donated` on every visit (`main.gd` `fill_museum`), never saved.
 - Island tours: `main.gd` swaps to a tour `World` (`tour = true`, `Game.tour`; nothing

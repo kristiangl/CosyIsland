@@ -183,6 +183,10 @@ Milestone 3b:
 - [x] Fruit planting: plant a fruit on open grass at home and it grows into a fruit
   tree over `World.GROW_DAYS` nights (saplings scale up); fruit from other islands sells
   for three times as much
+- [x] Neighbours only come from tours: Poppy hands out three plots on the first day (more
+  for sale later), plots stay empty until someone you invited on a tour moves in, and a
+  neighbour camps on every tour island; Marlow gives the first ticket free
+- [x] Tools with one job each: axe for trees, pickaxe for rocks, shovel for flowers
 - [x] Asking first: materials for building projects, Poppy's specimens, donations to
   the museum (all at once or one at a time) and favours ask "Give them X?" first
 

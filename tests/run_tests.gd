@@ -1066,9 +1066,18 @@ func _test_neighbours() -> void:
 			spot = rect
 	var plot := w.place_item("plot_kit", spot, 0)
 	check(plot.get("plot_day", -1) == w.day_key, "a plot remembers the day it was staked out")
+	var saved_flags := Story.flags.duplicate(true)
+	Story.flags["invited"] = []
+	w.day_key += 1
+	check(Story.move_in(w).is_empty() and plot["item"] == "plot_kit", "plots wait for someone you've invited")
+	w.day_key -= 1
+	var wanted: String = NpcData.neighbours().keys()[3]
+	Story.flags["invited"] = [wanted]
 	check(Story.move_in(w).is_empty(), "nobody moves in the same day")
 	w.day_key += 1
 	var arrived := Story.move_in(w)
+	check(arrived == [wanted] and Story.invited().is_empty(), "the one you invited moves in")
+	Story.flags = saved_flags
 	check(arrived.size() == 1 and plot["item"] == "neighbour_house" and plot["resident"] == arrived[0], "someone moves in the next day")
 	check(w.building_of(arrived[0]) == plot and Models.key_for(plot) == "nhouse:" + arrived[0], "into a house in their own colours")
 	check(Models.get_mesh(Models.key_for(plot)).get_surface_count() > 0, "the house has a model")
@@ -1164,7 +1173,11 @@ func _test_tours() -> void:
 	Story.flags["invited"] = free[-1]
 	var plot := w.place_item("plot_kit", spot, 0)
 	w.day_key += 1
-	check(Story.move_in(w) == [free[-1]] and plot["resident"] == free[-1] and not Story.flags.has("invited"), "the neighbour you invited moves in")
+	check(Story.move_in(w) == [free[-1]] and plot["resident"] == free[-1] and Story.invited().is_empty(), "an invitation from an older save still counts")
+	Inventory.reset()
+	Inventory.add_item("plot_kit")
+	Story.flags["invited"] = [free[0]]
+	check(Story.open_plots() == 1, "a plot in your pockets is an open plot")
 	w.free()
 	Story.flags = saved_flags
 

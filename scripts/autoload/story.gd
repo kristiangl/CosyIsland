@@ -104,6 +104,7 @@ func intro() -> void:
 		"Your very own tent kit! Open your pockets with {pockets}, choose the tent, and find a nice flat spot.",
 		"Somewhere with a view, I'd say.",
 	])
+	await _starting_plots()
 	flags["met_poppy"] = true
 	flags["intro_done"] = true
 	await _poppy_questions()
@@ -136,6 +137,10 @@ func _poppy(poppy: Npc) -> void:
 	if flags.has("house_day") and not flags.get("house_done", false):
 		await say("poppy", ["Your house is coming along nicely! Lucy's been hammering since breakfast.",
 			"It'll be ready tomorrow. Sleep well tonight, it's your last night under canvas!"])
+		return
+	if not flags.get("plots_given", false):
+		poppy.hop()
+		await _starting_plots()
 		return
 	if await _spare_kit("poppy", "museum_kit", flags.get("museum_kit", false) and not flags.get("museum_done", false)):
 		return
@@ -757,7 +762,9 @@ func _marlow(who: Npc) -> void:
 		await say("marlow", ["Ahoy! Marlow's the name, ferrying's the game. Poppy said you might like to see a bit of the sea.",
 			"There are little islands all over these waters. Nobody lives on most of them, so everything there's up for grabs.",
 			"Fruit you've never tasted, flowers you've never seen, and now and then someone looking for a new home.",
-			"A trip costs a tour ticket. I sell them for %d acorns, and Poppy's journal has them for stamps." % TICKET_COST])
+			"A trip costs a tour ticket. I sell them for %d acorns, and Poppy's journal has them for stamps." % TICKET_COST,
+			"Here, your first one's on me. Come and see me when you're ready!"])
+		_give("tour_ticket")
 		return
 	var greeting := _small_talk("marlow_hello", [
 		"Ahoy, {player}! Fancy a trip?",
@@ -796,32 +803,82 @@ func _marlow(who: Npc) -> void:
 func _tour_visitor(who: Npc) -> void:
 	var data := NpcData.get_character(who.id)
 	var catch: String = data.get("catchphrase", "")
-	if flags.get("invited", "") == who.id:
+	if who.id in invited():
 		await say(who.id, ["I'm packing already! See you on {island} Island. %s!" % catch.capitalize()])
 		return
 	who.hop()
 	await say(who.id, ["Oh! A visitor! I'm %s. I've been camping here a while. It's lovely, but awfully quiet, %s." % [data["name"], catch]])
+	if open_plots() <= invited().size():
+		await say(who.id, ["Is your island nice? I'd love to move somewhere friendlier one day.",
+			"Oh, but you've no plot free? Never mind. Maybe I'll see you on another island!"])
+		return
 	if await ask(who.id, "Is your island nice? I've been thinking of moving somewhere friendlier.",
 			["Come and live on mine!", "Just visiting"]) != 0:
 		await say(who.id, ["Fair enough! Enjoy the island. Mind the crabs."])
 		return
-	flags["invited"] = who.id
+	var list := invited()
+	list.append(who.id)
+	flags["invited"] = list
 	who.cheer()
-	var waiting := false
+	var staked := false
 	if Game.island:
 		for obj in Game.island.objects():
-			waiting = waiting or (obj["kind"] == "placed" and obj["item"] == "plot_kit")
+			staked = staked or (obj["kind"] == "placed" and obj["item"] == "plot_kit")
 	await say(who.id, ["Really? Oh, %s! Yes please!" % catch,
-		"I'll move into the plot you've staked out, first thing tomorrow!" if waiting
-			else "Stake out a plot from Poppy and I'll move in the very next day!"])
+		"I'll move into one of your plots first thing tomorrow!" if staked
+			else "Stake out one of your plots and I'll move in the next day!"])
 
 
 # --- Neighbours ----------------------------------------------------------------------
 
 ## Poppy sells neighbour plots once your house is built, one at a time, until everyone
 ## who might move in has.
+## How many plots Poppy hands out to begin with.
+const STARTING_PLOTS := 3
+
+
+## Poppy's first job for you: stake out three plots for neighbours, who'll come from
+## the islands you visit on Marlow's tours.
+func _starting_plots() -> void:
+	flags["plots_given"] = true
+	var have := Inventory.count_of("plot_kit")
+	if Game.island:
+		for obj in Game.island.objects():
+			if obj["kind"] == "placed" and (obj.has("resident") or obj["item"] == "plot_kit"):
+				have += 1
+	var giving := maxi(0, STARTING_PLOTS - have)
+	await say("poppy", ["And one more thing! This island's ready for a few neighbours.",
+		"Here are %s for their homes. Stake them out wherever you'd like someone to live," % ("three plots" if giving == 3 else "some plots"),
+		"just like the tent: choose one from your pockets with {pockets}."] if giving > 0 else
+		["About neighbours! Folk don't just turn up here, you know. You'll find them on your travels."])
+	for i in giving:
+		_give("plot_kit")
+	await say("poppy", ["A friend of mine, Marlow, runs a little ferry. He'll be tying up at the beach tomorrow.",
+		"He sails to islands nobody lives on, and there's often someone camping there who'd love a home.",
+		"Invite them, and they'll move into one of your plots the very next day."])
+
+
+## Plots that are staked out or still in the pockets, with nobody living in them yet.
+func open_plots() -> int:
+	var n := Inventory.count_of("plot_kit")
+	if Game.island:
+		for obj in Game.island.objects():
+			n += 1 if obj["kind"] == "placed" and obj["item"] == "plot_kit" else 0
+	return n
+
+
+## Who's been invited on a tour and is waiting for a plot, first invited first.
+func invited() -> Array:
+	var list: Variant = flags.get("invited", [])
+	if list is String:
+		list = [] if list == "" else [list]
+	return list
+
+
+## Once the first plots are out, Poppy sells more, one at a time, until everyone who
+## might move in has a plot.
 func can_offer_plot() -> bool:
-	if not flags.get("house_done", false) or Game.island == null:
+	if not flags.get("plots_given", false) or Game.island == null:
 		return false
 	var residents := 0
 	for obj in Game.island.objects():
@@ -831,9 +888,8 @@ func can_offer_plot() -> bool:
 
 
 func _plot_talk() -> void:
-	await say("poppy", ["New neighbours! I get letters every week from folk who'd love to live here.",
-		"I can sell you a plot for %d acorns. Stake it out wherever you like," % PLOT_COST,
-		"and someone will move in the very next day."])
+	await say("poppy", ["More neighbours! The more the merrier.",
+		"I can sell you another plot for %d acorns. Stake it out, then find someone on a tour to live there." % PLOT_COST])
 	if Inventory.currency < PLOT_COST:
 		await say("poppy", ["Come back when you've saved up. Selling to Lucy helps!"])
 		return
@@ -845,32 +901,28 @@ func _plot_talk() -> void:
 		"Leave room in front for the door, and somewhere to sit wouldn't hurt."])
 
 
-## Plots staked out on an earlier day get a neighbour: someone not already on the
-## island, picked by the island and the day. Returns who moved in.
+## Plots staked out on an earlier day get a neighbour: someone you invited on a tour,
+## first invited first. Plots stay empty until then. Returns who moved in.
 func move_in(island: World) -> Array[String]:
 	var here: Array = []
 	for obj in island.objects():
 		if obj.has("resident"):
 			here.append(obj["resident"])
+	var waiting: Array = invited().filter(func(id): return not id in here)
 	var arrived: Array[String] = []
 	for obj in island.objects():
+		if waiting.is_empty():
+			break
 		if obj["kind"] != "placed" or obj["item"] != "plot_kit" or int(obj.get("plot_day", island.day_key)) >= island.day_key:
 			continue
-		var free: Array = NpcData.neighbours().keys().filter(func(id): return not id in here)
-		if free.is_empty():
-			break
-		free.sort()
-		var who: String = free[(island.data.seed_value + island.day_key + here.size()) % free.size()]
-		# Someone you met on a tour and invited comes first.
-		if flags.get("invited", "") in free:
-			who = flags["invited"]
-			flags.erase("invited")
+		var who: String = waiting.pop_front()
 		obj["item"] = "neighbour_house"
 		obj["resident"] = who
 		obj.erase("plot_day")
 		island.refresh_node(obj)
 		here.append(who)
 		arrived.append(who)
+	flags["invited"] = waiting
 	return arrived
 
 

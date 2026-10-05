@@ -43,6 +43,11 @@ static func get_mesh(key: String) -> ArrayMesh:
 		var converted: ArrayMesh = load("res://assets/kaykit/%s.res" % p[1])
 		_cache[key] = converted
 		return converted
+	if p[0] == "head":
+		# A generated animal head (tools/head_import.gd), for checking it in the gallery.
+		var head: ArrayMesh = load("res://assets/characters/heads/%s.res" % p[1])
+		_cache[key] = head
+		return head
 	if p[0] == "festive_tree":
 		var tree := _festive_tree()
 		_cache[key] = tree

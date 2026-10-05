@@ -41,6 +41,7 @@ var _tail: Node3D
 var _tool: MeshInstance3D
 ## True when the head is a generated model (assets/characters/heads/<kind>.res).
 var _model_head := false
+var _head_offset := Vector3.ZERO
 ## Use generated heads where they exist (off: the procedural heads throughout).
 static var use_model_heads := true
 static var _heads: Dictionary = {}
@@ -199,7 +200,10 @@ func rebuild() -> void:
 	var head_key := head_model_for(species) if animal and use_model_heads else ""
 	_model_head = head_key != ""
 	var head_mesh := _mesh(model_head(head_key) if _model_head else (AnimalParts.head() if animal else P.head()), _face, _head)
-	head_mesh.position = P.HEAD_CENTRE
+	# A generated head sits a little lower or higher so its chin meets the body; what's
+	# worn on it (glasses, a ruff) moves with it.
+	_head_offset = model_head(head_key).get_meta("offset", Vector3.ZERO) if _model_head else Vector3.ZERO
+	head_mesh.position = P.HEAD_CENTRE + _head_offset
 	# Animals have fur instead of hair, and their ears get in the way of hats.
 	var hat_style: String = "none" if animal else look["hat"]
 	if animal:
@@ -237,7 +241,7 @@ func rebuild() -> void:
 		var size := 1.0 + int(look.get("glasses_size", 0)) * 0.06
 		var gap := 1.0 + int(look.get("eye_gap", 0)) * 0.08
 		glasses_mesh.scale = Vector3(size * gap, size, 1.0)
-		glasses_mesh.position = P.HEAD_CENTRE + Vector3(0, (int(look.get("eye_y", 0)) + int(look.get("glasses_y", 0))) * 0.01, 0)
+		glasses_mesh.position = P.HEAD_CENTRE + _head_offset + Vector3(0, (int(look.get("eye_y", 0)) + int(look.get("glasses_y", 0))) * 0.01, 0)
 		glasses_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 
@@ -291,9 +295,10 @@ func _build_animal() -> void:
 				for child in _head.get_children():
 					if child is MeshInstance3D and child.material_override == _face:
 						child.scale = Vector3(1.1, 0.98, 1.03)
-			else:
+			elif not base:
+				# (A generated head doesn't need the procedural ruff.)
 				var ruff := _mesh(AnimalParts.ruff(), _cloth(fur, fur2), _head)
-				ruff.position = P.HEAD_CENTRE
+				ruff.position = P.HEAD_CENTRE + _head_offset
 		"dog", "ferret", "mouse" when not base:
 			var snout := _mesh(AnimalParts.snout(kind), _cloth(fur if kind == "dog" else fur2, species.get("nose", Color("3a3236"))), _head)
 			snout.position = P.HEAD_CENTRE

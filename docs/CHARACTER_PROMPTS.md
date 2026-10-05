@@ -17,31 +17,36 @@ procedural.
   stay procedural.
 
 ```
-/opt/godot/godot --headless --path . --script res://tools/head_import.gd -- --name=dog_upright
+/opt/godot/godot --headless --path . --script res://tools/head_import.gd -- --name=dog_upright --from-body
 ```
 
-A full-body model works too (`--from-body` cuts the head off; that's how the cat head was
-made), but a head on its own gets more of the model's detail.
+All the heads so far came from full-body models in T-pose (`--from-body` cuts the head
+off at the throat, keeping ears clear of the arms they rest on); a head on its own works
+too and gets more of the model's detail. The importer also fixes triangles wound the
+wrong way round and smooths the normals. Per-head settings live at the top of
+`tools/head_import.gd`: `SIZES` (the mouse is scaled down, its muzzle sits low),
+`HANGING_EARS` (heads whose ears hang below the chin: the floppy dog and the lop rabbit)
+and `SMOOTHING` (the mouse's surface came out crumpled).
 
 ## The heads (10)
 
 | # | File name | Head | Who uses it |
 | --- | --- | --- | --- |
-| 1 | `cat` | Cat, pointed ears | Done (from the full-body cat); every cat but the shorthairs |
-| 2 | `cat_short` | Cat, round-faced shorthair | Daisy, Morris (`"short"`) |
-| 3 | `dog` | Dog, floppy ears | Every dog for now, Lucy and Bramble included |
-| 4 | `dog_upright` | Dog, upright ears | Dogs given `"head": "dog_upright"` |
-| 5 | `rabbit` | Rabbit, upright ears | Clover |
-| 6 | `rabbit_lop` | Rabbit, lop ears | Hazel (`"lop"`) |
-| 7 | `ferret` | Ferret | Sable, Pepper |
-| 8 | `mouse` | Mouse | Crumb, Barley |
-| 9 | `bird` | Songbird | Kiwi, Rosie |
-| 10 | `bird_sea` | Seabird | Marlow (`"head": "bird_sea"`) |
+| 1 | `cat` | Cat, pointed ears | Done; every cat |
+| 2 | `cat_short` | Cat, round-faced shorthair | Not made yet: Daisy and Morris (`"short"`) wear `cat` |
+| 3 | `dog` | Dog, floppy ears | Done; every dog but Pip and Sunny, Lucy and Bramble included |
+| 4 | `dog_upright` | Dog, upright ears | Done; Pip and Sunny (`"head": "dog_upright"`) |
+| 5 | `rabbit` | Rabbit, upright ears | Done; Clover |
+| 6 | `rabbit_lop` | Rabbit, lop ears | Done; Hazel (`"lop"`) |
+| 7 | `ferret` | Ferret | Done; Sable, Pepper |
+| 8 | `mouse` | Mouse | Done; Crumb, Barley |
+| 9 | `bird` | Songbird | Done; Kiwi, Rosie |
+| 10 | `bird_sea` | Seabird | Done; Marlow (`"head": "bird_sea"`) |
 
 The file name picks who wears it: a character's `"head"` in their species data if set,
 else their kind plus `_short` or `_lop` for those variants, else just their kind. Until a
-variant's head exists, they wear their kind's (Daisy and Morris wear `cat` for now).
-Poppy and the other long-haired cats keep their procedural ruff under the new head.
+variant's head exists, they wear their kind's. Model heads bring their own ears, muzzle
+or beak, so the procedural ones (and long-haired cats' ruff) are left off.
 
 ## Tips
 

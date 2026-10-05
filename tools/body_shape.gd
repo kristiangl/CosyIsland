@@ -33,11 +33,12 @@ static func joints(all_verts: PackedVector3Array) -> Dictionary:
 	for p in verts:
 		top = maxf(top, p.y)
 		reach = maxf(reach, absf(p.x))
-	# The arms: the forearms' height and thickness, measured out past the head's width.
+	# The arms: their height and thickness out by the hands, past where big ears or a
+	# wide head could reach.
 	var ys := PackedFloat32Array()
 	var zs := PackedFloat32Array()
 	for p in verts:
-		if absf(p.x) > reach * 0.72 and absf(p.x) < reach * 0.86:
+		if absf(p.x) > reach * 0.86 and absf(p.x) < reach * 0.96:
 			ys.append(p.y)
 			zs.append(p.z)
 	ys.sort()
@@ -143,27 +144,90 @@ static func find_arms(verts: PackedVector3Array, weld: PackedInt32Array, graph: 
 	return arms
 
 
-## The head: everything joined to the top of the head without going down through the
-## neck or into the arms, so cheeks that hang down beside the neck still count.
-static func find_head(verts: PackedVector3Array, weld: PackedInt32Array, graph: Dictionary, j: Dictionary, arms: Dictionary) -> Dictionary:
+## The head: everything joined to the top of the head without going down past the
+## throat or into the arms. With hanging_ears, ears that hang down beside the neck (a
+## spaniel's, a lop rabbit's) still count.
+static func find_head(verts: PackedVector3Array, weld: PackedInt32Array, graph: Dictionary, j: Dictionary, arms: Dictionary, hanging_ears := false) -> Dictionary:
 	var pos := {}
 	var top := -1
 	for v in verts.size():
 		pos[weld[v]] = verts[v]
 		if top < 0 or verts[v].y > (pos[top] as Vector3).y:
 			top = weld[v]
+	var floor_y: float = j["arm_y"] - j["thick"]
+	# Lop ears hang lower, out beside the body.
+	var ear_floor: float = lerpf(j["crotch_y"], j["arm_y"], 0.4)
+	var beside: float = j["shoulder_x"] * 1.05
+	var arm_line := Vector2(j["arm_y"], j["arm_z"])
+	# How wide the head is, measured above the arms: down where the arms are, anything
+	# wider than that is arm, not head.
+	var arm_top: float = j["arm_y"] + j["thick"] * 2.0
+	var width := 0.0
+	for p: Vector3 in pos.values():
+		if p.y > arm_top and p.y < arm_top + (j["top"] - arm_top) * 0.5:
+			width = maxf(width, absf(p.x))
+	# Down the middle, nothing below the throat counts: going down the front profile
+	# from the muzzle, the throat is where it reaches the neck's depth.
+	var raw := {}
+	for p: Vector3 in pos.values():
+		if absf(p.x) < j["neck_w"] and p.y > floor_y:
+			var row := int(p.y / 0.01)
+			raw[row] = maxf(raw.get(row, -INF), p.z)
+	# Each row takes its neighbours' furthest too, so a row the mesh skips doesn't dip.
+	var front := {}
+	for row: int in raw:
+		front[row] = maxf(raw[row], maxf(raw.get(row - 1, -INF), raw.get(row + 1, -INF)))
+	var muzzle_row := -1
+	for row: int in front:
+		if row * 0.01 > j["neck_y"] - 0.1 and (muzzle_row < 0 or front[row] > front[muzzle_row]):
+			muzzle_row = row
+	var deepest := INF
+	for row: int in front:
+		if row < muzzle_row:
+			deepest = minf(deepest, front[row])
+	var throat := muzzle_row
+	while throat > int(floor_y / 0.01) and front.get(throat, INF) > deepest + 0.03:
+		throat -= 1
+	var throat_y := throat * 0.01
+	# Just above the throat, nothing reaches out further than the jaw a little higher up.
+	var jaw := 0.0
+	for p: Vector3 in pos.values():
+		if p.y > throat_y + 0.06 and p.y < throat_y + 0.1 and absf(p.x) < j["reach"] * 0.6:
+			jaw = maxf(jaw, absf(p.x))
+	# Arm vertices on a grid, to keep ears that rest on the arms from bringing bits along.
+	var cell: float = minf(j["thick"] * 1.5, 0.04)
+	var arm_cells := {}
+	for id: int in arms:
+		arm_cells[((pos[id] as Vector3) / cell).floor()] = true
 	var head := {top: true}
 	var stack: Array[int] = [top]
-	var floor_y: float = j["arm_y"] - j["thick"]
 	while not stack.is_empty():
 		var at: int = stack.pop_back()
 		for n: int in graph.get(at, {}):
+			if head.has(n) or arms.has(n):
+				continue
 			var p: Vector3 = pos[n]
-			var in_neck: bool = p.y < j["neck_y"] + 0.015 and Vector2(p.x, p.z - j["neck_z"]).length() < j["neck_w"] * 1.3
-			if not head.has(n) and not arms.has(n) and not in_neck and p.y > floor_y:
+			var hanging := hanging_ears and absf(p.x) > beside
+			# Out to the sides, the shoulders come up a little higher than the throat.
+			var below := p.y < throat_y + (0.0 if absf(p.x) < beside else 0.03) and not hanging
+			var high_enough: bool = p.y > floor_y or (hanging and p.y > ear_floor)
+			var by_arm: bool = absf(p.x) > j["shoulder_x"] and Vector2(p.y, p.z).distance_to(arm_line) < j["thick"] * 1.6
+			var too_wide: bool = (p.y < arm_top and absf(p.x) > width * 1.01) or (not hanging_ears
+				and p.y < throat_y + 0.06 and absf(p.x) > jaw * 1.02)
+			var near_arm: bool = absf(p.x) > j["shoulder_x"] and _near(arm_cells, (p / cell).floor())
+			if not below and high_enough and not by_arm and not too_wide and not near_arm:
 				head[n] = true
 				stack.append(n)
 	return head
+
+
+static func _near(cells: Dictionary, at: Vector3) -> bool:
+	for x in range(-2, 3):
+		for y in range(-2, 3):
+			for z in range(-2, 3):
+				if cells.has(at + Vector3(x, y, z)):
+					return true
+	return false
 
 
 ## Vertices at the same spot (split by UV seams) share an id.

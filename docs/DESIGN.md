@@ -188,7 +188,7 @@ Milestone 3b:
   neighbour camps on every tour island; Marlow gives the first ticket free
 - [x] Tools with one job each: axe for trees, pickaxe for rocks, shovel for flowers
 - [x] Generated heads: animals keep the procedural body (clothes and animation work
-  best there) and wear a generated head; the cat's is in, the other nine to follow
+  best there) and wear a generated head; nine are in, the shorthair cat to follow
 - [x] Asking first: materials for building projects, Poppy's specimens, donations to
   the museum (all at once or one at a time) and favours ask "Give them X?" first
 

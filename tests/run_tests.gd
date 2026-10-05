@@ -268,7 +268,17 @@ func _test_animation() -> void:
 	var aabb := CharacterModel.model_head("cat").get_aabb()
 	check(aabb.get_center().distance_to(Vector3.ZERO) < 0.25 and aabb.size.x > 0.5 and aabb.size.x < 1.2, "sized and centred like the procedural head")
 	check(CharacterModel.head_model_for({"kind": "cat", "short": true}) == "cat", "a variant without its own head wears its kind's")
-	check(CharacterModel.head_model_for({"kind": "dog"}) == "" or CharacterModel.has_model_head("dog"), "no head, no model head")
+	check(CharacterModel.head_model_for({"kind": "rabbit", "lop": true}) == "rabbit_lop", "lop rabbits wear the lop head")
+	check(CharacterModel.head_model_for({"kind": "bird", "head": "bird_sea"}) == "bird_sea", "a species can name its head")
+	var heads_ok := true
+	for kind: String in ["cat", "dog", "dog_upright", "rabbit", "rabbit_lop", "ferret", "mouse", "bird", "bird_sea"]:
+		var box := CharacterModel.model_head(kind).get_aabb() if CharacterModel.has_model_head(kind) else AABB()
+		heads_ok = heads_ok and box.size.x > 0.5 and box.size.x < 1.3 and box.get_center().y > -0.4
+	check(heads_ok, "every animal kind has a generated head of about the right size")
+	var pip := NpcData.model("pip")
+	add_child(pip)
+	check(pip._model_head and CharacterModel.head_model_for(pip.species) == "dog_upright", "Pip wears the upright-eared dog head")
+	pip.free()
 	var cat := NpcData.model("maple")
 	add_child(cat)
 	check(cat._model_head and cat.find_child("Tail", true, false) != null and cat.find_child("LegL", true, false) != null,

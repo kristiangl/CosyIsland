@@ -17,7 +17,7 @@
 		},
 		"pip": {
 			"name": "Pip", "personality": "sporty", "catchphrase": "go go",
-			"species": {"kind": "dog", "fur": "#3a3434", "fur2": "#f6f1e8", "eyes": "#4a3020", "inner_ear": "#5a4a4a", "nose": "#2a2426"},
+			"species": {"head": "dog_upright", "kind": "dog", "fur": "#3a3434", "fur2": "#f6f1e8", "eyes": "#4a3020", "inner_ear": "#5a4a4a", "nose": "#2a2426"},
 			"look": {"eyes": "wide", "mouth": "grin", "cheeks": "none", "top": "tank", "top_color": "blue", "top_color2": "white", "bottom": "board_shorts", "bottom_color": "teal"},
 			"home": {"wall": "e8f2f4", "roof": "5f8fb8", "door": "f2d68a"},
 			"inside": {"series": "driftwood", "variant": "seaglass", "wall": "sky_wallpaper", "floor": "cream_tile_flooring"}
@@ -45,7 +45,7 @@
 		},
 		"sunny": {
 			"name": "Sunny", "personality": "sporty", "catchphrase": "hup",
-			"species": {"kind": "dog", "fur": "#f2c86a", "fur2": "#fff4d8", "eyes": "#4a3020", "inner_ear": "#d8a050", "nose": "#3a3236"},
+			"species": {"head": "dog_upright", "kind": "dog", "fur": "#f2c86a", "fur2": "#fff4d8", "eyes": "#4a3020", "inner_ear": "#d8a050", "nose": "#3a3236"},
 			"look": {"eyes": "classic", "mouth": "grin", "cheeks": "blush", "top": "tee", "top_color": "orange", "top_color2": "white", "bottom": "shorts", "bottom_color": "navy", "hat": "none"},
 			"home": {"wall": "fff8e0", "roof": "8fc58a", "door": "f2a660"},
 			"inside": {"series": "meadow", "variant": "sage", "wall": "mint_dot_wallpaper", "floor": "mint_tile_flooring"}

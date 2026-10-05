@@ -17,8 +17,12 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   then Continue and three files). `-- --new` starts a new island straight away in the
   scratch file (never shown on the title screen), `-- --slot=N` opens file N
   (`--slot=N --new` starts it over). Title screenshots: `--title` (`=splash|file|confirm|island`)
-  with `--screenshot=PATH`. Behind the menu is the latest file's island seen from far
-  out at sea (`TitleBackdrop`, no world curve, sea run out to `TerrainBuilder.sea_reach`).
+  with `--screenshot=PATH`. Behind the menu is a picture (`assets/title/backdrop.jpg`) of
+  an island seen from far out at sea, with butterflies (`TitleButterflies`) in front.
+  Re-render it from the live 3D view (`TitleBackdrop`, no world curve, sea run out to
+  `TerrainBuilder.sea_reach`): `xvfb-run -a -s "-screen 0 1920x1080x24" /opt/godot/godot
+  --path . --rendering-driver opengl3 --resolution 1920x1080 -- --title=island
+  --frames=40 --screenshot=/tmp/b.png`, then `ffmpeg -i /tmp/b.png -q:v 3 assets/title/backdrop.jpg`.
 - Check every script parses: `tools/check_scripts.sh` (run this first; GDScript treats
   inferred-Variant types as errors, so type loop variables over literal arrays).
 - Art check scenes (render with `tools/screenshot_scene.sh out.png res://tools/<scene>`):
@@ -39,7 +43,9 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
 ## Layout
 
 - `scripts/autoload/`: global singletons (Events bus, Game state, ItemDB, GameClock,
-  Inventory, SaveGame: one JSON file per slot, `SaveGame.slot`, 0 is scratch). Registered in `project.godot`.
+  Inventory, SaveGame: one JSON file per slot, `SaveGame.slot`, 0 is scratch; Music:
+  `assets/music`, morning/afternoon/evening pieces by the island clock, alternating
+  hourly, silent headless, in screenshots and with `--mute`). Registered in `project.godot`.
 - `scripts/world/`: island generation (`island_generator.gd`, pure data), meshes
   (`terrain_builder.gd`, `grass_field.gd`), the live `world.gd` (objects, walkability,
   island rules), `day_night.gd`, `placement.gd`.

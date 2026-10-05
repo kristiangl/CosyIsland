@@ -41,6 +41,7 @@ func _run() -> void:
 	_test_tour_visitors()
 	_test_fruit_planting()
 	_test_save_slots()
+	_test_music()
 	print("\n%d checks, %d failures" % [_checks, _failures])
 	get_tree().quit(1 if _failures > 0 else 0)
 
@@ -1363,3 +1364,17 @@ func _test_save_slots() -> void:
 	check(TitleScreen.skips_title({"screenshot": "x.png"}) and TitleScreen.skips_title({"new": ""})
 		and not TitleScreen.skips_title({}) and not TitleScreen.skips_title({"screenshot": "x.png", "title": ""}),
 		"game options on the command line skip the title screen (unless --title)")
+
+
+func _test_music() -> void:
+	check(Music.part_of_day(6.0) == "morning" and Music.part_of_day(11.9) == "morning" and Music.part_of_day(12.0) == "afternoon"
+		and Music.part_of_day(17.5) == "afternoon" and Music.part_of_day(18.0) == "evening" and Music.part_of_day(3.0) == "evening",
+		"morning from 6, afternoon from noon, evening from 6pm to 6am")
+	check(Music.track_for(8.2) != Music.track_for(9.2) and Music.track_for(8.2) == Music.track_for(10.5)
+		and Music.track_for(8.2) in Music.TRACKS["morning"], "the two pieces take turns hour by hour")
+	var all_load := true
+	for part: String in Music.TRACKS:
+		for path: String in Music.TRACKS[part]:
+			all_load = all_load and load(path) is AudioStream
+	check(all_load, "every piece of music loads")
+	check(not Music.enabled, "and none plays in headless runs")

@@ -1,8 +1,9 @@
 class_name TitleBackdrop
 extends Node3D
-## Behind the title screen: an island from the game seen from out at sea, with the
-## water close by and the island on the horizon. It's the island of the file played
-## last (as it was saved), or a fresh one when there are no files yet.
+## The picture behind the title screen (assets/title/backdrop.jpg), live: an island
+## from the game seen from far out at sea, the water close by and the island on the
+## horizon. The title shows the picture; this is for rendering it again
+## (--title=island). `saved` can be a save's data, to show that island instead.
 
 ## The island shown when there are no files.
 const DEFAULT_SEED := 7

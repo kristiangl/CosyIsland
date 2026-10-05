@@ -7,15 +7,17 @@ extends Control
 ## the game, so the tools keep working.
 ##
 ##   --title            show the title screen anyway (with --screenshot: the menu)
-##   --title=splash     the splash, for a screenshot (--title=island: just the island)
+##   --title=splash     the splash, for a screenshot (--title=island: the live 3D island
+##                      the backdrop picture is rendered from)
 ##   --title=file       the actions for file 1 (--title=confirm: asking before deleting)
 
 const GAME_SCENE := "res://scenes/main.tscn"
 ## Options that mean "go straight into the game".
 const DIRECT := ["new", "slot", "seed", "demo", "screenshot", "ui", "at", "view"]
 const SPLASH_TIME := 2.2
+## Rendered from TitleBackdrop: --title=island --screenshot=... at 1920x1080 (see CLAUDE.md).
+const BACKDROP := "res://assets/title/backdrop.jpg"
 
-var _backdrop: TitleBackdrop
 var _curtain: ColorRect
 var _splash: Control
 var _menu: Control
@@ -38,8 +40,15 @@ func _ready() -> void:
 	Game.mode = Game.Mode.MENU
 	theme = UIStyle.theme()
 	set_anchors_preset(PRESET_FULL_RECT)
-	_backdrop = TitleBackdrop.new()
-	add_child(_backdrop)
+	# A picture of an island from out at sea (rendered by --title=island), with
+	# butterflies flitting about in front of it.
+	var picture := TextureRect.new()
+	picture.texture = load(BACKDROP)
+	picture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	picture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	picture.set_anchors_preset(PRESET_FULL_RECT)
+	add_child(picture)
+	add_child(TitleButterflies.new())
 	# A cream curtain behind the splash; it lifts to show the island once it's built.
 	_curtain = ColorRect.new()
 	_curtain.color = UIStyle.CREAM
@@ -56,15 +65,15 @@ func _ready() -> void:
 	_fade.set_anchors_preset(PRESET_FULL_RECT)
 	_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_fade)
-	if Game.args.has("screenshot"):
-		_build_backdrop()
-	else:
-		_build_backdrop.call_deferred()
 	if title_arg == "splash" or title_arg == "none":
 		_show_splash()
 	elif title_arg == "island":
+		# The live island the picture is rendered from.
 		_curtain.visible = false
 		_menu.visible = false
+		var backdrop := TitleBackdrop.new()
+		add_child(backdrop)
+		backdrop.build({})
 	else:
 		_show_menu()
 		if title_arg in ["file", "confirm"] and SaveGame.has_save(1):
@@ -78,16 +87,6 @@ func _ready() -> void:
 ## Whether these command-line options go straight into the game.
 static func skips_title(args: Dictionary) -> bool:
 	return not args.has("title") and DIRECT.any(func(k): return args.has(k))
-
-
-## The island behind the menu: the file played last, as it was saved.
-func _build_backdrop() -> void:
-	if not Game.args.has("screenshot"):
-		# Let the splash show first; building takes a moment.
-		await get_tree().process_frame
-		await get_tree().process_frame
-	var latest := SaveGame.latest()
-	_backdrop.build(SaveGame.read(latest) if latest > 0 else {})
 
 
 func _process(delta: float) -> void:

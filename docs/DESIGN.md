@@ -187,10 +187,8 @@ Milestone 3b:
   for sale later), plots stay empty until someone you invited on a tour moves in, and a
   neighbour camps on every tour island; Marlow gives the first ticket free
 - [x] Tools with one job each: axe for trees, pickaxe for rocks, shovel for flowers
-- [x] Generated base bodies: cats wear a generated model, rigged by our own auto-rigger
-  (tail included) and driven by the existing pivots, with faces drawn on and clothes
-  painted on by region; people keep the procedural body. Next: clothed variants with the
-  clothes modelled in a key colour, short chunky arms, and the other animals
+- [x] Generated heads: animals keep the procedural body (clothes and animation work
+  best there) and wear a generated head; the cat's is in, the other nine to follow
 - [x] Asking first: materials for building projects, Poppy's specimens, donations to
   the museum (all at once or one at a time) and favours ask "Give them X?" first
 

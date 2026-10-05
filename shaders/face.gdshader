@@ -51,17 +51,10 @@ uniform bool cat_blaze = false;
 uniform vec3 whisker_colour : source_color = vec3(0.85, 0.82, 0.8);
 uniform vec3 nose_colour : source_color = vec3(0.9, 0.55, 0.6);
 
-// On a generated base body (SkinnedBody) the head is part of a skinned mesh: the face
-// is drawn from its rest position (UV, UV2.x), moved to the head's centre and scaled to
-// the procedural head's size, so the same feature placements fit.
-uniform bool rest_space = false;
-uniform vec3 head_centre = vec3(0.0);
-uniform vec3 head_scale = vec3(1.0);
-
 varying vec3 local_pos;
 
 void vertex() {
-	local_pos = rest_space ? (vec3(UV, UV2.x) - head_centre) * head_scale : VERTEX;
+	local_pos = VERTEX;
 	vec3 world = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	if (curved) {
 		VERTEX += (inverse(MODEL_MATRIX) * vec4(curve_world(world) - world, 0.0)).xyz;

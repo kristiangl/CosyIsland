@@ -39,12 +39,11 @@ var _knee_r: Node3D
 var _hand_r: Node3D
 var _tail: Node3D
 var _tool: MeshInstance3D
-## The generated base body, when there's one for this kind of character.
-var _skinned: SkinnedBody
-## Wear generated base bodies where they exist (off: the procedural bodies throughout).
-static var use_base_models := true
-## Colour base bodies by bone (--bones), for checking a rig.
-static var show_bones := false
+## True when the head is a generated model (assets/characters/heads/<kind>.res).
+var _model_head := false
+## Use generated heads where they exist (off: the procedural heads throughout).
+static var use_model_heads := true
+static var _heads: Dictionary = {}
 var _face: ShaderMaterial
 var _tool_id := ""
 
@@ -166,56 +165,41 @@ func rebuild() -> void:
 	_face.set_shader_parameter("cheek_style", Appearance.index_of(look, "cheeks"))
 	_apply_face_adjustments()
 	var head_parent := _head
-	_skinned = null
 	_tail = null
-	var base: String = species.get("kind", "") if animal else ""
-	if base != "" and use_base_models and SkinnedBody.has_model(base):
-		# A generated base body (ears, muzzle and tail and all) with its clothes painted on.
-		_tail = _pivot("Tail", Vector3(0, P.HIP_Y - 0.02, -0.14), _hips)
-		_skinned = SkinnedBody.new()
-		_skinned.name = "Base"
-		add_child(_skinned)
-		_skinned.setup(base, {"hips": _hips, "waist": _waist, "body": _body, "head": _head, "arm_l": _arm_l,
-			"arm_r": _arm_r, "elbow_l": _elbow_l, "elbow_r": _elbow_r, "hand": _hand_r, "leg_l": _leg_l,
-			"leg_r": _leg_r, "knee_l": _knee_l, "knee_r": _knee_r, "tail": _tail}, _base_body_material(base, skin_colour), _face)
-		var shape := SkinnedBody.head_shape(base)
-		_face.set_shader_parameter("rest_space", true)
-		_face.set_shader_parameter("head_centre", shape["centre"])
-		_face.set_shader_parameter("head_scale", P.HEAD_RADIUS / shape["radius"])
-		_tool.reparent(_skinned.grip, false)
-		head_parent = _skinned.head_frame
-	else:
-		# Body and limbs.
-		_mesh(P.torso_skin(), skin, _body)
-		var barefoot: bool = look["shoes"] == "none" or Appearance.option(look, "shoes").get("open", false)
-		var legs := P.leg_skin(barefoot)
-		var arms := P.arm_skin()
-		for side in [[_leg_l, _knee_l], [_leg_r, _knee_r]]:
-			_mesh(legs["upper"], skin, side[0])
-			_mesh(legs["lower"], skin, side[1])
-			if look["shoes"] != "none":
-				_mesh(P.shoe(look["shoes"]), shoe_mat, side[1])
-		for side in [[_arm_l, _elbow_l], [_arm_r, _elbow_r]]:
-			_mesh(arms["upper"], skin, side[0])
-			_mesh(arms["lower"], skin, side[1])
+	# Body and limbs.
+	_mesh(P.torso_skin(), skin, _body)
+	var barefoot: bool = look["shoes"] == "none" or Appearance.option(look, "shoes").get("open", false)
+	var legs := P.leg_skin(barefoot)
+	var arms := P.arm_skin()
+	for side in [[_leg_l, _knee_l], [_leg_r, _knee_r]]:
+		_mesh(legs["upper"], skin, side[0])
+		_mesh(legs["lower"], skin, side[1])
+		if look["shoes"] != "none":
+			_mesh(P.shoe(look["shoes"]), shoe_mat, side[1])
+	for side in [[_arm_l, _elbow_l], [_arm_r, _elbow_r]]:
+		_mesh(arms["upper"], skin, side[0])
+		_mesh(arms["lower"], skin, side[1])
 
-		var top := P.top(look["top"])
-		_mesh(top["torso"], top_mat, _body)
-		for side in [[_arm_l, _elbow_l], [_arm_r, _elbow_r]]:
-			if top["sleeve"]:
-				_mesh(top["sleeve"], top_mat, side[0])
-			if top["cuff"]:
-				_mesh(top["cuff"], top_mat, side[1])
-		if not Appearance.is_full_body_top(look):
-			var bottom := P.bottom(look["bottom"])
-			_mesh(bottom["hips"], bottom_mat, _body)
-			for side in [[_leg_l, _knee_l], [_leg_r, _knee_r]]:
-				if bottom["leg"]:
-					_mesh(bottom["leg"], bottom_mat, side[0])
-				if bottom["shin"]:
-					_mesh(bottom["shin"], bottom_mat, side[1])
-		var head_mesh := _mesh(AnimalParts.head() if animal else P.head(), _face, _head)
-		head_mesh.position = P.HEAD_CENTRE
+	var top := P.top(look["top"])
+	_mesh(top["torso"], top_mat, _body)
+	for side in [[_arm_l, _elbow_l], [_arm_r, _elbow_r]]:
+		if top["sleeve"]:
+			_mesh(top["sleeve"], top_mat, side[0])
+		if top["cuff"]:
+			_mesh(top["cuff"], top_mat, side[1])
+	if not Appearance.is_full_body_top(look):
+		var bottom := P.bottom(look["bottom"])
+		_mesh(bottom["hips"], bottom_mat, _body)
+		for side in [[_leg_l, _knee_l], [_leg_r, _knee_r]]:
+			if bottom["leg"]:
+				_mesh(bottom["leg"], bottom_mat, side[0])
+			if bottom["shin"]:
+				_mesh(bottom["shin"], bottom_mat, side[1])
+	# A generated head where there's one for this kind of animal (ears and all).
+	var head_key := head_model_for(species) if animal and use_model_heads else ""
+	_model_head = head_key != ""
+	var head_mesh := _mesh(model_head(head_key) if _model_head else (AnimalParts.head() if animal else P.head()), _face, _head)
+	head_mesh.position = P.HEAD_CENTRE
 	# Animals have fur instead of hair, and their ears get in the way of hats.
 	var hat_style: String = "none" if animal else look["hat"]
 	if animal:
@@ -279,7 +263,7 @@ func _apply_face_adjustments() -> void:
 ## Ears, tail, snout, beak or ruff, and the face shader's fur markings.
 func _build_animal() -> void:
 	var kind: String = species["kind"]
-	var base := _skinned != null
+	var base := _model_head
 	var fur: Color = species["fur"]
 	var fur2: Color = species.get("fur2", fur)
 	var fur3: Color = species.get("stripes", fur2)
@@ -296,10 +280,7 @@ func _build_animal() -> void:
 		"ferret": [-0.03, -0.2], "mouse": [-0.01, -0.21], "bird": [0.01, -0.2]}[kind]
 	_face.set_shader_parameter("eye_y", face[0])
 	_face.set_shader_parameter("mouth_y", face[1])
-	if base:
-		# The base model has its own ears, muzzle and tail.
-		return
-	if kind != "bird":
+	if kind != "bird" and not base:
 		var ear_colour: Color = fur2 if kind == "dog" else fur
 		var ears := _mesh(AnimalParts.ears(kind, species.get("lop", false), species.get("short", false)), _cloth(ear_colour, species.get("inner_ear", Color("e3a5aa"))), _head)
 		ears.position = P.HEAD_CENTRE
@@ -313,10 +294,10 @@ func _build_animal() -> void:
 			else:
 				var ruff := _mesh(AnimalParts.ruff(), _cloth(fur, fur2), _head)
 				ruff.position = P.HEAD_CENTRE
-		"dog", "ferret", "mouse":
+		"dog", "ferret", "mouse" when not base:
 			var snout := _mesh(AnimalParts.snout(kind), _cloth(fur if kind == "dog" else fur2, species.get("nose", Color("3a3236"))), _head)
 			snout.position = P.HEAD_CENTRE
-		"bird":
+		"bird" when not base:
 			var beak := _mesh(AnimalParts.beak(), _cloth(species.get("beak", Color("f2b14a")), species.get("crest", fur3)), _head)
 			beak.position = P.HEAD_CENTRE
 	_tail = _pivot("Tail", Vector3(0, P.HIP_Y - 0.02, -0.14), _hips)
@@ -386,8 +367,6 @@ func animate(delta: float, speed: float, turn_rate: float = 0.0, accel: float = 
 	t["head_yaw"] += clampf(turn_rate * 0.06, -0.3, 0.3)
 	_apply(t, delta)
 	_play_clips(delta, moving)
-	if _skinned:
-		_skinned.drive()
 
 
 ## The KayKit layer: an action if one's playing, else sitting, lying, fishing or idling,
@@ -560,35 +539,35 @@ func _mesh(mesh: ArrayMesh, material: Material, parent: Node3D) -> MeshInstance3
 	return mi
 
 
-## Skin and clothes painted onto a base body: the top's sleeves and hem, the bottoms'
-## length and the shoes, from the look and the body's layout.
-func _base_body_material(kind: String, skin_colour: Color) -> ShaderMaterial:
-	var mat := ShaderMaterial.new()
-	mat.shader = _shader("skinned_body")
-	var lay := SkinnedBody.layout(kind)
-	for key: String in lay:
-		mat.set_shader_parameter(key, lay[key])
-	mat.set_shader_parameter("skin", skin_colour)
-	mat.set_shader_parameter("show_bones", show_bones)
-	mat.set_shader_parameter("light_wrap", BODY_WRAP)
-	mat.set_shader_parameter("curved", curved)
-	mat.set_shader_parameter("fixed_tints", fixed_light)
-	mat.set_shader_parameter("top_a", Appearance.color(look, "top_color"))
-	mat.set_shader_parameter("top_b", Appearance.color(look, "top_color2"))
-	mat.set_shader_parameter("top_pattern", Appearance.index_of(look, "top_pattern"))
-	var top := P.top(look["top"])
-	mat.set_shader_parameter("sleeves", 0 if top["sleeve"] == null else (2 if top["cuff"] != null else 1))
-	var dress := Appearance.is_full_body_top(look)
-	mat.set_shader_parameter("hem", 1.0 if dress else 0.0)
-	var bottoms := 0
-	if not dress:
-		var bottom := P.bottom(look["bottom"])
-		bottoms = 3 if bottom["shin"] != null else (2 if look["bottom"].contains("skirt") else 1)
-	mat.set_shader_parameter("bottoms", bottoms)
-	mat.set_shader_parameter("bottom_colour", Appearance.color(look, "bottom_color"))
-	mat.set_shader_parameter("shoes", look["shoes"] != "none")
-	mat.set_shader_parameter("shoe_colour", Appearance.color(look, "shoe_color"))
-	return mat
+## The generated head an animal wears ("" for none): its own "head" if it names one,
+## else its kind with "_short" (British Shorthair cats) or "_lop" (lop ears), else just
+## its kind, whichever has a model.
+static func head_model_for(animal: Dictionary) -> String:
+	var kind: String = animal.get("kind", "")
+	var options: Array[String] = []
+	if animal.has("head"):
+		options.append(animal["head"])
+	if animal.get("short", false):
+		options.append(kind + "_short")
+	if animal.get("lop", false):
+		options.append(kind + "_lop")
+	options.append(kind)
+	for key in options:
+		if has_model_head(key):
+			return key
+	return ""
+
+
+## Whether there's a generated head by this name (assets/characters/heads/).
+static func has_model_head(kind: String) -> bool:
+	return _heads.has(kind) or ResourceLoader.exists("res://assets/characters/heads/%s.res" % kind)
+
+
+## The generated head for this kind of animal (see tools/head_import.gd).
+static func model_head(kind: String) -> ArrayMesh:
+	if not _heads.has(kind):
+		_heads[kind] = load("res://assets/characters/heads/%s.res" % kind)
+	return _heads[kind]
 
 
 func _cloth(a: Color, b: Color = Color.WHITE, pattern: int = 0) -> ShaderMaterial:

@@ -262,31 +262,21 @@ func _test_animation() -> void:
 	for i in 60:
 		m.animate(0.01, 0.0)
 	check(m._action == "", "and the action ends")
-	# Generated base bodies: cats wear one (auto-rigged, tail and all); people keep the
-	# procedural body.
-	check(m._skinned == null, "people keep the procedural body")
-	check(SkinnedBody.has_model("cat") and SkinnedBody.mesh_for("cat").get_surface_count() == 2, "the cat base model is there, with its head apart")
-	var lay := SkinnedBody.layout("cat")
-	check(lay["ankle_y"] < lay["knee_y"] and lay["knee_y"] < lay["hip_y"] and lay["hip_y"] < lay["neck_y"]
-		and lay["shoulder_x"] < lay["elbow_x"] and lay["elbow_x"] < lay["wrist_x"], "its joints are where a body's are")
-	var names: Array = SkinnedBody.mesh_for("cat").get_meta("bones")
-	check(names.has("Tail1") and names.has("Tail4"), "its tail is rigged")
+	# Generated heads: cats wear one on the procedural body; people keep theirs.
+	check(not m._model_head, "people keep the procedural head")
+	check(CharacterModel.has_model_head("cat") and CharacterModel.model_head("cat").get_surface_count() == 1, "there's a generated cat head")
+	var aabb := CharacterModel.model_head("cat").get_aabb()
+	check(aabb.get_center().distance_to(Vector3.ZERO) < 0.25 and aabb.size.x > 0.5 and aabb.size.x < 1.2, "sized and centred like the procedural head")
+	check(CharacterModel.head_model_for({"kind": "cat", "short": true}) == "cat", "a variant without its own head wears its kind's")
+	check(CharacterModel.head_model_for({"kind": "dog"}) == "" or CharacterModel.has_model_head("dog"), "no head, no model head")
 	var cat := NpcData.model("maple")
 	add_child(cat)
-	check(cat._skinned != null and cat.find_child("Tail", true, false) != null, "a cat neighbour wears it")
-	var skel: Skeleton3D = cat._skinned.skeleton
-	var hand := skel.find_bone("RightHand")
-	for i in 30:
-		cat.animate(0.01, 0.0)
-	var at_rest := skel.get_bone_global_pose(hand).origin
-	cat.play("cheer")
-	for i in 40:
-		cat.animate(0.01, 0.0)
-	check(skel.get_bone_global_pose(hand).origin.distance_to(at_rest) > 0.05, "and its arms move with the clips")
-	CharacterModel.use_base_models = false
+	check(cat._model_head and cat.find_child("Tail", true, false) != null and cat.find_child("LegL", true, false) != null,
+		"a cat neighbour wears it, on the procedural body with its tail")
+	CharacterModel.use_model_heads = false
 	cat.rebuild()
-	check(cat._skinned == null and cat.find_child("Base", true, false) == null, "the procedural body is still there to fall back on")
-	CharacterModel.use_base_models = true
+	check(not cat._model_head, "the procedural head is still there to fall back on")
+	CharacterModel.use_model_heads = true
 	cat.free()
 	for i in 60:
 		m.animate(0.01, 3.4)
@@ -1079,7 +1069,7 @@ func _test_neighbours() -> void:
 		if kinds.has(kind):
 			var m := NpcData.model(kinds[kind])
 			add_child(m)
-			check(m.find_child("Tail", true, false) != null and (m.find_child("Tail", true, false).get_child_count() > 0 or m._skinned != null), "%s has a tail" % kind)
+			check(m.find_child("Tail", true, false) != null and m.find_child("Tail", true, false).get_child_count() > 0, "%s has a tail" % kind)
 			m.free()
 	var d := IslandGenerator.generate(7)
 	var w := World.new()

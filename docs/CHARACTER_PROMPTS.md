@@ -1,322 +1,199 @@
-# Character base model prompts
+# Animal head prompts
 
-Image prompts for ChatGPT, to make reference images for an image-to-3D service. The
-3D models replace the procedural bodies in `scripts/character/`.
+Image prompts for ChatGPT, to make reference images for an image-to-3D service. The 3D
+heads replace the procedural animal heads; bodies, clothes and animation stay
+procedural.
 
-## How the models will be used
+## How the heads are used
 
-- **One bare base body per kind of character**, smooth like an unpainted vinyl toy.
-  Faces stay blank: eyes, mouths, noses and markings keep coming from the face shader,
-  so they can still be moved and changed in the creator.
-- **Clothes are painted onto the body as textures**: tops on everyone, and shorts or
-  trousers on the human's legs. Animals go without bottoms, as in Animal Crossing.
-  Anything that sticks out from the body gets its own small mesh: skirts, dresses,
-  hoods, hats, hair and glasses.
-- **Fur colours and patterns are textures too**, so one cat model covers every cat
-  neighbour.
-
-## The models (12)
-
-| # | Model | Who uses it |
-| --- | --- | --- |
-| 1 | Human, bald | The player |
-| 2 | Cat, pointed ears | Most cat neighbours |
-| 3 | Cat, long-haired | Poppy |
-| 4 | Cat, round-faced shorthair | Daisy, Morris |
-| 5 | Dog, upright ears | Dogs with pricked ears |
-| 6 | Dog, floppy ears | Bramble, Lucy, droopy-eared dogs |
-| 7 | Rabbit, upright ears | |
-| 8 | Rabbit, lop ears | |
-| 9 | Ferret | |
-| 10 | Mouse | |
-| 11 | Bird, songbird | Kiwi, Rosie |
-| 12 | Bird, seabird | Marlow |
-
-## What we learned from the first two
-
-- The human came back rigged by a free auto-rigger, which works. The cat came back
-  unrigged; `tools/auto_rig.gd` rigs those itself (tail included), so rigging services
-  aren't needed.
-- The cat's arms were long and thin with spread fingers, and hanging down they look
-  like flaps. The prompts now ask for short, chunky arms with mitten paws and a gap
-  under the head. If a model still comes back with long arms, the converter can
-  shorten and thicken them (`--arms=0.65`), but it's better from the start.
-- Faces, ears and tails worked well. Keep the faces blank.
-
-## Clothes built into the model
-
-Painted-on clothes have no shape of their own (no sleeve edges, collars or hems), so
-each animal can also come in a few outfits with the clothes modelled on:
-
-| Variant | Clothes |
-| --- | --- |
-| Short sleeves | A plain fitted t-shirt, sleeves ending halfway to the elbow, hem just above the hips |
-| Long sleeves | The same with sleeves to the wrists |
-| Dress | A plain dress with short sleeves and a skirt flaring out to just above the knees |
-
-Animals go without bottoms, as in Animal Crossing. That's 3 outfits per animal body.
-Try one first (the short-sleeved cat) before making the rest.
-
-The clothes go in a single flat key colour, magenta. The converter then finds them from
-the model's texture and the game repaints them in any colour and pattern, so one
-modelled t-shirt covers every t-shirt in the catalogue. To make a variant, take the
-animal's prompt and replace its "Surface" paragraph with this one (wording for the
-short-sleeved shirt; swap in the long sleeves or the dress):
+- `tools/head_import.gd` converts a head into `assets/characters/heads/<kind>.res` and the
+  game puts it on the head joint in place of the procedural head, for every animal of
+  that kind. It's sized and placed from the tip of the muzzle and the head's width, so
+  heads from different images line up.
+- Faces stay blank in the model: eyes, mouths, noses and fur markings come from the
+  face shader, so they keep working with the creator's adjustments and each
+  neighbour's colours.
+- The ears, muzzle or beak come with the model, so the procedural ones are dropped. Tails
+  stay procedural.
 
 ```
-Clothing: the character wears a plain, fitted, short-sleeved t-shirt in flat solid magenta (#FF00FF), with no pattern, logo, folds, seams or buttons. The sleeves end halfway down the upper arm and the hem sits just above the hips. Nothing else is worn. Everything that isn't the shirt is smooth, soft and uniform light grey, like an unpainted matte vinyl toy, with no fur strands and no surface texture.
+/opt/godot/godot --headless --path . --script res://tools/head_import.gd -- --name=dog_upright
 ```
+
+A full-body model works too (`--from-body` cuts the head off; that's how the cat head was
+made), but a head on its own gets more of the model's detail.
+
+## The heads (10)
+
+| # | File name | Head | Who uses it |
+| --- | --- | --- | --- |
+| 1 | `cat` | Cat, pointed ears | Done (from the full-body cat); every cat but the shorthairs |
+| 2 | `cat_short` | Cat, round-faced shorthair | Daisy, Morris (`"short"`) |
+| 3 | `dog` | Dog, floppy ears | Every dog for now, Lucy and Bramble included |
+| 4 | `dog_upright` | Dog, upright ears | Dogs given `"head": "dog_upright"` |
+| 5 | `rabbit` | Rabbit, upright ears | Clover |
+| 6 | `rabbit_lop` | Rabbit, lop ears | Hazel (`"lop"`) |
+| 7 | `ferret` | Ferret | Sable, Pepper |
+| 8 | `mouse` | Mouse | Crumb, Barley |
+| 9 | `bird` | Songbird | Kiwi, Rosie |
+| 10 | `bird_sea` | Seabird | Marlow (`"head": "bird_sea"`) |
+
+The file name picks who wears it: a character's `"head"` in their species data if set,
+else their kind plus `_short` or `_lop` for those variants, else just their kind. Until a
+variant's head exists, they wear their kind's (Daisy and Morris wear `cat` for now).
+Poppy and the other long-haired cats keep their procedural ruff under the new head.
 
 ## Tips
 
-- Make the human first. When you ask for each animal, attach the human image and keep
-  "same size, proportions and pose as the attached image" in the prompt.
-- Do them all in one ChatGPT conversation so the style stays put. If one drifts, ask
-  for it again rather than fixing it with edits.
-- If the 3D service takes several views, also ask ChatGPT for a straight front view and
-  a straight back view of each one: "the same character, seen from directly in front"
-  (or behind), with the rest of the prompt unchanged.
-- In the 3D service, ask for a low-poly or quad-remeshed result if it offers one
-  (around 5,000 to 10,000 triangles), in T-pose, ideally auto-rigged as a humanoid.
+- Do them in one ChatGPT conversation, and attach the first head image when asking for
+  the others, with "same size, style and angle as the attached image".
+- In the 3D service, ask for a low-poly result if it offers one (a head needs 1,000 to
+  3,000 triangles).
 
 ## Prompts
 
 Each prompt stands on its own. Copy one code block at a time.
 
-### 1. Human, bald
+### 2. Cat, round-faced shorthair
 
 ```
-A single cute chibi character for a cosy life-sim game, shown as a reference for 3D modelling. A small human child-like figure, bald, with no hair.
+A single cute chibi animal head for a cosy life-sim game, shown as a reference for 3D modelling: the head of a British Shorthair cat, like an Animal Crossing villager's, on its own with no body and no neck.
 
-Proportions (keep these exact): total height is 2.4 head-heights. The head is a large, slightly wide, smooth sphere, about 42% of the total height and about 1.3 times as wide as the shoulders. There is no visible neck: the head sits right on the shoulders. The torso is short and soft, a rounded pear shape slightly wider at the hips, about 30% of the height. The legs are short, round and stubby, about 28% of the height, with a gap of one leg-width between them. The feet are small, rounded and point forward. The arms are short and chunky, only about as long as the torso is tall and thick all the way along, ending in round mittens with no fingers. Small simple rounded ears on the sides of the head.
+Shape: a large, very round, chubby-cheeked head, a little wider than it is tall, with a small, broad, softly rounded muzzle at the front. Two small, rounded cat ears set wide apart on the top corners of the head, each about a fifth of the head's height. The underside of the head is smooth and gently rounded where the neck would join.
 
-Pose: a strict, symmetrical T-pose. Standing straight, arms held straight out to the sides at shoulder height with a clear gap between the arms and the underside of the head, palms facing down, legs straight with feet slightly apart.
+Surface: completely smooth and soft, like an unpainted matte vinyl toy. Uniform light grey all over. No fur strands, no surface texture, no seams.
 
-Surface: completely smooth and soft, like an unpainted matte vinyl toy. Uniform light grey all over. No clothing, no anatomical detail, no seams, no surface texture.
+Face: completely blank apart from the muzzle shape. No eyes, no eyebrows, no nose, no mouth, no whiskers, no markings, no inner-ear detail.
 
-Face: completely blank and smooth. No eyes, no eyebrows, no nose, no mouth, no blush, no markings.
-
-View: isometric three-quarter view from the front and slightly to one side, camera about 30 degrees above, so the front and one side of the body are visible. The whole figure is in frame with space around it, centred.
+View: three-quarter view from the front and slightly to one side, camera a little above, so the face, one side and both ears are visible. The head is centred with space around it.
 
 Background: plain flat white. No ground, no shadow, no props, no text. Soft even lighting. Square image.
 ```
 
-### 2. Cat, pointed ears
+### 3. Dog, upright ears
 
 ```
-A single cute chibi character for a cosy life-sim game, shown as a reference for 3D modelling. An anthropomorphic cat standing upright on two legs, like an Animal Crossing villager. Same size, proportions and pose as the attached image.
+A single cute chibi animal head for a cosy life-sim game, shown as a reference for 3D modelling: the head of a dog, like an Animal Crossing villager's, on its own with no body and no neck.
 
-Proportions (keep these exact): total height is 2.4 head-heights, not counting the ears. The head is a large, slightly wide, smooth rounded shape, about 42% of the total height and about 1.3 times as wide as the shoulders, with a small, softly rounded muzzle at the front. There is no visible neck: the head sits right on the shoulders. The torso is short and soft, a rounded pear shape slightly wider at the hips, about 30% of the height. The legs are short, round and stubby, about 28% of the height, with a gap of one leg-width between them. The feet are small rounded paws pointing forward. The arms are short and chunky, only about as long as the torso is tall and thick all the way along, ending in round mitten paws with no fingers, claws or pads.
+Shape: a large, slightly wide, rounded head with a short, rounded dog snout at the front, sticking out about a fifth of the head's depth. Two upright, pricked triangular ears with rounded tips, like a Shiba Inu's, each about a third of the head's height, set on the top corners of the head. The underside of the head is smooth and gently rounded where the neck would join.
 
-Cat features: two upright, pointed triangular cat ears on top of the head, each about a third of the head's height. A long, thin tail that comes out low on the back, sticks out behind and curves up and to one side so it is clearly visible beside the body.
+Surface: completely smooth and soft, like an unpainted matte vinyl toy. Uniform light grey all over. No fur strands, no surface texture, no seams.
 
-Pose: a strict, symmetrical T-pose. Standing straight, arms held straight out to the sides at shoulder height with a clear gap between the arms and the underside of the head, palms facing down, legs straight with feet slightly apart.
+Face: completely blank apart from the snout shape. No eyes, no eyebrows, no nose, no mouth, no markings, no inner-ear detail.
 
-Surface: completely smooth and soft, like an unpainted matte vinyl toy. Uniform light grey all over. No fur strands, no clothing, no anatomical detail, no seams, no surface texture.
-
-Face: completely blank and smooth apart from the muzzle shape. No eyes, no eyebrows, no nose, no mouth, no whiskers, no markings.
-
-View: isometric three-quarter view from the front and slightly to one side, camera about 30 degrees above, so the front, one side of the body and the tail are visible. The whole figure is in frame with space around it, centred.
+View: three-quarter view from the front and slightly to one side, camera a little above, so the face, one side and both ears are visible. The head is centred with space around it.
 
 Background: plain flat white. No ground, no shadow, no props, no text. Soft even lighting. Square image.
 ```
 
-### 3. Cat, long-haired
+### 4. Dog, floppy ears
 
 ```
-A single cute chibi character for a cosy life-sim game, shown as a reference for 3D modelling. An anthropomorphic long-haired cat standing upright on two legs, like an Animal Crossing villager. Same size, proportions and pose as the attached image.
+A single cute chibi animal head for a cosy life-sim game, shown as a reference for 3D modelling: the head of a dog, like an Animal Crossing villager's, on its own with no body and no neck.
 
-Proportions (keep these exact): total height is 2.4 head-heights, not counting the ears. The head is a large, slightly wide, smooth rounded shape, about 42% of the total height and about 1.3 times as wide as the shoulders, with a small, softly rounded muzzle at the front. There is no visible neck: the head sits right on the shoulders. The torso is short and soft, a rounded pear shape slightly wider at the hips, about 30% of the height. The legs are short, round and stubby, about 28% of the height, with a gap of one leg-width between them. The feet are small rounded paws pointing forward. The arms are short and chunky, only about as long as the torso is tall and thick all the way along, ending in round mitten paws with no fingers, claws or pads.
+Shape: a large, slightly wide, rounded head with a short, rounded dog snout at the front, sticking out about a fifth of the head's depth. Two soft, floppy ears like a beagle's or a spaniel's, attached high on the sides of the head and hanging down flat against it to about the level of the jaw, slightly flared at the bottom. The underside of the head is smooth and gently rounded where the neck would join.
 
-Long-haired cat features: two upright pointed cat ears with small soft tufts at the tips. Soft fluffy cheeks that flare out a little at the sides of the face, and a soft rounded ruff of fur around the chest under the chin, all shaped as a few large smooth clumps, not strands. A big, bushy, plume-like tail that comes out low on the back, sticks out behind and curves up and to one side so it is clearly visible beside the body.
+Surface: completely smooth and soft, like an unpainted matte vinyl toy. Uniform light grey all over. No fur strands, no surface texture, no seams.
 
-Pose: a strict, symmetrical T-pose. Standing straight, arms held straight out to the sides at shoulder height with a clear gap between the arms and the underside of the head, palms facing down, legs straight with feet slightly apart.
+Face: completely blank apart from the snout shape. No eyes, no eyebrows, no nose, no mouth, no markings.
 
-Surface: completely smooth and soft, like an unpainted matte vinyl toy. Uniform light grey all over. No fur strands, no clothing, no anatomical detail, no seams, no surface texture.
-
-Face: completely blank and smooth apart from the muzzle shape. No eyes, no eyebrows, no nose, no mouth, no whiskers, no markings.
-
-View: isometric three-quarter view from the front and slightly to one side, camera about 30 degrees above, so the front, one side of the body and the tail are visible. The whole figure is in frame with space around it, centred.
+View: three-quarter view from the front and slightly to one side, camera a little above, so the face, one side and both ears are visible. The head is centred with space around it.
 
 Background: plain flat white. No ground, no shadow, no props, no text. Soft even lighting. Square image.
 ```
 
-### 4. Cat, round-faced shorthair
+### 5. Rabbit, upright ears
 
 ```
-A single cute chibi character for a cosy life-sim game, shown as a reference for 3D modelling. An anthropomorphic British Shorthair cat standing upright on two legs, like an Animal Crossing villager. Same size, proportions and pose as the attached image.
+A single cute chibi animal head for a cosy life-sim game, shown as a reference for 3D modelling: the head of a rabbit, like an Animal Crossing villager's, on its own with no body and no neck.
 
-Proportions (keep these exact): total height is 2.4 head-heights, not counting the ears. The head is a large, very round, chubby-cheeked shape, a little wider than the other characters', about 42% of the total height and about 1.4 times as wide as the shoulders, with a small, broad, softly rounded muzzle at the front. There is no visible neck: the head sits right on the shoulders. The torso is short, soft and a little stocky, a rounded pear shape slightly wider at the hips, about 30% of the height. The legs are short, round and stubby, about 28% of the height, with a gap of one leg-width between them. The feet are small rounded paws pointing forward. The arms are short and chunky, only about as long as the torso is tall and thick all the way along, ending in round mitten paws with no fingers, claws or pads.
+Shape: a large, slightly wide, rounded head with a small, rounded, slightly puffy muzzle at the front. Two long upright rabbit ears on top of the head, each about as tall as the head itself, slim at the base, wider in the middle with rounded tips and a shallow scoop on the front, leaning slightly apart. The underside of the head is smooth and gently rounded where the neck would join.
 
-Shorthair cat features: two small, rounded cat ears set wide apart on the top corners of the head, each about a fifth of the head's height. A thick, short-to-medium tail with a rounded tip that comes out low on the back, sticks out behind and curves to one side so it is clearly visible beside the body.
+Surface: completely smooth and soft, like an unpainted matte vinyl toy. Uniform light grey all over. No fur strands, no surface texture, no seams.
 
-Pose: a strict, symmetrical T-pose. Standing straight, arms held straight out to the sides at shoulder height with a clear gap between the arms and the underside of the head, palms facing down, legs straight with feet slightly apart.
+Face: completely blank apart from the muzzle shape. No eyes, no eyebrows, no nose, no mouth, no whiskers, no buck teeth, no markings, no inner-ear detail.
 
-Surface: completely smooth and soft, like an unpainted matte vinyl toy. Uniform light grey all over. No fur strands, no clothing, no anatomical detail, no seams, no surface texture.
-
-Face: completely blank and smooth apart from the muzzle shape. No eyes, no eyebrows, no nose, no mouth, no whiskers, no markings.
-
-View: isometric three-quarter view from the front and slightly to one side, camera about 30 degrees above, so the front, one side of the body and the tail are visible. The whole figure is in frame with space around it, centred.
+View: three-quarter view from the front and slightly to one side, camera a little above, so the face, one side and both ears are visible. The whole head, ears included, is centred with space around it.
 
 Background: plain flat white. No ground, no shadow, no props, no text. Soft even lighting. Square image.
 ```
 
-### 5. Dog, upright ears
+### 6. Rabbit, lop ears
 
 ```
-A single cute chibi character for a cosy life-sim game, shown as a reference for 3D modelling. An anthropomorphic dog standing upright on two legs, like an Animal Crossing villager. Same size, proportions and pose as the attached image.
+A single cute chibi animal head for a cosy life-sim game, shown as a reference for 3D modelling: the head of a lop-eared rabbit, like an Animal Crossing villager's, on its own with no body and no neck.
 
-Proportions (keep these exact): total height is 2.4 head-heights, not counting the ears. The head is a large, slightly wide, smooth rounded shape, about 42% of the total height and about 1.3 times as wide as the shoulders, with a short, rounded dog snout at the front, sticking out about a fifth of the head's depth. There is no visible neck: the head sits right on the shoulders. The torso is short and soft, a rounded pear shape slightly wider at the hips, about 30% of the height. The legs are short, round and stubby, about 28% of the height, with a gap of one leg-width between them. The feet are small rounded paws pointing forward. The arms are short and chunky, only about as long as the torso is tall and thick all the way along, ending in round mitten paws with no fingers, claws or pads.
+Shape: a large, slightly wide, rounded head with a small, rounded, slightly puffy muzzle at the front. Two long, wide, soft ears that start on the top of the head and droop down the sides, hanging a little below the jaw, slightly flared and rounded at the ends, held a little away from the cheeks. The underside of the head is smooth and gently rounded where the neck would join.
 
-Dog features: two upright, pricked triangular ears with rounded tips, like a Shiba Inu's, each about a third of the head's height, set on the top corners of the head. A fluffy tail that comes out low on the back and curls up over itself into a loose ring, turned to one side so it is clearly visible beside the body.
+Surface: completely smooth and soft, like an unpainted matte vinyl toy. Uniform light grey all over. No fur strands, no surface texture, no seams.
 
-Pose: a strict, symmetrical T-pose. Standing straight, arms held straight out to the sides at shoulder height with a clear gap between the arms and the underside of the head, palms facing down, legs straight with feet slightly apart.
+Face: completely blank apart from the muzzle shape. No eyes, no eyebrows, no nose, no mouth, no whiskers, no buck teeth, no markings.
 
-Surface: completely smooth and soft, like an unpainted matte vinyl toy. Uniform light grey all over. No fur strands, no clothing, no anatomical detail, no seams, no surface texture.
-
-Face: completely blank and smooth apart from the snout shape. No eyes, no eyebrows, no nose, no mouth, no markings.
-
-View: isometric three-quarter view from the front and slightly to one side, camera about 30 degrees above, so the front, one side of the body and the tail are visible. The whole figure is in frame with space around it, centred.
+View: three-quarter view from the front and slightly to one side, camera a little above, so the face, one side and both ears are visible. The head is centred with space around it.
 
 Background: plain flat white. No ground, no shadow, no props, no text. Soft even lighting. Square image.
 ```
 
-### 6. Dog, floppy ears
+### 7. Ferret
 
 ```
-A single cute chibi character for a cosy life-sim game, shown as a reference for 3D modelling. An anthropomorphic dog standing upright on two legs, like an Animal Crossing villager. Same size, proportions and pose as the attached image.
+A single cute chibi animal head for a cosy life-sim game, shown as a reference for 3D modelling: the head of a ferret, like an Animal Crossing villager's, on its own with no body and no neck.
 
-Proportions (keep these exact): total height is 2.4 head-heights. The head is a large, slightly wide, smooth rounded shape, about 42% of the total height and about 1.3 times as wide as the shoulders, with a short, rounded dog snout at the front, sticking out about a fifth of the head's depth. There is no visible neck: the head sits right on the shoulders. The torso is short and soft, a rounded pear shape slightly wider at the hips, about 30% of the height. The legs are short, round and stubby, about 28% of the height, with a gap of one leg-width between them. The feet are small rounded paws pointing forward. The arms are short and chunky, only about as long as the torso is tall and thick all the way along, ending in round mitten paws with no fingers, claws or pads.
+Shape: a large, smooth head, a little narrower and longer front-to-back than a cat's, with a distinctly long, tapering, rounded muzzle that sticks out about a third of the head's depth, like a ferret's. Two small, round, half-circle ears set low on the sides of the top of the head, each about a sixth of the head's height. The underside of the head is smooth and gently rounded where the neck would join.
 
-Dog features: two soft, floppy ears like a beagle's or a spaniel's, attached high on the sides of the head and hanging down flat against it to about the level of the jaw, slightly flared at the bottom. A short, straight, tapering tail that comes out low on the back and points up and back at an angle, turned a little to one side so it is clearly visible beside the body.
+Surface: completely smooth and soft, like an unpainted matte vinyl toy. Uniform light grey all over. No fur strands, no surface texture, no seams.
 
-Pose: a strict, symmetrical T-pose. Standing straight, arms held straight out to the sides at shoulder height with a clear gap between the arms and the underside of the head, palms facing down, legs straight with feet slightly apart.
+Face: completely blank apart from the muzzle shape. No eyes, no eyebrows, no nose, no mouth, no whiskers, no mask markings.
 
-Surface: completely smooth and soft, like an unpainted matte vinyl toy. Uniform light grey all over. No fur strands, no clothing, no anatomical detail, no seams, no surface texture.
-
-Face: completely blank and smooth apart from the snout shape. No eyes, no eyebrows, no nose, no mouth, no markings.
-
-View: isometric three-quarter view from the front and slightly to one side, camera about 30 degrees above, so the front, one side of the body, the ears and the tail are visible. The whole figure is in frame with space around it, centred.
+View: three-quarter view from the front and slightly to one side, camera a little above, so the face, one side and both ears are visible. The head is centred with space around it.
 
 Background: plain flat white. No ground, no shadow, no props, no text. Soft even lighting. Square image.
 ```
 
-### 7. Rabbit, upright ears
+### 8. Mouse
 
 ```
-A single cute chibi character for a cosy life-sim game, shown as a reference for 3D modelling. An anthropomorphic rabbit standing upright on two legs, like an Animal Crossing villager. Same size, proportions and pose as the attached image.
+A single cute chibi animal head for a cosy life-sim game, shown as a reference for 3D modelling: the head of a mouse, like an Animal Crossing villager's, on its own with no body and no neck.
 
-Proportions (keep these exact): total height is 2.4 head-heights, not counting the ears. The head is a large, slightly wide, smooth rounded shape, about 42% of the total height and about 1.3 times as wide as the shoulders, with a small, rounded, slightly puffy muzzle at the front. There is no visible neck: the head sits right on the shoulders. The torso is short and soft, a rounded pear shape slightly wider at the hips, about 30% of the height. The legs are short, round and stubby, about 28% of the height, with a gap of one leg-width between them. The feet are rounded rabbit feet, a little longer than the other characters', pointing forward. The arms are short and chunky, only about as long as the torso is tall and thick all the way along, ending in round mitten paws with no fingers, claws or pads.
+Shape: a large, smooth, slightly egg-shaped head with a small, pointed but rounded muzzle at the front. Two very large, round, thin, dish-shaped ears on the top corners of the head, each about half the head's width, facing forward. The underside of the head is smooth and gently rounded where the neck would join.
 
-Rabbit features: two long upright rabbit ears on top of the head, each about as tall as the head itself, slim at the base, wider in the middle with rounded tips and a shallow scoop on the front, leaning slightly apart. A small, round, fluffy pom-pom tail low on the back, sticking out enough to be visible from the side.
+Surface: completely smooth and soft, like an unpainted matte vinyl toy. Uniform light grey all over. No fur strands, no surface texture, no seams.
 
-Pose: a strict, symmetrical T-pose. Standing straight, arms held straight out to the sides at shoulder height with a clear gap between the arms and the underside of the head, palms facing down, legs straight with feet slightly apart.
+Face: completely blank apart from the muzzle shape. No eyes, no eyebrows, no nose, no mouth, no whiskers, no markings, no inner-ear detail.
 
-Surface: completely smooth and soft, like an unpainted matte vinyl toy. Uniform light grey all over. No fur strands, no clothing, no anatomical detail, no seams, no surface texture.
-
-Face: completely blank and smooth apart from the muzzle shape. No eyes, no eyebrows, no nose, no mouth, no whiskers, no buck teeth, no markings.
-
-View: isometric three-quarter view from the front and slightly to one side, camera about 30 degrees above, so the front, one side of the body and the tail are visible. The whole figure, ears included, is in frame with space around it, centred.
+View: three-quarter view from the front and slightly to one side, camera a little above, so the face, one side and both ears are visible. The head is centred with space around it.
 
 Background: plain flat white. No ground, no shadow, no props, no text. Soft even lighting. Square image.
 ```
 
-### 8. Rabbit, lop ears
+### 9. Songbird
 
 ```
-A single cute chibi character for a cosy life-sim game, shown as a reference for 3D modelling. An anthropomorphic lop-eared rabbit standing upright on two legs, like an Animal Crossing villager. Same size, proportions and pose as the attached image.
+A single cute chibi animal head for a cosy life-sim game, shown as a reference for 3D modelling: the head of a little songbird, like an Animal Crossing villager's, on its own with no body and no neck.
 
-Proportions (keep these exact): total height is 2.4 head-heights. The head is a large, slightly wide, smooth rounded shape, about 42% of the total height and about 1.3 times as wide as the shoulders, with a small, rounded, slightly puffy muzzle at the front. There is no visible neck: the head sits right on the shoulders. The torso is short and soft, a rounded pear shape slightly wider at the hips, about 30% of the height. The legs are short, round and stubby, about 28% of the height, with a gap of one leg-width between them. The feet are rounded rabbit feet, a little longer than the other characters', pointing forward. The arms are short and chunky, only about as long as the torso is tall and thick all the way along, ending in round mitten paws with no fingers, claws or pads.
+Shape: a large, round, smooth head with a small, short, cone-shaped beak in the middle of the face, closed, about a sixth of the head's width. A small tuft crest of three soft rounded feathers on top of the head. The underside of the head is smooth and gently rounded where the neck would join.
 
-Lop rabbit features: two long, wide, soft ears that start on the top of the head and droop down the sides, hanging past the jaw to about shoulder level, slightly flared and rounded at the ends. A small, round, fluffy pom-pom tail low on the back, sticking out enough to be visible from the side.
+Surface: completely smooth and soft, like an unpainted matte vinyl toy; the crest feathers are a few large smooth shapes. Uniform light grey all over, beak included. No surface texture, no seams.
 
-Pose: a strict, symmetrical T-pose. Standing straight, arms held straight out to the sides at shoulder height with a clear gap between the arms and the underside of the head, palms facing down, legs straight with feet slightly apart. The ears hang clear of the arms.
+Face: completely blank apart from the beak. No eyes, no eyebrows, no nostrils, no markings.
 
-Surface: completely smooth and soft, like an unpainted matte vinyl toy. Uniform light grey all over. No fur strands, no clothing, no anatomical detail, no seams, no surface texture.
-
-Face: completely blank and smooth apart from the muzzle shape. No eyes, no eyebrows, no nose, no mouth, no whiskers, no buck teeth, no markings.
-
-View: isometric three-quarter view from the front and slightly to one side, camera about 30 degrees above, so the front, one side of the body, the ears and the tail are visible. The whole figure is in frame with space around it, centred.
+View: three-quarter view from the front and slightly to one side, camera a little above, so the face, one side, the beak and the crest are visible. The head is centred with space around it.
 
 Background: plain flat white. No ground, no shadow, no props, no text. Soft even lighting. Square image.
 ```
 
-### 9. Ferret
+### 10. Seabird
 
 ```
-A single cute chibi character for a cosy life-sim game, shown as a reference for 3D modelling. An anthropomorphic ferret standing upright on two legs, like an Animal Crossing villager. Same overall size and pose as the attached image, but noticeably slimmer and longer, as described below.
+A single cute chibi animal head for a cosy life-sim game, shown as a reference for 3D modelling: the head of a seagull, like an Animal Crossing villager's, on its own with no body and no neck.
 
-Proportions (keep these exact): total height is 2.5 head-heights. The head is a large, smooth shape, about 40% of the total height, a little narrower and longer front-to-back than the other characters', about 1.15 times as wide as the shoulders, with a distinctly long, tapering, rounded muzzle that sticks out about a third of the head's depth, like a ferret's. A short, slender neck is visible between the head and the shoulders. The torso is long, slim and tube-like, about 34% of the height, only slightly wider at the hips. The legs are short and stubby, about 24% of the height, with a gap of one leg-width between them. The feet are small rounded paws pointing forward. The arms are short and chunky, only about as long as the torso is tall and thick all the way along, ending in round mitten paws with no fingers, claws or pads.
+Shape: a large, smooth, slightly oval head with a longer, gently hooked, closed beak in the middle of the face, about a third of the head's width long, flat-sided and rounded at the tip. No crest; the top of the head is smooth. The underside of the head is smooth and gently rounded where the neck would join.
 
-Ferret features: two small, round, half-circle ears set low on the sides of the top of the head, each about a sixth of the head's height. A long, thick, furry tail about as long as the body is tall, coming out low on the back, sticking out behind and curving to one side so it is clearly visible beside the body.
+Surface: completely smooth and soft, like an unpainted matte vinyl toy. Uniform light grey all over, beak included. No surface texture, no seams.
 
-Pose: a strict, symmetrical T-pose. Standing straight, arms held straight out to the sides at shoulder height with a clear gap between the arms and the underside of the head, palms facing down, legs straight with feet slightly apart.
+Face: completely blank apart from the beak. No eyes, no eyebrows, no nostrils, no markings.
 
-Surface: completely smooth and soft, like an unpainted matte vinyl toy. Uniform light grey all over. No fur strands, no clothing, no anatomical detail, no seams, no surface texture.
-
-Face: completely blank and smooth apart from the muzzle shape. No eyes, no eyebrows, no nose, no mouth, no whiskers, no mask markings.
-
-View: isometric three-quarter view from the front and slightly to one side, camera about 30 degrees above, so the front, one side of the body and the tail are visible. The whole figure is in frame with space around it, centred.
-
-Background: plain flat white. No ground, no shadow, no props, no text. Soft even lighting. Square image.
-```
-
-### 10. Mouse
-
-```
-A single cute chibi character for a cosy life-sim game, shown as a reference for 3D modelling. An anthropomorphic mouse standing upright on two legs, like an Animal Crossing villager. Same size, proportions and pose as the attached image.
-
-Proportions (keep these exact): total height is 2.4 head-heights, not counting the ears. The head is a large, smooth, slightly egg-shaped head, about 42% of the total height and about 1.3 times as wide as the shoulders, with a small, pointed but rounded muzzle at the front. There is no visible neck: the head sits right on the shoulders. The torso is short and soft, a rounded pear shape slightly wider at the hips, about 30% of the height. The legs are short, round and stubby, about 28% of the height, with a gap of one leg-width between them. The feet are small rounded paws pointing forward. The arms are short and chunky, only about as long as the torso is tall and thick all the way along, ending in round mitten paws with no fingers, claws or pads.
-
-Mouse features: two very large, round, thin, dish-shaped ears on the top corners of the head, each about half the head's width, facing forward. A long, thin, smooth tail, about one and a half times the body's height, coming out low on the back and curving out to one side in a gentle S so it is clearly visible beside the body.
-
-Pose: a strict, symmetrical T-pose. Standing straight, arms held straight out to the sides at shoulder height with a clear gap between the arms and the underside of the head, palms facing down, legs straight with feet slightly apart.
-
-Surface: completely smooth and soft, like an unpainted matte vinyl toy. Uniform light grey all over. No fur strands, no clothing, no anatomical detail, no seams, no surface texture.
-
-Face: completely blank and smooth apart from the muzzle shape. No eyes, no eyebrows, no nose, no mouth, no whiskers, no markings.
-
-View: isometric three-quarter view from the front and slightly to one side, camera about 30 degrees above, so the front, one side of the body, the ears and the tail are visible. The whole figure is in frame with space around it, centred.
-
-Background: plain flat white. No ground, no shadow, no props, no text. Soft even lighting. Square image.
-```
-
-### 11. Bird, songbird
-
-```
-A single cute chibi character for a cosy life-sim game, shown as a reference for 3D modelling. An anthropomorphic little songbird standing upright on two legs, like an Animal Crossing villager. Same size, proportions and pose as the attached image.
-
-Proportions (keep these exact): total height is 2.4 head-heights, not counting the crest. The head is a large, round, smooth shape, about 42% of the total height and about 1.3 times as wide as the shoulders. There is no visible neck: the head sits right on the shoulders. The torso is short, soft and round-bellied, slightly wider at the hips, about 30% of the height. The legs are short and stubby, about 28% of the height, with a gap of one leg-width between them, ending in small rounded bird feet with three short, thick, rounded toes pointing forward.
-
-Bird features: a small, short, cone-shaped beak in the middle of the face, closed, about a sixth of the head's width. A small tuft crest of three soft rounded feathers on top of the head. The arms are wings: the same length and thickness as the other characters' arms, but each ends in a soft fan of four or five broad, rounded feather tips instead of a hand, with a small thumb-like feather that can grip things, and a short row of rounded feathers along the underside of the arm. A short, fanned tail of five rounded feathers low on the back, angled to one side so it is clearly visible beside the body.
-
-Pose: a strict, symmetrical T-pose. Standing straight, wing-arms held straight out to the sides at shoulder height with a clear gap between the arms and the underside of the head, feather tips spread flat, legs straight with feet slightly apart.
-
-Surface: completely smooth and soft, like an unpainted matte vinyl toy; feathers are a few large smooth shapes, not detailed. Uniform light grey all over, beak included. No clothing, no anatomical detail, no seams, no surface texture.
-
-Face: completely blank and smooth apart from the beak. No eyes, no eyebrows, no nostrils, no markings.
-
-View: isometric three-quarter view from the front and slightly to one side, camera about 30 degrees above, so the front, one side of the body, a wing and the tail are visible. The whole figure is in frame with space around it, centred.
-
-Background: plain flat white. No ground, no shadow, no props, no text. Soft even lighting. Square image.
-```
-
-### 12. Bird, seabird
-
-```
-A single cute chibi character for a cosy life-sim game, shown as a reference for 3D modelling. An anthropomorphic seagull standing upright on two legs, like an Animal Crossing villager. Same size, proportions and pose as the attached image.
-
-Proportions (keep these exact): total height is 2.4 head-heights. The head is a large, smooth, slightly oval shape, about 42% of the total height and about 1.3 times as wide as the shoulders. There is no visible neck: the head sits right on the shoulders. The torso is short, soft and round-bellied, slightly wider at the hips, about 30% of the height. The legs are short and stubby, about 28% of the height, with a gap of one leg-width between them, ending in small, flat, webbed feet pointing forward.
-
-Seabird features: a longer, gently hooked, closed beak in the middle of the face, about a third of the head's width long, flat-sided and rounded at the tip. No crest; the top of the head is smooth. The arms are wings: the same length and thickness as the other characters' arms, but each ends in a soft fan of four or five long, rounded feather tips instead of a hand, with a small thumb-like feather that can grip things, and a row of rounded feathers along the underside of the arm. A short, pointed tail of a few rounded feathers low on the back, angled to one side so it is clearly visible beside the body.
-
-Pose: a strict, symmetrical T-pose. Standing straight, wing-arms held straight out to the sides at shoulder height with a clear gap between the arms and the underside of the head, feather tips spread flat, legs straight with feet slightly apart.
-
-Surface: completely smooth and soft, like an unpainted matte vinyl toy; feathers are a few large smooth shapes, not detailed. Uniform light grey all over, beak included. No clothing, no anatomical detail, no seams, no surface texture.
-
-Face: completely blank and smooth apart from the beak. No eyes, no eyebrows, no nostrils, no markings.
-
-View: isometric three-quarter view from the front and slightly to one side, camera about 30 degrees above, so the front, one side of the body, a wing and the tail are visible. The whole figure is in frame with space around it, centred.
+View: three-quarter view from the front and slightly to one side, camera a little above, so the face, one side and the beak are visible. The head is centred with space around it.
 
 Background: plain flat white. No ground, no shadow, no props, no text. Soft even lighting. Square image.
 ```

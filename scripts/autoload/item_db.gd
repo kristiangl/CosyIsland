@@ -57,12 +57,15 @@ func _ready() -> void:
 		}
 	for id in flowers:
 		var fl: Dictionary = flowers[id]
+		# Rare colours (only found on some tour islands) join the usual ones.
+		for colour: String in fl.get("rare_colors", {}):
+			fl["colors"][colour] = fl["rare_colors"][colour]
 		for colour in fl["colors"]:
 			# A picked flower: wear it in your hair or stand it in a bud vase.
 			var picked := "%s_%s" % [id, colour]
 			items[picked] = {
 				"name": "%s %s" % [colour.capitalize(), fl["name"].to_lower()],
-				"category": "flower", "stack": 10, "price": 40, "color": fl["colors"][colour],
+				"category": "flower", "stack": 10, "price": 40 if not is_rare_flower(id, colour) else 160, "color": fl["colors"][colour],
 				"species": id, "flower_color": colour,
 				"desc": "Freshly picked. Wear it in your hair, or put it in a vase.",
 				"placeable": {"footprint": [1, 1], "model": "vase:" + picked, "rotatable": true, "small": true},
@@ -70,7 +73,7 @@ func _ready() -> void:
 			# The whole plant, dug up with a shovel: plant it somewhere else.
 			items[picked + "_plant"] = {
 				"name": "%s %s plant" % [colour.capitalize(), fl["name"].to_lower()],
-				"category": "flower_plant", "stack": 10, "price": 80, "color": fl["colors"][colour],
+				"category": "flower_plant", "stack": 10, "price": 80 if not is_rare_flower(id, colour) else 320, "color": fl["colors"][colour],
 				"species": id, "flower_color": colour,
 				"desc": "Roots and all. Plant it somewhere and it'll keep flowering.",
 			}
@@ -78,6 +81,11 @@ func _ready() -> void:
 	_load_furniture()
 	_load_colourways(data.get("colourways", {}))
 	_load_creatures()
+
+
+## A colour of flower only found on some tour islands.
+func is_rare_flower(species: String, colour: String) -> bool:
+	return flowers.get(species, {}).get("rare_colors", {}).has(colour)
 
 
 ## Designed clothes come as bases with colourways (data/clothing.json); each colourway

@@ -63,7 +63,7 @@ static func stock(island_seed: int, day: int, native_flower: String = "", keeper
 			"clothing":
 				clothes.append(id)
 			"flower_plant":
-				if def.get("species", "") != native_flower:
+				if def.get("species", "") != native_flower and not ItemDB.is_rare_flower(def["species"], def["flower_color"]):
 					plants.append(id)
 	furniture.sort()
 	interiors.sort()

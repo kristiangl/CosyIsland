@@ -1,5 +1,5 @@
 {
-	"_note": "Fish and bugs. hours: [from, to] in island time (wrapping past midnight when from > to). where: fish in sea, river or pond; bugs on flowers, in the air, on grass, on trees, on rocks, on the beach or over water. size (fish): tiny, small, medium, large, huge. shape picks the model. weight: how common, relative to others in the same place.",
+	"_note": "Fish and bugs. hours: [from, to] in island time (wrapping past midnight when from > to). where: fish in sea, river or pond; bugs on flowers, in the air, on grass, on trees, on rocks, on the beach or over water. size (fish): tiny, small, medium, large, huge. shape picks the model. weight: how common, relative to others in the same place. islands: only found on those kinds of tour island (data/tour_islands.json).",
 	"fish": [
 		{"id": "anchovy", "name": "Anchovy", "where": "sea", "size": "tiny", "hours": [4, 21], "price": 200, "weight": 10, "colors": ["9fb4c8", "dfe8f0"]},
 		{"id": "horse_mackerel", "name": "Horse mackerel", "where": "sea", "size": "small", "hours": [0, 24], "price": 150, "weight": 12, "colors": ["8aa3b8", "e8eef2"]},
@@ -21,7 +21,10 @@
 		{"id": "killifish", "name": "Killifish", "where": "pond", "size": "tiny", "hours": [0, 24], "price": 300, "weight": 6, "colors": ["8aa0a8", "f2d68a"]},
 		{"id": "tadpole", "name": "Tadpole", "where": "pond", "size": "tiny", "hours": [0, 24], "price": 100, "weight": 8, "colors": ["4a4a3a", "6a6a5a"], "shape": "tadpole"},
 		{"id": "frog", "name": "Frog", "where": "pond", "size": "small", "hours": [0, 24], "price": 120, "weight": 8, "colors": ["7cbb5c", "f6f1d0"], "shape": "frog"},
-		{"id": "catfish", "name": "Catfish", "where": "pond", "size": "large", "hours": [16, 9], "price": 800, "weight": 3, "colors": ["5f5a50", "c8c0b0"]}
+		{"id": "catfish", "name": "Catfish", "where": "pond", "size": "large", "hours": [16, 9], "price": 800, "weight": 3, "colors": ["5f5a50", "c8c0b0"]},
+		{"id": "sunfish", "name": "Ocean sunfish", "where": "sea", "size": "huge", "hours": [0, 24], "price": 4000, "weight": 3, "colors": ["b8c4cc", "e8eef0"], "shape": "round", "islands": ["fishy"]},
+		{"id": "angelfish", "name": "Angelfish", "where": "sea", "size": "small", "hours": [0, 24], "price": 3000, "weight": 3, "colors": ["f2d04a", "3a3a3a"], "shape": "stripy", "islands": ["fishy"]},
+		{"id": "golden_koi", "name": "Golden koi", "where": "river", "size": "large", "hours": [0, 24], "price": 6000, "weight": 3, "colors": ["f2c14e", "fff4d0"], "islands": ["fishy"]}
 	],
 	"bugs": [
 		{"id": "white_butterfly", "name": "White butterfly", "where": "flowers", "hours": [4, 19], "price": 160, "weight": 12, "colors": ["fbf8f0", "3a3a3a"], "shape": "butterfly"},
@@ -40,6 +43,9 @@
 		{"id": "rhino_beetle", "name": "Rhinoceros beetle", "where": "trees", "hours": [23, 8], "price": 1350, "weight": 3, "colors": ["4a3020", "6a4a30"], "shape": "rhino"},
 		{"id": "stag_beetle", "name": "Stag beetle", "where": "trees", "hours": [23, 8], "price": 2000, "weight": 2, "colors": ["3a2a20", "6a4a30"], "shape": "stag"},
 		{"id": "snail", "name": "Snail", "where": "rocks", "hours": [0, 24], "price": 250, "weight": 5, "colors": ["c8a070", "b8b0a0"], "shape": "snail"},
-		{"id": "hermit_crab", "name": "Hermit crab", "where": "beach", "hours": [19, 8], "price": 1000, "weight": 4, "colors": ["e0857a", "f2d8b0"], "shape": "crab"}
+		{"id": "hermit_crab", "name": "Hermit crab", "where": "beach", "hours": [19, 8], "price": 1000, "weight": 4, "colors": ["e0857a", "f2d8b0"], "shape": "crab"},
+		{"id": "blue_morpho", "name": "Blue morpho", "where": "flowers", "hours": [0, 24], "price": 4000, "weight": 3, "colors": ["3f7fe0", "1a2a50"], "shape": "butterfly", "islands": ["buggy"]},
+		{"id": "orchid_mantis", "name": "Orchid mantis", "where": "flowers", "hours": [0, 24], "price": 2400, "weight": 3, "colors": ["f4c0d8", "fbe8f0"], "shape": "hopper", "islands": ["buggy"]},
+		{"id": "golden_stag", "name": "Golden stag", "where": "trees", "hours": [0, 24], "price": 10000, "weight": 2, "colors": ["d8a83a", "8a6a20"], "shape": "stag", "islands": ["buggy"]}
 	]
 }

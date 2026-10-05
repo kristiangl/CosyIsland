@@ -118,17 +118,28 @@ static func _in_hours(c: Dictionary, hour: float) -> bool:
 	return hour >= from or hour < to
 
 
+## Creatures with "islands" only live on those kinds of tour island.
+static func lives_here(c: Dictionary, kind: String) -> bool:
+	return not c.has("islands") or kind in c["islands"]
+
+
+## How common a creature is; the rare ones of a rare island are its point, so they're
+## easy to come across there.
+func _weight(c: Dictionary) -> float:
+	return float(c.get("weight", 1)) * (6.0 if c.has("islands") else 1.0)
+
+
 ## A creature for a place at this hour, by weight, or {} if none are about.
 func pick(table: Dictionary, where: String, hour: float) -> Dictionary:
 	var pool: Array = []
 	var total := 0.0
 	for c: Dictionary in table.values():
-		if c["where"] == where and _in_hours(c, hour):
+		if c["where"] == where and _in_hours(c, hour) and lives_here(c, world.data.kind):
 			pool.append(c)
-			total += float(c.get("weight", 1))
+			total += _weight(c)
 	var roll := _rng.randf() * total
 	for c: Dictionary in pool:
-		roll -= float(c.get("weight", 1))
+		roll -= _weight(c)
 		if roll <= 0.0:
 			return c
 	return {}
@@ -142,9 +153,10 @@ func _process(delta: float) -> void:
 	_spawn_timer -= delta
 	if _spawn_timer <= 0.0:
 		_spawn_timer = 0.6
-		if fish.size() < FISH_MAX:
+		var more := float(TourKinds.get_kind(world.data.kind).get("critters", 1.0)) if world.data.kind != "" else 1.0
+		if fish.size() < FISH_MAX * more:
 			_spawn_fish(player.position, hour)
-		if bugs.size() < BUGS_MAX:
+		if bugs.size() < BUGS_MAX * more:
 			_spawn_bug(player.position, hour)
 	for f in fish.duplicate():
 		_update_fish(f, delta, player)

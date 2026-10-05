@@ -41,6 +41,8 @@ var splits: Dictionary = {}
 
 var native_fruit: String
 var native_flower: String
+## For tour islands, which kind of island it is (TourKinds); "" at home.
+var kind := ""
 var plaza: Rect2i
 var spawn: Vector2i
 ## Placed things: trees, rocks, flowers, dropped items and player furniture.

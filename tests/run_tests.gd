@@ -37,6 +37,8 @@ func _run() -> void:
 	_test_neighbours()
 	_test_friendship()
 	_test_tours()
+	_test_rare_islands()
+	_test_tour_visitors()
 	_test_fruit_planting()
 	print("\n%d checks, %d failures" % [_checks, _failures])
 	get_tree().quit(1 if _failures > 0 else 0)
@@ -1205,6 +1207,98 @@ func _test_tours() -> void:
 	Story.flags["invited"] = [free[0]]
 	check(Story.open_plots() == 1, "a plot in your pockets is an open plot")
 	w.free()
+	Story.flags = saved_flags
+
+
+func _test_rare_islands() -> void:
+	check(TourKinds.pick(1, 0.0, 0.5) == "plain", "the first tour lands somewhere ordinary")
+	check(TourKinds.pick(5, 0.99, 0.5) == "plain" and TourKinds.pick(5, 0.0, 0.5) in TourKinds.rare_kinds(),
+		"later ones are sometimes rare")
+	var kinds_seen := {}
+	for i in 40:
+		kinds_seen[TourKinds.pick(2, 0.0, i / 40.0)] = true
+	check(kinds_seen.size() == TourKinds.rare_kinds().size(), "every rare kind turns up")
+	var plain := IslandGenerator.generate_tour(11, "apple", "tulip")
+	var count := func(t: IslandData, kind: String) -> int: return t.objects.filter(func(o): return o["kind"] == kind).size()
+	var orchard := IslandGenerator.generate_tour(11, "apple", "tulip", "orchard")
+	var fruits := {}
+	for o in orchard.objects:
+		if o["kind"] == "fruit_tree":
+			fruits[o["fruit"]] = true
+	check(orchard.kind == "orchard" and count.call(orchard, "fruit_tree") > count.call(plain, "fruit_tree") * 2 and fruits.size() >= 4,
+		"an orchard island is full of fruit trees of every kind")
+	var meadow := IslandGenerator.generate_tour(11, "apple", "tulip", "meadow")
+	var rare := meadow.objects.filter(func(o): return o["kind"] == "flower" and o["color"] in IslandGenerator.RARE_FLOWER_COLOURS)
+	check(count.call(meadow, "flower") > count.call(plain, "flower") * 2 and not rare.is_empty(), "a meadow has lots of flowers, some in rare colours")
+	check(not plain.objects.any(func(o): return o["kind"] == "flower" and o["color"] in IslandGenerator.RARE_FLOWER_COLOURS),
+		"ordinary islands don't")
+	var flower: Dictionary = rare[0]
+	var picked := "%s_%s" % [flower["species"], flower["color"]]
+	check(ItemDB.has_item(picked) and ItemDB.has_item(picked + "_plant") and ItemDB.is_rare_flower(flower["species"], flower["color"])
+		and ItemDB.get_item(picked)["price"] > ItemDB.get_item("%s_red" % flower["species"])["price"], "rare colours are items worth more")
+	var had_shop: bool = Story.flags.get("shop_done", false)
+	Story.flags["shop_done"] = true
+	var sold_rare := false
+	for day in 40:
+		for id in Shop.stock(7, day, "tulip"):
+			sold_rare = sold_rare or ItemDB.get_item(id).get("flower_color", "") in IslandGenerator.RARE_FLOWER_COLOURS
+	Story.flags["shop_done"] = had_shop
+	check(not sold_rare, "and Lucy never sells them")
+	var quarry := IslandGenerator.generate_tour(11, "apple", "tulip", "quarry")
+	check(count.call(quarry, "rock") > count.call(plain, "rock"), "a rocky island has more rocks")
+	var qw := World.new()
+	qw.tour = true
+	add_child(qw)
+	qw.setup(quarry)
+	var gold := 0
+	for i in 400:
+		gold += 1 if qw._roll_rock_item() == "gold_nugget" else 0
+	check(gold > 20, "with gold in them (%d in 400)" % gold)
+	qw.free()
+	var morpho: Dictionary = ItemDB.bugs["blue_morpho"]
+	check(not Critters.lives_here(morpho, "") and not Critters.lives_here(morpho, "fishy") and Critters.lives_here(morpho, "buggy"),
+		"rare bugs only live on bug islands")
+	check(ItemDB.fish.values().filter(func(f): return f.has("islands")).size() >= 3, "and there are rare fish for fishing islands")
+
+
+func _test_tour_visitors() -> void:
+	var saved_flags := Story.flags.duplicate(true)
+	var saved_island := Game.island
+	Story.reset()
+	var d := IslandGenerator.generate(7)
+	var w := World.new()
+	add_child(w)
+	w.setup(d)
+	Game.island = w
+	check(Story.visitor_today() == "", "nobody visits before you've met anyone")
+	Story.flags["met"] = {"kiwi": GameClock.day_key()}
+	Story.force_visitor = "kiwi"
+	check(Story.visitor_today() == "", "nor on the day you met them")
+	Story.flags["met"] = {"kiwi": GameClock.day_key() - 1}
+	check(Story.visitor_today() == "kiwi", "someone met on a tour drops in on a later day")
+	Story.flags["met"] = {"kiwi": 0}
+	Story.force_visitor = ""
+	var days := 0
+	for day in 60:
+		GameClock.offset_seconds += 86400
+		days += 1 if Story.visitor_today() == "kiwi" else 0
+	GameClock.offset_seconds -= 86400 * 60
+	check(days > 10 and days < 40, "now and then (%d days in 60)" % days)
+	var gift := Story.souvenir("kiwi", 3)
+	check(ItemDB.has_item(gift) and gift != d.native_fruit, "they bring a souvenir from away (%s)" % gift)
+	Story.force_visitor = "kiwi"
+	var spot := Rect2i()
+	for r in range(3, 20):
+		var rect := Rect2i(d.spawn + Vector2i(-6, r), Vector2i(3, 3))
+		if spot.size == Vector2i.ZERO and w.can_place(rect, Vector3(-10, 0, -10)) and w.door_clear("plot_kit", rect, 0):
+			spot = rect
+	var plot := w.place_item("plot_kit", spot, 0)
+	plot["item"] = "neighbour_house"
+	plot["resident"] = "kiwi"
+	check(Story.visitor_today() == "", "and stop visiting once they live here")
+	w.free()
+	Game.island = saved_island
+	Story.reset()
 	Story.flags = saved_flags
 
 

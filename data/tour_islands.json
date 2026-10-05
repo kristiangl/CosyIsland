@@ -1,0 +1,43 @@
+{
+	"_note": "Kinds of island Marlow's tours can land on (read by TourKinds). After the first trip, rare_chance of tours land on one of the rare kinds, picked by weight. arrive: Marlow's toast on landing. fruit_trees: share of trees that bear fruit, of every kind. flower_clusters: [min, max] patches of mixed flowers, rare_flowers the share in rare colours. rocks: how many rocks, rock_table what they give. critters: more fish and bugs about; creatures with \"islands\" in data/creatures.json only live on those kinds.",
+	"rare_chance": 0.35,
+	"kinds": {
+		"plain": {
+			"name": "Island",
+			"arrive": "Land ho! Talk to Marlow when you're ready to sail home."
+		},
+		"orchard": {
+			"name": "Orchard island",
+			"weight": 3,
+			"arrive": "Land ho! Fruit trees as far as the eye can see. Every kind!",
+			"fruit_trees": 0.6
+		},
+		"meadow": {
+			"name": "Flower meadow",
+			"weight": 3,
+			"arrive": "Land ho! It's all flowers. Some colours Marlow's never seen before!",
+			"flower_clusters": [26, 32],
+			"rare_flowers": 0.3
+		},
+		"quarry": {
+			"name": "Rocky island",
+			"weight": 2,
+			"arrive": "Land ho! Rocks everywhere, and Marlow swears there's gold in them.",
+			"rocks": 16,
+			"rock_table": [["stone", 35], ["clay", 15], ["iron_nugget", 35], ["gold_nugget", 15]]
+		},
+		"buggy": {
+			"name": "Bug island",
+			"weight": 2,
+			"arrive": "Land ho! Listen to it buzz. Bugs you won't find at home!",
+			"critters": 2.0,
+			"flower_clusters": [14, 18]
+		},
+		"fishy": {
+			"name": "Fishing island",
+			"weight": 2,
+			"arrive": "Land ho! The fish round here are a funny shape. Rare ones, Marlow reckons.",
+			"critters": 2.0
+		}
+	}
+}

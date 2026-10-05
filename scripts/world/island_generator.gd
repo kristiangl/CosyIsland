@@ -27,6 +27,9 @@ const TOUR_HEIGHT := 56
 const FRUITS := ["apple", "orange", "pear", "cherry", "peach", "plum"]
 const FLOWERS := ["tulip", "pansy", "cosmos", "rose", "lily", "hyacinth", "windflower", "mum"]
 const FLOWER_COLOURS := ["red", "red", "white", "yellow", "yellow"]
+## Colours only found on rare tour islands (every flower has them: "rare_colors" in
+## data/items.json).
+const RARE_FLOWER_COLOURS := ["pink", "orange", "purple", "blue"]
 
 const DIRS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 ## Corner height on the beach by number of sea tiles touching that corner (0-4).
@@ -45,6 +48,8 @@ var version := VERSION
 ## Tour islands: no plaza buildings, and natives other than these.
 var tour := false
 var avoid: Array = []
+## A tour island's kind settings (TourKinds), {} for a plain one.
+var kind: Dictionary = {}
 var rng := RandomNumberGenerator.new()
 var ocean_dist: PackedInt32Array
 var beach_width: PackedInt32Array
@@ -62,12 +67,14 @@ static func generate(seed_value: int, w: int = WIDTH, h: int = HEIGHT, gen_versi
 
 ## A small wild island for a tour: no plaza or office, and a different fruit and flower
 ## from home's.
-static func generate_tour(seed_value: int, home_fruit: String, home_flower: String) -> IslandData:
+static func generate_tour(seed_value: int, home_fruit: String, home_flower: String, kind_id := "plain") -> IslandData:
 	var g := IslandGenerator.new()
 	g.tour = true
 	g.avoid = [home_fruit, home_flower]
+	g.kind = TourKinds.get_kind(kind_id) if kind_id != "plain" else {}
 	var data := g._run(seed_value, TOUR_WIDTH, TOUR_HEIGHT)
 	data.plaza = Rect2i()
+	data.kind = kind_id
 	return data
 
 
@@ -764,6 +771,13 @@ func _place_trees() -> void:
 		pick["kind"] = "fruit_tree"
 		pick["fruit"] = d.native_fruit
 		pick["fruit_count"] = 3
+	# An orchard island: most of the rest bear fruit too, of every kind.
+	if kind.has("fruit_trees"):
+		for tree in trees:
+			if tree["kind"] == "tree" and rng.randf() < float(kind["fruit_trees"]):
+				tree["kind"] = "fruit_tree"
+				tree["fruit"] = FRUITS[rng.randi() % FRUITS.size()]
+				tree["fruit_count"] = 3
 
 
 func _place_palms() -> void:
@@ -790,12 +804,14 @@ func _place_rocks() -> void:
 				spots.append(Vector2i(x, z))
 	_shuffle(spots)
 	var placed: Array[Vector2i] = []
+	var count := int(kind.get("rocks", ROCK_COUNT))
+	var apart := 7.0 if count <= ROCK_COUNT else 4.0
 	for p in spots:
-		if placed.size() >= ROCK_COUNT:
+		if placed.size() >= count:
 			break
 		var far := true
 		for q in placed:
-			if q.distance_to(p) < 7.0:
+			if q.distance_to(p) < apart:
 				far = false
 		if far and _rock_spot(p.x, p.y):
 			_add_object({"kind": "rock", "x": p.x, "z": p.y, "hits_left": 8, "variant": rng.randi() % 4})
@@ -815,6 +831,9 @@ func _rock_spot(x: int, z: int) -> bool:
 
 
 func _place_flowers() -> void:
+	if kind.has("flower_clusters"):
+		_place_meadow()
+		return
 	var clusters := rng.randi_range(6, 9)
 	var attempts := 0
 	while clusters > 0 and attempts < 500:
@@ -830,6 +849,30 @@ func _place_flowers() -> void:
 				# Clusters are mostly one colour with the odd stray.
 				var col: String = colour if rng.randf() < 0.8 else FLOWER_COLOURS[rng.randi() % FLOWER_COLOURS.size()]
 				_add_object({"kind": "flower", "x": p.x, "z": p.y, "species": d.native_flower, "color": col})
+				planted += 1
+		if planted > 0:
+			clusters -= 1
+
+
+## A rare island's flowers: lots of patches, every kind, some in rare colours.
+func _place_meadow() -> void:
+	var range_: Array = kind["flower_clusters"]
+	var clusters := rng.randi_range(int(range_[0]), int(range_[1]))
+	var rare := float(kind.get("rare_flowers", 0.0))
+	var attempts := 0
+	while clusters > 0 and attempts < 1500:
+		attempts += 1
+		var c := Vector2i(rng.randi_range(0, d.width - 1), rng.randi_range(0, d.height - 1))
+		if d.tile(c.x, c.y) != T.GRASS or not _free(c.x, c.y):
+			continue
+		var species: String = FLOWERS[rng.randi() % FLOWERS.size()]
+		var colour: String = RARE_FLOWER_COLOURS[rng.randi() % RARE_FLOWER_COLOURS.size()] if rng.randf() < rare \
+			else FLOWER_COLOURS[rng.randi() % FLOWER_COLOURS.size()]
+		var planted := 0
+		for k in rng.randi_range(4, 8):
+			var p := c + Vector2i(rng.randi_range(-2, 2), rng.randi_range(-2, 2))
+			if d.tile(p.x, p.y) == T.GRASS and not d.is_ramp(p.x, p.y) and _free(p.x, p.y):
+				_add_object({"kind": "flower", "x": p.x, "z": p.y, "species": species, "color": colour})
 				planted += 1
 		if planted > 0:
 			clusters -= 1

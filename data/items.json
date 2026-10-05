@@ -1977,6 +1977,12 @@
 				"red": "#e5484d",
 				"white": "#f7f3ea",
 				"yellow": "#f5c842"
+			},
+			"rare_colors": {
+				"pink": "#f29bbd",
+				"orange": "#f2994a",
+				"purple": "#a580d8",
+				"blue": "#6f9fe8"
 			}
 		},
 		"pansy": {
@@ -1985,6 +1991,12 @@
 				"red": "#d9435a",
 				"white": "#f4f1f7",
 				"yellow": "#f2cf3c"
+			},
+			"rare_colors": {
+				"pink": "#f29bc7",
+				"orange": "#f2854a",
+				"purple": "#9a80d8",
+				"blue": "#6faee8"
 			}
 		},
 		"cosmos": {
@@ -1993,6 +2005,12 @@
 				"red": "#e0607e",
 				"white": "#faf5f2",
 				"yellow": "#f6d34a"
+			},
+			"rare_colors": {
+				"pink": "#f29bb3",
+				"orange": "#f2ad4a",
+				"purple": "#b080d8",
+				"blue": "#6f90e8"
 			}
 		},
 		"rose": {
@@ -2001,6 +2019,12 @@
 				"red": "#c8233a",
 				"white": "#fbf6f0",
 				"yellow": "#f4c430"
+			},
+			"rare_colors": {
+				"pink": "#f29bc2",
+				"orange": "#f28f4a",
+				"purple": "#a080d8",
+				"blue": "#6fa6e8"
 			}
 		},
 		"lily": {
@@ -2009,6 +2033,12 @@
 				"red": "#e4573d",
 				"white": "#fdfbf4",
 				"yellow": "#f8d24c"
+			},
+			"rare_colors": {
+				"pink": "#f29bb5",
+				"orange": "#f2a84a",
+				"purple": "#ad80d8",
+				"blue": "#6f94e8"
 			}
 		},
 		"hyacinth": {
@@ -2017,6 +2047,12 @@
 				"red": "#d64f6a",
 				"white": "#f6f2f8",
 				"yellow": "#f3d65a"
+			},
+			"rare_colors": {
+				"pink": "#f29bc5",
+				"orange": "#f28a4a",
+				"purple": "#9d80d8",
+				"blue": "#6faae8"
 			}
 		},
 		"windflower": {
@@ -2025,6 +2061,12 @@
 				"red": "#d93a46",
 				"white": "#f8f5ef",
 				"yellow": "#f2c94c"
+			},
+			"rare_colors": {
+				"pink": "#f29bb8",
+				"orange": "#f2a34a",
+				"purple": "#aa80d8",
+				"blue": "#6f98e8"
 			}
 		},
 		"mum": {
@@ -2033,6 +2075,12 @@
 				"red": "#c9364a",
 				"white": "#f7f4ea",
 				"yellow": "#f0c53a"
+			},
+			"rare_colors": {
+				"pink": "#f29bc0",
+				"orange": "#f2944a",
+				"purple": "#a280d8",
+				"blue": "#6fa3e8"
 			}
 		}
 	},

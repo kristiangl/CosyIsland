@@ -18,10 +18,12 @@ extends Node3D
 ##   --demo=door        pitch the tent and stand outside its door
 ##   --demo=shop        Lucy's shop has been built; stand in front of it (--demo=museum: Bramble's,
 ##                      --built for the finished museum, --visit to go in)
-##   --demo=dock        Marlow's ferry dock (--demo=tour: off on a tour, --camper with someone camping there)
+##   --demo=dock        Marlow's ferry dock (--demo=tour: off on a tour, --camper with someone camping there,
+##                     --island=orchard|meadow|quarry|buggy|fishy for a rare island)
 ##   --demo=orchard     a row of planted fruit trees, one at each stage of growing
 ##   --demo=site        Lucy's shop kit staked out, waiting to be built
 ##   --demo=neighbours  two neighbours have just moved in (--visit: go inside one's home, --who=id,id: who)
+##   --demo=visitor     someone met on a tour is visiting by the plaza (--who=id)
 ##   --demo=fishing     fishing off the beach with fish about (--demo=bugs: bugs nearby)
 ##   --demo=flowers     stand by some flowers, one picked, with a flower in your hair
 ##   --house            with --demo: the tent has already become a house
@@ -351,6 +353,16 @@ func _spawn_npcs() -> void:
 	for obj in world.objects():
 		if obj.has("resident"):
 			_spawn_neighbour(obj)
+	_check_visitor()
+
+
+## Nothing on this tile or near it (so a visitor isn't hidden in the trees).
+func _open_around(x: int, z: int) -> bool:
+	for dz in range(-2, 3):
+		for dx in range(-2, 3):
+			if not world.object_at(x + dx, z + dz).is_empty():
+				return false
+	return true
 
 
 ## The house Poppy promised goes up once a night has passed (not while you're inside).
@@ -374,6 +386,40 @@ func _check_house() -> void:
 	for who in Story.move_in(world):
 		Events.toast.emit("%s has moved in! Go and say hello." % NpcData.display_name(who))
 		_spawn_neighbour(world.building_of(who))
+	_check_visitor()
+
+
+## Someone you met on a tour drops in for the day, round the plaza; yesterday's goes home.
+func _check_visitor() -> void:
+	var who := Story.visitor_today()
+	for n in Game.npcs.duplicate():
+		if n.visiting and n.id != who:
+			Game.npcs.erase(n)
+			n.queue_free()
+	if who == "" or Story.npc(who) != null:
+		return
+	# Somewhere open just outside the plaza.
+	var plaza := world.data.plaza
+	var centre := Vector2(plaza.get_center())
+	var spot := Vector3.ZERO
+	var best := INF
+	for z in range(plaza.position.y - 4, plaza.end.y + 4):
+		for x in range(plaza.position.x - 4, plaza.end.x + 4):
+			var c := Vector2(x + 0.5, z + 0.5)
+			var d := c.distance_to(centre + Vector2(0, plaza.size.y * 0.5 + 2.0))
+			if not plaza.grow(1).has_point(Vector2i(x, z)) and world.data.tile(x, z) == IslandData.Tile.GRASS \
+					and world.is_walkable(c.x, c.y) and _open_around(x, z) and d < best:
+				best = d
+				spot = Vector3(c.x, 0, c.y)
+	if best == INF:
+		return
+	var npc := Npc.new()
+	world.add_child(npc)
+	npc.setup(who, world, spot, Vector3(0, 0, 1))
+	npc.wanders = true
+	npc.visiting = true
+	npc.home = npc.position
+	Game.npcs.append(npc)
 
 
 ## A neighbour, out and about near their house.
@@ -572,10 +618,14 @@ func _start_tour() -> void:
 	await hud.fade_out()
 	var trips := int(Story.flags.get("tours", 0)) + 1
 	Story.flags["tours"] = trips
+	# Now and then Marlow finds somewhere special.
+	var luck := RandomNumberGenerator.new()
+	luck.seed = hash([_seed, GameClock.day_key(), trips, "kind"])
+	var kind: String = Game.args.get("island", TourKinds.pick(trips, luck.randf(), luck.randf()))
 	var dock := {}
 	for attempt in 6:
 		var data := IslandGenerator.generate_tour(absi(hash([_seed, GameClock.day_key(), trips, attempt])) % 1000000,
-			world.data.native_fruit, world.data.native_flower)
+			world.data.native_fruit, world.data.native_flower, kind)
 		tour = World.new()
 		tour.name = "Tour"
 		tour.tour = true
@@ -603,7 +653,7 @@ func _start_tour() -> void:
 	Events.placed_changed.emit()
 	Game.mode = Game.Mode.PLAY
 	await hud.fade_in()
-	Events.toast.emit("Land ho! Talk to Marlow when you're ready to sail home.")
+	Events.toast.emit(TourKinds.get_kind(kind).get("arrive", TourKinds.get_kind("plain")["arrive"]))
 
 
 ## Someone's camping on each tour island who'd like a new home: one of the neighbours
@@ -695,6 +745,18 @@ func _run_demo() -> void:
 		Story.flags["tent_gift"] = true
 		Story.flags["house_day"] = GameClock.day_key() - 1
 		_check_house()
+	if Game.args["demo"] == "visitor":
+		var who: String = Game.args.get("who", "kiwi")
+		Story.flags["met"] = {who: GameClock.day_key() - 1}
+		Story.force_visitor = who
+		_check_visitor()
+		var visitor := Story.npc(who)
+		if visitor:
+			visitor.wanders = false
+			player.position = visitor.position + Vector3(1.3, 0, 0.6)
+			player.facing = Vector3(-1, 0, -0.4).normalized()
+			camera_rig.snap()
+		return
 	if Game.args["demo"] == "neighbours":
 		# Two plots staked out yesterday, so two neighbours have just moved in.
 		var placed := 0

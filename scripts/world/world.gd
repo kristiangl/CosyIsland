@@ -570,8 +570,13 @@ func plant_flower(item_id: String, tile: Vector2i) -> Dictionary:
 
 
 func _roll_rock_item() -> String:
-	var roll := _rng.randi_range(1, 100)
-	for entry in ROCK_TABLE:
+	# Some tour islands have richer rocks.
+	var table: Array = TourKinds.get_kind(data.kind).get("rock_table", ROCK_TABLE) if data.kind != "" else ROCK_TABLE
+	var total := 0
+	for entry in table:
+		total += int(entry[1])
+	var roll := _rng.randi_range(1, total)
+	for entry in table:
 		roll -= entry[1]
 		if roll <= 0:
 			return entry[0]

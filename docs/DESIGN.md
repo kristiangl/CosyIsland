@@ -191,14 +191,21 @@ Milestone 3b:
   best there) and wear a generated head; nine are in, the shorthair cat to follow
 - [x] Asking first: materials for building projects, Poppy's specimens, donations to
   the museum (all at once or one at a time) and favours ask "Give them X?" first
+- [x] Rare tour islands (`data/tour_islands.json`, `TourKinds`): after the first trip,
+  about one tour in three lands somewhere special: an orchard of every fruit, a flower
+  meadow with rare colours (pink, orange, purple, blue; never sold), a rocky island with
+  iron and gold, and bug and fishing islands with creatures found nowhere else
+- [x] Visitors from tours: someone you met camping on a tour sometimes spends a day by
+  your plaza, brings a souvenir (fruit or a flower you don't grow) and can be asked to
+  stay if a plot is free
 
 Next milestones (suggested order):
 3c. Bigger house (more rooms) and outdoor house colours. Clothes as items instead of
    everything unlocked, sold by Lucy. Time travel moves out of the phone into an
    options menu.
 4. Daily visitors; more neighbour life (moving out). A try-on mirror at the tailors.
-5. More to find on tours: rare islands (other trees, rare bugs), visitors from tours
-   stopping by.
+5. More to find on tours: other kinds of tree on rare islands, flower breeding for the
+   rare colours.
 6. Path tool, terraforming, waterscaping, rock moving.
 7. Weather and seasons; audio.
 8. Platform work: touch controls, performance passes, Switch porting.

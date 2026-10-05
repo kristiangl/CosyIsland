@@ -26,6 +26,7 @@ var _chats: Dictionary = {}
 
 func reset() -> void:
 	flags.clear()
+	force_visitor = ""
 	_chats.clear()
 
 
@@ -77,6 +78,8 @@ func talk_to(who: Npc) -> void:
 		_:
 			if NpcData.is_neighbour(who.id) and who.world and who.world.tour:
 				await _tour_visitor(who)
+			elif NpcData.is_neighbour(who.id) and who.visiting:
+				await _visitor(who)
 			elif NpcData.is_neighbour(who.id):
 				await _neighbour(who)
 	_end()
@@ -796,6 +799,8 @@ func _marlow(who: Npc) -> void:
 				"Bring a shovel. Flowers dig up lovely, and they'll grow at home.",
 				"Fruit you plant at home grows into a tree, given time. So I'm told. I mostly eat it.",
 				"Sometimes there's someone camping out there who'd love a proper home. Worth a chat!",
+				"Every so often we land somewhere special. An island of nothing but flowers, once. Another one, all bugs.",
+				"There's fish out on the far islands you'll never catch at home. Golden ones, if you believe the stories.",
 			])])
 
 
@@ -806,16 +811,27 @@ func _tour_visitor(who: Npc) -> void:
 	if who.id in invited():
 		await say(who.id, ["I'm packing already! See you on {island} Island. %s!" % catch.capitalize()])
 		return
+	# Remembered, so they might drop in on your island one day.
+	var met: Dictionary = flags.get("met", {})
+	if not met.has(who.id):
+		met[who.id] = GameClock.day_key()
+		flags["met"] = met
 	who.hop()
 	await say(who.id, ["Oh! A visitor! I'm %s. I've been camping here a while. It's lovely, but awfully quiet, %s." % [data["name"], catch]])
 	if open_plots() <= invited().size():
 		await say(who.id, ["Is your island nice? I'd love to move somewhere friendlier one day.",
-			"Oh, but you've no plot free? Never mind. Maybe I'll see you on another island!"])
+			"Oh, but you've no plot free? Never mind. Maybe I'll come and visit you instead!"])
 		return
 	if await ask(who.id, "Is your island nice? I've been thinking of moving somewhere friendlier.",
 			["Come and live on mine!", "Just visiting"]) != 0:
 		await say(who.id, ["Fair enough! Enjoy the island. Mind the crabs."])
 		return
+	await _invite(who)
+
+
+## They're coming to live on your island: into the next plot staked out.
+func _invite(who: Npc) -> void:
+	var catch: String = NpcData.get_character(who.id).get("catchphrase", "")
 	var list := invited()
 	list.append(who.id)
 	flags["invited"] = list
@@ -827,6 +843,81 @@ func _tour_visitor(who: Npc) -> void:
 	await say(who.id, ["Really? Oh, %s! Yes please!" % catch,
 		"I'll move into one of your plots first thing tomorrow!" if staked
 			else "Stake out one of your plots and I'll move in the next day!"])
+
+
+# --- Visitors ------------------------------------------------------------------------
+
+## How likely it is that someone you met on a tour drops in on a given day.
+const VISIT_CHANCE := 0.4
+## Who visits regardless of the day's luck (for demos and tests).
+var force_visitor := ""
+
+
+## Who's visiting your island today: now and then, someone you met camping on a tour
+## (on a later day) who hasn't moved in yet. "" for nobody.
+func visitor_today() -> String:
+	var met: Dictionary = flags.get("met", {})
+	var day := GameClock.day_key()
+	var here: Array = []
+	if Game.island:
+		for obj in Game.island.objects():
+			if obj.has("resident"):
+				here.append(obj["resident"])
+	var free: Array = met.keys().filter(func(id): return not id in here and day > int(met[id]))
+	if free.is_empty():
+		return ""
+	if force_visitor in free:
+		return force_visitor
+	free.sort()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(["visitor", day, Game.island.data.seed_value if Game.island else 0])
+	if rng.randf() >= VISIT_CHANCE:
+		return ""
+	return free[rng.randi() % free.size()]
+
+
+## Someone from a tour, visiting for the day: a souvenir, and a chance to ask them to stay.
+func _visitor(who: Npc) -> void:
+	var catch: String = NpcData.get_character(who.id).get("catchphrase", "")
+	var day := GameClock.day_key()
+	if who.id in invited():
+		await say(who.id, ["Just having a look round before I move in. I can't wait, %s!" % catch])
+		return
+	if flags.get("visit_greeted", -1) != day:
+		flags["visit_greeted"] = day
+		who.hop()
+		await say(who.id, ["{player}! Remember me? We met on my island. I've come to see what {island} Island's like!"])
+		if flags.get("visit_gift", -1) != day:
+			flags["visit_gift"] = day
+			var gift := souvenir(who.id, day)
+			await say(who.id, ["I brought you a little something from home, %s." % catch])
+			_give(gift)
+	if open_plots() > invited().size():
+		if await ask(who.id, "It's lovely here. I don't suppose... is there room for me?",
+				["Come and live here!", "Just visiting today"]) == 0:
+			await _invite(who)
+			return
+		await say(who.id, ["That's all right! I'll enjoy my day out. %s!" % catch.capitalize()])
+		return
+	await say(who.id, [_small_talk(who.id, [
+		"I'm catching the evening boat home. It's been a lovely day out!",
+		"Your island's so much busier than mine. In a good way!",
+		"If you ever have a plot free, I'd love to live here. Just saying, %s." % catch,
+	])])
+
+
+## What a visitor brings: fruit from their island, or a flower plant you don't grow.
+func souvenir(id: String, day: int) -> String:
+	var pool: Array = []
+	var native_fruit: String = Game.island.data.native_fruit if Game.island else ""
+	var native_flower: String = Game.island.data.native_flower if Game.island else ""
+	for f: String in IslandGenerator.FRUITS:
+		if f != native_fruit:
+			pool.append(f)
+	for fl: String in IslandGenerator.FLOWERS:
+		if fl != native_flower:
+			pool.append("%s_%s_plant" % [fl, IslandGenerator.FLOWER_COLOURS[absi(hash([id, fl])) % IslandGenerator.FLOWER_COLOURS.size()]])
+	return pool[absi(hash([id, day])) % pool.size()]
 
 
 # --- Neighbours ----------------------------------------------------------------------
@@ -1001,7 +1092,8 @@ func request_for(id: String) -> String:
 			var d := Game.island.data
 			pool.append(d.native_fruit)
 			for colour: String in ItemDB.flowers.get(d.native_flower, {}).get("colors", {}):
-				pool.append("%s_%s" % [d.native_flower, colour])
+				if not ItemDB.is_rare_flower(d.native_flower, colour):
+					pool.append("%s_%s" % [d.native_flower, colour])
 		for c: Dictionary in ItemDB.fish.values() + ItemDB.bugs.values():
 			if int(c.get("weight", 1)) >= 8:
 				pool.append(c["id"])

@@ -18,6 +18,8 @@ var rest_facing := Vector3(0, 0, 1)
 var wanders := false
 ## Wanders at any hour (someone camping on a tour island has no home to go to).
 var always_out := false
+## Visiting from a tour island for the day (wanders round the plaza).
+var visiting := false
 var home := Vector3.ZERO
 const WALK := 1.1
 const ROAM := 7.0

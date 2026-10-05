@@ -242,6 +242,9 @@ func rebuild() -> void:
 		var gap := 1.0 + int(look.get("eye_gap", 0)) * 0.08
 		glasses_mesh.scale = Vector3(size * gap, size, 1.0)
 		glasses_mesh.position = P.HEAD_CENTRE + _head_offset + Vector3(0, (int(look.get("eye_y", 0)) + int(look.get("glasses_y", 0))) * 0.01, 0)
+		if _model_head:
+			# Generated heads have their eyes a little higher (at 0, not -0.035).
+			glasses_mesh.position.y += 0.035
 		glasses_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 
@@ -284,6 +287,14 @@ func _build_animal() -> void:
 		"ferret": [-0.03, -0.2], "mouse": [-0.01, -0.21], "bird": [0.01, -0.2]}[kind]
 	_face.set_shader_parameter("eye_y", face[0])
 	_face.set_shader_parameter("mouth_y", face[1])
+	if base:
+		# A generated head has its eye line at 0 and says where its muzzle and beak are.
+		var head := model_head(head_model_for(species))
+		_face.set_shader_parameter("face_lift", -face[0])
+		_face.set_shader_parameter("mouth_y", float(head.get_meta("mouth", face[1])) + face[0])
+		if kind == "bird":
+			_face.set_shader_parameter("beak_z", head.get_meta("beak", 10.0))
+			_face.set_shader_parameter("beak_colour", species.get("beak", Color("e8a040")))
 	if kind != "bird" and not base:
 		var ear_colour: Color = fur2 if kind == "dog" else fur
 		var ears := _mesh(AnimalParts.ears(kind, species.get("lop", false), species.get("short", false)), _cloth(ear_colour, species.get("inner_ear", Color("e3a5aa"))), _head)

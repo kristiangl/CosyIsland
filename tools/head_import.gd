@@ -2,14 +2,15 @@ extends SceneTree
 ## Converts a generated animal head (glTF from an image-to-3D service, facing +Z, up +Y)
 ## into a mesh that sits on CharacterModel's head pivot in place of the procedural head:
 ##
-##   /opt/godot/godot --headless --path . --script res://tools/head_import.gd -- --name=cat [--from-body] [--size=1.0]
+##   /opt/godot/godot --headless --path . --script res://tools/head_import.gd -- --name=cat [--from-body] [--size=1.0] [--eyes=0.45]
 ##
 ## Reads assets/characters/src/<name>.glb and writes assets/characters/heads/<name>.res.
 ## --from-body cuts the head off a full-body model standing in T-pose (BodyShape finds
 ## it); otherwise the whole model is the head. The face shader draws the eyes, mouth and
-## markings, so the head is placed where the procedural head was: the tip of the muzzle
-## just below the head's centre, the head's width there matching P.HEAD_RADIUS (times
-## --size), centred on the origin.
+## markings, so every head is placed alike: its width at the muzzle matching
+## P.HEAD_RADIUS (times --size), its eye line at EYE_Y and the face beside the muzzle at
+## FACE_Z. The mesh's metadata says how far to move it to meet the body ("offset"), where
+## the mouth goes ("mouth") and where a beak starts ("beak").
 
 const P = preload("res://scripts/character/character_parts.gd")
 const BodyShape = preload("res://tools/body_shape.gd")
@@ -19,9 +20,18 @@ const OUT := "res://assets/characters/heads/"
 const CHIN := -0.37
 ## Full-body models are measured at this height (BodyShape's slices assume it).
 const BODY_HEIGHT := 1.4
-## --size for heads that come out too big by the width at the muzzle (the mouse's muzzle
-## sits low on a head that's wider above it).
-const SIZES := {"mouse": 0.8}
+## Heads are sized by their width at the height of the muzzle; --size scales that, for
+## heads that look too big or small by it (hanging ears make a head look wider there).
+const SIZES := {"dog": 1.2, "dog_upright": 0.9, "rabbit": 0.92, "rabbit_lop": 1.15, "mouse": 0.8,
+	"bird": 0.88, "bird_sea": 0.88}
+## Where the eyes go, as a share of the way up the middle of the head from chin to crown
+## (--eyes). The face shader draws them at EYE_Y, with the face's surface beside the
+## muzzle or beak at FACE_Z, so every head's eyes sit alike.
+const EYES := {"cat": 0.42, "bird": 0.4}
+const DEFAULT_EYES := 0.45
+const EYE_X := 0.125
+const EYE_Y := 0.0
+const FACE_Z := 0.3
 ## Heads whose ears hang down below the chin.
 const HANGING_EARS := ["dog", "rabbit_lop"]
 ## Rounds of smoothing for heads whose surface came out dented or crumpled.
@@ -35,7 +45,8 @@ func _init() -> void:
 		args[kv[0]] = kv[1] if kv.size() > 1 else ""
 	var model_name: String = args.get("name", "cat")
 	var mesh := import_head(ProjectSettings.globalize_path(SRC + model_name + ".glb"), args.has("from-body"),
-		float(args.get("size", SIZES.get(model_name, 1.0))), int(args.get("smooth", SMOOTHING.get(model_name, 0))))
+		float(args.get("size", SIZES.get(model_name, 1.0))), int(args.get("smooth", SMOOTHING.get(model_name, 0))),
+		float(args.get("eyes", EYES.get(model_name, DEFAULT_EYES))))
 	if mesh == null:
 		push_error("Couldn't import " + model_name)
 	else:
@@ -46,7 +57,7 @@ func _init() -> void:
 	quit()
 
 
-static func import_head(path: String, from_body: bool, size: float, smoothing := 0) -> ArrayMesh:
+static func import_head(path: String, from_body: bool, size: float, smoothing := 0, eyes := DEFAULT_EYES) -> ArrayMesh:
 	var doc := GLTFDocument.new()
 	var state := GLTFState.new()
 	if doc.append_from_file(path, state) != OK:
@@ -109,7 +120,7 @@ static func import_head(path: String, from_body: bool, size: float, smoothing :=
 		var sum: Vector3 = welded[(out_verts[v] * 10000.0).round()]
 		if sum.length_squared() > 0.0:
 			out_normals[v] = sum.normalized()
-	# Where the face goes: anchored on the muzzle tip, scaled by the width there.
+	# Sized by the width at the height of the muzzle's tip.
 	var tip := Vector3(0, 0, -INF)
 	for p in out_verts:
 		if p.z > tip.z:
@@ -124,7 +135,27 @@ static func import_head(path: String, from_body: bool, size: float, smoothing :=
 		if absf(p.y - tip.y) < (high - low) * 0.05:
 			half = maxf(half, absf(p.x))
 	var s := P.HEAD_RADIUS.x / half * size
-	var centre := Vector3(0.0, tip.y + 0.11 / s, tip.z - P.HEAD_RADIUS.z / s)
+	# The eye line, part way up the middle of the head (between any ears).
+	var chin_c := INF
+	var crown := -INF
+	for p in out_verts:
+		if absf(p.x) < 0.06 / s:
+			chin_c = minf(chin_c, p.y)
+			crown = maxf(crown, p.y)
+	var eye_y := lerpf(chin_c, crown, eyes)
+	# How far forward the face is where the eyes go, beside the muzzle or beak.
+	var face_z := -INF
+	for p in out_verts:
+		if absf(absf(p.x) - EYE_X / s) < 0.03 / s and absf(p.y - eye_y) < 0.03 / s:
+			face_z = maxf(face_z, p.z)
+	if face_z == -INF:
+		face_z = tip.z - 0.06 / s
+	# And down the middle at that height: a beak is whatever sticks out further.
+	var brow_z := -INF
+	for p in out_verts:
+		if absf(p.x) < 0.04 / s and absf(p.y - eye_y) < 0.04 / s:
+			brow_z = maxf(brow_z, p.z)
+	var centre := Vector3(0.0, eye_y - EYE_Y / s, face_z - FACE_Z / s)
 	for v in out_verts.size():
 		out_verts[v] = (out_verts[v] - centre) * s
 	# The chin (the underside in the middle, not hanging ears) should meet the body where
@@ -141,6 +172,9 @@ static func import_head(path: String, from_body: bool, size: float, smoothing :=
 	var mesh := ArrayMesh.new()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, surface)
 	mesh.set_meta("offset", Vector3(0.0, CHIN - chin, 0.0))
+	# The nose goes on the muzzle's tip and the mouth under it (the shader's mouth_y).
+	mesh.set_meta("mouth", (tip.y - centre.y) * s - 0.045)
+	mesh.set_meta("beak", (maxf(brow_z, face_z) - centre.z) * s + 0.015)
 	return mesh
 
 

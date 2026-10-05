@@ -51,10 +51,16 @@ uniform bool cat_blaze = false;
 uniform vec3 whisker_colour : source_color = vec3(0.85, 0.82, 0.8);
 uniform vec3 nose_colour : source_color = vec3(0.9, 0.55, 0.6);
 
+// Generated heads: how far up their face is drawn (so the kind's eye height lands on
+// the head's eye line), and how far forward a beak starts, painted beak_colour.
+uniform float face_lift = 0.0;
+uniform float beak_z = 10.0;
+uniform vec3 beak_colour : source_color = vec3(0.9, 0.6, 0.3);
+
 varying vec3 local_pos;
 
 void vertex() {
-	local_pos = VERTEX;
+	local_pos = VERTEX - vec3(0.0, face_lift, 0.0);
 	vec3 world = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	if (curved) {
 		VERTEX += (inverse(MODEL_MATRIX) * vec4(curve_world(world) - world, 0.0)).xyz;
@@ -309,6 +315,9 @@ vec3 draw_nose(vec3 base, vec2 p, float aa) {
 
 void fragment() {
 	vec3 col = markings(skin, local_pos);
+	if (local_pos.z > beak_z) {
+		col = beak_colour;
+	}
 	if (local_pos.z > 0.12) {
 		vec2 p = local_pos.xy;
 		float aa = max(fwidth(p.x), fwidth(p.y)) * 0.8;

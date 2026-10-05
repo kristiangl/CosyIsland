@@ -23,10 +23,13 @@ procedural.
 All the heads so far came from full-body models in T-pose (`--from-body` cuts the head
 off at the throat, keeping ears clear of the arms they rest on); a head on its own works
 too and gets more of the model's detail. The importer also fixes triangles wound the
-wrong way round and smooths the normals. Per-head settings live at the top of
-`tools/head_import.gd`: `SIZES` (the mouse is scaled down, its muzzle sits low),
-`HANGING_EARS` (heads whose ears hang below the chin: the floppy dog and the lop rabbit)
-and `SMOOTHING` (the mouse's surface came out crumpled).
+wrong way round and smooths the normals. Every head is placed alike: its eye line (part
+way up the middle of the head) where the face shader draws eyes, and the face beside the
+muzzle or beak at the same depth, so muzzles and beaks stick out in front. A bird's beak
+is painted its species' "beak" colour. Per-head settings live at the top of
+`tools/head_import.gd`: `SIZES` (how big each head looks), `EYES` (how far up the eyes
+go), `HANGING_EARS` (heads whose ears hang below the chin: the floppy dog and the lop
+rabbit) and `SMOOTHING` (the mouse's surface came out crumpled).
 
 ## The heads (10)
 

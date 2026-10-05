@@ -14,6 +14,7 @@ const APPS := [
 	["time", "Time travel", "clock", "c9d8f2"],
 	["controls", "Controls", "leaf", "f4e1a8"],
 	["save", "Save", "save", "d9cfee"],
+	["title", "Title screen", "back", "cfe6e0"],
 	["quit", "Save & quit", "door", "f2c6a8"],
 ]
 const PHONE_SIZE := Vector2(360, 540)

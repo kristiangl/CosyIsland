@@ -195,6 +195,8 @@ Milestone 3b:
   about one tour in three lands somewhere special: an orchard of every fruit, a flower
   meadow with rare colours (pink, orange, purple, blue; never sold), a rocky island with
   iron and gold, and bug and fishing islands with creatures found nowhere else
+- [x] Title screen: a splash, then Continue and three save files (play, start over or
+  delete, asking first); the phone's Title screen app saves and goes back to it
 - [x] Visitors from tours: someone you met camping on a tour sometimes spends a day by
   your plaza, brings a souvenir (fruit or a flower you don't grow) and can be asked to
   stay if a plot is free

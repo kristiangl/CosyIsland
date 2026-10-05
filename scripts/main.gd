@@ -41,6 +41,8 @@ var placement: Placement
 var _seed := 0
 var _gen_version := IslandGenerator.VERSION
 var _welcome_pending := false
+## The island day this file began (for "Day N" on the title screen).
+var _started_day := 0
 ## The room the player is in, or null outdoors.
 var room: World
 ## The island visited on a tour, while there.
@@ -54,7 +56,10 @@ var ambient: AmbientEffects
 
 func _ready() -> void:
 	var fresh := Game.args.has("new") or Game.args.has("seed") or Game.args.has("screenshot")
+	if Game.args.has("slot"):
+		SaveGame.slot = clampi(int(Game.args["slot"]), 0, SaveGame.SLOTS)
 	var saved := {} if fresh else SaveGame.read()
+	_started_day = int(saved.get("started_day", GameClock.day_key()))
 	_seed = int(Game.args.get("seed", saved.get("seed", randi() % 1000000)))
 	# Islands keep the generator version they were made with (saves before versions are 1).
 	_gen_version = int(saved.get("gen", 1)) if saved.has("seed") else int(Game.args.get("gen", IslandGenerator.VERSION))
@@ -125,6 +130,7 @@ func _ready() -> void:
 	hud.quit_requested.connect(func():
 		save_game()
 		get_tree().quit())
+	hud.title_requested.connect(quit_to_title)
 	hud.wardrobe_requested.connect(func(): hud.creator.open(player.model.look, false))
 	add_child(hud)
 	hud.creator.finished.connect(_on_creator_finished)
@@ -311,11 +317,37 @@ func save_game() -> void:
 		"journal": Journal.to_save(),
 		"player_name": Game.player_name,
 		"island_name": Game.island_name,
+		"day": GameClock.day_key(),
+		"started_day": _started_day,
 	})
+
+
+## Saves and goes back to the title screen.
+func quit_to_title() -> void:
+	save_game()
+	Game.mode = Game.Mode.MENU
+	await hud.fade_out()
+	Game.args.erase("new")
+	Game.args.erase("slot")
+	get_tree().change_scene_to_file("res://scenes/title.tscn")
 
 
 func _exit_tree() -> void:
 	IslandMap.finish()
+	# Back to the title: nothing of this island stays behind for the next file.
+	Game.npcs.clear()
+	Game.world = null
+	Game.island = null
+	Game.tour = null
+	Game.player = null
+	Game.camera = null
+	Game.dialogue = null
+	Game.shop = null
+	Game.player_name = ""
+	Game.island_name = ""
+	Story.reset()
+	GameClock.offset_seconds = 0
+	GameClock.time_scale = 1.0
 
 
 func _notification(what: int) -> void:

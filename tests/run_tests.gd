@@ -40,6 +40,7 @@ func _run() -> void:
 	_test_rare_islands()
 	_test_tour_visitors()
 	_test_fruit_planting()
+	_test_save_slots()
 	print("\n%d checks, %d failures" % [_checks, _failures])
 	get_tree().quit(1 if _failures > 0 else 0)
 
@@ -1343,3 +1344,22 @@ func _test_fruit_planting() -> void:
 	t.free()
 	w.free()
 
+
+func _test_save_slots() -> void:
+	var was := SaveGame.slot
+	check(SaveGame.path(0) != SaveGame.path(1) and SaveGame.path(1) != SaveGame.path(2), "every file has its own save")
+	# Only the scratch slot, so a real file is never touched.
+	SaveGame.slot = 0
+	SaveGame.delete()
+	check(SaveGame.summary(0).is_empty(), "an empty file has nothing to show")
+	SaveGame.write({"player_name": "Ada", "island_name": "Fern", "inventory": {"currency": 250},
+		"day": 100, "started_day": 96, "player": {"look": {"hair": "bob"}}})
+	var s := SaveGame.summary(0)
+	check(s["player_name"] == "Ada" and s["island_name"] == "Fern" and s["acorns"] == 250 and s["days"] == 5
+		and s["look"]["hair"] == "bob" and int(s["saved_at"]) > 0, "a file shows who, where, how far along and when")
+	SaveGame.delete()
+	check(not SaveGame.has_save(0), "and can be deleted")
+	SaveGame.slot = was
+	check(TitleScreen.skips_title({"screenshot": "x.png"}) and TitleScreen.skips_title({"new": ""})
+		and not TitleScreen.skips_title({}) and not TitleScreen.skips_title({"screenshot": "x.png", "title": ""}),
+		"game options on the command line skip the title screen (unless --title)")

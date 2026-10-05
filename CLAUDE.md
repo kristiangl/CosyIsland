@@ -13,7 +13,11 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
 - Screenshot: `tools/screenshot.sh out.png [extra args]`, e.g.
   `tools/screenshot.sh shots/day.png --seed=7 --hour=10` or `--view=overview`
   (runs under xvfb with Mesa software GL; first run imports the project).
-- Run the game with a window: `/opt/godot/godot --path .` (add `-- --new` for a new island).
+- Run the game with a window: `/opt/godot/godot --path .` opens the title screen (splash,
+  then Continue and three files). `-- --new` starts a new island straight away in the
+  scratch file (never shown on the title screen), `-- --slot=N` opens file N
+  (`--slot=N --new` starts it over). Title screenshots: `--title` (`=splash|file|confirm`)
+  with `--screenshot=PATH`.
 - Check every script parses: `tools/check_scripts.sh` (run this first; GDScript treats
   inferred-Variant types as errors, so type loop variables over literal arrays).
 - Art check scenes (render with `tools/screenshot_scene.sh out.png res://tools/<scene>`):
@@ -34,7 +38,7 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
 ## Layout
 
 - `scripts/autoload/`: global singletons (Events bus, Game state, ItemDB, GameClock,
-  Inventory, SaveGame). Registered in `project.godot`.
+  Inventory, SaveGame: one JSON file per slot, `SaveGame.slot`, 0 is scratch). Registered in `project.godot`.
 - `scripts/world/`: island generation (`island_generator.gd`, pure data), meshes
   (`terrain_builder.gd`, `grass_field.gd`), the live `world.gd` (objects, walkability,
   island rules), `day_night.gd`, `placement.gd`.
@@ -100,7 +104,8 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
 
 ## Conventions
 
-- Scenes are built in code; `scenes/main.tscn` is just the root. Keep it that way unless
+- Scenes are built in code; `scenes/main.tscn` (the game) and `scenes/title.tscn` (the
+  title screen, the main scene; game options on the command line skip it) are just roots. Keep it that way unless
   an editor-made scene clearly helps.
 - One tile = one world unit. Tile (x, z) spans x..x+1, z..z+1; north is -z.
 - Island objects are plain dictionaries in `IslandData.objects` (saved as JSON). Visuals

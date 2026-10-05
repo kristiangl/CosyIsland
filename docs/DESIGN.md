@@ -187,6 +187,9 @@ Milestone 3b:
   for sale later), plots stay empty until someone you invited on a tour moves in, and a
   neighbour camps on every tour island; Marlow gives the first ticket free
 - [x] Tools with one job each: axe for trees, pickaxe for rocks, shovel for flowers
+- [x] Generated base bodies: the first (the human) is in, rigged by a free auto-rigger and
+  driven by the existing pivots; clothes are painted on by region (skirts, hoods and other
+  shapes as separate meshes still to come); eleven animal bodies to follow
 - [x] Asking first: materials for building projects, Poppy's specimens, donations to
   the museum (all at once or one at a time) and favours ask "Give them X?" first
 

@@ -262,6 +262,24 @@ func _test_animation() -> void:
 	for i in 60:
 		m.animate(0.01, 0.0)
 	check(m._action == "", "and the action ends")
+	# The generated base body: the player wears it, and its arm follows the pivot.
+	check(SkinnedBody.has_model("human") and SkinnedBody.mesh_for("human").get_surface_count() == 2, "the human base model is there, with its head apart")
+	var lay := SkinnedBody.layout("human")
+	check(lay["ankle_y"] < lay["knee_y"] and lay["knee_y"] < lay["hip_y"] and lay["hip_y"] < lay["neck_y"]
+		and lay["shoulder_x"] < lay["elbow_x"] and lay["elbow_x"] < lay["wrist_x"], "its joints are where a body's are")
+	check(m._skinned != null and m._skinned.skeleton.get_bone_count() == 22, "the player wears it")
+	var skel: Skeleton3D = m._skinned.skeleton
+	var hand := skel.find_bone("RightHand")
+	var at_rest := skel.get_bone_global_pose(hand).origin
+	m.play("chop")
+	for i in 20:
+		m.animate(0.01, 0.0)
+	check(skel.get_bone_global_pose(hand).origin.distance_to(at_rest) > 0.1, "and its tool hand moves with the chop")
+	check(m._tool.get_parent() == m._skinned.grip, "holding the tool in the bone's hand")
+	CharacterModel.use_base_models = false
+	m.rebuild()
+	check(m._skinned == null and m.find_child("Base", true, false) == null, "the procedural body is still there to fall back on")
+	CharacterModel.use_base_models = true
 	for i in 60:
 		m.animate(0.01, 3.4)
 	var hips: Node3D = m.find_child("Hips", true, false)

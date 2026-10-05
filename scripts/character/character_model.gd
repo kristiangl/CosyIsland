@@ -39,6 +39,10 @@ var _knee_r: Node3D
 var _hand_r: Node3D
 var _tail: Node3D
 var _tool: MeshInstance3D
+## The generated base body, when there's one for this kind of character.
+var _skinned: SkinnedBody
+## Wear generated base bodies where they exist (off: the procedural bodies throughout).
+static var use_base_models := true
 var _face: ShaderMaterial
 var _tool_id := ""
 
@@ -145,36 +149,6 @@ func rebuild() -> void:
 	var hair_mat := _cloth(hair_colour, hair_colour.darkened(0.25))
 	hair_mat.set_shader_parameter("shine", 0.7)
 
-	# Body and limbs.
-	_mesh(P.torso_skin(), skin, _body)
-	var barefoot: bool = look["shoes"] == "none" or Appearance.option(look, "shoes").get("open", false)
-	var legs := P.leg_skin(barefoot)
-	var arms := P.arm_skin()
-	for side in [[_leg_l, _knee_l], [_leg_r, _knee_r]]:
-		_mesh(legs["upper"], skin, side[0])
-		_mesh(legs["lower"], skin, side[1])
-		if look["shoes"] != "none":
-			_mesh(P.shoe(look["shoes"]), shoe_mat, side[1])
-	for side in [[_arm_l, _elbow_l], [_arm_r, _elbow_r]]:
-		_mesh(arms["upper"], skin, side[0])
-		_mesh(arms["lower"], skin, side[1])
-
-	var top := P.top(look["top"])
-	_mesh(top["torso"], top_mat, _body)
-	for side in [[_arm_l, _elbow_l], [_arm_r, _elbow_r]]:
-		if top["sleeve"]:
-			_mesh(top["sleeve"], top_mat, side[0])
-		if top["cuff"]:
-			_mesh(top["cuff"], top_mat, side[1])
-	if not Appearance.is_full_body_top(look):
-		var bottom := P.bottom(look["bottom"])
-		_mesh(bottom["hips"], bottom_mat, _body)
-		for side in [[_leg_l, _knee_l], [_leg_r, _knee_r]]:
-			if bottom["leg"]:
-				_mesh(bottom["leg"], bottom_mat, side[0])
-			if bottom["shin"]:
-				_mesh(bottom["shin"], bottom_mat, side[1])
-
 	# Head, face and everything on it.
 	_face = ShaderMaterial.new()
 	_face.shader = _shader("face")
@@ -189,8 +163,54 @@ func rebuild() -> void:
 	_face.set_shader_parameter("mouth_style", Appearance.index_of(look, "mouth"))
 	_face.set_shader_parameter("cheek_style", Appearance.index_of(look, "cheeks"))
 	_apply_face_adjustments()
-	var head_mesh := _mesh(AnimalParts.head() if animal else P.head(), _face, _head)
-	head_mesh.position = P.HEAD_CENTRE
+	var head_parent := _head
+	_skinned = null
+	if not animal and use_base_models and SkinnedBody.has_model("human"):
+		# A generated base body with its clothes painted on.
+		_skinned = SkinnedBody.new()
+		_skinned.name = "Base"
+		add_child(_skinned)
+		_skinned.setup("human", {"hips": _hips, "waist": _waist, "body": _body, "head": _head, "arm_l": _arm_l,
+			"arm_r": _arm_r, "elbow_l": _elbow_l, "elbow_r": _elbow_r, "hand": _hand_r, "leg_l": _leg_l,
+			"leg_r": _leg_r, "knee_l": _knee_l, "knee_r": _knee_r}, _base_body_material("human", skin_colour), _face)
+		var shape := SkinnedBody.head_shape("human")
+		_face.set_shader_parameter("rest_space", true)
+		_face.set_shader_parameter("head_centre", shape["centre"])
+		_face.set_shader_parameter("head_scale", P.HEAD_RADIUS / shape["radius"])
+		_tool.reparent(_skinned.grip, false)
+		head_parent = _skinned.head_frame
+	else:
+		# Body and limbs.
+		_mesh(P.torso_skin(), skin, _body)
+		var barefoot: bool = look["shoes"] == "none" or Appearance.option(look, "shoes").get("open", false)
+		var legs := P.leg_skin(barefoot)
+		var arms := P.arm_skin()
+		for side in [[_leg_l, _knee_l], [_leg_r, _knee_r]]:
+			_mesh(legs["upper"], skin, side[0])
+			_mesh(legs["lower"], skin, side[1])
+			if look["shoes"] != "none":
+				_mesh(P.shoe(look["shoes"]), shoe_mat, side[1])
+		for side in [[_arm_l, _elbow_l], [_arm_r, _elbow_r]]:
+			_mesh(arms["upper"], skin, side[0])
+			_mesh(arms["lower"], skin, side[1])
+
+		var top := P.top(look["top"])
+		_mesh(top["torso"], top_mat, _body)
+		for side in [[_arm_l, _elbow_l], [_arm_r, _elbow_r]]:
+			if top["sleeve"]:
+				_mesh(top["sleeve"], top_mat, side[0])
+			if top["cuff"]:
+				_mesh(top["cuff"], top_mat, side[1])
+		if not Appearance.is_full_body_top(look):
+			var bottom := P.bottom(look["bottom"])
+			_mesh(bottom["hips"], bottom_mat, _body)
+			for side in [[_leg_l, _knee_l], [_leg_r, _knee_r]]:
+				if bottom["leg"]:
+					_mesh(bottom["leg"], bottom_mat, side[0])
+				if bottom["shin"]:
+					_mesh(bottom["shin"], bottom_mat, side[1])
+		var head_mesh := _mesh(AnimalParts.head() if animal else P.head(), _face, _head)
+		head_mesh.position = P.HEAD_CENTRE
 	_tail = null
 	# Animals have fur instead of hair, and their ears get in the way of hats.
 	var hat_style: String = "none" if animal else look["hat"]
@@ -198,13 +218,13 @@ func rebuild() -> void:
 		_build_animal()
 	else:
 		var covers: String = Appearance.option(look, "hat").get("covers", "")
-		var hair_mesh := _mesh(P.hair(look["hair"], covers == "full", covers == "top"), hair_mat, _head)
+		var hair_mesh := _mesh(P.hair(look["hair"], covers == "full", covers == "top"), hair_mat, head_parent)
 		hair_mesh.position = P.HEAD_CENTRE
 		# Hair, hats and glasses don't cast shadows, so faces stay bright under a brim.
 		hair_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	if hat_style != "none":
 		var hat_mat := _cloth(Appearance.color(look, "hat_color"), Color("fff4e0") if hat_style != "flower_crown" else Color("f6d36b"))
-		var hat_mesh := _mesh(P.hat(hat_style), hat_mat, _head)
+		var hat_mesh := _mesh(P.hat(hat_style), hat_mat, head_parent)
 		hat_mesh.position = P.HEAD_CENTRE
 		# Some hats can be worn different ways (a bow on either side, a cap backwards).
 		var ways := Appearance.hat_positions(look)
@@ -221,10 +241,10 @@ func rebuild() -> void:
 		flower.position = P.HEAD_CENTRE + out * 0.41
 		flower.basis = Basis(Quaternion(Vector3.UP, out)).scaled(Vector3.ONE * 1.5)
 		flower.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		_head.add_child(flower)
+		head_parent.add_child(flower)
 	if look["glasses"] != "none":
 		var frame := _cloth(Color("4a4550"), Color("3a3a4a") if look["glasses"] == "sunnies" else Color("4a4550"))
-		var glasses_mesh := _mesh(P.glasses(look["glasses"]), frame, _head)
+		var glasses_mesh := _mesh(P.glasses(look["glasses"]), frame, head_parent)
 		# Glasses follow the eyes: their height and spacing, plus their own nudges.
 		var size := 1.0 + int(look.get("glasses_size", 0)) * 0.06
 		var gap := 1.0 + int(look.get("eye_gap", 0)) * 0.08
@@ -358,6 +378,8 @@ func animate(delta: float, speed: float, turn_rate: float = 0.0, accel: float = 
 	t["head_yaw"] += clampf(turn_rate * 0.06, -0.3, 0.3)
 	_apply(t, delta)
 	_play_clips(delta, moving)
+	if _skinned:
+		_skinned.drive()
 
 
 ## The KayKit layer: an action if one's playing, else sitting, lying, fishing or idling,
@@ -528,6 +550,36 @@ func _mesh(mesh: ArrayMesh, material: Material, parent: Node3D) -> MeshInstance3
 		mi.scale = BODY_BULK
 	parent.add_child(mi)
 	return mi
+
+
+## Skin and clothes painted onto a base body: the top's sleeves and hem, the bottoms'
+## length and the shoes, from the look and the body's layout.
+func _base_body_material(kind: String, skin_colour: Color) -> ShaderMaterial:
+	var mat := ShaderMaterial.new()
+	mat.shader = _shader("skinned_body")
+	var lay := SkinnedBody.layout(kind)
+	for key: String in lay:
+		mat.set_shader_parameter(key, lay[key])
+	mat.set_shader_parameter("skin", skin_colour)
+	mat.set_shader_parameter("light_wrap", BODY_WRAP)
+	mat.set_shader_parameter("curved", curved)
+	mat.set_shader_parameter("fixed_tints", fixed_light)
+	mat.set_shader_parameter("top_a", Appearance.color(look, "top_color"))
+	mat.set_shader_parameter("top_b", Appearance.color(look, "top_color2"))
+	mat.set_shader_parameter("top_pattern", Appearance.index_of(look, "top_pattern"))
+	var top := P.top(look["top"])
+	mat.set_shader_parameter("sleeves", 0 if top["sleeve"] == null else (2 if top["cuff"] != null else 1))
+	var dress := Appearance.is_full_body_top(look)
+	mat.set_shader_parameter("hem", 1.0 if dress else 0.0)
+	var bottoms := 0
+	if not dress:
+		var bottom := P.bottom(look["bottom"])
+		bottoms = 3 if bottom["shin"] != null else (2 if look["bottom"].contains("skirt") else 1)
+	mat.set_shader_parameter("bottoms", bottoms)
+	mat.set_shader_parameter("bottom_colour", Appearance.color(look, "bottom_color"))
+	mat.set_shader_parameter("shoes", look["shoes"] != "none")
+	mat.set_shader_parameter("shoe_colour", Appearance.color(look, "shoe_color"))
+	return mat
 
 
 func _cloth(a: Color, b: Color = Color.WHITE, pattern: int = 0) -> ShaderMaterial:

@@ -67,6 +67,14 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   Series pieces with "kaykit" (comfy, kitchen, festive) are KayKit models repainted per
   variant by colour family (`Palette`, the variant's "paint"); they and the KayKit
   decorations in `data/items.json` come from `tools/kaykit_catalogue.py`.
+- Generated base bodies (`assets/characters/<kind>.res`, converted from rigged glTFs in
+  `assets/characters/src/` by `tools/character_import.gd -- --name=<kind>`; Mixamo bone
+  names, T-pose, facing +Z; prompts in `docs/CHARACTER_PROMPTS.md`) replace the procedural
+  body where one exists (the human so far): `SkinnedBody` copies the pivots' rotations
+  onto its bones each frame, `skinned_body.gdshader` paints clothes from each vertex's
+  rest position (UV, UV2.x), and the face shader draws on its head (`rest_space`).
+  `--procedural` brings back the old bodies; `tools/skinned_preview.tscn --file=x.glb`
+  shows a source model as it came.
 - Characters animate two ways: the hand-made walk and run in `character_model.gd`, and
   KayKit's Rig_Medium clips (`assets/kaykit/rig_medium.res`, the clips listed under
   "animations" in `tools/kaykit.json`) for idling, actions (`CharacterModel.ACTIONS`),

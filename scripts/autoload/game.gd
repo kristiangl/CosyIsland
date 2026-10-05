@@ -38,6 +38,8 @@ func _enter_tree() -> void:
 	for arg in OS.get_cmdline_user_args():
 		var parts := arg.trim_prefix("--").split("=", true, 1)
 		args[parts[0]] = parts[1] if parts.size() > 1 else ""
+	# --procedural: the hand-built character bodies instead of the generated base models.
+	CharacterModel.use_base_models = not args.has("procedural")
 	InputSetup.register()
 
 

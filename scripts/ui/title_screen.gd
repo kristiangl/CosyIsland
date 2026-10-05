@@ -7,7 +7,7 @@ extends Control
 ## the game, so the tools keep working.
 ##
 ##   --title            show the title screen anyway (with --screenshot: the menu)
-##   --title=splash     the splash, for a screenshot
+##   --title=splash     the splash, for a screenshot (--title=island: just the island)
 ##   --title=file       the actions for file 1 (--title=confirm: asking before deleting)
 
 const GAME_SCENE := "res://scenes/main.tscn"
@@ -15,7 +15,8 @@ const GAME_SCENE := "res://scenes/main.tscn"
 const DIRECT := ["new", "slot", "seed", "demo", "screenshot", "ui", "at", "view"]
 const SPLASH_TIME := 2.2
 
-var _sky: ColorRect
+var _backdrop: TitleBackdrop
+var _curtain: ColorRect
 var _splash: Control
 var _menu: Control
 var _files: VBoxContainer
@@ -37,12 +38,14 @@ func _ready() -> void:
 	Game.mode = Game.Mode.MENU
 	theme = UIStyle.theme()
 	set_anchors_preset(PRESET_FULL_RECT)
-	_sky = ColorRect.new()
-	_sky.set_anchors_preset(PRESET_FULL_RECT)
-	var mat := ShaderMaterial.new()
-	mat.shader = load("res://shaders/title_sky.gdshader")
-	_sky.material = mat
-	add_child(_sky)
+	_backdrop = TitleBackdrop.new()
+	add_child(_backdrop)
+	# A cream curtain behind the splash; it lifts to show the island once it's built.
+	_curtain = ColorRect.new()
+	_curtain.color = UIStyle.CREAM
+	_curtain.set_anchors_preset(PRESET_FULL_RECT)
+	_curtain.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_curtain)
 	_thumbs = CharacterThumbs.new()
 	add_child(_thumbs)
 	_thumbs.thumb_ready.connect(func(_key): _refresh_portraits())
@@ -53,10 +56,15 @@ func _ready() -> void:
 	_fade.set_anchors_preset(PRESET_FULL_RECT)
 	_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_fade)
-	resized.connect(_on_resized)
-	_on_resized()
+	if Game.args.has("screenshot"):
+		_build_backdrop()
+	else:
+		_build_backdrop.call_deferred()
 	if title_arg == "splash" or title_arg == "none":
 		_show_splash()
+	elif title_arg == "island":
+		_curtain.visible = false
+		_menu.visible = false
 	else:
 		_show_menu()
 		if title_arg in ["file", "confirm"] and SaveGame.has_save(1):
@@ -72,8 +80,14 @@ static func skips_title(args: Dictionary) -> bool:
 	return not args.has("title") and DIRECT.any(func(k): return args.has(k))
 
 
-func _on_resized() -> void:
-	(_sky.material as ShaderMaterial).set_shader_parameter("screen", size)
+## The island behind the menu: the file played last, as it was saved.
+func _build_backdrop() -> void:
+	if not Game.args.has("screenshot"):
+		# Let the splash show first; building takes a moment.
+		await get_tree().process_frame
+		await get_tree().process_frame
+	var latest := SaveGame.latest()
+	_backdrop.build(SaveGame.read(latest) if latest > 0 else {})
 
 
 func _process(delta: float) -> void:
@@ -132,8 +146,9 @@ func _show_splash() -> void:
 func _build_menu() -> void:
 	_menu = VBoxContainer.new()
 	_menu.set_anchors_preset(PRESET_CENTER_TOP)
-	_menu.anchor_left = 0.5
-	_menu.anchor_right = 0.5
+	# Right of centre, leaving the island on the left clear.
+	_menu.anchor_left = 0.66
+	_menu.anchor_right = 0.66
 	_menu.offset_left = -260
 	_menu.offset_right = 260
 	_menu.offset_top = 36
@@ -192,6 +207,10 @@ func _show_menu() -> void:
 	_splash.visible = false
 	_splash_left = 0.0
 	_menu.visible = true
+	if Game.args.has("screenshot"):
+		_curtain.visible = false
+	else:
+		create_tween().tween_property(_curtain, "modulate:a", 0.0, 0.8)
 	_refresh_files()
 
 

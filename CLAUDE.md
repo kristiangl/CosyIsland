@@ -16,8 +16,9 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
 - Run the game with a window: `/opt/godot/godot --path .` opens the title screen (splash,
   then Continue and three files). `-- --new` starts a new island straight away in the
   scratch file (never shown on the title screen), `-- --slot=N` opens file N
-  (`--slot=N --new` starts it over). Title screenshots: `--title` (`=splash|file|confirm`)
-  with `--screenshot=PATH`.
+  (`--slot=N --new` starts it over). Title screenshots: `--title` (`=splash|file|confirm|island`)
+  with `--screenshot=PATH`. Behind the menu is the latest file's island seen from far
+  out at sea (`TitleBackdrop`, no world curve, sea run out to `TerrainBuilder.sea_reach`).
 - Check every script parses: `tools/check_scripts.sh` (run this first; GDScript treats
   inferred-Variant types as errors, so type loop variables over literal arrays).
 - Art check scenes (render with `tools/screenshot_scene.sh out.png res://tools/<scene>`):

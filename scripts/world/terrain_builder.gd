@@ -311,6 +311,11 @@ static func _tile_points(x: int, z: int, y: float) -> Array[Vector3]:
 
 ## The sea: a fine grid around the island (shore distance in vertex red) plus a coarse
 ## outer skirt reaching to the horizon.
+## How far the sea reaches past the island, in tiles (the title screen, seen from low
+## down, wants it to run on further).
+static var sea_reach := 240
+
+
 static func build_sea(d: IslandData) -> ArrayMesh:
 	var w := d.width + 1
 	var h := d.height + 1
@@ -341,22 +346,42 @@ static func build_sea(d: IslandData) -> ArrayMesh:
 			var a := iz * row + ix
 			k.quad(a, a + 1, a + row + 1, a + row, Vector3.UP)
 
-	# Coarse skirt out to the horizon, just under the fine grid.
-	var reach := 240
-	var step := 16
-	var y := IslandData.SEA_LEVEL - 0.03
-	for sz in range(-reach, d.height + reach, step):
-		for sx in range(-reach, d.width + reach, step):
-			if sx >= -b and sx + step <= w + b and sz >= -b and sz + step <= h + b:
-				continue
-			var q := [
-				k.vertex(Vector3(sx, y, sz), Vector3.UP, Color(1, 0, 0, 1)),
-				k.vertex(Vector3(sx + step, y, sz), Vector3.UP, Color(1, 0, 0, 1)),
-				k.vertex(Vector3(sx + step, y, sz + step), Vector3.UP, Color(1, 0, 0, 1)),
-				k.vertex(Vector3(sx, y, sz + step), Vector3.UP, Color(1, 0, 0, 1)),
-			]
-			k.quad(q[0], q[1], q[2], q[3], Vector3.UP)
+	# Coarse skirt out to the horizon, level with the fine grid. It's one grid whose lines
+	# carry on from the fine grid's (1 apart alongside it, 16 apart beyond), so every
+	# edge it shares has the same vertices on both sides: no hairline cracks for the ink
+	# outline to catch when it's seen from low down, as on the title screen.
+	var xs := _skirt_lines(-b, w + b - 1, sea_reach)
+	var zs := _skirt_lines(-b, h + b - 1, sea_reach)
+	var base := k.verts.size()
+	for z in zs:
+		for x in xs:
+			k.vertex(Vector3(x, IslandData.SEA_LEVEL, z), Vector3.UP, Color(1, 0, 0, 1))
+	var cols := xs.size()
+	for iz in zs.size() - 1:
+		for ix in cols - 1:
+			var inside := xs[ix] >= -b and xs[ix + 1] <= w + b - 1 and zs[iz] >= -b and zs[iz + 1] <= h + b - 1
+			if not inside:
+				var a := base + iz * cols + ix
+				k.quad(a, a + 1, a + cols + 1, a + cols, Vector3.UP)
 	return k.commit()
+
+
+## Grid lines for the sea skirt along one axis: every 1 across the fine grid from `lo`
+## to `hi`, then every 16 out to 240 and every 80 beyond that, out to `reach`.
+static func _skirt_lines(lo: int, hi: int, reach: int) -> PackedFloat32Array:
+	var gaps := PackedFloat32Array()
+	var at := 0
+	while at < reach:
+		at += 16 if at < 240 else 80
+		gaps.append(mini(at, reach))
+	var out := PackedFloat32Array()
+	for i in range(gaps.size() - 1, -1, -1):
+		out.append(lo - gaps[i])
+	for v in range(lo, hi + 1):
+		out.append(v)
+	for g in gaps:
+		out.append(hi + g)
+	return out
 
 
 ## Two-pass chamfer distance transform (close to Euclidean, in tiles).

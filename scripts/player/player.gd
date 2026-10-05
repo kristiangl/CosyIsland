@@ -197,9 +197,11 @@ func _use() -> void:
 			_cast()
 		"net":
 			_swing_net()
-		"axe", "shovel":
+		"axe", "shovel", "pickaxe":
+			# Each tool has one job: the axe chops trees, the pickaxe breaks rocks and the
+			# shovel digs up flowers. Anything else just gets a bump.
 			_busy = SWING_TIME
-			model.play("chop" if tool_kind == "axe" else "dig")
+			model.play({"axe": "chop", "shovel": "dig", "pickaxe": "mine"}[tool_kind])
 			await get_tree().create_timer(IMPACT_TIME).timeout
 			if kind == "bush":
 				world.shake(obj, position)
@@ -210,8 +212,12 @@ func _use() -> void:
 				else:
 					world.shake(obj, position)
 			elif kind == "rock":
-				world.strike_rock(obj, position)
-				Inventory.wear_equipped()
+				if tool_kind == "pickaxe":
+					world.strike_rock(obj, position)
+					Inventory.wear_equipped()
+				else:
+					world.bump_rock(obj, position)
+					Events.toast.emit("Clonk! A pickaxe would break bits off.")
 				_recoil()
 			elif kind == "flower" and tool_kind == "shovel":
 				if world.dig_up(obj):

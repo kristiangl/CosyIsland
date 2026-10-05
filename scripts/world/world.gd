@@ -385,6 +385,12 @@ func chop(obj: Dictionary, player_pos: Vector3) -> void:
 		Journal.add("wood")
 
 
+## A rock hit with the wrong tool: a jolt and a few sparks, nothing comes off.
+func bump_rock(obj: Dictionary, player_pos: Vector3) -> void:
+	_squash(obj)
+	_burst_towards(obj, player_pos, "sparks", 0.35)
+
+
 func strike_rock(obj: Dictionary, player_pos: Vector3) -> bool:
 	_squash(obj)
 	_burst_towards(obj, player_pos, "sparks", 0.35)

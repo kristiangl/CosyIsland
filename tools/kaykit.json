@@ -299,6 +299,15 @@
 			"palette": "tools",
 			"keep_origin": true
 		},
+		"tool_pickaxe": {
+			"src": "KayKit_RPGToolsBits_1.0_FREE/Assets/gltf/pickaxe.gltf",
+			"fit": [
+				0.56,
+				0.62
+			],
+			"palette": "tools",
+			"keep_origin": true
+		},
 		"furniture_armchair_pillows": {
 			"src": "KayKit_Furniture_Bits_1.0_FREE/Assets/gltf/armchair_pillows.gltf",
 			"scale": 0.66
@@ -636,6 +645,7 @@
 		"KayKit_Character_Animations_1.1/Animations/gltf/Rig_Medium/Rig_Medium_Tools.glb": [
 			"Chop",
 			"Dig",
+			"Pickaxe",
 			"Hammering",
 			"Fishing_Cast",
 			"Fishing_Idle",

@@ -2,7 +2,7 @@
 	"_note": "Poppy's Island Journal. Milestones count things you do over the whole game (stat counters) and pay stamps at each goal; a goal can also teach a recipe. Five daily tasks are picked from the pool each day. Stamps buy the exchange's offers.",
 	"milestones": [
 		{"id": "woodcutter", "name": "Woodcutter", "stat": "wood", "text": "Chop {n} pieces of wood", "goals": [10, 50, 200, 1000], "stamps": [100, 300, 600, 1500], "recipes": {"1": "stone_axe"}},
-		{"id": "rock_breaker", "name": "Rock Breaker", "stat": "rock_hits", "text": "Get {n} things from rocks", "goals": [10, 50, 200, 800], "stamps": [100, 300, 600, 1500], "recipes": {"1": "sturdy_shovel"}},
+		{"id": "rock_breaker", "name": "Rock Breaker", "stat": "rock_hits", "text": "Get {n} things from rocks", "goals": [10, 50, 200, 800], "stamps": [100, 300, 600, 1500], "recipes": {"1": "sturdy_pickaxe"}},
 		{"id": "fruit_picker", "name": "Fruit Picker", "stat": "fruit", "text": "Shake down {n} fruit", "goals": [10, 50, 200, 1000], "stamps": [100, 300, 600, 1500]},
 		{"id": "angler", "name": "Angler", "stat": "fish", "text": "Catch {n} fish", "goals": [1, 20, 100, 500], "stamps": [150, 400, 1000, 2500]},
 		{"id": "bug_catcher", "name": "Bug Catcher", "stat": "bugs", "text": "Catch {n} bugs", "goals": [1, 20, 100, 500], "stamps": [150, 400, 1000, 2500]},

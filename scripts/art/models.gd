@@ -112,9 +112,15 @@ static func get_mesh(key: String) -> ArrayMesh:
 		"drop":
 			_drop(k, p[1])
 		"tool":
-			if ItemDB.tool_type(p[1]) in ["axe", "shovel"]:
+			if ItemDB.tool_type(p[1]) in ["axe", "shovel", "pickaxe"]:
 				k = _kit_from("tool_" + ItemDB.tool_type(p[1]))
 				_tint_metal(k, ItemDB.color_of(p[1]))
+				if ItemDB.tool_type(p[1]) == "axe":
+					# Held in the hand slot, KayKit's axe would swing with its blade trailing:
+					# turn it about the handle so the edge leads.
+					for i in k.verts.size():
+						k.verts[i] = Vector3(-k.verts[i].x, k.verts[i].y, -k.verts[i].z)
+						k.normals[i] = Vector3(-k.normals[i].x, k.normals[i].y, -k.normals[i].z)
 			else:
 				_tool(k, p[1])
 		"furniture":
@@ -1121,6 +1127,43 @@ static func _tint_metal(k: MeshKit, colour: Color) -> void:
 			k.colours[i] = Color(t, c.a)
 
 
+## A bug net's hoop and bag: the hoop opens towards +X (the way the hand swings it
+## in the hand slot) and the bag trails behind, pale outside and shaded inside so you can
+## see into it.
+static func _net_head(k: MeshKit, centre: Vector3, r: float) -> void:
+	var rim := MeshKit.lin(Color("9aa4ad"))
+	var segments := 14
+	for i in segments:
+		var a0 := TAU * i / segments
+		var a1 := TAU * (i + 1) / segments
+		k.cylinder(centre + Vector3(0, cos(a0), sin(a0)) * r, centre + Vector3(0, cos(a1), sin(a1)) * r, 0.013, 0.013, rim, 4, false)
+	var outside := MeshKit.lin(Color("f2f4f2"), 0.25)
+	var inside := MeshKit.lin(Color("c4ced4"), 0.25)
+	# Rings of the bag from the hoop back to a rounded tip.
+	var rings := [[0.0, 1.0], [-0.1, 0.92], [-0.2, 0.72], [-0.28, 0.42], [-0.31, 0.0]]
+	var rows: Array = []
+	for ring: Array in rings:
+		var row_out: Array[int] = []
+		var row_in: Array[int] = []
+		for i in segments:
+			var ang := TAU * i / segments
+			var dir := Vector3(0, cos(ang), sin(ang))
+			var p := centre + Vector3(ring[0], 0, 0) + dir * r * float(ring[1])
+			var n := (dir + Vector3(-0.6, 0, 0)).normalized()
+			row_out.append(k.vertex(p, n, outside))
+			row_in.append(k.vertex(p, -n, inside))
+		rows.append([row_out, row_in])
+	for j in rows.size() - 1:
+		for i in segments:
+			var i2 := (i + 1) % segments
+			for side in 2:
+				var a: Array[int] = rows[j][side]
+				var b: Array[int] = rows[j + 1][side]
+				var ang := TAU * (i + 0.5) / segments
+				var out := (Vector3(0, cos(ang), sin(ang)) + Vector3(-0.6, 0, 0)).normalized()
+				k.quad(a[i], a[i2], b[i2], b[i], out if side == 0 else -out)
+
+
 static func _tool(k: MeshKit, item: String) -> void:
 	var handle := MeshKit.lin(Color("c19a6e"))
 	var head := MeshKit.lin(ItemDB.color_of(item).lightened(0.15))
@@ -1137,9 +1180,6 @@ static func _tool(k: MeshKit, item: String) -> void:
 			k.sphere(Vector3(0, 0.9, 0), Vector3.ONE * 0.016, MeshKit.lin(Color("e0453a")), 3, 5)
 		"net":
 			k.cylinder(Vector3(0, -0.1, 0), Vector3(0, 0.62, 0), 0.025, 0.025, handle, 5)
-			k.xform = Transform3D(Basis(Vector3.RIGHT, PI * 0.5), Vector3(0, 0.78, 0))
-			k.cylinder(Vector3(0, -0.01, 0), Vector3(0, 0.01, 0), 0.17, 0.17, MeshKit.lin(Color("c8ccd2")), 14, false)
-			k.xform = Transform3D.IDENTITY
-			k.sphere(Vector3(0, 0.78, -0.08), Vector3(0.15, 0.15, 0.12), MeshKit.lin(Color("f4f0e6"), 0.3), 5, 10)
+			_net_head(k, Vector3(0, 0.79, 0), 0.17)
 		_:
 			k.cylinder(Vector3(0, -0.1, 0), Vector3(0, 0.5, 0), 0.03, 0.03, handle, 5)

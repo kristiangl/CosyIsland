@@ -274,6 +274,11 @@ func _test_animation() -> void:
 
 
 func _test_crafting() -> void:
+	for id: String in ["flimsy_axe", "flimsy_pickaxe", "flimsy_shovel", "flimsy_net", "flimsy_rod", "sturdy_pickaxe"]:
+		check(ItemDB.is_tool(id) and Models.get_mesh("tool:" + id).get_surface_count() > 0, "%s is a tool with a model" % id)
+	check(ItemDB.tool_type("flimsy_pickaxe") == "pickaxe" and Recipes.recipes.has("flimsy_pickaxe") and Recipes.recipes.has("sturdy_pickaxe"),
+		"pickaxes can be made")
+	check(RigPose.length(CharacterModel.ACTIONS["mine"][0]) > CharacterModel.ACTIONS["mine"][2], "the pickaxe swing has its clip")
 	Inventory.reset()
 	Recipes.reset()
 	for id in Recipes.recipes:

@@ -8,6 +8,13 @@
 			},
 			"known": true
 		},
+		"flimsy_pickaxe": {
+			"materials": {
+				"tree_branch": 3,
+				"stone": 3
+			},
+			"known": true
+		},
 		"flimsy_shovel": {
 			"materials": {
 				"wood": 5
@@ -30,6 +37,12 @@
 			"materials": {
 				"flimsy_axe": 1,
 				"wood": 3
+			}
+		},
+		"sturdy_pickaxe": {
+			"materials": {
+				"flimsy_pickaxe": 1,
+				"iron_nugget": 1
 			}
 		},
 		"sturdy_shovel": {

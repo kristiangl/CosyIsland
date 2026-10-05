@@ -80,7 +80,9 @@ const BODY_BULK := Vector3(1.08, 1.0, 1.08)
 const ACTIONS := {
 	"chop": ["Chop", 0.25, 1.05, 0.42],
 	"dig": ["Dig", 0.4, 1.3, 0.42],
-	"net": ["Melee_2H_Attack_Slice", 0.2, 1.1, 0.42],
+	"mine": ["Pickaxe", 0.47, 1.37, 0.42],
+	# Brought down over the bug, like the axe's chop.
+	"net": ["Chop", 0.36, 1.16, 0.42],
 	"shake": ["Interact", 0.0, 1.3, 0.5],
 	"pickup": ["PickUp", 0.1, 1.2, 0.5],
 	"cheer": ["Cheering", 0.0, 1.67, 1.3],

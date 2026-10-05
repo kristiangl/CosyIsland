@@ -74,6 +74,16 @@
 			"color": "#b08a5a",
 			"desc": "Chops wood from trees. It won't fell them."
 		},
+		"flimsy_pickaxe": {
+			"name": "Flimsy Pickaxe",
+			"category": "tool",
+			"tool": "pickaxe",
+			"durability": 40,
+			"stack": 1,
+			"price": 200,
+			"color": "#9aa2aa",
+			"desc": "Breaks bits off rocks: stone, clay and the odd iron nugget."
+		},
 		"flimsy_shovel": {
 			"name": "Flimsy Shovel",
 			"category": "tool",
@@ -82,7 +92,7 @@
 			"stack": 1,
 			"price": 200,
 			"color": "#8aa0b0",
-			"desc": "Good for hitting rocks. Digging comes later."
+			"desc": "Digs up flowers, roots and all, to plant somewhere else."
 		},
 		"flimsy_rod": {
 			"name": "Flimsy Fishing Rod",
@@ -435,6 +445,16 @@
 			"price": 620,
 			"color": "#9a9a92",
 			"desc": "A tougher axe that lasts much longer."
+		},
+		"sturdy_pickaxe": {
+			"name": "Sturdy Pickaxe",
+			"category": "tool",
+			"tool": "pickaxe",
+			"durability": 100,
+			"stack": 1,
+			"price": 600,
+			"color": "#7d8790",
+			"desc": "An iron pickaxe built to last."
 		},
 		"sturdy_shovel": {
 			"name": "Sturdy Shovel",

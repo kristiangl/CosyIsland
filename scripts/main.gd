@@ -268,7 +268,7 @@ func _ready() -> void:
 func _new_game_pockets() -> void:
 	Inventory.reset()
 	Inventory.add_item("flimsy_axe")
-	Inventory.add_item("flimsy_shovel")
+	Inventory.add_item("flimsy_pickaxe")
 	Inventory.equip(0)
 
 

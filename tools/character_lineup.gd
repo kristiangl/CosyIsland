@@ -2,7 +2,7 @@ extends Node3D
 ## Renders a row of characters for checking the character art:
 ##   tools/screenshot_scene.sh out.png res://tools/character_lineup.tscn [--seed=N] [--angle=DEG]
 ##     [--vary=KEY [--only=id,id]] [--base=key:id,key:id] [--npcs[=id,id] [--angles=0,35]] [--close]
-##     [--poses [--only=chop,dig,...]]
+##     [--poses [--only=chop,dig,...] [--times=0.1,0.2 (one pose at several moments)]]
 ## Without --vary: the --base look (default look if none) and five random ones.
 ## With --vary: one character per option of KEY, all on the --base look.
 
@@ -98,13 +98,19 @@ func _add_camera() -> void:
 ## One character per pose, frozen part-way through: idle, walk, run, chop, pickup, sit,
 ## cheer, shake. Each is stepped with fixed time steps to the interesting moment.
 func _pose_sheet(look: Dictionary) -> void:
-	var poses := [["idle", 0.0, 0.5], ["walk", 3.4, 0.33], ["run", 6.4, 0.3], ["chop", 0.0, 0.2], ["dig", 0.0, 0.22],
+	var poses := [["idle", 0.0, 0.5], ["walk", 3.4, 0.33], ["run", 6.4, 0.3], ["chop", 0.0, 0.2], ["dig", 0.0, 0.22], ["mine", 0.0, 0.2],
 		["net", 0.0, 0.2], ["cast", 0.0, 0.25], ["fishing", 0.0, 1.0], ["pickup", 0.0, 0.25], ["sit", 0.0, 0.5],
 		["sleeping", 0.0, 0.5], ["cheer", 0.0, 0.6], ["shake", 0.0, 0.25], ["eat", 0.0, 0.5], ["craft", 0.0, 0.4], ["wave", 0.0, 0.6]]
 	var only: PackedStringArray = Game.args.get("only", "").split(",", false)
 	if not only.is_empty():
 		poses = poses.filter(func(p): return p[0] in only)
-	var tools := {"chop": "flimsy_axe", "dig": "flimsy_shovel", "net": "flimsy_net", "cast": "flimsy_rod", "fishing": "flimsy_rod"}
+	if Game.args.has("times") and not poses.is_empty():
+		# One pose at several moments: --only=chop --times=0.05,0.15,0.25
+		var frames := []
+		for t in Game.args["times"].split(","):
+			frames.append([poses[0][0], poses[0][1], float(t)])
+		poses = frames
+	var tools := {"chop": "flimsy_axe", "dig": "flimsy_shovel", "mine": "flimsy_pickaxe", "net": "flimsy_net", "cast": "flimsy_rod", "fishing": "flimsy_rod"}
 	var spacing := minf(0.85, 7.0 / poses.size())
 	for i in poses.size():
 		var c := CharacterModel.new(look)

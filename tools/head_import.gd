@@ -22,7 +22,7 @@ const CHIN := -0.37
 const BODY_HEIGHT := 1.4
 ## Heads are sized by their width at the height of the muzzle; --size scales that, for
 ## heads that look too big or small by it (hanging ears make a head look wider there).
-const SIZES := {"dog": 1.2, "dog_upright": 0.9, "rabbit": 0.92, "rabbit_lop": 1.15, "mouse": 0.8,
+const SIZES := {"dog": 1.2, "dog_upright": 0.9, "rabbit": 0.92, "rabbit_lop": 1.15, "mouse": 0.8, "ferret": 0.86,
 	"bird": 0.88, "bird_sea": 0.88}
 ## Where the eyes go, as a share of the way up the middle of the head from chin to crown
 ## (--eyes). The face shader draws them at EYE_Y, with the face's surface beside the
@@ -34,6 +34,8 @@ const EYE_Y := 0.0
 const FACE_Z := 0.3
 ## Heads whose ears hang down below the chin.
 const HANGING_EARS := ["dog", "rabbit_lop"]
+## Heads with ears that stand up, whose insides get coloured in.
+const EARS := ["cat", "dog_upright", "rabbit", "ferret", "mouse"]
 ## Rounds of smoothing for heads whose surface came out dented or crumpled.
 const SMOOTHING := {"mouse": 12}
 
@@ -175,6 +177,23 @@ static func import_head(path: String, from_body: bool, size: float, smoothing :=
 	# The nose goes on the muzzle's tip and the mouth under it (the shader's mouth_y).
 	mesh.set_meta("mouth", (tip.y - centre.y) * s - 0.045)
 	mesh.set_meta("beak", (maxf(brow_z, face_z) - centre.z) * s + 0.015)
+	# Where the inside of the ears is, for the face shader to colour in: the
+	# front-facing part of what rises at the top corners, as an ellipse [x, y, rx, ry].
+	if EARS.has(path.get_file().get_basename()):
+		var crown_m := (crown - centre.y) * s
+		var lo := Vector2(INF, INF)
+		var hi := -lo
+		for v in out_verts.size():
+			var p := out_verts[v]
+			if absf(p.x) > 0.14 and p.y > crown_m - 0.12 and out_normals[v].z > 0.35:
+				lo = lo.min(Vector2(absf(p.x), p.y))
+				hi = hi.max(Vector2(absf(p.x), p.y))
+		if lo.x < INF:
+			var mid := (lo + hi) * 0.5
+			var reach := (hi - lo) * 0.5
+			mesh.set_meta("ears", Vector4(mid.x, mid.y, reach.x * 0.62, reach.y * 0.7))
+			if OS.get_cmdline_user_args().has("--debug"):
+				print("ears ", mesh.get_meta("ears"), " crown ", crown_m)
 	return mesh
 
 

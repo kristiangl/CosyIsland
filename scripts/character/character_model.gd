@@ -81,6 +81,9 @@ const LEG_BULK := Vector3(1.2, 1.0, 1.15)
 const ARM_BULK := Vector3(1.15, 1.0, 1.15)
 const BODY_BULK := Vector3(1.08, 1.0, 1.08)
 
+## How far apart a ferret's (generated head's) eyes are, wider than most.
+const FERRET_EYE_X := 0.14
+
 ## Actions: KayKit clip, the stretch of it used (seconds), and how long it plays here,
 ## so a swing lands when the game expects it to.
 const ACTIONS := {
@@ -240,6 +243,9 @@ func rebuild() -> void:
 		# Glasses follow the eyes: their height and spacing, plus their own nudges.
 		var size := 1.0 + int(look.get("glasses_size", 0)) * 0.06
 		var gap := 1.0 + int(look.get("eye_gap", 0)) * 0.08
+		# Ferrets' eyes are set wider (see _build_animal).
+		if _model_head and species.get("kind", "") == "ferret":
+			gap *= FERRET_EYE_X / 0.125
 		glasses_mesh.scale = Vector3(size * gap, size, 1.0)
 		glasses_mesh.position = P.HEAD_CENTRE + _head_offset + Vector3(0, (int(look.get("eye_y", 0)) + int(look.get("glasses_y", 0))) * 0.01, 0)
 		if _model_head:
@@ -292,11 +298,23 @@ func _build_animal() -> void:
 		var head := model_head(head_model_for(species))
 		_face.set_shader_parameter("face_lift", -face[0])
 		_face.set_shader_parameter("mouth_y", float(head.get_meta("mouth", face[1])) + face[0])
+		# The insides of standing ears.
+		var ears: Vector4 = head.get_meta("ears", Vector4.ZERO)
+		if ears.z > 0.0:
+			_face.set_shader_parameter("ear_spot", Vector4(ears.x, ears.y + face[0], ears.z, ears.w))
+			_face.set_shader_parameter("inner_ear", species.get("inner_ear", Color("e3a5aa")))
+		# Ferrets have big round eyes, set wide.
+		if kind == "ferret":
+			_face.set_shader_parameter("eye_scale", 1.35)
+			_face.set_shader_parameter("eye_x", FERRET_EYE_X)
 		# Snouts get a nose on the tip and the mouth a little lower, under it.
 		var nose: float = {"dog": 1.3, "ferret": 0.7, "mouse": 0.65}.get(kind, 0.0)
 		if nose > 0.0:
 			_face.set_shader_parameter("snout_nose", nose)
 			_face.set_shader_parameter("mouth_y", float(head.get_meta("mouth", face[1])) + face[0] - 0.025)
+		if kind == "ferret":
+			# A ferret's muzzle tip is low on its head; its nose sits just under the eyes.
+			_face.set_shader_parameter("mouth_y", face[0] - 0.125)
 		if kind == "bird":
 			_face.set_shader_parameter("beak_z", head.get_meta("beak", 10.0))
 			_face.set_shader_parameter("beak_colour", species.get("beak", Color("e8a040")))

@@ -73,8 +73,8 @@
 		},
 		"sable": {
 			"name": "Sable", "personality": "sporty", "catchphrase": "zoom",
-			"species": {"kind": "ferret", "fur": "#8a6a50", "fur2": "#f4ead8", "stripes": "#5e4434", "eyes": "#2a1a14", "inner_ear": "#d8b0a8", "nose": "#d88a90"},
-			"look": {"eyes": "wide", "mouth": "grin", "cheeks": "none", "top": "hoodie", "top_color": "red", "top_color2": "white", "bottom": "cargo_shorts", "bottom_color": "olive"},
+			"species": {"kind": "ferret", "fur": "#8a6a50", "fur2": "#f4ead8", "stripes": "#5e4434", "eyes": "#2a1a14", "inner_ear": "#e2a8a0", "nose": "#5e4434"},
+			"look": {"eyes": "wide", "mouth": "cat", "cheeks": "none", "top": "hoodie", "top_color": "red", "top_color2": "white", "bottom": "cargo_shorts", "bottom_color": "olive"},
 			"home": {"wall": "efe6d8", "roof": "c8564a", "door": "4a6a8a"},
 			"inside": {"series": "lodge", "variant": "moss", "wall": "cabin_wall", "floor": "wooden_flooring"}
 		},

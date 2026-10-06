@@ -60,10 +60,17 @@ uniform float snout_nose = 0.0;
 uniform float beak_z = 10.0;
 uniform vec3 beak_colour : source_color = vec3(0.9, 0.6, 0.3);
 
+// Inside of the ears on generated heads: an ellipse (x, y, rx, ry) in face space, mirrored
+// either side; rx 0 for none.
+uniform vec4 ear_spot = vec4(0.0);
+uniform vec3 inner_ear : source_color = vec3(0.89, 0.65, 0.67);
+
 varying vec3 local_pos;
+varying vec3 local_normal;
 
 void vertex() {
 	local_pos = VERTEX - vec3(0.0, face_lift, 0.0);
+	local_normal = NORMAL;
 	vec3 world = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	if (curved) {
 		VERTEX += (inverse(MODEL_MATRIX) * vec4(curve_world(world) - world, 0.0)).xyz;
@@ -240,14 +247,17 @@ vec3 markings(vec3 col, vec3 p) {
 		puff = min(puff, sd_ellipse(p.xy - vec2(0.0, -0.2), vec2(0.06, 0.04)));
 		col = mix(col, fur_b, 1.0 - smoothstep(-0.01, 0.01, puff));
 	} else if (species == 4 && p.z > 0.05) {
-		// Ferret: a pale face, a dark mask round the eyes running down the nose, and pale
-		// brows above it.
-		float face = sd_ellipse(p.xy - vec2(0.0, -0.09), vec2(0.2, 0.13));
-		col = mix(col, fur_b, 1.0 - smoothstep(-0.012, 0.012, face));
-		float mask = sd_ellipse(vec2(abs(p.x) - 0.13, p.y + 0.03), vec2(0.105, 0.06));
-		mask = min(mask, sd_segment(p.xy, vec2(0.0, -0.01), vec2(0.0, -0.1)) - 0.025);
+		// Ferret: a big pale face (cheeks and muzzle) with the fur running down between the
+		// eyes, a dark mask round each eye and pale brows above them.
+		float cheeks = sd_ellipse(vec2(abs(p.x) - eye_x - 0.03, p.y - eye_y + 0.05), vec2(0.16, 0.14));
+		float muzzle = sd_ellipse(p.xy - vec2(0.0, eye_y - 0.13), vec2(0.21, 0.12));
+		float pale = min(cheeks, muzzle);
+		col = mix(col, fur_b, 1.0 - smoothstep(-0.012, 0.012, pale));
+		float stripe = sd_segment(p.xy, vec2(0.0, eye_y + 0.2), vec2(0.0, eye_y - 0.05)) - (0.03 + clamp(p.y - eye_y, 0.0, 0.2) * 0.25);
+		col = mix(col, skin, 1.0 - smoothstep(-0.01, 0.01, stripe));
+		float mask = sd_ellipse(vec2(abs(p.x) - eye_x - 0.005, p.y - eye_y + 0.008), vec2(0.075, 0.066) * eye_scale);
 		col = mix(col, fur_c, 1.0 - smoothstep(-0.01, 0.01, mask));
-		float brow = sd_ellipse(vec2(abs(p.x) - 0.12, p.y - 0.065), vec2(0.06, 0.028));
+		float brow = sd_ellipse(vec2(abs(p.x) - eye_x + 0.01, p.y - eye_y - 0.1), vec2(0.048, 0.024));
 		col = mix(col, fur_b, 1.0 - smoothstep(-0.01, 0.01, brow));
 	} else if (species == 5 && p.z > 0.1) {
 		// Mouse: a pale muzzle round the base of the snout.
@@ -335,6 +345,10 @@ vec3 draw_nose(vec3 base, vec2 p, float aa) {
 
 void fragment() {
 	vec3 col = markings(skin, local_pos);
+	if (ear_spot.z > 0.0 && local_normal.z > 0.2) {
+		vec2 e = vec2(abs(local_pos.x) - ear_spot.x, local_pos.y - ear_spot.y) / ear_spot.zw;
+		col = mix(col, inner_ear, 1.0 - smoothstep(0.85, 1.0, length(e)));
+	}
 	if (local_pos.z > beak_z) {
 		col = beak_colour;
 	}
@@ -371,7 +385,7 @@ void fragment() {
 		if (species == 3) {
 			col = buck_teeth(col, p, aa);
 		}
-		if (species == 1 || species == 3 || species == 5) {
+		if (species == 1 || species == 3 || species == 4 || species == 5) {
 			col = whiskers(col, p, aa);
 		}
 		if (species == 1 || species == 3) {

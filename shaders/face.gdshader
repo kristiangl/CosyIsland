@@ -48,6 +48,9 @@ uniform vec3 fur_b : source_color = vec3(1.0);
 uniform vec3 fur_c : source_color = vec3(1.0);
 // A cat's pale blaze from the nose up between the eyes.
 uniform bool cat_blaze = false;
+// A cactus cat: no pale muzzle or tabby stripes, but stitched ribs (in fur_c) running
+// up and over the head.
+uniform bool cactus = false;
 uniform vec3 whisker_colour : source_color = vec3(0.85, 0.82, 0.8);
 uniform vec3 nose_colour : source_color = vec3(0.9, 0.55, 0.6);
 
@@ -214,7 +217,22 @@ vec3 draw_mouth(vec3 base, vec2 p, float aa) {
 
 // Fur markings over the whole head, before the face is drawn on top.
 vec3 markings(vec3 col, vec3 p) {
-	if (species == 1) {
+	if (species == 1 && cactus) {
+		// Ribs at even angles round the head, meeting over the top, each a line of
+		// stitches; the middle one stops above the nose.
+		float a = atan(p.x, p.z);
+		float rib = (a - round(a / 0.6) * 0.6) * length(p.xz);
+		float stitch = step(fract(p.y * 26.0), 0.6);
+		float line = (1.0 - smoothstep(0.004, 0.009, abs(rib))) * stitch;
+		if (abs(a) < 0.3 && p.z > 0.0) {
+			line *= step(eye_y - 0.04, p.y);
+		}
+		// They part round the eyes.
+		if (p.z > 0.0) {
+			line *= smoothstep(0.06, 0.075, length(vec2(abs(p.x) - eye_x, p.y - eye_y) / vec2(1.0, 1.15)));
+		}
+		col = mix(col, fur_c, line);
+	} else if (species == 1) {
 		// Cat: a pale muzzle and chin, and tabby stripes on the forehead and cheeks.
 		if (p.z > 0.1) {
 			float muzzle = sd_ellipse(p.xy - vec2(0.0, -0.13), vec2(0.15, 0.085));

@@ -227,14 +227,14 @@ func rebuild() -> void:
 			var rot: Array = ways[clampi(int(look.get("hat_pos", 0)), 0, ways.size() - 1)]["rot"]
 			hat_mesh.rotation_degrees = Vector3(rot[0], rot[1], rot[2])
 		hat_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	if not animal and look.get("hair_flower", "") != "":
-		# Tucked in above the left ear.
+	if look.get("hair_flower", "") != "":
+		# Tucked in above the left ear (an animal's, in front of it).
 		var flower := MeshInstance3D.new()
 		flower.mesh = Models.get_mesh("hairflower:" + look["hair_flower"])
 		flower.material_override = Models.material() if curved else _flat_prop()
-		var out := Vector3(0.68, 0.5, 0.55).normalized()
-		flower.position = P.HEAD_CENTRE + out * 0.41
-		flower.basis = Basis(Quaternion(Vector3.UP, out)).scaled(Vector3.ONE * 1.5)
+		var out := Vector3(0.68, 0.5, 0.55).normalized() if not animal else Vector3(0.5, 0.62, 0.6).normalized()
+		flower.position = P.HEAD_CENTRE + _head_offset + out * 0.41
+		flower.basis = Basis(Quaternion(Vector3.UP, out)).scaled(Vector3.ONE * (1.5 if not animal else 1.1))
 		flower.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		head_parent.add_child(flower)
 	if look["glasses"] != "none":
@@ -284,6 +284,7 @@ func _build_animal() -> void:
 	_face.set_shader_parameter("fur_b", fur2)
 	_face.set_shader_parameter("fur_c", fur3)
 	_face.set_shader_parameter("cat_blaze", species.get("blaze", false))
+	_face.set_shader_parameter("cactus", species.get("cactus", false))
 	_face.set_shader_parameter("eye_colour", species.get("eyes", Color("6a4430")))
 	_face.set_shader_parameter("brow_style", 0)
 	_face.set_shader_parameter("nose_colour", species.get("nose", Color("d98f98")))

@@ -35,15 +35,15 @@ rabbit) and `SMOOTHING` (the mouse's surface came out crumpled).
 
 | # | File name | Head | Who uses it |
 | --- | --- | --- | --- |
-| 1 | `cat` | Cat, pointed ears | Done; every cat |
+| 1 | `cat` | Cat, pointed ears | Done; every cat (Ms Miss is a cactus cat: `"cactus"`) |
 | 2 | `cat_short` | Cat, round-faced shorthair | Not made yet: Daisy and Morris (`"short"`) wear `cat` |
 | 3 | `dog` | Dog, floppy ears | Done; every dog but Pip and Sunny, Lucy and Bramble included |
 | 4 | `dog_upright` | Dog, upright ears | Done; Pip and Sunny (`"head": "dog_upright"`) |
 | 5 | `rabbit` | Rabbit, upright ears | Done; Clover |
-| 6 | `rabbit_lop` | Rabbit, lop ears | Done; Hazel (`"lop"`) |
-| 7 | `ferret` | Ferret | Done; Sable, Pepper |
-| 8 | `mouse` | Mouse | Done; Crumb, Barley |
-| 9 | `bird` | Songbird | Done; Kiwi, Rosie |
+| 6 | `rabbit_lop` | Rabbit, lop ears | Done; Hazel and Pudding (`"lop"`) |
+| 7 | `ferret` | Ferret | Done; Sable, Pepper, Truffle |
+| 8 | `mouse` | Mouse | Done; Crumb, Barley, Mochi |
+| 9 | `bird` | Songbird | Done; Kiwi, Rosie, Wren |
 | 10 | `bird_sea` | Seabird | Done; Marlow (`"head": "bird_sea"`) |
 
 The file name picks who wears it: a character's `"head"` in their species data if set,

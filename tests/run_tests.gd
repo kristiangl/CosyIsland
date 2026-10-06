@@ -1372,8 +1372,8 @@ func _test_music() -> void:
 	check(Music.part_of_day(6.0) == "morning" and Music.part_of_day(11.9) == "morning" and Music.part_of_day(12.0) == "afternoon"
 		and Music.part_of_day(17.5) == "afternoon" and Music.part_of_day(18.0) == "evening" and Music.part_of_day(3.0) == "evening",
 		"morning from 6, afternoon from noon, evening from 6pm to 6am")
-	check(Music.track_for(8.2) != Music.track_for(9.2) and Music.track_for(8.2) == Music.track_for(10.5)
-		and Music.track_for(8.2) in Music.TRACKS["morning"], "the two pieces take turns hour by hour")
+	check(Music.track_for(8.2) != Music.track_for(9.2) and Music.track_for(7.2) == Music.track_for(11.5)
+		and Music.track_for(8.2) in Music.TRACKS["morning"], "the pieces take turns hour by hour")
 	var all_load := true
 	for part: String in Music.TRACKS:
 		for path: String in Music.TRACKS[part]:

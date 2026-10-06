@@ -18,7 +18,7 @@
 		{"id": "lashes", "name": "Lashes"},
 		{"id": "almond", "name": "Almond"},
 		{"id": "dots", "name": "Dots"},
-		{"id": "wide", "name": "Wide"}
+		{"id": "wide", "name": "Big"}
 	],
 	"eye_color": [
 		{"id": "brown", "color": "#6a4430"},

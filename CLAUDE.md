@@ -93,7 +93,9 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
 - Generated animal heads (`assets/characters/heads/<name>.res`, converted from glTFs in
   `assets/characters/src/` by `tools/head_import.gd -- --name=<name> [--from-body]`;
   prompts in `docs/CHARACTER_PROMPTS.md`) replace the procedural head, ears and muzzle on
-  the procedural body, placed so the face shader draws on them as before. Which head an
+  the procedural body, placed so the face shader draws on them as before. The importer
+  bakes each standing-eared head's inner-ear shape into a small map (`ear_map`) that the
+  face shader colours with the species' "inner_ear". Which head an
   animal wears: `CharacterModel.head_model_for` (species "head", else kind + "_short" /
   "_lop", else kind). `--procedural` brings back the procedural heads;
   `tools/skinned_preview.tscn --file=x.glb [--textured]` shows a source model as it came.

@@ -1,13 +1,16 @@
 extends Node
 ## Background music by the island clock (assets/music): morning pieces from 6am to noon,
-## afternoon ones until 6pm, evening ones through the night. The two pieces of each part
+## afternoon ones until 6pm, evening ones through the night. The four pieces of each part
 ## of the day take turns hour by hour, each looping until its hour is up, and one fades
 ## into the next. On the title screen the clock is the real time.
 
 const TRACKS := {
-	"morning": ["res://assets/music/morning_1.mp3", "res://assets/music/morning_2.mp3"],
-	"afternoon": ["res://assets/music/afternoon_1.mp3", "res://assets/music/afternoon_2.mp3"],
-	"evening": ["res://assets/music/night_1.mp3", "res://assets/music/night_2.mp3"],
+	"morning": ["res://assets/music/morning_1.mp3", "res://assets/music/morning_2.mp3",
+		"res://assets/music/morning_3.mp3", "res://assets/music/morning_4.mp3"],
+	"afternoon": ["res://assets/music/afternoon_1.mp3", "res://assets/music/afternoon_2.mp3",
+		"res://assets/music/afternoon_3.mp3", "res://assets/music/afternoon_4.mp3"],
+	"evening": ["res://assets/music/night_1.mp3", "res://assets/music/night_2.mp3",
+		"res://assets/music/night_3.mp3", "res://assets/music/night_4.mp3"],
 }
 const FADE_TIME := 4.0
 ## How loud the music plays, 0 to 1.
@@ -42,7 +45,7 @@ static func part_of_day(hour: float) -> String:
 	return "evening"
 
 
-## The piece for this hour: the part of the day's two, turn about by the hour.
+## The piece for this hour: the part of the day's pieces, in turn by the hour.
 static func track_for(hour: float) -> String:
 	var pieces: Array = TRACKS[part_of_day(hour)]
 	return pieces[int(floor(hour)) % pieces.size()]

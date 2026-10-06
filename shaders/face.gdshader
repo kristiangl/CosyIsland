@@ -60,9 +60,11 @@ uniform float snout_nose = 0.0;
 uniform float beak_z = 10.0;
 uniform vec3 beak_colour : source_color = vec3(0.9, 0.6, 0.3);
 
-// Inside of the ears on generated heads: an ellipse (x, y, rx, ry) in face space, mirrored
-// either side; rx 0 for none.
-uniform vec4 ear_spot = vec4(0.0);
+// Inside of the ears on generated heads: a map of the head seen from the front (the
+// importer's "ear_map", 0.5 on the edge of the inside and more within) over ear_rect
+// (left, top, width, height in the head mesh's own space); width 0 for none.
+uniform sampler2D ear_map : filter_linear, repeat_disable;
+uniform vec4 ear_rect = vec4(0.0);
 uniform vec3 inner_ear : source_color = vec3(0.89, 0.65, 0.67);
 
 varying vec3 local_pos;
@@ -129,12 +131,14 @@ vec3 draw_eye(vec3 base, vec2 p, float aa, float side) {
 		return paint(base, dark, length(p / vec2(1.0, open)) - 0.026, aa);
 	}
 	if (eye_style == 7) {
-		// Wide: white, coloured iris, pupil, shine.
-		base = paint(base, white, sd_ellipse(p, vec2(0.056, 0.064 * open)), aa);
-		base = paint(base, eye_colour, sd_ellipse(p - vec2(0.0, -0.006), vec2(0.04, 0.05 * open)), aa);
-		base = paint(base, dark, sd_ellipse(p - vec2(0.0, -0.006), vec2(0.022, 0.028 * open)), aa);
-		base = paint(base, dark, abs(sd_ellipse(p, vec2(0.056, 0.064 * open))) - 0.004, aa);
-		return paint(base, white, length(p - vec2(0.016, 0.02)) - 0.012, aa);
+		// Big: a large round eye that's all iris, dark at the top and warming to the eye
+		// colour at the bottom, with a big shine and a little one.
+		vec2 r = vec2(0.054, 0.06 * open);
+		float d = sd_ellipse(p, r);
+		float warm = smoothstep(0.01, -0.05, p.y) * 0.75;
+		base = paint(base, mix(dark, eye_colour, warm), d, aa);
+		base = paint(base, white, length(p - vec2(0.017, 0.02)) - 0.018, aa);
+		return paint(base, white, length(p - vec2(-0.02, -0.026)) - 0.008, aa);
 	}
 	vec2 r = vec2(0.045, 0.062 * open);
 	if (eye_style == 5) {
@@ -290,7 +294,7 @@ vec3 snout_nose_draw(vec3 base, vec2 p, float aa) {
 	vec2 n = p - vec2(0.0, mouth_y + 0.07);
 	vec3 line = vec3(0.45, 0.22, 0.24);
 	// The line from under the nose down to the mouth.
-	base = paint(base, line, sd_segment(p, vec2(0.0, mouth_y + 0.07 - 0.02 * k), vec2(0.0, mouth_y + 0.012)) - 0.0045, aa);
+	base = paint(base, line, sd_segment(p, vec2(0.0, mouth_y + 0.07 - 0.02 * k), vec2(0.0, mouth_y + 0.008)) - 0.0045, aa);
 	// A soft rounded nose, a little wider at the top, with a shine.
 	vec2 q = n / k;
 	float d = sd_ellipse(q - vec2(0.0, 0.002), vec2(0.04, 0.027));
@@ -345,9 +349,11 @@ vec3 draw_nose(vec3 base, vec2 p, float aa) {
 
 void fragment() {
 	vec3 col = markings(skin, local_pos);
-	if (ear_spot.z > 0.0 && local_normal.z > 0.2) {
-		vec2 e = vec2(abs(local_pos.x) - ear_spot.x, local_pos.y - ear_spot.y) / ear_spot.zw;
-		col = mix(col, inner_ear, 1.0 - smoothstep(0.85, 1.0, length(e)));
+	if (ear_rect.z > 0.0) {
+		vec2 uv = vec2(local_pos.x - ear_rect.x, ear_rect.y - local_pos.y - face_lift) / ear_rect.zw;
+		float v = texture(ear_map, uv).r;
+		float inside = clamp((v - 0.5) / max(fwidth(v), 0.001) + 0.5, 0.0, 1.0);
+		col = mix(col, inner_ear, inside * smoothstep(0.05, 0.25, local_normal.z));
 	}
 	if (local_pos.z > beak_z) {
 		col = beak_colour;

@@ -45,7 +45,7 @@
 		},
 		"look": {
 			"eyes": "classic",
-			"mouth": "grin",
+			"mouth": "cat",
 			"cheeks": "blush",
 			"top": "tee",
 			"top_color": "red",
@@ -73,7 +73,7 @@
 		},
 		"look": {
 			"eyes": "sleepy",
-			"mouth": "smile",
+			"mouth": "cat",
 			"cheeks": "none",
 			"top": "waistcoat",
 			"top_color": "olive",

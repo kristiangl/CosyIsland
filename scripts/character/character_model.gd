@@ -299,9 +299,9 @@ func _build_animal() -> void:
 		_face.set_shader_parameter("face_lift", -face[0])
 		_face.set_shader_parameter("mouth_y", float(head.get_meta("mouth", face[1])) + face[0])
 		# The insides of standing ears.
-		var ears: Vector4 = head.get_meta("ears", Vector4.ZERO)
-		if ears.z > 0.0:
-			_face.set_shader_parameter("ear_spot", Vector4(ears.x, ears.y + face[0], ears.z, ears.w))
+		if head.has_meta("ear_map"):
+			_face.set_shader_parameter("ear_map", head.get_meta("ear_map"))
+			_face.set_shader_parameter("ear_rect", head.get_meta("ear_rect"))
 			_face.set_shader_parameter("inner_ear", species.get("inner_ear", Color("e3a5aa")))
 		# Ferrets have big round eyes, set wide.
 		if kind == "ferret":

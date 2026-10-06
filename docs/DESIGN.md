@@ -214,7 +214,7 @@ Next milestones (suggested order):
 5. More to find on tours: other kinds of tree on rare islands, flower breeding for the
    rare colours.
 6. Path tool, terraforming, waterscaping, rock moving.
-7. Weather and seasons; sound effects (music is in: two pieces each for morning,
+7. Weather and seasons; sound effects (music is in: four pieces each for morning,
    afternoon and evening, taking turns by the hour).
 8. Platform work: touch controls, performance passes, Switch porting.
 

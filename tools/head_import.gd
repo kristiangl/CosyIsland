@@ -10,7 +10,8 @@ extends SceneTree
 ## markings, so every head is placed alike: its width at the muzzle matching
 ## P.HEAD_RADIUS (times --size), its eye line at EYE_Y and the face beside the muzzle at
 ## FACE_Z. The mesh's metadata says how far to move it to meet the body ("offset"), where
-## the mouth goes ("mouth") and where a beak starts ("beak").
+## the mouth goes ("mouth"), where a beak starts ("beak") and, for standing ears, a map
+## of their insides ("ear_map" over "ear_rect").
 
 const P = preload("res://scripts/character/character_parts.gd")
 const BodyShape = preload("res://tools/body_shape.gd")
@@ -36,8 +37,17 @@ const FACE_Z := 0.3
 const HANGING_EARS := ["dog", "rabbit_lop"]
 ## Heads with ears that stand up, whose insides get coloured in.
 const EARS := ["cat", "dog_upright", "rabbit", "ferret", "mouse"]
+## The ear map's size in cells, how big a circle (for the skull's size) opens the ears off
+## the outline, how much of each ear's width is left as a rim round its inside, how far (in
+## widths) the inside reaches from the ear's middle, and how far
+## (in head units) the map's distance runs from the edge of the inside to white.
+const EAR_MAP := 128
+const EAR_OPENING := 0.6
+const EAR_RIM := 0.5
+const EAR_SOFT := 0.05
+const EAR_LENGTH := 3.0
 ## Rounds of smoothing for heads whose surface came out dented or crumpled.
-const SMOOTHING := {"mouse": 12}
+const SMOOTHING := {}
 
 
 func _init() -> void:
@@ -177,24 +187,145 @@ static func import_head(path: String, from_body: bool, size: float, smoothing :=
 	# The nose goes on the muzzle's tip and the mouth under it (the shader's mouth_y).
 	mesh.set_meta("mouth", (tip.y - centre.y) * s - 0.045)
 	mesh.set_meta("beak", (maxf(brow_z, face_z) - centre.z) * s + 0.015)
-	# Where the inside of the ears is, for the face shader to colour in: the
-	# front-facing part of what rises at the top corners, as an ellipse [x, y, rx, ry].
+	# Where the inside of the ears is, for the face shader to colour in: a map of the
+	# head seen from the front, drawn from each ear's own outline.
 	if EARS.has(path.get_file().get_basename()):
-		var crown_m := (crown - centre.y) * s
-		var lo := Vector2(INF, INF)
-		var hi := -lo
-		for v in out_verts.size():
-			var p := out_verts[v]
-			if absf(p.x) > 0.14 and p.y > crown_m - 0.12 and out_normals[v].z > 0.35:
-				lo = lo.min(Vector2(absf(p.x), p.y))
-				hi = hi.max(Vector2(absf(p.x), p.y))
-		if lo.x < INF:
-			var mid := (lo + hi) * 0.5
-			var reach := (hi - lo) * 0.5
-			mesh.set_meta("ears", Vector4(mid.x, mid.y, reach.x * 0.62, reach.y * 0.7))
-			if OS.get_cmdline_user_args().has("--debug"):
-				print("ears ", mesh.get_meta("ears"), " crown ", crown_m)
+		_ear_map(mesh, out_verts, out_indices)
 	return mesh
+
+
+## Bakes the insides of the ears into a small picture of the head from the front (meta
+## "ear_map", an ImageTexture, over "ear_rect": left, top, width, height in head space).
+## The ears are what sticks out of the outline: the outline opened by a circle about the
+## size of the skull loses them. Each one's inside is the ear shrunk in from its edge.
+## The picture holds a distance (0.5 on the edge, more inside) so the shader can draw a
+## crisp edge from it at any size.
+static func _ear_map(mesh: ArrayMesh, verts: PackedVector3Array, indices: PackedInt32Array) -> void:
+	var lo := Vector2(INF, INF)
+	var hi := -lo
+	for p in verts:
+		lo = lo.min(Vector2(p.x, p.y))
+		hi = hi.max(Vector2(p.x, p.y))
+	var cell := maxf(hi.x - lo.x, hi.y - lo.y) / (EAR_MAP - 4)
+	# Two cells of nothing round the edge.
+	var left := lo.x - cell * 2.0
+	var top := hi.y + cell * 2.0
+	var w := int(ceil((hi.x - lo.x) / cell)) + 4
+	var h := int(ceil((hi.y - lo.y) / cell)) + 4
+	var inside := PackedByteArray()
+	inside.resize(w * h)
+	for t in range(0, indices.size(), 3):
+		var a := _pixel(verts[indices[t]], left, top, cell)
+		var b := _pixel(verts[indices[t + 1]], left, top, cell)
+		var c := _pixel(verts[indices[t + 2]], left, top, cell)
+		var area := (b - a).cross(c - a)
+		if absf(area) < 1e-9:
+			continue
+		for y in range(maxi(0, int(minf(a.y, minf(b.y, c.y)))), mini(h, int(maxf(a.y, maxf(b.y, c.y))) + 1)):
+			for x in range(maxi(0, int(minf(a.x, minf(b.x, c.x)))), mini(w, int(maxf(a.x, maxf(b.x, c.x))) + 1)):
+				var q := Vector2(x + 0.5, y + 0.5)
+				var u := (b - q).cross(c - q) / area
+				var v := (c - q).cross(a - q) / area
+				if u >= -0.01 and v >= -0.01 and u + v <= 1.02:
+					inside[y * w + x] = 1
+	var outside := PackedByteArray()
+	outside.resize(w * h)
+	for i in w * h:
+		outside[i] = 1 - inside[i]
+	# How far in from the outline, and the outline opened (eroded then grown back) by a
+	# circle a bit over half the skull's size.
+	var depth := _distance(outside, w, h)
+	var skull := 0.0
+	for d in depth:
+		skull = maxf(skull, d)
+	var r := skull * EAR_OPENING
+	var core := PackedByteArray()
+	core.resize(w * h)
+	for i in w * h:
+		core[i] = 1 if depth[i] > r else 0
+	var from_core := _distance(core, w, h)
+	# Ears: inside, outside the opened outline and above the eyes, in pieces big enough.
+	var eye_row := int((top - EYE_Y) / cell)
+	var piece := PackedInt32Array()
+	piece.resize(w * h)
+	piece.fill(-1)
+	var pieces: Array[PackedInt32Array] = []
+	for start in w * h:
+		if piece[start] >= 0 or inside[start] == 0 or from_core[start] <= r or start / w > eye_row:
+			continue
+		var cells := PackedInt32Array([start])
+		piece[start] = pieces.size()
+		var at := 0
+		while at < cells.size():
+			var i := cells[at]
+			at += 1
+			for n: int in [i - 1, i + 1, i - w, i + w]:
+				if n >= 0 and n < w * h and piece[n] < 0 and inside[n] == 1 and from_core[n] > r and n / w <= eye_row:
+					piece[n] = pieces.size()
+					cells.append(n)
+		pieces.append(cells)
+	var img := Image.create(w, h, false, Image.FORMAT_L8)
+	var count := 0
+	for cells in pieces:
+		if cells.size() < w * h * 0.004:
+			continue
+		count += 1
+		# The ear's thickest point, its middle.
+		var widest := 0.0
+		var middle := Vector2.ZERO
+		for i in cells:
+			var e := minf(depth[i], from_core[i] - r)
+			if e > widest:
+				widest = e
+				middle = Vector2(i % w, i / w)
+		var rim := widest * EAR_RIM
+		for i in cells:
+			# In from the ear's edge, and a little way up from where it meets the head (so
+			# thin slivers where the outline was only rounded off are left out).
+			var d := minf(depth[i] - rim, from_core[i] - r - rim * 0.3)
+			# Not too far from its middle either: where the head's corners were rounded
+			# off, thin tails run down its sides.
+			d = minf(d, widest * EAR_LENGTH - Vector2(i % w, i / w).distance_to(middle)) * cell
+			img.set_pixel(i % w, i / w, Color(clampf(0.5 + d / EAR_SOFT, 0.0, 1.0), 0, 0))
+	if count == 0:
+		return
+	mesh.set_meta("ear_map", ImageTexture.create_from_image(img))
+	mesh.set_meta("ear_rect", Vector4(left, top, w * cell, h * cell))
+	if OS.get_cmdline_user_args().has("--debug"):
+		print("ears: %d, map %dx%d" % [count, w, h])
+		img.save_png(OS.get_cache_dir().path_join("ear_map.png"))
+		print("saved ", OS.get_cache_dir().path_join("ear_map.png"))
+
+
+static func _pixel(p: Vector3, left: float, top: float, cell: float) -> Vector2:
+	return Vector2((p.x - left) / cell, (top - p.y) / cell)
+
+
+## Each cell's distance (in cells) to the nearest cell in `seeds`: two sweeps of a
+## chamfer, near enough to the real distance.
+static func _distance(seeds: PackedByteArray, w: int, h: int) -> PackedFloat32Array:
+	var d := PackedFloat32Array()
+	d.resize(w * h)
+	for i in w * h:
+		d[i] = 0.0 if seeds[i] == 1 else 1e9
+	var diag := sqrt(2.0)
+	for y in h:
+		for x in w:
+			var i := y * w + x
+			if x > 0: d[i] = minf(d[i], d[i - 1] + 1.0)
+			if y > 0:
+				d[i] = minf(d[i], d[i - w] + 1.0)
+				if x > 0: d[i] = minf(d[i], d[i - w - 1] + diag)
+				if x < w - 1: d[i] = minf(d[i], d[i - w + 1] + diag)
+	for y in range(h - 1, -1, -1):
+		for x in range(w - 1, -1, -1):
+			var i := y * w + x
+			if x < w - 1: d[i] = minf(d[i], d[i + 1] + 1.0)
+			if y < h - 1:
+				d[i] = minf(d[i], d[i + w] + 1.0)
+				if x < w - 1: d[i] = minf(d[i], d[i + w + 1] + diag)
+				if x > 0: d[i] = minf(d[i], d[i + w - 1] + diag)
+	return d
 
 
 ## The mesh node's transform all the way up.

@@ -54,6 +54,9 @@ uniform vec3 nose_colour : source_color = vec3(0.9, 0.55, 0.6);
 // Generated heads: how far up their face is drawn (so the kind's eye height lands on
 // the head's eye line), and how far forward a beak starts, painted beak_colour.
 uniform float face_lift = 0.0;
+// Generated heads with a snout (dogs, ferrets, mice): a nose on the snout's tip this big
+// (0 for none), a short line down from it, and the mouth underneath.
+uniform float snout_nose = 0.0;
 uniform float beak_z = 10.0;
 uniform vec3 beak_colour : source_color = vec3(0.9, 0.6, 0.3);
 
@@ -269,6 +272,23 @@ vec3 buck_teeth(vec3 base, vec2 p, float aa) {
 	return paint(base, vec3(0.75, 0.7, 0.7), sd_segment(q, vec2(0.0, 0.012), vec2(0.0, -0.016)) - 0.0018, aa);
 }
 
+// A nose on the tip of a snout: a rounded triangle with a shine, and the line down from
+// it to the mouth below.
+vec3 snout_nose_draw(vec3 base, vec2 p, float aa) {
+	float k = snout_nose;
+	// The nose sits on the tip of the snout (just above where it used to put the mouth).
+	vec2 n = p - vec2(0.0, mouth_y + 0.07);
+	vec3 line = vec3(0.45, 0.22, 0.24);
+	// The line from under the nose down to the mouth.
+	base = paint(base, line, sd_segment(p, vec2(0.0, mouth_y + 0.07 - 0.02 * k), vec2(0.0, mouth_y + 0.012)) - 0.0045, aa);
+	// A soft rounded nose, a little wider at the top, with a shine.
+	vec2 q = n / k;
+	float d = sd_ellipse(q - vec2(0.0, 0.002), vec2(0.04, 0.027));
+	d = max(d, abs(q.x) * 0.35 - q.y * 0.8 - 0.036);
+	base = paint(base, nose_colour, d * k, aa);
+	return paint(base, vec3(1.0), length(q - vec2(-0.015, 0.01)) * k - 0.0065 * k, aa);
+}
+
 vec3 animal_nose(vec3 base, vec2 p, float aa) {
 	vec2 q = p - vec2(0.0, mouth_y + 0.045);
 	// A small rounded triangle pointing down.
@@ -344,6 +364,9 @@ void fragment() {
 		}
 		if (species != 6) {
 			col = draw_mouth(col, p, aa);
+		}
+		if (snout_nose > 0.0) {
+			col = snout_nose_draw(col, p, aa);
 		}
 		if (species == 3) {
 			col = buck_teeth(col, p, aa);

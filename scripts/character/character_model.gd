@@ -292,6 +292,11 @@ func _build_animal() -> void:
 		var head := model_head(head_model_for(species))
 		_face.set_shader_parameter("face_lift", -face[0])
 		_face.set_shader_parameter("mouth_y", float(head.get_meta("mouth", face[1])) + face[0])
+		# Snouts get a nose on the tip and the mouth a little lower, under it.
+		var nose: float = {"dog": 1.3, "ferret": 0.7, "mouse": 0.65}.get(kind, 0.0)
+		if nose > 0.0:
+			_face.set_shader_parameter("snout_nose", nose)
+			_face.set_shader_parameter("mouth_y", float(head.get_meta("mouth", face[1])) + face[0] - 0.025)
 		if kind == "bird":
 			_face.set_shader_parameter("beak_z", head.get_meta("beak", 10.0))
 			_face.set_shader_parameter("beak_colour", species.get("beak", Color("e8a040")))

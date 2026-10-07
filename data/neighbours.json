@@ -88,14 +88,14 @@
 		"crumb": {
 			"name": "Crumb", "personality": "sleepy", "catchphrase": "squeak",
 			"species": {"kind": "mouse", "fur": "#aaa4a6", "fur2": "#efe8ea", "eyes": "#2a2024", "inner_ear": "#f0b4bc", "nose": "#e88a98"},
-			"look": {"eyes": "dots", "mouth": "o", "cheeks": "blush", "top": "nightgown", "top_color": "sky", "top_color2": "white", "top_pattern": "stars"},
+			"look": {"eyes": "dots", "mouth": "cat", "cheeks": "blush", "top": "nightgown", "top_color": "sky", "top_color2": "white", "top_pattern": "stars"},
 			"home": {"wall": "eef0f4", "roof": "8aa0c8", "door": "f2d68a"},
 			"inside": {"series": "starlight", "variant": "dawn", "wall": "sky_wallpaper", "floor": "rosy_carpet"}
 		},
 		"barley": {
 			"name": "Barley", "personality": "cheerful", "catchphrase": "nibble",
 			"species": {"kind": "mouse", "fur": "#c8a07a", "fur2": "#f6eadc", "eyes": "#2a1a14", "inner_ear": "#eeaab0", "nose": "#e0848e"},
-			"look": {"eyes": "happy", "mouth": "grin", "cheeks": "blush", "top": "pinafore", "top_color": "yellow", "top_color2": "white", "bottom": "shorts", "bottom_color": "brown"},
+			"look": {"eyes": "happy", "mouth": "cat", "cheeks": "blush", "top": "pinafore", "top_color": "yellow", "top_color2": "white", "bottom": "shorts", "bottom_color": "brown"},
 			"home": {"wall": "fbf0dc", "roof": "d8a050", "door": "8fc58a"},
 			"inside": {"series": "mushroom", "variant": "golden", "wall": "peach_dot_wallpaper", "floor": "wooden_flooring"}
 		},
@@ -130,7 +130,7 @@
 		"mochi": {
 			"name": "Mochi", "personality": "cheerful", "catchphrase": "yum yum",
 			"species": {"kind": "mouse", "fur": "#f6f2ee", "fur2": "#fffaf6", "eyes": "#3a1a24", "inner_ear": "#f4a8b8", "nose": "#f08aa0"},
-			"look": {"eyes": "sparkle", "mouth": "o", "cheeks": "blush", "top": "dress", "top_color": "pink", "top_color2": "white", "top_pattern": "cherries"},
+			"look": {"eyes": "sparkle", "mouth": "cat", "cheeks": "blush", "top": "dress", "top_color": "pink", "top_color2": "white", "top_pattern": "cherries"},
 			"home": {"wall": "fff2f4", "roof": "f08aa0", "door": "a8d0a0"},
 			"inside": {"series": "kitchen", "variant": "rose", "wall": "peach_dot_wallpaper", "floor": "cream_tile_flooring"}
 		},

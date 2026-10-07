@@ -92,10 +92,12 @@ static func get_mesh(key: String) -> ArrayMesh:
 			# KayKit's tall cottage on its stone footing, in a tailor's lavender and cream.
 			k = _kit_from("hex_home_b")
 			Palette.repaint(k.colours, {"red": ["a58cc8", "bba4da", "d2c0ea"], "white": ["eee4dc", "f8f0ea", "fffaf4"]})
+			_grow(k, PREBUILT_SCALE)
 		"lucy_shop":
 			# KayKit's market stall, its awning in Lucy's sunny yellow.
 			k = _kit_from("hex_market")
 			Palette.repaint(k.colours, {"yellow": ["e8b84f", "f2cc6a", "f8e0a0"], "white": ["eee6d6", "f8f2e6", "fffaf0"]})
+			_grow(k, PREBUILT_SCALE)
 		"museum_tent":
 			_museum_tent(k)
 		"museum":
@@ -114,6 +116,7 @@ static func get_mesh(key: String) -> ArrayMesh:
 			var home: Dictionary = NpcData.get_character(p[1]).get("home", {})
 			k = _kit_from("hex_home_a")
 			Palette.repaint(k.colours, {"blue": _ramp(Color(home.get("roof", "e0857a"))), "white": _ramp(Color(home.get("wall", "fbf0d9")))})
+			_grow(k, PREBUILT_SCALE)
 		"fitting_mirror":
 			_fitting_mirror(k)
 		"clothes_rail":
@@ -307,6 +310,17 @@ const ROCKS := ["rock_3_a", "rock_3_b", "rock_3_c", "rock_3_d", "rock_3_e", "roc
 
 
 ## A converted KayKit mesh as a MeshKit, to add more to it.
+## The KayKit buildings (neighbours' houses, Lucy's stall, the tailors') a size up, so
+## they stand as tall as the player's house.
+const PREBUILT_SCALE := 1.2
+
+
+## Scales a model about its base (the middle of its footprint, on the ground).
+static func _grow(k: MeshKit, f: float) -> void:
+	for i in k.verts.size():
+		k.verts[i] *= f
+
+
 static func _kit_from(name: String) -> MeshKit:
 	var k := MeshKit.new()
 	var mesh: ArrayMesh = load("res://assets/kaykit/%s.res" % name)

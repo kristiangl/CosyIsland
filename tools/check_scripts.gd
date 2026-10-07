@@ -14,7 +14,11 @@ func _load_all(path: String) -> int:
 	var count := 0
 	for file in DirAccess.get_files_at(path):
 		if file.ends_with(".gd"):
-			load(path.path_join(file))
+			var script := load(path.path_join(file)) as GDScript
+			# A script that failed to parse can't be instanced (the error may only show
+			# as a failed load, so say so plainly).
+			if script == null or not script.can_instantiate():
+				print("SCRIPT ERROR: %s didn't load" % path.path_join(file))
 			count += 1
 	for sub in DirAccess.get_directories_at(path):
 		count += _load_all(path.path_join(sub))

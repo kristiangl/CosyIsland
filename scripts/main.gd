@@ -17,6 +17,7 @@ extends Node3D
 ##   --demo=sit         same, and sit on the chair
 ##   --demo=home        pitch the tent, go inside and furnish it (--room=wallpaper,flooring)
 ##   --demo=door        pitch the tent and stand outside its door
+##   --demo=office      inside Poppy's office
 ##   --demo=shop        Lucy's shop has been built; stand in front of it (--demo=museum: Bramble's,
 ##                      --demo=tailors: Daisy and Morris's, --visit to go in;
 ##                      --built for the finished museum, --visit to go in)
@@ -124,6 +125,9 @@ func _ready() -> void:
 	ambient = AmbientEffects.new()
 	ambient.camera = camera_rig
 	add_child(ambient)
+	if not Story.flags.get("dock_south", false):
+		Story.flags["dock_south"] = true
+		world.move_dock_south(world.data.spawn)
 	_spawn_npcs()
 
 	day_night = DayNight.new()
@@ -450,6 +454,9 @@ func _spawn_npcs() -> void:
 	Game.npcs.clear()
 	var plaza := world.data.plaza
 	for id: String in NPC_SPOTS:
+		# Poppy greets you in the plaza on your first day, then works in her office.
+		if id == "poppy" and Story.flags.get("intro_done", false) and not world.building("island_office").is_empty():
+			continue
 		var spot: Vector2 = NPC_SPOTS[id][0] + Vector2(plaza.position)
 		var npc := Npc.new()
 		world.add_child(npc)
@@ -563,23 +570,11 @@ func _spawn_neighbour(house: Dictionary) -> void:
 
 ## Bramble comes to the island with his museum and stands at its door.
 func _place_bramble() -> void:
-	var museum := world.building("museum_tent")
-	if museum.is_empty():
-		museum = world.building("museum")
-	if museum.is_empty():
-		return
-	var bramble := Story.npc("bramble")
-	if bramble == null:
-		bramble = Npc.new()
-		world.add_child(bramble)
-		var spot := world.outside_door(museum)
-		bramble.setup("bramble", world, spot["position"], spot["facing"])
-		Game.npcs.append(bramble)
-	var at := world.outside_door(museum)
-	bramble.position = at["position"] + Vector3(0.9, 0, -0.2)
-	bramble.position.y = world.ground_height(bramble.position.x, bramble.position.z)
-	bramble.rest_facing = at["facing"]
-	world.reserve(Vector2i(floori(bramble.position.x), floori(bramble.position.z)))
+	# Bramble works inside his museum tent (and later the museum): see INSIDES.
+	var outside := Story.npc("bramble")
+	if outside and outside.world == world:
+		Game.npcs.erase(outside)
+		outside.queue_free()
 
 
 ## Marlow stands by his dock, on the island or a tour island.
@@ -602,7 +597,7 @@ func _place_marlow(w: World) -> Npc:
 
 ## Daisy and Morris stand either side of their shop door.
 func _place_tailors() -> void:
-	# Daisy and Morris work inside their shop now (see fill_tailors); anyone left
+	# Daisy and Morris work inside their shop now (see INSIDES); anyone left
 	# standing outside from before goes in, and so does the mirror.
 	for id: String in ["daisy", "morris"]:
 		var outside := Story.npc(id)
@@ -689,7 +684,7 @@ func _open_room(uid: int, index: int) -> void:
 	var spec: Dictionary = defs[index]
 	var resident: String = home.get("resident", "")
 	var museum: bool = def.get("museum", false)
-	var shop_room: bool = def.get("shop_room", false)
+	var inside: String = def.get("inside", "")
 	var size: Array = spec["size"]
 	var key := room_key(uid, index)
 	room = World.new()
@@ -703,24 +698,33 @@ func _open_room(uid: int, index: int) -> void:
 		room.room_doors = World.doors_for(size[0], size[1], walls)
 	add_child(room)
 	var first_visit := not _rooms.has(key)
-	room.visitor = resident != "" or museum or shop_room
+	room.visitor = resident != "" or not _kept(def)
 	room.setup(IslandData.room(size[0], size[1]), {} if not _kept(def) else _rooms.get(key, {}))
-	if museum:
+	var people: Array = []
+	if inside != "":
+		fill_inside(room, inside)
+		people = INSIDES[inside]["people"]
+	elif museum:
 		fill_museum(room)
-	elif shop_room:
-		fill_tailors(room)
-		for entry: Array in TAILORS_INSIDE:
-			var keeper := Npc.new()
-			room.add_child(keeper)
-			keeper.setup(entry[0], room, Vector3(entry[1].x, 0, entry[1].y), entry[2].normalized())
-			room.reserve(Vector2i(floori(entry[1].x), floori(entry[1].y)))
-			Game.npcs.append(keeper)
-			room.tree_exiting.connect(func(): Game.npcs.erase(keeper))
+		# Bramble shows visitors round, just inside the door.
+		people = [["bramble", Vector2(size[0] * 0.5 + 1.5, size[1] - 1.5), Vector3(-0.4, 0, 1)]]
 	elif first_visit and resident != "":
 		_furnish_for(room, resident)
 	elif first_visit and index == 0:
 		# Every new home comes with somewhere to sleep, against the back wall.
 		room.place_item("sleeping_bag", Rect2i(0, 0, 1, 2), 0)
+	for entry: Array in people:
+		# They work in here now: anyone of them still standing about outside comes in.
+		var outside := Story.npc(entry[0])
+		if outside and outside.world == world:
+			Game.npcs.erase(outside)
+			outside.queue_free()
+		var keeper := Npc.new()
+		room.add_child(keeper)
+		keeper.setup(entry[0], room, Vector3(entry[1].x, 0, entry[1].y), (entry[2] as Vector3).normalized())
+		room.reserve(Vector2i(floori(entry[1].x), floori(entry[1].y)))
+		Game.npcs.append(keeper)
+		room.tree_exiting.connect(func(): Game.npcs.erase(keeper))
 	if resident != "":
 		# They're home: standing by their table.
 		var host := Npc.new()
@@ -746,10 +750,10 @@ func _open_room(uid: int, index: int) -> void:
 	camera_rig.room = Rect2(0, 0, size[0], size[1])
 
 
-## Is a building's inside kept between visits? (The museum and the tailors' are set out
-## afresh every time.)
+## Is a building's inside kept between visits? (The museum, the shops and the tents
+## the islanders work in are set out afresh every time.)
 static func _kept(def: Dictionary) -> bool:
-	return not def.get("museum", false) and not def.get("shop_room", false)
+	return not def.get("museum", false) and not def.has("inside")
 
 
 ## Saves the room we're in (if it's kept) and takes it down.
@@ -1086,6 +1090,9 @@ func _run_demo() -> void:
 			player.facing = Vector3(-0.3, 0, -1).normalized()
 			camera_rig.snap()
 		return
+	if Game.args["demo"] == "office":
+		await _enter_home(world.building("island_office")["uid"], true)
+		return
 	if Game.args["demo"] == "tailors":
 		# Lucy's shop and, the night after her news, Daisy and Morris's.
 		Story.flags["shop_day"] = GameClock.day_key() - 1
@@ -1240,19 +1247,46 @@ func _take_screenshot(path: String, frames: int) -> void:
 	get_tree().quit()
 
 
-## Inside Daisy and Morris's: rails of clothes and the mirror along the back, mannequins
-## and shelves down the sides, a counter, and plants by the door. Set out every visit.
-const TAILORS_FITTINGS := [["clothes_rail", Vector2i(1, 0), 0], ["fitting_mirror", Vector2i(4, 0), 0],
-	["clothes_rail", Vector2i(6, 0), 0], ["mannequin", Vector2i(0, 2), 3], ["mannequin", Vector2i(0, 4), 3],
-	["wooden_shelf", Vector2i(8, 2), 1], ["wooden_shelf", Vector2i(8, 3), 1], ["wooden_table", Vector2i(6, 4), 0],
-	["potted_plant", Vector2i(0, 6), 0], ["potted_plant", Vector2i(8, 6), 0]]
-## Where Daisy (behind the counter) and Morris (by the rails) stand, and which way.
-const TAILORS_INSIDE := [["daisy", Vector2(6.5, 3.5), Vector3(-0.3, 0, 1)], ["morris", Vector2(2.5, 1.6), Vector3(0.4, 0, 1)]]
+## Insides set out afresh every visit, by the building's "inside": what stands where
+## ([item, tile, rotation]: 0 faces the door, 1 faces -x, 2 the back wall, 3 faces +x)
+## and who works there ([id, spot, facing]).
+## Daisy and Morris's: rails of clothes and the mirror along the back, mannequins and
+## shelves down the sides, a counter, and plants by the door.
+## Poppy's office: a marquee with her desk at the back, shelves of files, a rug, stools
+## for visitors, lanterns and plants.
+## Bramble's museum tent: a camp desk and specimen cases, crates and barrels, a bench.
+const INSIDES := {
+	"tailors": {
+		"fittings": [["clothes_rail", Vector2i(1, 0), 0], ["fitting_mirror", Vector2i(4, 0), 0],
+			["clothes_rail", Vector2i(6, 0), 0], ["mannequin", Vector2i(0, 2), 3], ["mannequin", Vector2i(0, 4), 3],
+			["wooden_shelf", Vector2i(8, 2), 1], ["wooden_shelf", Vector2i(8, 3), 1], ["wooden_table", Vector2i(6, 4), 0],
+			["potted_plant", Vector2i(0, 6), 0], ["potted_plant", Vector2i(8, 6), 0]],
+		"people": [["daisy", Vector2(6.5, 3.5), Vector3(-0.3, 0, 1)], ["morris", Vector2(2.5, 1.6), Vector3(0.4, 0, 1)]],
+	},
+	"office": {
+		"fittings": [["round_rug_strawberry", Vector2i(3, 2), 0], ["wooden_table", Vector2i(3, 1), 0],
+			["wooden_shelf", Vector2i(0, 1), 3], ["wooden_shelf", Vector2i(0, 2), 3], ["wooden_box", Vector2i(7, 1), 0],
+			["firewood_pile", Vector2i(7, 2), 1], ["wooden_stool", Vector2i(2, 3), 0], ["wooden_stool", Vector2i(5, 3), 0],
+			["stone_lantern", Vector2i(1, 0), 0], ["stone_lantern", Vector2i(6, 0), 0], ["potted_plant", Vector2i(0, 4), 0],
+			["potted_plant", Vector2i(7, 4), 0]],
+		"people": [["poppy", Vector2(4.0, 0.55), Vector3(0, 0, 1)]],
+	},
+	"museum_tent": {
+		"fittings": [["lodge_rug_honey", Vector2i(2, 2), 0], ["wooden_table", Vector2i(3, 0), 0], ["exhibit_case", Vector2i(0, 1), 3],
+			["exhibit_tank", Vector2i(7, 1), 1], ["barrel", Vector2i(0, 0), 0], ["wooden_box", Vector2i(7, 0), 0],
+			["wooden_box", Vector2i(0, 3), 0], ["log_bench", Vector2i(5, 3), 0], ["stone_lantern", Vector2i(7, 4), 0],
+			["potted_plant", Vector2i(0, 4), 0]],
+		"people": [["bramble", Vector2(4.0, 1.55), Vector3(0, 0, 1)]],
+	},
+}
 
 
-static func fill_tailors(r: World) -> void:
-	for entry: Array in TAILORS_FITTINGS:
-		var size: Array = ItemDB.placeable(entry[0])["footprint"]
+static func fill_inside(r: World, kind: String) -> void:
+	for entry: Array in INSIDES[kind]["fittings"]:
+		var def := ItemDB.placeable(entry[0])
+		if def.is_empty():
+			continue
+		var size: Array = def["footprint"]
 		var dims := Vector2i(size[0], size[1]) if entry[2] % 2 == 0 else Vector2i(size[1], size[0])
 		r.place_item(entry[0], Rect2i(entry[1], dims), entry[2])
 
@@ -1305,6 +1339,8 @@ func _furnish_for(r: World, who: String) -> void:
 
 
 ## A room's worth of one furniture series for --demo=home: [item, tile, rotation] by kind.
+## Rotation 0 faces the front (+z), 1 faces -x, 2 the back wall, 3 faces +x: seats by a
+## side wall face into the room.
 func _series_layout(series_id: String, variant: String) -> Array:
 	var data: Dictionary = ItemDB.series.get(series_id, {})
 	if data.is_empty():
@@ -1318,7 +1354,7 @@ func _series_layout(series_id: String, variant: String) -> Array:
 	var out := []
 	for entry: Array in [["rug", Vector2i(2, 2), 0], ["bed", Vector2i(1, 0), 0], ["bookcase", Vector2i(3, 0), 0], ["table", Vector2i(3, 2), 0],
 			["chair", Vector2i(3, 3), 2], ["stool", Vector2i(4, 3), 2], ["floor_lamp", Vector2i(5, 0), 0],
-			["sofa", Vector2i(0, 3), 1], ["bench", Vector2i(0, 3), 1], ["armchair", Vector2i(5, 4), 3],
+			["sofa", Vector2i(0, 3), 3], ["bench", Vector2i(0, 3), 3], ["armchair", Vector2i(5, 4), 1],
 			["side_table", Vector2i(5, 2), 0], ["dresser", Vector2i(1, 5), 0], ["crate", Vector2i(5, 0), 0],
 			["fridge", Vector2i(0, 0), 0], ["counter", Vector2i(1, 0), 0], ["stove", Vector2i(2, 0), 0], ["sink", Vector2i(3, 0), 0],
 			["oven", Vector2i(4, 0), 0], ["cupboard", Vector2i(5, 0), 0], ["round_table", Vector2i(2, 3), 0], ["tree", Vector2i(4, 0), 0]]:

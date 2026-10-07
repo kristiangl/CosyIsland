@@ -228,6 +228,10 @@ Milestone 3b:
 - [x] Inside the tailors: walk in to find Daisy at the counter and Morris by the rails;
   the fitting mirror (or "Try things on" with Daisy) opens the wardrobe with today's
   rail, and what you keep on is bought straight into the wardrobe
+- [x] Poppy's office and Bramble's museum tent have insides (a striped marquee and a
+  rugged canvas tent, with poles) where they work; Bramble stands in the museum too.
+  Marlow's dock is on the south shore; neighbours stay off cliffs; the KayKit buildings
+  are a size up
 
 Next milestones (suggested order):
 4. More to find on tours: other kinds of tree on rare islands, flower breeding for the

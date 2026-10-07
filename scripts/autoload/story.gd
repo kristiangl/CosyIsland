@@ -1640,6 +1640,6 @@ func _has_home() -> bool:
 		return false
 	for obj in Game.island.objects():
 		if obj["kind"] == "placed" and ItemDB.placeable(obj["item"]).has("room") and not obj.has("resident") \
-				and not ItemDB.placeable(obj["item"]).get("museum", false):
+				and not ItemDB.placeable(obj["item"]).get("museum", false) and not ItemDB.placeable(obj["item"]).has("inside"):
 			return true
 	return false

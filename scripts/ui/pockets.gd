@@ -13,6 +13,8 @@ var _desc_label: Label
 var _currency_label: Label
 var _currency_icon: TextureRect
 var _buttons: Array[SlotButton] = []
+## Shown while you've a flower in your hair: takes it out, back into the pockets.
+var _flower_button: Button
 var _selected := 0
 
 
@@ -37,6 +39,12 @@ func _ready() -> void:
 	_name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	header.add_child(_name_label)
+	_flower_button = Button.new()
+	_flower_button.text = "Take out hair flower"
+	_flower_button.add_theme_font_size_override("font_size", 16)
+	_flower_button.expand_icon = true
+	_flower_button.pressed.connect(_take_out_flower)
+	header.add_child(_flower_button)
 	var pill := UIStyle.acorn_pill(20)
 	header.add_child(pill)
 	_currency_label = pill.get_meta("label")
@@ -108,6 +116,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _refresh() -> void:
 	_currency_label.text = UIStyle.acorns(Inventory.currency)
+	var wearing: String = Game.player.model.look.get("hair_flower", "") if Game.player else ""
+	_flower_button.visible = wearing != ""
+	_flower_button.icon = Icons.get_icon(wearing) if wearing != "" else null
 	# The icon renders in the background the first time.
 	if _currency_icon.texture == null:
 		_currency_icon.texture = Icons.get_icon("acorn_pouch")
@@ -234,12 +245,26 @@ func _use_flower(i: int) -> void:
 		"Put it in a vase":
 			place_requested.emit(i)
 		"Take out my hair flower":
-			var look: Dictionary = player.model.look.duplicate()
-			look["hair_flower"] = ""
-			player.model.set_look(look)
-			if Inventory.add_item(wearing) > 0:
-				Events.toast.emit("Your pockets are full, so it's on the ground.")
-				Game.world.drop_from_pockets(player.tile(), player.target_tile(), wearing, 1)
+			_take_out_flower()
+
+
+## Takes the flower out of your hair and puts it in the pockets (or at your feet).
+func _take_out_flower() -> void:
+	var player := Game.player
+	var wearing: String = player.model.look.get("hair_flower", "")
+	if wearing == "":
+		return
+	var look: Dictionary = player.model.look.duplicate()
+	look["hair_flower"] = ""
+	player.model.set_look(look)
+	if Inventory.add_item(wearing) > 0:
+		Events.toast.emit("Your pockets are full, so it's on the ground.")
+		Game.world.drop_from_pockets(player.tile(), player.target_tile(), wearing, 1)
+	else:
+		Events.toast.emit("You took the %s out of your hair." % ItemDB.display_name(wearing).to_lower())
+	_refresh()
+	if visible:
+		_buttons[clampi(_selected, 0, _buttons.size() - 1)].grab_focus()
 
 
 func _drop_slot(i: int) -> void:

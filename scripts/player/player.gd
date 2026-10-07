@@ -54,8 +54,10 @@ func _physics_process(delta: float) -> void:
 	var active := Game.mode == Game.Mode.PLAY or Game.mode == Game.Mode.PLACING
 	var input := Input.get_vector("move_left", "move_right", "move_up", "move_down") if active else Vector2.ZERO
 	if _seat_uid >= 0:
-		# Any push on the stick (or cancel) gets back up.
-		if input.length() > 0.5 or (active and Input.is_action_just_pressed("cancel")):
+		if _busy > 0.0:
+			_busy -= delta
+		# Any push on the stick, use or cancel gets back up.
+		if input.length() > 0.5 or (active and _busy <= 0.0 and (Input.is_action_just_pressed("cancel") or Input.is_action_just_pressed("use"))):
 			_stand_up()
 		model.animate(delta, 0.0)
 		return
@@ -388,6 +390,9 @@ func _sit_on(obj: Dictionary) -> void:
 	tw.tween_property(model, "position:y", spot["height"] - CharacterParts.HIP_Y + 0.05, 0.22)
 	model.rotation.y = atan2(facing.x, facing.z)
 	model.set_sitting(true)
+	if not Story.flags.get("seat_hint", false):
+		Story.flags["seat_hint"] = true
+		Events.toast.emit(Prompts.fill("Move, or press {use}, to get up again."))
 
 
 ## Climbs into bed: lying on the back, head on the pillow at the headboard end.
@@ -425,15 +430,33 @@ func get_up() -> void:
 func _stand_up() -> void:
 	_seat_uid = -1
 	model.set_sitting(false)
-	# Step off towards the front if there's room, else back where we came from.
-	var front := position + facing * 0.85
+	# Step off to the front if there's room, else to a side, the back, or where we came
+	# from: somewhere clear (no furniture, nobody standing there) that we can walk away from.
+	var side := Vector3(-facing.z, 0, facing.x)
 	var goal := _stand_spot
-	if world.is_walkable(front.x, front.z):
-		goal = Vector3(front.x, world.ground_height(front.x, front.z), front.z)
+	for offset: Vector3 in [facing * 0.85, side * 0.85, -side * 0.85, -facing * 0.85]:
+		var c := position + offset
+		if _free_spot(c):
+			goal = Vector3(c.x, world.ground_height(c.x, c.z), c.z)
+			break
 	_busy = 0.2
 	var tw := create_tween().set_parallel()
 	tw.tween_property(self, "position", goal, 0.2).set_trans(Tween.TRANS_QUAD)
 	tw.tween_property(model, "position:y", 0.0, 0.2)
+
+
+## Somewhere to stand: open ground nobody's on, with a way to walk off from it.
+func _free_spot(c: Vector3) -> bool:
+	if not world.is_walkable(c.x, c.z):
+		return false
+	var at := Vector3(c.x, world.ground_height(c.x, c.z), c.z)
+	for npc in Game.npcs:
+		if npc.world == world and npc.blocks(c.x, c.z):
+			return false
+	for step: Vector2 in [Vector2(0.3, 0), Vector2(-0.3, 0), Vector2(0, 0.3), Vector2(0, -0.3)]:
+		if world.can_move(at, c.x + step.x, c.z + step.y, RADIUS):
+			return true
+	return false
 
 
 ## Eats something from the pockets: up to the mouth, crumbs, hearts.

@@ -1078,8 +1078,9 @@ func add_dock(near: Vector2i) -> Dictionary:
 		for l: int in sizes:
 			if main < 0 or sizes[l] > sizes[main]:
 				main = l
-	# rot 0 faces +Z (south), 3 faces +X, 1 faces -X, 2 faces -Z.
-	for rot: int in [2, 3, 1, 0]:
+	# rot 0 faces +Z (south), 3 faces +X, 1 faces -X, 2 faces -Z. The south shore first:
+	# it's the side facing the camera, easiest to get to.
+	for rot: int in [0, 3, 1, 2]:
 		var best := Rect2i()
 		var best_dist := INF
 		for z in range(1, data.height - 2):
@@ -1100,6 +1101,22 @@ func add_dock(near: Vector2i) -> Dictionary:
 			dock["fixed"] = true
 			return dock
 	return {}
+
+
+## Islands from before Marlow moved to the south shore: his dock moves there (if it
+## fits). Returns true if it moved.
+func move_dock_south(near: Vector2i) -> bool:
+	var dock := building("dock")
+	if dock.is_empty() or int(dock.get("rot", 0)) == 0:
+		return false
+	var old := dock.duplicate()
+	remove_object(dock["uid"])
+	var moved := add_dock(near)
+	if moved.is_empty():
+		var back := place_item("dock", Rect2i(old["x"], old["z"], old["w"], old["d"]), old["rot"])
+		back["fixed"] = true
+		return false
+	return int(moved["rot"]) != int(old["rot"])
 
 
 ## A tile next to a 2x2 rect, seen from the dock: `side` across (0 and 1 are the

@@ -119,7 +119,8 @@ func _wander(delta: float) -> float:
 		return 0.0
 	var step := to.normalized() * minf(WALK * delta, to.length())
 	var next := position + step
-	if not world.is_walkable(next.x, next.z):
+	# The same rule as the player's: no stepping up or down cliffs.
+	if not world.is_walkable(next.x, next.z) or not world.can_move(position, next.x, next.z, RADIUS):
 		_pick_target()
 		return 0.0
 	position = Vector3(next.x, world.ground_height(next.x, next.z), next.z)
@@ -129,7 +130,9 @@ func _wander(delta: float) -> float:
 func _pick_target() -> void:
 	for attempt in 8:
 		var p := home + Vector3(_rng.randf_range(-ROAM, ROAM), 0, _rng.randf_range(-ROAM, ROAM))
-		if world.is_walkable(p.x, p.z) and world.object_at(floori(p.x), floori(p.z)).is_empty():
+		# Somewhere on the same level as home (ramps aside, cliffs are in the way).
+		if world.is_walkable(p.x, p.z) and world.object_at(floori(p.x), floori(p.z)).is_empty() \
+				and absf(world.ground_height(p.x, p.z) - world.ground_height(home.x, home.z)) < 0.3:
 			_target = Vector3(p.x, world.ground_height(p.x, p.z), p.z)
 			return
 	_target = home

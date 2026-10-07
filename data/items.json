@@ -422,7 +422,15 @@
 				"model": "office",
 				"structure": true,
 				"rotatable": false,
-				"door": true
+				"door": true,
+				"room": {
+					"size": [
+						8,
+						6
+					],
+					"style": "marquee"
+				},
+				"inside": "office"
 			}
 		},
 		"dock": {
@@ -484,7 +492,7 @@
 					],
 					"style": "boutique"
 				},
-				"shop_room": true
+				"inside": "tailors"
 			}
 		},
 		"museum_tent": {
@@ -503,7 +511,15 @@
 				"structure": true,
 				"rotatable": false,
 				"door": true,
-				"museum": true
+				"museum": true,
+				"room": {
+					"size": [
+						8,
+						6
+					],
+					"style": "canvas"
+				},
+				"inside": "museum_tent"
 			}
 		},
 		"museum": {

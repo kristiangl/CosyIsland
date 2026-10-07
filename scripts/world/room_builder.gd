@@ -21,6 +21,18 @@ const STYLES := {
 		"wall": {"pattern": 2, "a": "dfe8d6", "b": "d2dcc8"},
 		"trim": "f3eee2", "base": "8a7a68", "mat": "b8cf9a", "bunting": false,
 	},
+	"marquee": {
+		"height": 2.4,
+		"floor": {"pattern": 3, "a": "e2cfa4", "b": "c4a77a"},
+		"wall": {"pattern": 2, "a": "f2a091", "b": "fbefd6"},
+		"trim": "f3eee2", "base": "8a6b4f", "mat": "e0857a", "bunting": true, "poles": "b08463",
+	},
+	"canvas": {
+		"height": 2.3,
+		"floor": {"pattern": 1, "a": "c8a878", "b": "a88a5e"},
+		"wall": {"pattern": 4, "a": "bccb94", "b": "a3b47e"},
+		"trim": "c39a6b", "base": "6b4f3a", "mat": "8fb07a", "bunting": false, "poles": "8a6b4f",
+	},
 	"boutique": {
 		"height": 2.5,
 		"floor": {"pattern": 1, "a": "e6c8a0", "b": "cfae84"},
@@ -97,6 +109,16 @@ static func build(data: IslandData, style_id: String, look: Dictionary = {}, doo
 	kit.rounded_box(Vector3(door.x + 0.5, y + 0.005, d + 0.4), Vector3(0.86, 0.03, 0.62), Color(style["mat"]), 0.4)
 	if style.get("bunting", false):
 		_bunting(kit, Vector3(0.1, y + h - 0.05, 0.06), Vector3(w - 0.1, y + h - 0.05, 0.06))
+	if style.has("poles"):
+		# A tent: rough wooden poles at the corners and in the middle of the back, and a
+		# scalloped canvas edge hanging along the top of the walls.
+		var wood := Color(style["poles"])
+		for at: Vector2 in [Vector2(0.08, 0.08), Vector2(w - 0.08, 0.08), Vector2(w * 0.5, 0.08), Vector2(0.08, d - 0.1), Vector2(w - 0.08, d - 0.1)]:
+			kit.cylinder(Vector3(at.x, y, at.y), Vector3(at.x, y + h + 0.12, at.y), 0.07, 0.06, wood, 6, true)
+		var edge := Color(style["wall"]["a"]).darkened(0.08)
+		_valance(kit, Vector3(0, y + h, 0.05), Vector3(w, y + h, 0.05), Vector3.BACK, edge)
+		_valance(kit, Vector3(0.05, y + h, d), Vector3(0.05, y + h, 0), Vector3.RIGHT, edge)
+		_valance(kit, Vector3(w - 0.05, y + h, 0), Vector3(w - 0.05, y + h, d), Vector3.LEFT, edge)
 	# Windows in the back wall (one, or two in a wide room) and each side wall.
 	var curtains := ItemDB.get_item(look.get("window", ""))
 	var variant: Dictionary = curtains.get("build", {}).get("variant", {})
@@ -186,6 +208,25 @@ static func _wall(kit: MeshKit, from: Vector3, to: Vector3, h: float, n: Vector3
 
 static func _box(kit: MeshKit, lo: Vector3, hi: Vector3, c: Color) -> void:
 	kit.box((lo + hi) * 0.5, hi - lo, c)
+
+
+## A row of rounded canvas scallops hanging from a wall's top edge.
+static func _valance(kit: MeshKit, from: Vector3, to: Vector3, n: Vector3, col: Color) -> void:
+	var count := int(from.distance_to(to) / 0.4)
+	for i in count:
+		var a := from.lerp(to, float(i) / count)
+		var b := from.lerp(to, float(i + 1) / count)
+		var steps := 5
+		var top_a := kit.vertex(a, n, col)
+		var top_b := kit.vertex(b, n, col)
+		var prev := top_a
+		for k in range(1, steps):
+			var t := float(k) / steps
+			var p := a.lerp(b, t) + Vector3(0, -sin(t * PI) * 0.16 - 0.04, 0)
+			var v := kit.vertex(p, n, col)
+			kit.tri(top_a, prev, v, n)
+			prev = v
+		kit.tri(top_a, prev, top_b, n)
 
 
 ## A string of little flags hanging along the back wall.

@@ -445,6 +445,33 @@ func _test_rooms() -> void:
 		"and the side doors lead to the side rooms")
 	check(big.room_door_ahead(Vector3(3.5, 0, 0.3), Vector3(0, 0, -1)) == -1, "the wall beside a door is just wall")
 	big.free()
+	# Sitting down and getting up again, from a chair against a wall facing into the
+	# room and from one facing the wall.
+	for case: Array in [[Vector2i(0, 2), 3], [Vector2i(0, 2), 1], [Vector2i(2, 0), 2]]:
+		var seat_room := World.new()
+		seat_room.interior = true
+		add_child(seat_room)
+		seat_room.setup(IslandData.room(6, 6))
+		var seat := seat_room.place_item("wooden_chair", Rect2i(case[0], Vector2i.ONE), case[1])
+		var sitter := Player.new()
+		add_child(sitter)
+		sitter.setup(seat_room, Vector3(case[0].x + 1.5, 0, case[0].y + 1.5), Appearance.DEFAULT)
+		var was_mode := Game.mode
+		Game.mode = Game.Mode.PLAY
+		sitter._sit_on(seat)
+		var sat := sitter.is_sitting()
+		for action: String in ["move_down", "move_right", "move_up"]:
+			Input.action_press(action)
+			for i in 20:
+				sitter._physics_process(0.05)
+			Input.action_release(action)
+			for i in 10:
+				sitter._physics_process(0.05)
+		var off := not seat_room.footprint(seat).has(sitter.tile())
+		check(sat and not sitter.is_sitting() and off, "you can get up from a chair facing %s and walk away" % ["into the room", "the wall", "the back wall"][[3, 1, 2].find(case[1])])
+		Game.mode = was_mode
+		sitter.free()
+		seat_room.free()
 	var bed := r.place_item("simple_bed", Rect2i(0, 0, 2, 2), 0)
 	var table := r.place_item("wooden_table", Rect2i(3, 1, 2, 1), 0)
 	r.place_on_surface("teapot", Vector2i(3, 1), 0)
@@ -590,7 +617,7 @@ func _test_tailors() -> void:
 	check(not Story.finish_tailors(w), "the shop takes a night")
 	Story.flags["tailors_day"] = GameClock.day_key() - 1
 	check(Story.finish_tailors(w) and not w.building("tailor_shop").is_empty(), "then Daisy and Morris's shop opens")
-	check(ItemDB.placeable("tailor_shop").get("shop_room", false) and not w.door_of(w.building("tailor_shop")).is_empty(), "and you can walk in")
+	check(ItemDB.placeable("tailor_shop").get("inside", "") == "tailors" and not w.door_of(w.building("tailor_shop")).is_empty(), "and you can walk in")
 	w.free()
 	Inventory.reset()
 	Story.flags = saved_flags
@@ -725,12 +752,30 @@ func _test_clothes() -> void:
 	inside.interior = true
 	add_child(inside)
 	inside.setup(IslandData.room(shop_def["room"]["size"][0], shop_def["room"]["size"][1]))
-	Main.fill_tailors(inside)
-	check(not inside.building("fitting_mirror").is_empty() and inside.objects().size() == Main.TAILORS_FITTINGS.size(),
+	Main.fill_inside(inside, "tailors")
+	check(not inside.building("fitting_mirror").is_empty() and inside.objects().size() == Main.INSIDES["tailors"]["fittings"].size(),
 		"rails, mannequins and the mirror all fit inside")
-	for entry: Array in Main.TAILORS_INSIDE:
-		check(inside.object_at(floori(entry[1].x), floori(entry[1].y)).is_empty(), "%s has somewhere to stand" % entry[0])
 	inside.free()
+	# Every set-out inside fits in its room, and leaves its people somewhere to stand.
+	for building: String in ["tailor_shop", "island_office", "museum_tent"]:
+		var def := ItemDB.placeable(building)
+		var kind: String = def["inside"]
+		var r2 := World.new()
+		r2.interior = true
+		add_child(r2)
+		r2.setup(IslandData.room(def["room"]["size"][0], def["room"]["size"][1]))
+		Main.fill_inside(r2, kind)
+		var placed := 0
+		for entry: Array in Main.INSIDES[kind]["fittings"]:
+			placed += 1 if ItemDB.has_item(entry[0]) else 0
+		check(r2.objects().size() == placed and placed == Main.INSIDES[kind]["fittings"].size(), "everything fits inside the %s" % kind)
+		for person: Array in Main.INSIDES[kind]["people"]:
+			check(r2.object_at(floori(person[1].x), floori(person[1].y)).is_empty() and r2.data.in_bounds(floori(person[1].x), floori(person[1].y)),
+				"%s has somewhere to stand in the %s" % [person[0], kind])
+		var door := r2.data.room_door()
+		check(r2.object_at(door.x, door.y - 1).is_empty(), "and the way in is clear (%s)" % kind)
+		r2.free()
+
 	var lucy := Shop.stock(7, 100)
 	check(lucy.any(func(id): return ItemDB.get_item(id).get("basic", false)), "Lucy sells everyday clothes")
 	check(Shop.stock(7, 100, "", "tailors").all(func(id): return ItemDB.get_item(id).has("base")), "the tailors sell designed ones")
@@ -1214,6 +1259,17 @@ func _test_neighbours() -> void:
 	npc.home = npc.position
 	npc._pick_target()
 	check(w.is_walkable(npc._target.x, npc._target.z), "neighbours stroll to places they can stand")
+	# A long stroll never steps up or down a cliff.
+	var saved_player := Game.player
+	Game.player = null
+	var jumped := false
+	var last_y := npc.position.y
+	for i in 3000:
+		npc._wander(0.1)
+		jumped = jumped or absf(npc.position.y - last_y) > 0.25
+		last_y = npc.position.y
+	Game.player = saved_player
+	check(not jumped, "and never walk up or down cliffs")
 	w.free()
 
 
@@ -1257,6 +1313,17 @@ func _test_tours() -> void:
 			check(w.is_walkable(spots["skipper"].x, spots["skipper"].z) and w.is_walkable(spots["arrive"].x, spots["arrive"].z),
 				"Marlow and the ferry's passengers stand on open sand (island %d)" % seed_value)
 			check(w.add_dock(d.spawn) == dock, "and there's only one dock")
+			check(int(dock["rot"]) == 0, "on the south shore (island %d)" % seed_value)
+			# An older island with the dock round the back gets it moved to the south.
+			w.remove_object(dock["uid"])
+			var north := Rect2i()
+			for z in range(1, d.height / 2):
+				for x in range(1, d.width - 2):
+					if north.size == Vector2i.ZERO and w._dock_fits(Rect2i(x, z, 2, 2), 2):
+						north = Rect2i(x, z, 2, 2)
+			if north.size != Vector2i.ZERO:
+				w.place_item("dock", north, 2)
+				check(w.move_dock_south(d.spawn) and int(w.building("dock")["rot"]) == 0, "an old north-shore dock moves south")
 		var t := IslandGenerator.generate_tour(seed_value * 7 + 1, d.native_fruit, d.native_flower)
 		check(t.native_fruit != d.native_fruit and t.native_flower != d.native_flower,
 			"a tour island grows other fruit and flowers (%s/%s vs %s/%s)" % [t.native_fruit, t.native_flower, d.native_fruit, d.native_flower])

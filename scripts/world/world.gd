@@ -130,7 +130,9 @@ func _build_terrain() -> void:
 	var ground := MeshInstance3D.new()
 	ground.name = "Ground"
 	ground.mesh = TerrainBuilder.build_ground(data)
-	ground.material_override = TerrainBuilder.terrain_material()
+	# Its own copy: the plaza is this island's (a tour island mustn't move the home
+	# island's paving).
+	ground.material_override = TerrainBuilder.terrain_material().duplicate()
 	var plaza := Rect2(data.plaza)
 	ground.material_override.set_shader_parameter("plaza", Vector4(plaza.position.x, plaza.position.y, plaza.size.x, plaza.size.y))
 	add_child(ground)

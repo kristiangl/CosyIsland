@@ -8,6 +8,8 @@ extends Node
 var flags: Dictionary = {}
 ## What a proper house costs, paid to Poppy, who has it built overnight.
 const HOUSE_COST := 10000
+## What the extension costs: an upstairs and three more rooms.
+const EXTENSION_COST := 25000
 ## What Lucy needs to build her shop.
 const SHOP_MATERIALS := {"wood": 30, "stone": 20, "clay": 10}
 ## How many different fish and bugs bring Bramble to the island.
@@ -147,6 +149,16 @@ func _poppy(poppy: Npc) -> void:
 		return
 	if await _spare_kit("poppy", "museum_kit", flags.get("museum_kit", false) and not flags.get("museum_done", false)):
 		return
+	if flags.has("extension_day") and not flags.get("extension_done", false):
+		await say("poppy", ["Lucy's up a ladder on your roof as we speak. Well, she was. She's having a sandwich.",
+			"Your extension will be ready in the morning!"])
+		return
+	if flags.get("extension_done", false) and not flags.get("extension_thanks", false):
+		flags["extension_thanks"] = true
+		poppy.hop()
+		await say("poppy", ["Look at your house now! An upstairs and everything!",
+			"The new rooms are through the doors in your living room. Back, left and right. So many walls to decorate!"])
+		return
 	if flags.get("house_done", false) and not flags.get("house_thanks", false):
 		flags["house_thanks"] = true
 		poppy.hop()
@@ -167,9 +179,9 @@ func _poppy(poppy: Npc) -> void:
 func _poppy_questions() -> void:
 	while true:
 		var options := ["How do I make things?", "What is there to do?", "I'm all set!"]
-		var house_offer := can_offer_house()
+		var house_offer := can_offer_house() or can_offer_extension()
 		if house_offer:
-			options.insert(2, "About a proper house...")
+			options.insert(2, "About a proper house..." if can_offer_house() else "About a bigger house...")
 		var plot_offer := can_offer_plot()
 		if plot_offer:
 			options.insert(2, "About new neighbours...")
@@ -188,7 +200,10 @@ func _poppy_questions() -> void:
 		if plot_offer and pick > 2:
 			pick -= 1
 		if house_offer and pick == 2:
-			await _house_talk()
+			if can_offer_house():
+				await _house_talk()
+			else:
+				await _extension_talk()
 			continue
 		if house_offer and pick > 2:
 			pick -= 1
@@ -226,6 +241,26 @@ func _house_talk() -> void:
 		"and in the morning you'll have a house!"])
 
 
+## Once the house has been lived in a while (the day after it went up), it can grow.
+func can_offer_extension() -> bool:
+	return flags.get("house_done", false) and flags.get("house_thanks", false) and not flags.has("extension_day")
+
+
+func _extension_talk() -> void:
+	await say("poppy", ["A bigger house? Ooh, yes! We can put an upstairs on, and three more rooms through doors off your living room.",
+		"The living room gets bigger too. It's %d acorns, and it'll be done overnight." % EXTENSION_COST])
+	if Inventory.currency < EXTENSION_COST:
+		await say("poppy", ["You've got %d at the moment. Keep selling to Lucy and you'll be there in no time!" % Inventory.currency])
+		return
+	if await ask("poppy", "Shall we build it?", ["Yes please!", "Not just yet"]) != 0:
+		await say("poppy", ["Whenever you're ready!"])
+		return
+	Inventory.add_currency(-EXTENSION_COST)
+	flags["extension_day"] = GameClock.day_key()
+	_npc_cheer("poppy")
+	await say("poppy", ["Hooray! Lucy will start tonight. Mind the scaffolding!"])
+
+
 func _npc_cheer(id: String) -> void:
 	var who := npc(id)
 	if who:
@@ -233,8 +268,16 @@ func _npc_cheer(id: String) -> void:
 
 
 ## Builds the house once the night has passed: the tent becomes a house in the same
-## spot, keeping everything inside. Returns true if it happened just now.
+## spot, keeping everything inside (and later the house becomes the big house). Returns true if it happened just now.
 func finish_house(island: World) -> bool:
+	if flags.has("extension_day") and not flags.get("extension_done", false) \
+			and GameClock.day_key() > int(flags["extension_day"]):
+		for obj in island.objects():
+			if obj["kind"] == "placed" and obj["item"] == "house":
+				obj["item"] = "big_house"
+				island.refresh_node(obj)
+				flags["extension_done"] = true
+				return true
 	if not flags.has("house_day") or flags.get("house_done", false):
 		return false
 	if GameClock.day_key() <= int(flags["house_day"]):

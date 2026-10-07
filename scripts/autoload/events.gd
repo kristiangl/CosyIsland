@@ -15,6 +15,8 @@ signal placed_changed
 ## The player walked into a home's door (uid of the home), or out of a room.
 signal home_entered(uid: int)
 signal home_left
+## Walked through a door inside a home to another of its rooms (0 is the main room).
+signal room_door(index: int)
 ## The player chose to sleep until this hour.
 signal sleep_requested(hour: float)
 ## Marlow is setting sail for a tour island, or back home from one.

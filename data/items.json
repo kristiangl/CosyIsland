@@ -181,6 +181,66 @@
 				]
 			}
 		},
+		"big_house": {
+			"name": "Big House",
+			"category": "building",
+			"stack": 1,
+			"price": 0,
+			"color": "#e0857a",
+			"desc": "Your cottage, grown a second storey and three more rooms.",
+			"placeable": {
+				"footprint": [
+					3,
+					3
+				],
+				"model": "big_house",
+				"structure": true,
+				"rotatable": false,
+				"room": {
+					"size": [
+						10,
+						8
+					],
+					"style": "cottage"
+				},
+				"rooms": [
+					{
+						"size": [
+							8,
+							6
+						],
+						"style": "cottage",
+						"door": "back"
+					},
+					{
+						"size": [
+							7,
+							6
+						],
+						"style": "cottage",
+						"door": "left"
+					},
+					{
+						"size": [
+							7,
+							6
+						],
+						"style": "cottage",
+						"door": "right"
+					}
+				],
+				"effects": [
+					{
+						"kind": "smoke",
+						"at": [
+							0.65,
+							4.05,
+							-0.35
+						]
+					}
+				]
+			}
+		},
 		"plot_kit": {
 			"name": "Neighbour Plot",
 			"category": "kit",

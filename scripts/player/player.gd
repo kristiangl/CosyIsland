@@ -119,11 +119,16 @@ func _move(step: Vector3) -> void:
 	position.y = world.ground_height(position.x, position.z)
 
 
-## Walking into a home's door goes inside; stepping onto a room's doormat goes out.
+## Walking into a home's door goes inside; stepping onto a room's doormat goes out (or
+## back to the main room), and walking into a door in a wall goes through to that room.
 func _check_doors(dir: Vector3) -> void:
 	if world.interior:
 		if tile() == world.data.room_door():
 			Events.home_left.emit()
+			return
+		var through := world.room_door_ahead(position, dir)
+		if through >= 0:
+			Events.room_door.emit(through)
 		return
 	var home := world.home_entrance(position, dir)
 	if not home.is_empty():

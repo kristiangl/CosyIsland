@@ -27,7 +27,8 @@ extends Node3D
 ##   --demo=visitor     someone met on a tour is visiting by the plaza (--who=id)
 ##   --demo=fishing     fishing off the beach with fish about (--demo=bugs: bugs nearby)
 ##   --demo=flowers     stand by some flowers, one picked, with a flower in your hair
-##   --house            with --demo: the tent has already become a house
+##   --house            with --demo: the tent has already become a house (--big: the big house,
+##                      --in=N: go into its room N with --demo=home, --paint=wall,roof,door hex colours)
 ##   --series=ID        with --demo or --demo=home: furniture from one series (--variant=ID)
 ##   --ui=pockets|pause|map|creator|crafting|customise|journal|exchange|critters|friends|neighbour|placing (--place=ID)|intro|ask|lucy|sleep|asleep|shop|sell (--sold: just sold one)  (--tab=N picks a creator tab, --try=key:id,... dresses up, --closet=TEXT opens the wardrobe with clothes whose ids contain TEXT)  open a menu or mode (for screenshots)
 
@@ -49,6 +50,8 @@ var room: World
 ## The island visited on a tour, while there.
 var tour: World
 var _home_uid := -1
+## Which of the home's rooms (0 is the main room, the one with the front door).
+var _room_index := 0
 ## Saved rooms by home uid (as a string, for JSON).
 var _rooms: Dictionary = {}
 var _going_through_door := false
@@ -140,6 +143,7 @@ func _ready() -> void:
 	Game.island_name = saved.get("island_name", "")
 	Events.home_entered.connect(_enter_home)
 	Events.home_left.connect(_leave_home)
+	Events.room_door.connect(_go_through)
 	Events.sleep_requested.connect(_sleep)
 	Events.day_changed.connect(func(_key): if room == null and tour == null: _check_house())
 	Events.tour_requested.connect(func(): _start_tour.call_deferred())
@@ -148,7 +152,7 @@ func _ready() -> void:
 	# Back inside if that's where we saved.
 	var inside := int(saved.get("inside", -1))
 	if inside >= 0 and not world.get_object(inside).is_empty():
-		await _enter_home(inside, true)
+		await _enter_home(inside, true, int(saved.get("inside_room", 0)))
 		player.position = Vector3(saved["player"]["x"], room.ground_height(saved["player"]["x"], saved["player"]["z"]), saved["player"]["z"])
 		camera_rig.snap()
 
@@ -302,7 +306,7 @@ func save_game() -> void:
 	if Game.args.has("screenshot"):
 		return
 	if room and not ItemDB.placeable(world.get_object(_home_uid).get("item", "")).get("museum", false):
-		_rooms[str(_home_uid)] = room.to_save()
+		_rooms[room_key(_home_uid, _room_index)] = room.to_save()
 	var me := player.to_save()
 	if tour:
 		# Tour islands aren't kept: a game saved on one carries on back at the dock.
@@ -316,6 +320,7 @@ func save_game() -> void:
 		"world": world.to_save(),
 		"rooms": _rooms,
 		"inside": _home_uid if room else -1,
+		"inside_room": _room_index if room else 0,
 		"inventory": Inventory.to_save(),
 		"player": me,
 		"recipes": Recipes.to_save(),
@@ -603,13 +608,12 @@ func _sleep(hour: float) -> void:
 
 # --- Homes --------------------------------------------------------------------------
 
-func _enter_home(uid: int, instant := false) -> void:
+func _enter_home(uid: int, instant := false, index := 0) -> void:
 	var home := world.get_object(uid)
 	var def := ItemDB.placeable(home.get("item", ""))
 	if _going_through_door or room != null or not def.has("room"):
 		return
 	var resident: String = home.get("resident", "")
-	var museum: bool = def.get("museum", false)
 	if resident != "" and Npc.out_at(GameClock.hour_float()):
 		Events.toast.emit("Nobody's home. %s is out and about until six." % NpcData.display_name(resident))
 		return
@@ -617,20 +621,58 @@ func _enter_home(uid: int, instant := false) -> void:
 	Game.mode = Game.Mode.MENU
 	if not instant:
 		await hud.fade_out()
-	var size: Array = def["room"]["size"]
+	_open_room(uid, index)
+	var spawn := room.data.spawn
+	player.position = Vector3(spawn.x + 0.5, room.ground_height(spawn.x + 0.5, spawn.y + 0.5), spawn.y + 0.5)
+	player.facing = Vector3(0, 0, -1)
+	camera_rig.snap()
+	Game.mode = Game.Mode.PLAY
+	if not instant:
+		await hud.fade_in()
+	_going_through_door = false
+
+
+## A home's rooms: its main "room", then any others in "rooms".
+static func room_defs(def: Dictionary) -> Array:
+	var defs: Array = [def["room"]]
+	defs.append_array(def.get("rooms", []))
+	return defs
+
+
+## Where a home's room is saved: the main room under the home's uid, others "uid:index".
+static func room_key(uid: int, index: int) -> String:
+	return str(uid) if index == 0 else "%d:%d" % [uid, index]
+
+
+## Builds room `index` of home `uid` and goes in (the player isn't placed yet).
+func _open_room(uid: int, index: int) -> void:
+	var home := world.get_object(uid)
+	var def := ItemDB.placeable(home.get("item", ""))
+	var defs := room_defs(def)
+	index = clampi(index, 0, defs.size() - 1)
+	var spec: Dictionary = defs[index]
+	var resident: String = home.get("resident", "")
+	var museum: bool = def.get("museum", false)
+	var size: Array = spec["size"]
+	var key := room_key(uid, index)
 	room = World.new()
 	room.name = "Room"
 	room.interior = true
-	room.room_style = def["room"]["style"]
+	room.room_style = spec["style"]
+	if index == 0:
+		var walls: Array = []
+		for other: Dictionary in defs.slice(1):
+			walls.append(other["door"])
+		room.room_doors = World.doors_for(size[0], size[1], walls)
 	add_child(room)
-	var first_visit := not _rooms.has(str(uid))
+	var first_visit := not _rooms.has(key)
 	room.visitor = resident != "" or museum
-	room.setup(IslandData.room(size[0], size[1]), {} if museum else _rooms.get(str(uid), {}))
+	room.setup(IslandData.room(size[0], size[1]), {} if museum else _rooms.get(key, {}))
 	if museum:
 		fill_museum(room)
 	elif first_visit and resident != "":
 		_furnish_for(room, resident)
-	elif first_visit:
+	elif first_visit and index == 0:
 		# Every new home comes with somewhere to sleep, against the back wall.
 		room.place_item("sleeping_bag", Rect2i(0, 0, 1, 2), 0)
 	if resident != "":
@@ -653,28 +695,56 @@ func _enter_home(uid: int, instant := false) -> void:
 		Game.npcs.append(host)
 		room.tree_exiting.connect(func(): Game.npcs.erase(host))
 	_home_uid = uid
+	_room_index = index
 	_switch_world(room)
-	var spawn := room.data.spawn
-	player.position = Vector3(spawn.x + 0.5, room.ground_height(spawn.x + 0.5, spawn.y + 0.5), spawn.y + 0.5)
-	player.facing = Vector3(0, 0, -1)
 	camera_rig.room = Rect2(0, 0, size[0], size[1])
+
+
+## Saves the room we're in (not the museum, rebuilt every visit) and takes it down.
+func _close_room() -> void:
+	if not ItemDB.placeable(world.get_object(_home_uid).get("item", "")).get("museum", false):
+		_rooms[room_key(_home_uid, _room_index)] = room.to_save()
+	room.queue_free()
+	room = null
+
+
+## Through a door inside the home to room `index`: in at its doormat, or back into the
+## main room in front of the door we came through.
+func _go_through(index: int) -> void:
+	if _going_through_door or room == null:
+		return
+	_going_through_door = true
+	Game.mode = Game.Mode.MENU
+	await hud.fade_out()
+	var from := _room_index
+	_close_room()
+	_open_room(_home_uid, index)
+	var spawn := room.data.spawn
+	var at := Vector3(spawn.x + 0.5, 0, spawn.y + 0.5)
+	var facing := Vector3(0, 0, -1)
+	for door in room.room_doors:
+		if door["to"] == from:
+			var out: Vector2i = door["out"]
+			at = Vector3(door["tile"].x + 0.5 - out.x * 0.2, 0, door["tile"].y + 0.5 - out.y * 0.2)
+			facing = Vector3(-out.x, 0, -out.y)
+	player.position = Vector3(at.x, room.ground_height(at.x, at.z), at.z)
+	player.facing = facing
 	camera_rig.snap()
 	Game.mode = Game.Mode.PLAY
-	if not instant:
-		await hud.fade_in()
+	await hud.fade_in()
 	_going_through_door = false
 
 
 func _leave_home() -> void:
 	if _going_through_door or room == null:
 		return
+	if _room_index != 0:
+		await _go_through(0)
+		return
 	_going_through_door = true
 	Game.mode = Game.Mode.MENU
 	await hud.fade_out()
-	if not ItemDB.placeable(world.get_object(_home_uid).get("item", "")).get("museum", false):
-		_rooms[str(_home_uid)] = room.to_save()
-	room.queue_free()
-	room = null
+	_close_room()
 	_switch_world(world)
 	_check_house()
 	var out := world.outside_door(world.get_object(_home_uid))
@@ -824,6 +894,14 @@ func _run_demo() -> void:
 		Story.flags["tent_gift"] = true
 		Story.flags["house_day"] = GameClock.day_key() - 1
 		_check_house()
+		if Game.args.has("big"):
+			Story.flags["house_thanks"] = true
+			Story.flags["extension_day"] = GameClock.day_key() - 1
+			_check_house()
+		if Game.args.has("paint"):
+			var colours: PackedStringArray = str(Game.args["paint"]).split(",")
+			tent["paint"] = {"wall": colours[0], "roof": colours[1], "door": colours[2]}
+			world.refresh_node(tent)
 	if Game.args["demo"] == "visitor":
 		var who: String = Game.args.get("who", "kiwi")
 		Story.flags["met"] = {who: GameClock.day_key() - 1}
@@ -1016,7 +1094,7 @@ func _run_demo() -> void:
 		camera_rig.snap()
 		return
 	if Game.args["demo"] == "home" and not tent.is_empty():
-		await _enter_home(tent["uid"], true)
+		await _enter_home(tent["uid"], true, int(Game.args.get("in", 0)))
 		var furniture := [["simple_bed", Vector2i(1, 0), 0], ["wooden_table", Vector2i(3, 1), 0], ["wooden_chair", Vector2i(3, 2), 2],
 				["stone_lantern", Vector2i(5, 0), 0], ["potted_plant", Vector2i(5, 5), 0], ["barrel", Vector2i(5, 3), 0], ["log_bench", Vector2i(0, 3), 1]]
 		if Game.args.has("series"):

@@ -429,6 +429,22 @@ func _test_rooms() -> void:
 	check(not r.is_walkable(0.5, 6.5), "the front edge beside the doormat isn't floor")
 	check(not r.can_place(Rect2i(3, 5, 1, 1), Vector3(-10, 0, -10)), "the way out stays clear")
 	check(r.can_place(Rect2i(0, 0, 2, 2), Vector3(-10, 0, -10)), "furniture fits in a room")
+	# Doors to other rooms: in the back, left and right walls, kept clear, and walked
+	# through by pushing into the wall in front of them.
+	var big := World.new()
+	big.interior = true
+	big.room_doors = World.doors_for(10, 8, ["back", "left", "right"])
+	add_child(big)
+	big.setup(IslandData.room(10, 8))
+	check(big.room_doors.size() == 3 and big.room_doors[0]["tile"] == Vector2i(5, 0), "a back door in the middle of the back wall")
+	check(not big.can_place(Rect2i(5, 0, 1, 1), Vector3(-10, 0, -10)) and not big.can_place(Rect2i(0, 4, 1, 1), Vector3(-10, 0, -10)),
+		"nothing can block a door")
+	check(big.room_door_ahead(Vector3(5.5, 0, 0.3), Vector3(0, 0, -1)) == 1, "walking into the back door goes through it")
+	check(big.room_door_ahead(Vector3(5.5, 0, 0.3), Vector3(0, 0, 1)) == -1, "walking away from it doesn't")
+	check(big.room_door_ahead(Vector3(0.3, 0, 4.5), Vector3(-1, 0, 0)) == 2 and big.room_door_ahead(Vector3(9.7, 0, 4.5), Vector3(1, 0, 0)) == 3,
+		"and the side doors lead to the side rooms")
+	check(big.room_door_ahead(Vector3(3.5, 0, 0.3), Vector3(0, 0, -1)) == -1, "the wall beside a door is just wall")
+	big.free()
 	var bed := r.place_item("simple_bed", Rect2i(0, 0, 2, 2), 0)
 	var table := r.place_item("wooden_table", Rect2i(3, 1, 2, 1), 0)
 	r.place_on_surface("teapot", Vector2i(3, 1), 0)
@@ -615,6 +631,18 @@ func _test_shop_and_house() -> void:
 	check(Story.finish_house(w) and tent["item"] == "house", "the tent becomes a house overnight")
 	check(not Story.can_offer_house() and not Story.finish_house(w), "and only once")
 	check(not w.door_of(tent).is_empty() and ItemDB.placeable("house")["room"]["size"][0] > 6, "the house has a door and a bigger room")
+	check(not Story.can_offer_extension(), "no extension until Poppy's seen the house")
+	Story.flags["house_thanks"] = true
+	check(Story.can_offer_extension(), "then she offers a bigger house")
+	Story.flags["extension_day"] = GameClock.day_key()
+	check(not Story.finish_house(w) and tent["item"] == "house", "the extension isn't done the same day")
+	Story.flags["extension_day"] = GameClock.day_key() - 1
+	check(Story.finish_house(w) and tent["item"] == "big_house" and not Story.can_offer_extension(), "the house grows overnight")
+	var defs := Main.room_defs(ItemDB.placeable("big_house"))
+	check(defs.size() == 4 and defs[0]["size"][0] > ItemDB.placeable("house")["room"]["size"][0], "the big house has a bigger main room and three more")
+	check(Main.room_key(5, 0) == "5" and Main.room_key(5, 2) == "5:2", "each room is saved on its own")
+	tent["paint"] = {"wall": "cfe6f2", "roof": "3a5a8a", "door": "f2c14e"}
+	check(Models.key_for(tent) == "big_house:cfe6f2:3a5a8a:f2c14e", "a painted house is drawn in its paint")
 	w.free()
 	Game.island = null
 	Story.reset()

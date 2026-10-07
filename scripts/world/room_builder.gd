@@ -2,7 +2,8 @@ class_name RoomBuilder
 extends RefCounted
 ## Builds the inside of a home from a room's IslandData (see IslandData.room): a
 ## patterned floor, back and side walls with trims, a window in each side wall (dressed
-## with curtains if some are put up), and a doormat at the way out.
+## with curtains if some are put up), doors through to the home's other rooms, and a
+## doormat at the way out.
 ## The front is left open so the camera can look in, like a doll's house.
 
 const WALL := 0.18
@@ -32,7 +33,8 @@ const BUNTING: Array[Color] = [Color("f2a7a0"), Color("f6d58c"), Color("9fd3c7")
 
 ## `look` can swap the wall and floor for wallpaper and flooring items, and hang
 ## curtains: {"wall": item id, "floor": item id, "window": item id}.
-static func build(data: IslandData, style_id: String, look: Dictionary = {}) -> Node3D:
+## `doors` are World.room_doors.
+static func build(data: IslandData, style_id: String, look: Dictionary = {}, doors: Array[Dictionary] = []) -> Node3D:
 	var style: Dictionary = STYLES.get(style_id, STYLES["tent"]).duplicate()
 	for part: String in ["wall", "floor"]:
 		var item: Dictionary = ItemDB.get_item(look.get(part, "")).get("interior", {})
@@ -98,9 +100,14 @@ static func build(data: IslandData, style_id: String, look: Dictionary = {}) -> 
 	maker.glass = glass
 	var opening := Vector2(0.9, 0.8) if h > 2.0 else Vector2(0.7, 0.6)
 	var spots: Array[Transform3D] = []
+	var door_walls := {}
+	for inner in doors:
+		door_walls[inner["out"]] = true
 	for side: float in [-1.0, 1.0]:
 		var x := 0.0 if side < 0.0 else w
-		spots.append(Transform3D(Basis(Vector3.UP, -side * PI * 0.5), Vector3(x, y + h * 0.55, d * 0.5)))
+		# Beside the door, if there's one in this wall.
+		var z := d * 0.5 if not door_walls.has(Vector2i(int(side), 0)) else d * 0.22
+		spots.append(Transform3D(Basis(Vector3.UP, -side * PI * 0.5), Vector3(x, y + h * 0.55, z)))
 	var back_y := y + h * (0.62 if h > 2.0 else 0.5)
 	if w >= 7.0:
 		spots.append(Transform3D(Basis(), Vector3(w * 0.25, back_y, 0)))
@@ -112,6 +119,17 @@ static func build(data: IslandData, style_id: String, look: Dictionary = {}) -> 
 		fabric.xform = xform
 		glass.xform = xform
 		maker.window(Vector3(0, 0, 0.004), opening, not curtains.is_empty())
+	# Doors to the other rooms: a panelled door in a frame, with a knob.
+	for inner in doors:
+		var t: Vector2i = inner["tile"]
+		match inner["out"]:
+			Vector2i(0, -1):
+				kit.xform = Transform3D(Basis(), Vector3(t.x + 0.5, y, 0))
+			Vector2i(-1, 0):
+				kit.xform = Transform3D(Basis(Vector3.UP, PI * 0.5), Vector3(0, y, t.y + 0.5))
+			_:
+				kit.xform = Transform3D(Basis(Vector3.UP, -PI * 0.5), Vector3(w, y, t.y + 0.5))
+		_door(kit, trim)
 	kit.xform = Transform3D.IDENTITY
 	var props := _instance("Trim", kit.commit(), Models.material())
 	room.add_child(props)
@@ -119,6 +137,17 @@ static func build(data: IslandData, style_id: String, look: Dictionary = {}) -> 
 	if not fabric.is_empty():
 		room.add_child(_instance("Curtains", fabric.commit(), Models.fabric_material(variant["fabric"])))
 	return room
+
+
+## A door standing against a wall at the origin, facing +z.
+static func _door(kit: MeshKit, trim: Color) -> void:
+	var wood := Color("b08463")
+	_box(kit, Vector3(-0.47, 0, 0), Vector3(0.47, 1.62, 0.05), trim.darkened(0.1))
+	_box(kit, Vector3(-0.4, 0, 0.02), Vector3(0.4, 1.55, 0.07), wood)
+	for row in 2:
+		var y0 := 0.18 + row * 0.7
+		_box(kit, Vector3(-0.3, y0, 0.065), Vector3(0.3, y0 + 0.55, 0.085), wood.lightened(0.12))
+	kit.sphere(Vector3(0.28, 0.8, 0.1), Vector3.ONE * 0.045, Color("f4d672"), 3, 6)
 
 
 static func surface_material(look: Dictionary) -> ShaderMaterial:

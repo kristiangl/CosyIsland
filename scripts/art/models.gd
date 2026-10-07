@@ -15,6 +15,10 @@ const FABRIC_DARK := Color("4f9488")
 const CREAM := Color("fff6e4")
 const PLANK := Color("d4a77e")
 const PLANK_DARK := Color("b08463")
+## The player's house before it's painted: cream walls, a coral roof and a mint door.
+const HOUSE_WALL := Color("fbf0d9")
+const HOUSE_ROOF := Color("e0857a")
+const HOUSE_DOOR := Color("9fd3c7")
 
 static var _cache: Dictionary = {}
 static var _material: ShaderMaterial
@@ -98,8 +102,12 @@ static func get_mesh(key: String) -> ArrayMesh:
 			_museum(k)
 		"exhibit":
 			_exhibit(k, p[1] if p.size() > 1 else "tank", p[2] if p.size() > 2 else "")
-		"house":
-			_house(k)
+		"house", "big_house":
+			# The player's house, in its paint (wall, roof, door) if it's been painted.
+			if p.size() >= 4:
+				_house(k, Color(p[1]), Color(p[2]), Color(p[3]), p[0] == "big_house")
+			else:
+				_house(k, HOUSE_WALL, HOUSE_ROOF, HOUSE_DOOR, p[0] == "big_house")
 		"nhouse":
 			# A neighbour's house in their colours.
 			# KayKit's timbered cottage, its roof and walls painted in their colours.
@@ -257,6 +265,10 @@ static func key_for(obj: Dictionary) -> String:
 				return "exhibit:%s:%s" % ["tank" if obj["item"] == "exhibit_tank" else "case", obj["exhibit"]]
 			if obj.has("resident"):
 				return "nhouse:" + String(obj["resident"])
+			if obj.has("paint"):
+				var paint: Dictionary = obj["paint"]
+				return "%s:%s:%s:%s" % [ItemDB.placeable(obj["item"]).get("model", "house"), paint.get("wall", HOUSE_WALL.to_html(false)),
+					paint.get("roof", HOUSE_ROOF.to_html(false)), paint.get("door", HOUSE_DOOR.to_html(false))]
 			return ItemDB.placeable(obj["item"]).get("model", "drop:" + obj["item"])
 	return "unknown"
 
@@ -550,13 +562,13 @@ static func _tent(k: MeshKit) -> void:
 
 
 ## A little cottage: cream walls with timber trim, a tiled roof, round windows, a
-## chimney and a front door with a step.
-static func _house(k: MeshKit, wall_col: Color = Color("fbf0d9"), roof_col: Color = Color("e0857a"),
-		door_col: Color = Color("9fd3c7")) -> void:
+## chimney and a front door with a step. `tall` adds an upstairs with two windows.
+static func _house(k: MeshKit, wall_col: Color = HOUSE_WALL, roof_col: Color = HOUSE_ROOF,
+		door_col: Color = HOUSE_DOOR, tall := false) -> void:
 	var w := 1.3
 	var d := 1.15
-	var eave := 1.45
-	var top := 2.6
+	var eave := 1.45 if not tall else 2.5
+	var top := 2.6 if not tall else 3.65
 	var wall := MeshKit.lin(wall_col)
 	var trim := MeshKit.lin(PLANK_DARK)
 	var roof := MeshKit.lin(roof_col)
@@ -614,6 +626,20 @@ static func _house(k: MeshKit, wall_col: Color = Color("fbf0d9"), roof_col: Colo
 		var side := Vector3(sx * (w + 0.01), 0.95, 0)
 		k.box(side, Vector3(0.05, 0.5, 0.5), trim)
 		k.box(side + Vector3(sx * 0.02, 0, 0), Vector3(0.04, 0.4, 0.4), glass)
+		if tall:
+			# Upstairs: a square window over each round one, with shutters, a beam
+			# between the floors, and a window in each side.
+			var up := Vector3(sx * 0.62, 1.95, front + 0.01)
+			k.box(up, Vector3(0.5, 0.52, 0.04), trim)
+			k.box(up + Vector3(0, 0, 0.02), Vector3(0.4, 0.42, 0.04), glass)
+			k.box(up + Vector3(0, 0, 0.045), Vector3(0.4, 0.035, 0.01), trim)
+			k.box(up + Vector3(0, 0, 0.045), Vector3(0.035, 0.42, 0.01), trim)
+			for shutter: float in [-1.0, 1.0]:
+				k.box(up + Vector3(shutter * 0.34, 0, 0.01), Vector3(0.14, 0.52, 0.04), MeshKit.lin(door_col))
+			k.box(side + Vector3(0, 1.05, 0), Vector3(0.05, 0.5, 0.5), trim)
+			k.box(side + Vector3(sx * 0.02, 1.05, 0), Vector3(0.04, 0.4, 0.4), glass)
+	if tall:
+		k.box(Vector3(0, 1.52, d + 0.02), Vector3(w * 2 + 0.1, 0.09, 0.08), trim)
 
 
 ## The island office: a striped marquee with a leaf sign over the entrance.

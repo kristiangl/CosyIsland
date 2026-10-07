@@ -21,6 +21,9 @@ var room_style := "tent"
 ## Wallpaper, flooring and curtains put up in this room:
 ## {"wall": item id, "floor": item id, "window": item id}.
 var room_look: Dictionary = {}
+## Doors through a room's walls to the home's other rooms: {"tile": the floor tile in
+## front of the door, "out": Vector2i through the wall, "to": room index}.
+var room_doors: Array[Dictionary] = []
 var day_key: int
 var money_rock_uid: int = -1
 var grass: GrassField
@@ -62,7 +65,7 @@ func setup(island: IslandData, saved: Dictionary = {}) -> void:
 	if interior:
 		_is_night = true
 		room_look = saved.get("look", {}).duplicate()
-		add_child(RoomBuilder.build(data, room_style, room_look))
+		add_child(RoomBuilder.build(data, room_style, room_look, room_doors))
 		for obj in data.objects:
 			_register(obj)
 		return
@@ -117,7 +120,7 @@ func set_room_look(item_id: String) -> String:
 	var shell := get_node_or_null("Room")
 	if shell:
 		shell.free()
-	var rebuilt := RoomBuilder.build(data, room_style, room_look)
+	var rebuilt := RoomBuilder.build(data, room_style, room_look, room_doors)
 	add_child(rebuilt)
 	move_child(rebuilt, 0)
 	return old
@@ -743,8 +746,42 @@ func _keep_clear(x: int, z: int) -> bool:
 		return true
 	if not interior:
 		return false
+	for inner in room_doors:
+		if inner["tile"] == Vector2i(x, z):
+			return true
 	var door := data.room_door()
 	return x == door.x and z >= door.y - 1
+
+
+## Doors for a room `w` by `d` tiles to other rooms, one per wall named in `walls`
+## ("back", "left" or "right"), leading to rooms 1, 2... in that order.
+static func doors_for(w: int, d: int, walls: Array) -> Array[Dictionary]:
+	var doors: Array[Dictionary] = []
+	for i in walls.size():
+		match walls[i]:
+			"back":
+				doors.append({"tile": Vector2i(w / 2, 0), "out": Vector2i(0, -1), "to": i + 1})
+			"left":
+				doors.append({"tile": Vector2i(0, d / 2), "out": Vector2i(-1, 0), "to": i + 1})
+			"right":
+				doors.append({"tile": Vector2i(w - 1, d / 2), "out": Vector2i(1, 0), "to": i + 1})
+	return doors
+
+
+## The room behind the inner door the player at `pos` is walking into (heading `dir`),
+## or -1.
+func room_door_ahead(pos: Vector3, dir: Vector3) -> int:
+	if not interior or dir.length() < 0.5:
+		return -1
+	var tile := Vector2i(floori(pos.x), floori(pos.z))
+	var ahead := pos + dir.normalized() * 0.45
+	var heading := Vector2(dir.x, dir.z).normalized()
+	for door in room_doors:
+		# Standing in front of it, pushing on into the wall.
+		if door["tile"] == tile and heading.dot(Vector2(door["out"])) > 0.7 \
+				and (ahead.x < 0.0 or ahead.z < 0.0 or ahead.x > data.width):
+			return door["to"]
+	return -1
 
 
 ## Keeps a tile free of furniture and drops (where a character stands).

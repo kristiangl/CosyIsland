@@ -134,14 +134,18 @@ vec3 draw_eye(vec3 base, vec2 p, float aa, float side) {
 		return paint(base, dark, length(p / vec2(1.0, open)) - 0.026, aa);
 	}
 	if (eye_style == 7) {
-		// Big: a large round eye that's all iris, dark at the top and warming to the eye
-		// colour at the bottom, with a big shine and a little one.
+		// Big: a large round eye, a dark rim with a white crescent down its left side, the
+		// iris dark at the top warming to the eye colour at the bottom, and a big shine.
 		vec2 r = vec2(0.054, 0.06 * open);
-		float d = sd_ellipse(p, r);
-		float warm = smoothstep(0.01, -0.05, p.y) * 0.75;
-		base = paint(base, mix(dark, eye_colour, warm), d, aa);
-		base = paint(base, white, length(p - vec2(0.017, 0.02)) - 0.018, aa);
-		return paint(base, white, length(p - vec2(-0.02, -0.026)) - 0.008, aa);
+		base = paint(base, dark, sd_ellipse(p, r), aa);
+		vec2 inner = r - 0.007;
+		base = paint(base, white, sd_ellipse(p, inner), aa);
+		vec2 c = p - vec2(0.011, -0.002);
+		float iris = max(sd_ellipse(c, vec2(0.043, 0.054 * open)), sd_ellipse(p, inner));
+		float warm = smoothstep(0.0, -0.045, p.y);
+		vec3 lit = mix(eye_colour, vec3(1.0, 0.85, 0.6), 0.15);
+		base = paint(base, mix(dark, lit, warm), iris, aa);
+		return paint(base, white, length(p - vec2(0.02, 0.02)) - 0.015, aa);
 	}
 	vec2 r = vec2(0.045, 0.062 * open);
 	if (eye_style == 5) {

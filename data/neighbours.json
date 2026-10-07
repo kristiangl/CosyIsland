@@ -17,7 +17,7 @@
 		},
 		"pip": {
 			"name": "Pip", "personality": "sporty", "catchphrase": "go go",
-			"species": {"head": "dog_upright", "kind": "dog", "fur": "#3a3434", "fur2": "#f6f1e8", "eyes": "#4a3020", "inner_ear": "#5a4a4a", "nose": "#2a2426"},
+			"species": {"head": "dog_upright", "kind": "dog", "fur": "#3a3434", "fur2": "#f6f1e8", "eyes": "#7a4a2a", "inner_ear": "#5a4a4a", "nose": "#2a2426"},
 			"look": {"eyes": "wide", "mouth": "cat", "cheeks": "none", "top": "tank", "top_color": "blue", "top_color2": "white", "bottom": "board_shorts", "bottom_color": "teal"},
 			"home": {"wall": "e8f2f4", "roof": "5f8fb8", "door": "f2d68a"},
 			"inside": {"series": "driftwood", "variant": "seaglass", "wall": "sky_wallpaper", "floor": "cream_tile_flooring"}
@@ -73,7 +73,7 @@
 		},
 		"sable": {
 			"name": "Sable", "personality": "sporty", "catchphrase": "zoom",
-			"species": {"kind": "ferret", "fur": "#8a6a50", "fur2": "#f4ead8", "stripes": "#5e4434", "eyes": "#2a1a14", "inner_ear": "#e2a8a0", "nose": "#5e4434"},
+			"species": {"kind": "ferret", "fur": "#8a6a50", "fur2": "#f4ead8", "stripes": "#5e4434", "eyes": "#9a5a28", "inner_ear": "#e2a8a0", "nose": "#5e4434"},
 			"look": {"eyes": "wide", "mouth": "cat", "cheeks": "none", "top": "hoodie", "top_color": "red", "top_color2": "white", "bottom": "cargo_shorts", "bottom_color": "olive"},
 			"home": {"wall": "efe6d8", "roof": "c8564a", "door": "4a6a8a"},
 			"inside": {"series": "lodge", "variant": "moss", "wall": "cabin_wall", "floor": "wooden_flooring"}
@@ -113,8 +113,8 @@
 			"home": {"wall": "f2f6e4", "roof": "6aa04a", "door": "f2cf73"},
 			"inside": {"series": "mushroom", "variant": "teal", "wall": "mint_dot_wallpaper", "floor": "mint_tile_flooring"}
 		},
-		"miss": {
-			"name": "Ms Miss", "personality": "cheerful", "catchphrase": "prickly",
+		"cacticat": {
+			"name": "Cacticat", "personality": "cheerful", "catchphrase": "prickly",
 			"species": {"kind": "cat", "cactus": true, "fur": "#a8c84a", "fur2": "#a8c84a", "stripes": "#5e8a2a", "eyes": "#2a2a20", "inner_ear": "#7ea03a", "nose": "#f0703a"},
 			"look": {"eyes": "happy", "mouth": "cat", "cheeks": "none", "top": "sundress", "top_color": "cream", "top_color2": "white", "hair_flower": "pansy_red"},
 			"home": {"wall": "f6f0dc", "roof": "7ea03a", "door": "e8603a"},
@@ -136,7 +136,7 @@
 		},
 		"truffle": {
 			"name": "Truffle", "personality": "bookish", "catchphrase": "hmm hmm",
-			"species": {"kind": "ferret", "fur": "#4a3a34", "fur2": "#efe4d4", "stripes": "#2a2220", "eyes": "#1a1210", "inner_ear": "#d8a098", "nose": "#2a2220"},
+			"species": {"kind": "ferret", "fur": "#4a3a34", "fur2": "#efe4d4", "stripes": "#2a2220", "eyes": "#8a5a34", "inner_ear": "#d8a098", "nose": "#2a2220"},
 			"look": {"eyes": "wide", "mouth": "cat", "cheeks": "none", "top": "turtleneck", "top_color": "mint", "top_color2": "white", "bottom": "trousers", "bottom_color": "charcoal", "glasses": "square"},
 			"home": {"wall": "ece6dc", "roof": "4a5a4a", "door": "c8a060"},
 			"inside": {"series": "lodge", "variant": "walnut", "wall": "cabin_wall", "floor": "woven_flooring"}

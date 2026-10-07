@@ -674,7 +674,6 @@ static func glasses(style: String) -> ArrayMesh:
 					k.sphere(centre - Vector3(0, 0, 0.005), Vector3(0.06, 0.06, 0.008), TRIM, 4, 12)
 			"square":
 				_ring(k, centre, 0.07, 0.052, 0.009)
-		k.cylinder(Vector3(s * 0.19, y + 0.01, z - 0.01), Vector3(s * 0.37, y + 0.02, -0.05), 0.008, 0.008, PLAIN, 4, false)
 	var bz := _head_front(0.0, y) + 0.02
 	k.cylinder(Vector3(-0.065, y + 0.01, bz), Vector3(0.065, y + 0.01, bz), 0.008, 0.008, PLAIN, 4, false)
 	return k.commit()

@@ -35,7 +35,7 @@ rabbit) and `SMOOTHING` (the mouse's surface came out crumpled).
 
 | # | File name | Head | Who uses it |
 | --- | --- | --- | --- |
-| 1 | `cat` | Cat, pointed ears | Done; every cat (Ms Miss is a cactus cat: `"cactus"`) |
+| 1 | `cat` | Cat, pointed ears | Done; every cat (Cacticat is a cactus cat: `"cactus"`) |
 | 2 | `cat_short` | Cat, round-faced shorthair | Not made yet: Daisy and Morris (`"short"`) wear `cat` |
 | 3 | `dog` | Dog, floppy ears | Done; every dog but Pip and Sunny, Lucy and Bramble included |
 | 4 | `dog_upright` | Dog, upright ears | Done; Pip and Sunny (`"head": "dog_upright"`) |

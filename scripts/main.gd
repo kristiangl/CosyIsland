@@ -30,7 +30,7 @@ extends Node3D
 ##   --house            with --demo: the tent has already become a house (--big: the big house,
 ##                      --in=N: go into its room N with --demo=home, --paint=wall,roof,door hex colours)
 ##   --series=ID        with --demo or --demo=home: furniture from one series (--variant=ID)
-##   --ui=pockets|pause|map|creator|crafting|customise|journal|exchange|critters|friends|neighbour|placing (--place=ID)|intro|ask|lucy|sleep|asleep|shop|sell (--sold: just sold one)  (--tab=N picks a creator tab, --try=key:id,... dresses up, --closet=TEXT opens the wardrobe with clothes whose ids contain TEXT)  open a menu or mode (for screenshots)
+##   --ui=pockets|pause|map|creator|crafting|customise|journal|exchange|critters|friends|neighbour|placing (--place=ID)|intro|ask|lucy|sleep|asleep|shop|sell (--sold: just sold one)|paint (--big)  (--tab=N picks a creator tab, --try=key:id,... dresses up, --closet=TEXT opens the wardrobe with clothes whose ids contain TEXT)  open a menu or mode (for screenshots)
 
 const AUTOSAVE_SECONDS := 60.0
 
@@ -176,6 +176,8 @@ func _ready() -> void:
 				# Just sold one (--sold): the line flashes and Lucy's thanks show on top.
 				await get_tree().process_frame
 				hud.shop._sell(1, 1)
+		"paint":
+			Game.house_paint.open({"roof": "3a7a9a", "wall": "dcecf4", "door": "f2d68a"}, Game.args.has("big"))
 		"tailors":
 			Inventory.add_currency(9000)
 			hud.shop.open("buy", "tailors")

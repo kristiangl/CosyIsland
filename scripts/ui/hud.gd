@@ -134,6 +134,9 @@ func _ready() -> void:
 	journal = JournalMenu.new()
 	centre.add_child(journal)
 	Game.shop = shop
+	var paint := HousePaint.new()
+	centre.add_child(paint)
+	Game.house_paint = paint
 	Events.workbench_opened.connect(crafting.open)
 
 	dialogue = DialogueBox.new()

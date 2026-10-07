@@ -10,6 +10,8 @@ var flags: Dictionary = {}
 const HOUSE_COST := 10000
 ## What the extension costs: an upstairs and three more rooms.
 const EXTENSION_COST := 25000
+## What Lucy charges to repaint the house.
+const PAINT_COST := 500
 ## What Lucy needs to build her shop.
 const SHOP_MATERIALS := {"wood": 30, "stone": 20, "clay": 10}
 ## How many different fish and bugs bring Bramble to the island.
@@ -188,7 +190,13 @@ func _poppy_questions() -> void:
 		var museum_offer := museum_project_open()
 		if museum_offer:
 			options.insert(2, "About fish and bugs..." if not flags.has("museum_gifts") else "I've brought specimens")
+		var home := player_house()
+		if not home.is_empty():
+			options.insert(options.size() - 1, "About my house's paint...")
 		var pick := await ask("poppy", "Anything you'd like to know?", options)
+		if not home.is_empty() and pick == options.size() - 2:
+			await _paint_talk(home)
+			continue
 		if museum_offer and pick == 2:
 			await _museum_project()
 			continue
@@ -259,6 +267,37 @@ func _extension_talk() -> void:
 	flags["extension_day"] = GameClock.day_key()
 	_npc_cheer("poppy")
 	await say("poppy", ["Hooray! Lucy will start tonight. Mind the scaffolding!"])
+
+
+## The player's house (once the tent has become one), or {}.
+func player_house() -> Dictionary:
+	if Game.island == null:
+		return {}
+	for obj in Game.island.objects():
+		if obj["kind"] == "placed" and obj["item"] in ["house", "big_house"]:
+			return obj
+	return {}
+
+
+func _paint_talk(home: Dictionary) -> void:
+	await say("poppy", ["A new coat of paint? Lucy loves painting. Mostly she loves the ladder.",
+		"Choose your colours and she'll do it straight away. It's %d acorns." % PAINT_COST])
+	if Inventory.currency < PAINT_COST:
+		await say("poppy", ["Oh, you're a little short. Come back when you've got %d!" % PAINT_COST])
+		return
+	if Game.house_paint == null:
+		return
+	Game.house_paint.open(home.get("paint", {}), home["item"] == "big_house")
+	var paint: Dictionary = await Game.house_paint.closed
+	Game.mode = Game.Mode.MENU
+	if paint.is_empty():
+		await say("poppy", ["Keeping it as it is? It does look lovely already."])
+		return
+	Inventory.add_currency(-PAINT_COST)
+	home["paint"] = paint
+	Game.island.refresh_node(home)
+	_npc_cheer("poppy")
+	await say("poppy", ["Lucy's on it! ...And she's done. That was quick. She must have been waiting with the brush."])
 
 
 func _npc_cheer(id: String) -> void:

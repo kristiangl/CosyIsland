@@ -24,13 +24,14 @@ extends Node3D
 ##   --demo=orchard     a row of planted fruit trees, one at each stage of growing
 ##   --demo=site        Lucy's shop kit staked out, waiting to be built
 ##   --demo=neighbours  two neighbours have just moved in (--visit: go inside one's home, --who=id,id: who)
-##   --demo=visitor     someone met on a tour is visiting by the plaza (--who=id)
+##   --demo=visitor     someone met on a tour is visiting by the plaza (--who=id; or a travelling
+##                      visitor: --who=fennel|tansy|basil|marina)
 ##   --demo=fishing     fishing off the beach with fish about (--demo=bugs: bugs nearby)
 ##   --demo=flowers     stand by some flowers, one picked, with a flower in your hair
 ##   --house            with --demo: the tent has already become a house (--big: the big house,
 ##                      --in=N: go into its room N with --demo=home, --paint=wall,roof,door hex colours)
 ##   --series=ID        with --demo or --demo=home: furniture from one series (--variant=ID)
-##   --ui=pockets|pause|map|creator|crafting|customise|journal|exchange|critters|friends|neighbour|placing (--place=ID)|intro|ask|lucy|sleep|asleep|shop|sell (--sold: just sold one)|paint (--big)  (--tab=N picks a creator tab, --try=key:id,... dresses up, --closet=TEXT opens the wardrobe with clothes whose ids contain TEXT)  open a menu or mode (for screenshots)
+##   --ui=pockets|pause|map|creator|crafting|recipes|customise|journal|exchange|critters|friends|neighbour|placing (--place=ID)|intro|ask|lucy|sleep|asleep|shop|sell (--sold: just sold one)|paint (--big)  (--tab=N picks a creator tab, --try=key:id,... dresses up, --closet=TEXT opens the wardrobe with clothes whose ids contain TEXT)  open a menu or mode (for screenshots)
 
 const AUTOSAVE_SECONDS := 60.0
 
@@ -230,10 +231,13 @@ func _ready() -> void:
 			hud.creator.open(trying, not Game.args.has("closet"))
 			if Game.args.has("tab"):
 				hud.creator._select_tab(int(Game.args["tab"]))
-		"crafting":
+		"crafting", "recipes":
 			Inventory.add_item("wood", 12)
 			Inventory.add_item("stone", 5)
-			hud.crafting.open()
+			if Game.args["ui"] == "recipes":
+				hud.crafting.open_book()
+			else:
+				hud.crafting.open()
 		"critters":
 			for id: String in ["sea_bass", "koi", "anchovy", "white_butterfly", "ladybug", "cicada", "frog"]:
 				Journal.catch(id)
@@ -486,16 +490,24 @@ func _check_house() -> void:
 	_check_visitor()
 
 
-## Someone you met on a tour drops in for the day, round the plaza; yesterday's goes home.
+## Someone you met on a tour drops in for the day, south of the plaza, and a travelling
+## visitor sets up east of it; yesterday's go home.
 func _check_visitor() -> void:
 	var who := Story.visitor_today()
+	var daily := Story.daily_visitor_today()
 	for n in Game.npcs.duplicate():
-		if n.visiting and n.id != who:
+		if n.visiting and n.id != who and n.id != daily:
 			Game.npcs.erase(n)
 			n.queue_free()
-	if who == "" or Story.npc(who) != null:
-		return
-	# Somewhere open just outside the plaza.
+	var plaza := world.data.plaza
+	if who != "" and Story.npc(who) == null:
+		_add_visitor(who, Vector2(0, plaza.size.y * 0.5 + 2.0), true)
+	if daily != "" and Story.npc(daily) == null:
+		_add_visitor(daily, Vector2(plaza.size.x * 0.5 + 2.5, 0), false)
+
+
+## A visitor standing on open grass nearest `offset` from the plaza's middle.
+func _add_visitor(id: String, offset: Vector2, wanders: bool) -> void:
 	var plaza := world.data.plaza
 	var centre := Vector2(plaza.get_center())
 	var spot := Vector3.ZERO
@@ -503,7 +515,7 @@ func _check_visitor() -> void:
 	for z in range(plaza.position.y - 4, plaza.end.y + 4):
 		for x in range(plaza.position.x - 4, plaza.end.x + 4):
 			var c := Vector2(x + 0.5, z + 0.5)
-			var d := c.distance_to(centre + Vector2(0, plaza.size.y * 0.5 + 2.0))
+			var d := c.distance_to(centre + offset)
 			if not plaza.grow(1).has_point(Vector2i(x, z)) and world.data.tile(x, z) == IslandData.Tile.GRASS \
 					and world.is_walkable(c.x, c.y) and _open_around(x, z) and d < best:
 				best = d
@@ -512,8 +524,8 @@ func _check_visitor() -> void:
 		return
 	var npc := Npc.new()
 	world.add_child(npc)
-	npc.setup(who, world, spot, Vector3(0, 0, 1))
-	npc.wanders = true
+	npc.setup(id, world, spot, (Vector3(centre.x, 0, centre.y) - spot).normalized() if not wanders else Vector3(0, 0, 1))
+	npc.wanders = wanders
 	npc.visiting = true
 	npc.home = npc.position
 	Game.npcs.append(npc)
@@ -917,8 +929,11 @@ func _run_demo() -> void:
 			world.refresh_node(tent)
 	if Game.args["demo"] == "visitor":
 		var who: String = Game.args.get("who", "kiwi")
-		Story.flags["met"] = {who: GameClock.day_key() - 1}
-		Story.force_visitor = who
+		if who in Story.DAILY_VISITORS:
+			Story.force_daily = who
+		else:
+			Story.flags["met"] = {who: GameClock.day_key() - 1}
+			Story.force_visitor = who
 		_check_visitor()
 		var visitor := Story.npc(who)
 		if visitor:

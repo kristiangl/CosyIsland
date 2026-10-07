@@ -7,6 +7,8 @@ extends RefCounted
 ## Things sell to Lucy for their listed price and cost four times that to buy. Once her
 ## shop is built (Story "shop_done") she stocks twice as much, plus flower plants from
 ## other islands.
+## Daily visitors keep stalls too (KEEPERS): Fennel's fabrics and Tansy's seeds to buy,
+## and Basil and Marina, who only buy bugs or fish, for half as much again.
 
 const BUY_MARKUP := 4
 ## Always in stock, however many you buy.
@@ -17,6 +19,19 @@ const CLOTHES_PER_DAY := 3
 const PLANTS_PER_DAY := 2
 ## What the tailors put out each day.
 const TAILOR_CLOTHES_PER_DAY := 12
+## Every counter: its title, whether you can buy or sell there (the first is where it
+## opens), who pays you, and what a buyer-only stall wants and how well it pays.
+const KEEPERS := {
+	"lucy": {"title": "Lucy's Odds & Ends", "modes": ["buy", "sell"], "who": "Lucy"},
+	"tailors": {"title": "Daisy & Morris Tailoring", "modes": ["buy"], "who": "Daisy"},
+	"fennel": {"title": "Fennel's Fabric Cart", "modes": ["buy"], "who": "Fennel"},
+	"tansy": {"title": "Tansy's Seed Barrow", "modes": ["buy"], "who": "Tansy"},
+	"basil": {"title": "Basil's Bug Swap", "modes": ["sell"], "who": "Basil", "buys": "bug", "rate": 1.5},
+	"marina": {"title": "Marina's Fish Stall", "modes": ["sell"], "who": "Marina", "buys": "fish", "rate": 1.5},
+}
+## How many things Fennel and Tansy bring.
+const FENNEL_PER_DAY := 8
+const TANSY_PER_DAY := 5
 
 
 static func buy_price(id: String) -> int:
@@ -27,16 +42,21 @@ static func buy_price(id: String) -> int:
 const FOREIGN_FRUIT := 3
 
 
-static func sell_price(id: String) -> int:
+static func sell_price(id: String, keeper: String = "lucy") -> int:
 	var def := ItemDB.get_item(id)
 	var price := int(def.get("price", 0))
 	if def.get("category", "") == "fruit" and Game.island and id != Game.island.data.native_fruit:
 		price *= FOREIGN_FRUIT
+	var buys: String = KEEPERS.get(keeper, {}).get("buys", "")
+	if buys != "":
+		if def.get("category", "") != buys:
+			return 0
+		price = roundi(price * float(KEEPERS[keeper]["rate"]))
 	return price
 
 
-static func can_sell(id: String) -> bool:
-	return sell_price(id) > 0
+static func can_sell(id: String, keeper: String = "lucy") -> bool:
+	return sell_price(id, keeper) > 0
 
 
 ## Today's stock: staples first, then the day's furniture, wallpaper or flooring, and clothes.
@@ -47,7 +67,7 @@ static func level() -> int:
 
 static func stock(island_seed: int, day: int, native_flower: String = "", keeper: String = "lucy") -> Array[String]:
 	var rng := RandomNumberGenerator.new()
-	rng.seed = island_seed * 7919 + day + (104729 if keeper == "tailors" else 0)
+	rng.seed = island_seed * 7919 + day + ({"lucy": 0, "tailors": 104729}.get(keeper, absi(hash(keeper)) % 1000003) as int)
 	var furniture: Array[String] = []
 	var interiors: Array[String] = []
 	var clothes: Array[String] = []
@@ -73,6 +93,15 @@ static func stock(island_seed: int, day: int, native_flower: String = "", keeper
 	plants.sort()
 	if keeper == "tailors":
 		return _pick(rng, clothes, TAILOR_CLOTHES_PER_DAY)
+	if keeper == "fennel":
+		# Wallpaper, flooring, curtains and rugs.
+		var fabrics := interiors.duplicate()
+		for id: String in furniture:
+			if ItemDB.placeable(id).get("rug", false):
+				fabrics.append(id)
+		return _pick(rng, fabrics, FENNEL_PER_DAY)
+	if keeper == "tansy":
+		return tansy_stock(rng, native_flower)
 	var more := 1 + level()
 	var out: Array[String] = []
 	out.append_array(STAPLES)
@@ -88,6 +117,30 @@ static func stock(island_seed: int, day: int, native_flower: String = "", keeper
 	out.append_array(everyday)
 	if level() > 0:
 		out.append_array(_pick(rng, plants, PLANTS_PER_DAY))
+	return out
+
+
+## Tansy's barrow: flower plants in colours you'd otherwise only find on far-off
+## islands (one of them really rare), and fruit for planting from elsewhere.
+static func tansy_stock(rng: RandomNumberGenerator, native_flower: String) -> Array[String]:
+	var plants: Array[String] = []
+	var rare: Array[String] = []
+	for id: String in ItemDB.items:
+		var def := ItemDB.get_item(id)
+		if def.get("category", "") == "flower_plant" and def.get("species", "") != native_flower:
+			if ItemDB.is_rare_flower(def["species"], def["flower_color"]):
+				rare.append(id)
+			else:
+				plants.append(id)
+	plants.sort()
+	rare.sort()
+	var out := _pick(rng, rare, 1)
+	out.append_array(_pick(rng, plants, TANSY_PER_DAY - 3))
+	var fruit: Array[String] = []
+	for f: String in IslandGenerator.FRUITS:
+		if not Game.island or f != Game.island.data.native_fruit:
+			fruit.append(f)
+	out.append_array(_pick(rng, fruit, 2))
 	return out
 
 
@@ -129,12 +182,12 @@ static func buy(id: String, day: int, keeper: String = "lucy") -> String:
 
 
 ## Sells `count` of the item in a pocket slot. Returns the acorns earned.
-static func sell(slot: int, count: int) -> int:
+static func sell(slot: int, count: int, keeper: String = "lucy") -> int:
 	var entry := Inventory.slots[slot]
-	if entry.is_empty() or not can_sell(entry["id"]):
+	if entry.is_empty() or not can_sell(entry["id"], keeper):
 		return 0
 	var n := mini(count, int(entry.get("count", 1)))
-	var earned := sell_price(entry["id"]) * n
+	var earned := sell_price(entry["id"], keeper) * n
 	if slot == Inventory.equipped_slot and n >= int(entry.get("count", 1)):
 		Inventory.equip(-1)
 	Inventory.remove_from_slot(slot, n)

@@ -11,6 +11,7 @@ const APPS := [
 	["journal", "Journal", "journal", "f6e3a1"],
 	["map", "Map", "map", "c7e6c1"],
 	["wardrobe", "Wardrobe", "wardrobe", "f6c9c0"],
+	["recipes", "DIY Recipes", "hammer", "f6d8a8"],
 	["options", "Options", "gear", "c9d8f2"],
 	["save", "Save", "save", "d9cfee"],
 	["sos", "SOS", "sos", "fbe3d6"],

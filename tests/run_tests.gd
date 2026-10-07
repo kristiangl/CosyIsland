@@ -1354,6 +1354,38 @@ func _test_tour_visitors() -> void:
 	plot["item"] = "neighbour_house"
 	plot["resident"] = "kiwi"
 	check(Story.visitor_today() == "", "and stop visiting once they live here")
+
+	# Travelling visitors: from the day after you meet Lucy, most days, never two days running.
+	Story.reset()
+	var today := GameClock.day_key()
+	check(Story.daily_visitor_today(today) == "", "no travelling visitors before you've met Lucy")
+	Story.flags["met_lucy"] = true
+	Story.flags["lucy_met_day"] = today - 1
+	var seen := {}
+	var last := ""
+	var twice := false
+	for day in range(today, today + 60):
+		var v := Story.daily_visitor_today(day)
+		if v != "":
+			seen[v] = true
+			twice = twice or v == last
+		last = v
+	check(seen.size() == Story.DAILY_VISITORS.size(), "all four come by in a couple of months (%d)" % seen.size())
+	check(not twice, "never the same one two days running")
+	for id: String in Story.DAILY_VISITORS:
+		check(not NpcData.get_character(id).is_empty() and Shop.KEEPERS.has(id), "%s has a character and a stall" % id)
+	var fabrics := Shop.stock(7, today, "", "fennel")
+	check(fabrics.size() == Shop.FENNEL_PER_DAY and fabrics.all(func(id): return ItemDB.get_item(id).get("category", "") == "interior" \
+		or ItemDB.placeable(id).get("rug", false)), "Fennel sells wallpaper, flooring, curtains and rugs")
+	var seeds := Shop.stock(7, today, d.native_flower, "tansy")
+	check(seeds.any(func(id): return ItemDB.get_item(id).get("category", "") == "flower_plant" \
+		and ItemDB.is_rare_flower(ItemDB.get_item(id)["species"], ItemDB.get_item(id)["flower_color"])), "Tansy has a rare flower")
+	check(seeds.any(func(id): return ItemDB.get_item(id).get("category", "") == "fruit" and id != d.native_fruit), "and fruit from elsewhere")
+	var bug: String = ItemDB.bugs.keys()[0]
+	var fish: String = ItemDB.fish.keys()[0]
+	check(Shop.sell_price(bug, "basil") == roundi(Shop.sell_price(bug) * 1.5) and not Shop.can_sell(fish, "basil")
+		and not Shop.can_sell("wood", "basil"), "Basil pays more for bugs, and only buys bugs")
+	check(Shop.sell_price(fish, "marina") > Shop.sell_price(fish) and not Shop.can_sell(bug, "marina"), "Marina pays more for fish")
 	w.free()
 	Game.island = saved_island
 	Story.reset()

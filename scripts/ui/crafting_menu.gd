@@ -3,9 +3,13 @@ extends PanelContainer
 ## The DIY workbench, with two tabs (switch with L/R, Q/E or by clicking). Make: known
 ## recipes on the left, the selected one's materials on the right; A crafts. Customise:
 ## furniture and clothes in your pockets that come in other colourways; left/right picks
-## one and A remakes it with a customisation kit. B closes.
+## one and A remakes it with a customisation kit. B closes. Opened from the phone
+## (open_book) it's just the recipe book: the recipes you know and what they need.
 
 var _mode := "make"
+## The phone's recipe book: look, don't make.
+var browsing := false
+var _title: Label
 var _tabs: Array[Button] = []
 var _list: VBoxContainer
 var _icon: TextureRect
@@ -32,11 +36,11 @@ func _ready() -> void:
 	var title_row := HBoxContainer.new()
 	title_row.add_theme_constant_override("separation", 8)
 	left.add_child(title_row)
-	var title := Label.new()
-	title.text = "Workbench"
-	title.add_theme_font_size_override("font_size", 30)
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title_row.add_child(title)
+	_title = Label.new()
+	_title.text = "Workbench"
+	_title.add_theme_font_size_override("font_size", 30)
+	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title_row.add_child(_title)
 	for mode: String in ["make", "customise"]:
 		var b := Button.new()
 		b.text = mode.capitalize()
@@ -90,9 +94,24 @@ func _ready() -> void:
 
 
 func open(mode: String = "make") -> void:
+	browsing = false
+	_title.text = "Workbench"
+	for tab in _tabs:
+		tab.visible = true
 	visible = true
 	Game.mode = Game.Mode.MENU
 	_set_mode(mode)
+
+
+## The recipe book, from the phone: every recipe you know and what it takes.
+func open_book() -> void:
+	open("make")
+	browsing = true
+	_title.text = "DIY Recipes"
+	for tab in _tabs:
+		tab.visible = false
+	_hint_template = "%d recipes   Make them at a workbench   {ui_cancel} close" % Recipes.known.size()
+	_hint.text = Prompts.fill(_hint_template)
 
 
 func close() -> void:
@@ -109,7 +128,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pockets"):
 		close()
-	elif event.is_action_pressed("tab_prev") or event.is_action_pressed("tab_next"):
+	elif (event.is_action_pressed("tab_prev") or event.is_action_pressed("tab_next")) and not browsing:
 		_set_mode("customise" if _mode == "make" else "make")
 	else:
 		return
@@ -228,6 +247,9 @@ func cycle(row: RecipeRow, direction: int) -> void:
 
 
 func _activate(row: RecipeRow) -> void:
+	if browsing:
+		Events.toast.emit("Make it at a workbench.")
+		return
 	if _mode == "make":
 		_craft(row)
 	else:

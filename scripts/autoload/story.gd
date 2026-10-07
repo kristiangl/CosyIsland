@@ -31,6 +31,7 @@ var _chats: Dictionary = {}
 func reset() -> void:
 	flags.clear()
 	force_visitor = ""
+	force_daily = ""
 	_chats.clear()
 
 
@@ -79,6 +80,8 @@ func talk_to(who: Npc) -> void:
 			await _tailors(who)
 		"marlow":
 			await _marlow(who)
+		"fennel", "tansy", "basil", "marina":
+			await _daily(who)
 		_:
 			if NpcData.is_neighbour(who.id) and who.world and who.world.tour:
 				await _tour_visitor(who)
@@ -986,6 +989,75 @@ func _visitor(who: Npc) -> void:
 		"Your island's so much busier than mine. In a good way!",
 		"If you ever have a plot free, I'd love to live here. Just saying, %s." % catch,
 	])])
+
+
+# --- Daily visitors ----------------------------------------------------------------
+
+## Travelling folk who set up by the plaza for a day: Fennel's fabrics, Tansy's seeds,
+## Basil who buys bugs and Marina who buys fish (both for more than Lucy pays).
+const DAILY_VISITORS := ["fennel", "tansy", "basil", "marina"]
+## How likely it is that one of them is about on a given day.
+const DAILY_CHANCE := 0.75
+## Who's about regardless of the day's luck (for demos and tests).
+var force_daily := ""
+
+
+## Which travelling visitor is by the plaza today ("" for none). They start coming the
+## day after you meet Lucy, and never two days running.
+func daily_visitor_today(day: int = GameClock.day_key()) -> String:
+	if force_daily != "":
+		return force_daily
+	if not flags.get("met_lucy", false) or day <= int(flags.get("lucy_met_day", day)):
+		return ""
+	return _daily_pick(day) if _daily_pick(day) != _daily_pick(day - 1) else ""
+
+
+func _daily_pick(day: int) -> String:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(["daily", day, Game.island.data.seed_value if Game.island else 0])
+	if rng.randf() >= DAILY_CHANCE:
+		return ""
+	return DAILY_VISITORS[rng.randi() % DAILY_VISITORS.size()]
+
+
+func _daily(who: Npc) -> void:
+	var met: Array = flags.get("met_visitors", [])
+	var first := not who.id in met
+	if first:
+		met.append(who.id)
+		flags["met_visitors"] = met
+		who.hop()
+	var hello: Dictionary = {
+		"fennel": ["Ooh, hello! I'm Fennel. I wheel my fabric cart from island to island.",
+			"Wallpaper, flooring, curtains, rugs... all the soft and pretty things. Have a rummage!"],
+		"tansy": ["Hello there! Tansy. I grow things. Well, I mostly grow things.",
+			"I've seeds and plants from all over, and some colours you won't find round here!"],
+		"basil": ["Oh! Hello! Basil. I collect bugs. Well, I love bugs. Same thing really.",
+			"Bring me any bugs you catch and I'll pay half as much again as Lucy does. Honest!"],
+		"marina": ["Afternoon. Marina. I fish. Mostly I talk about fishing.",
+			"I'm after fish for my collection. I'll pay half as much again as Lucy. Got any?"],
+	}
+	var again: Dictionary = {
+		"fennel": ["Fennel's back! Fresh fabrics today. Shall we have a look?"],
+		"tansy": ["Back again! The barrow's full. Something for your garden?"],
+		"basil": ["Hello again! Caught anything crawly?"],
+		"marina": ["Ah, you again. Anything biting?"],
+	}
+	await say(who.id, hello[who.id] if first else again[who.id])
+	var buying: bool = who.id in ["fennel", "tansy"]
+	var pick := await ask(who.id, "Have a look?" if buying else "Sell me something?",
+		["Let's see!" if buying else "Let's trade!", "Just saying hello"])
+	if pick != 0:
+		await say(who.id, [{"fennel": "Come back before I pack up tonight!", "tansy": "I'm here till sundown!",
+			"basil": "Keep your net handy!", "marina": "Tight lines."}[who.id]])
+		return
+	if Game.shop == null:
+		return
+	Game.shop.open("buy" if buying else "sell", who.id)
+	await Game.shop.closed
+	Game.mode = Game.Mode.MENU
+	await say(who.id, [{"fennel": "Lovely! Enjoy, enjoy!", "tansy": "Water them well!",
+		"basil": "What a collection! Thank you!", "marina": "Pleasure doing business."}[who.id]])
 
 
 ## What a visitor brings: fruit from their island, or a flower plant you don't grow.

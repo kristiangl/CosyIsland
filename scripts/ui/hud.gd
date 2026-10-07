@@ -298,6 +298,8 @@ func _on_phone_app(app: String) -> void:
 			wardrobe_requested.emit()
 		"journal":
 			journal.open()
+		"recipes":
+			crafting.open_book()
 		"save":
 			save_requested.emit()
 			Events.toast.emit("Game saved.")

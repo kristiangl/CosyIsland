@@ -172,5 +172,124 @@
 			"hat": "none",
 			"glasses": "none"
 		}
+	},
+	"fennel": {
+		"name": "Fennel",
+		"title": "Fabric cart",
+		"tag": "#c9b3e6",
+		"voice": 1.2,
+		"species": {
+			"kind": "ferret",
+			"fur": "#c89060",
+			"fur2": "#fbf0e0",
+			"stripes": "#8a5a38",
+			"eyes": "#7a4a2a",
+			"inner_ear": "#e8b0a8",
+			"nose": "#d88a90"
+		},
+		"look": {
+			"eyes": "wide",
+			"mouth": "cat",
+			"cheeks": "blush",
+			"top": "cardigan",
+			"top_color": "lavender",
+			"top_color2": "cream",
+			"top_pattern": "plain",
+			"bottom": "long_skirt",
+			"bottom_color": "purple",
+			"shoes": "none",
+			"hat": "beret",
+			"hat_color": "coral",
+			"glasses": "none"
+		}
+	},
+	"tansy": {
+		"name": "Tansy",
+		"title": "Seed barrow",
+		"tag": "#b8dca0",
+		"voice": 1.3,
+		"species": {
+			"kind": "rabbit",
+			"fur": "#e8d4b8",
+			"fur2": "#fffaf0",
+			"eyes": "#5a3a2a",
+			"inner_ear": "#f2b8b8",
+			"nose": "#e88a98"
+		},
+		"look": {
+			"eyes": "happy",
+			"mouth": "smile",
+			"cheeks": "freckles",
+			"top": "pinafore",
+			"top_color": "green",
+			"top_color2": "cream",
+			"top_pattern": "plain",
+			"bottom": "shorts",
+			"bottom_color": "tan",
+			"shoes": "none",
+			"hat": "straw",
+			"hat_color": "yellow",
+			"glasses": "none"
+		}
+	},
+	"basil": {
+		"name": "Basil",
+		"title": "Bug fan",
+		"tag": "#9fd38a",
+		"voice": 1.0,
+		"species": {
+			"head": "dog_upright",
+			"kind": "dog",
+			"fur": "#a07850",
+			"fur2": "#f0e2cc",
+			"eyes": "#3a2a1a",
+			"inner_ear": "#7a5a3a",
+			"nose": "#2a2426"
+		},
+		"look": {
+			"eyes": "sparkle",
+			"mouth": "cat",
+			"cheeks": "none",
+			"top": "flannel_shirt",
+			"top_color": "olive",
+			"top_color2": "cream",
+			"top_pattern": "plain",
+			"bottom": "cargo_shorts",
+			"bottom_color": "tan",
+			"shoes": "none",
+			"hat": "bucket",
+			"hat_color": "olive",
+			"glasses": "none"
+		}
+	},
+	"marina": {
+		"name": "Marina",
+		"title": "Angler",
+		"tag": "#8fc8e0",
+		"voice": 1.1,
+		"species": {
+			"kind": "cat",
+			"fur": "#e0e4ea",
+			"fur2": "#ffffff",
+			"stripes": "#7a8a9a",
+			"eyes": "#3a8ac0",
+			"inner_ear": "#e8b8c0",
+			"nose": "#e0909a"
+		},
+		"look": {
+			"eyes": "almond",
+			"mouth": "cat",
+			"cheeks": "none",
+			"top": "raincoat",
+			"top_color": "yellow",
+			"top_color2": "cream",
+			"top_pattern": "plain",
+			"bottom": "trousers",
+			"bottom_color": "navy",
+			"shoes": "none",
+			"hat": "sou_wester",
+			"hat_color": "yellow",
+			"glasses": "none"
+		}
 	}
 }

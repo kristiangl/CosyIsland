@@ -103,6 +103,15 @@ static func draw(c: CanvasItem, id: String, o: Vector2, s: float, col: Color) ->
 			c.draw_circle(o + Vector2(s * 0.06, -s * 0.04), s * 0.15, light)
 			c.draw_colored_polygon(PackedVector2Array([o + Vector2(s * 0.16, s * 0.36), o + Vector2(s * 0.26, s * 0.36),
 				o + Vector2(s * 0.26, s * 0.5), o + Vector2(s * 0.21, s * 0.44), o + Vector2(s * 0.16, s * 0.5)]), Color(0.86, 0.36, 0.34))
+		"hammer":
+			# A hammer, head up and to the left.
+			var a := o + Vector2(s * 0.3, s * 0.34)
+			var b := o + Vector2(-s * 0.12, -s * 0.1)
+			c.draw_line(a, b, col, s * 0.13)
+			var head := PackedVector2Array([o + Vector2(-s * 0.4, -s * 0.06), o + Vector2(-s * 0.12, -s * 0.38),
+				o + Vector2(s * 0.04, -s * 0.22), o + Vector2(-s * 0.24, s * 0.1)])
+			c.draw_colored_polygon(head, col)
+			c.draw_line(o + Vector2(-s * 0.3, -s * 0.12), o + Vector2(-s * 0.13, -s * 0.29), light, w)
 		"gear":
 			# A cog: teeth round a ring.
 			for k in 8:

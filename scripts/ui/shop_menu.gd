@@ -1,9 +1,10 @@
 class_name ShopMenu
 extends PanelContainer
-## A shop counter: Lucy's ("lucy") or the tailors' ("tailors"). Lucy's has two tabs
-## (switch with L/R, Q/E or by clicking): Buy shows today's stock, Sell shows what's in
-## your pockets. A buys or sells one, Y sells the whole stack, B leaves. The tailors only
-## sell. Emits closed so the shopkeeper can say goodbye.
+## A shop counter (Shop.KEEPERS): Lucy's has two tabs (switch with L/R, Q/E or by
+## clicking): Buy shows today's stock, Sell shows what's in your pockets that she'll
+## take. A buys or sells one, Y sells the whole stack, B leaves. The tailors and some
+## visitors only sell to you, others only buy. Emits closed so the shopkeeper can say
+## goodbye.
 
 signal closed
 
@@ -101,9 +102,12 @@ func _ready() -> void:
 
 func open(mode: String, shop_keeper: String = "lucy") -> void:
 	keeper = shop_keeper
-	_title.text = "Lucy's Odds & Ends" if keeper == "lucy" else "Daisy & Morris Tailoring"
+	var info: Dictionary = Shop.KEEPERS.get(keeper, Shop.KEEPERS["lucy"])
+	_title.text = info["title"]
 	for tab in _tabs:
-		tab.visible = keeper == "lucy"
+		tab.visible = info["modes"].size() > 1
+	if not mode in info["modes"]:
+		mode = info["modes"][0]
 	visible = true
 	Game.mode = Game.Mode.MENU
 	_set_mode(mode)
@@ -120,7 +124,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("cancel"):
 		close()
-	elif (event.is_action_pressed("tab_prev") or event.is_action_pressed("tab_next")) and keeper == "lucy":
+	elif (event.is_action_pressed("tab_prev") or event.is_action_pressed("tab_next")) and _both():
 		_set_mode("sell" if _mode == "buy" else "buy")
 	elif event.is_action_pressed("pickup") and _mode == "sell" and _selected >= 0:
 		_sell(_selected, 999)
@@ -133,10 +137,20 @@ func _set_mode(mode: String) -> void:
 	_mode = mode
 	_tabs[0].button_pressed = mode == "buy"
 	_tabs[1].button_pressed = mode == "sell"
-	var hint := ("{ui_accept} buy   {tab_prev} {tab_next} sell   {ui_cancel} leave" if keeper == "lucy" else "{ui_accept} buy   {ui_cancel} leave") if mode == "buy" \
-		else "{ui_accept} sell one   {pickup} sell all   {tab_prev} {tab_next} buy   {ui_cancel} leave"
+	var hint := ("{ui_accept} buy   {tab_prev} {tab_next} sell   {ui_cancel} leave" if _both() else "{ui_accept} buy   {ui_cancel} leave") if mode == "buy" \
+		else ("{ui_accept} sell one   {pickup} sell all   {tab_prev} {tab_next} buy   {ui_cancel} leave" if _both() \
+		else "{ui_accept} sell one   {pickup} sell all   {ui_cancel} leave")
 	_hint.text = Prompts.fill(hint)
 	_rebuild(0)
+
+
+## Can you both buy and sell here?
+func _both() -> bool:
+	return Shop.KEEPERS.get(keeper, {}).get("modes", []).size() > 1
+
+
+func _who() -> String:
+	return Shop.KEEPERS.get(keeper, {}).get("who", "Lucy")
 
 
 func _day() -> int:
@@ -157,13 +171,15 @@ func _rebuild(focus_index: int) -> void:
 	else:
 		for i in Inventory.slots.size():
 			var slot := Inventory.slots[i]
-			if not slot.is_empty() and Shop.can_sell(slot["id"]):
+			if not slot.is_empty() and Shop.can_sell(slot["id"], keeper):
 				_add_row(ShopRow.new(slot["id"], i, self))
 	if _rows.is_empty():
 		_selected = -1
 		_icon.texture = null
 		_name.text = "Nothing to sell" if _mode == "sell" else "Sold out!"
-		_desc.text = "Bring Lucy something she can sell on." if _mode == "sell" else "Come back tomorrow."
+		var buys: String = Shop.KEEPERS.get(keeper, {}).get("buys", "")
+		_desc.text = ("Bring %s some %s." % [_who(), "bugs" if buys == "bug" else buys] if buys != "" \
+			else "Bring Lucy something she can sell on.") if _mode == "sell" else "Come back tomorrow."
 		_price.text = ""
 		_update_acorns()
 		return
@@ -192,7 +208,7 @@ func _show(index: int) -> void:
 	if _mode == "buy":
 		_price.text = "Sold out" if Shop.is_sold_out(row.item_id, _day(), keeper) else "%d %s" % [Shop.buy_price(row.item_id), Game.CURRENCY_NAME]
 	else:
-		_price.text = "Lucy pays %d each" % Shop.sell_price(row.item_id)
+		_price.text = "%s pays %d each" % [_who(), Shop.sell_price(row.item_id, keeper)]
 	for r in _rows:
 		r.queue_redraw()
 
@@ -221,9 +237,9 @@ func _activate(index: int) -> void:
 func _sell(index: int, count: int) -> void:
 	var row := _rows[index]
 	var pocket := row.slot
-	var earned := Shop.sell(pocket, count)
+	var earned := Shop.sell(pocket, count, keeper)
 	if earned > 0:
-		Events.toast.emit("Lucy gave you %d %s." % [earned, Game.CURRENCY_NAME.to_lower()])
+		Events.toast.emit("%s gave you %d %s." % [_who(), earned, Game.CURRENCY_NAME.to_lower()])
 	# The slot may be empty now, so list the pockets again and stay about here.
 	_rebuild(index)
 	if earned > 0:
@@ -293,7 +309,7 @@ class ShopRow:
 		var font := get_theme_default_font()
 		var day := GameClock.day_key()
 		var label := ItemDB.display_name(item_id)
-		var price := Shop.buy_price(item_id) if menu.is_buying() else Shop.sell_price(item_id)
+		var price := Shop.buy_price(item_id) if menu.is_buying() else Shop.sell_price(item_id, menu.keeper)
 		var dim := menu.is_buying() and (Shop.is_sold_out(item_id, day, menu.keeper) or Inventory.currency < price)
 		if slot >= 0:
 			label += "  x%d" % int(Inventory.slots[slot].get("count", 1))

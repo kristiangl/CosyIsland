@@ -15,8 +15,21 @@ const TRACKS := {
 const FADE_TIME := 4.0
 ## How loud the music plays, 0 to 1.
 const VOLUME := 0.7
+const SETTINGS := "user://settings.cfg"
 
 var enabled := true
+## Turned off in the options (kept in user://settings.cfg, for every save file).
+var muted := false:
+	set(value):
+		muted = value
+		var cfg := ConfigFile.new()
+		cfg.load(SETTINGS)
+		cfg.set_value("sound", "music_off", value)
+		cfg.save(SETTINGS)
+		if value:
+			for p in _players:
+				p.stop()
+			_track = ""
 var _players: Array[AudioStreamPlayer] = []
 ## Which player is fading in (the other fades out).
 var _front := 0
@@ -29,6 +42,9 @@ var _streams: Dictionary = {}
 func _ready() -> void:
 	# No music in screenshots, tests and other headless runs, or with --mute.
 	enabled = DisplayServer.get_name() != "headless" and not Game.args.has("screenshot") and not Game.args.has("mute")
+	var cfg := ConfigFile.new()
+	if cfg.load(SETTINGS) == OK:
+		muted = bool(cfg.get_value("sound", "music_off", false))
 	for i in 2:
 		var p := AudioStreamPlayer.new()
 		p.volume_db = linear_to_db(0.0)
@@ -52,7 +68,7 @@ static func track_for(hour: float) -> String:
 
 
 func _process(delta: float) -> void:
-	if not enabled:
+	if not enabled or muted:
 		return
 	_check -= delta
 	if _check <= 0.0:

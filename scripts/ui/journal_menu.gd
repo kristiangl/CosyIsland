@@ -208,6 +208,7 @@ func _show(row: JournalRow) -> void:
 			_detail.text = "%d stamps" % int(d["cost"]) + ("" if why == "" else "\n" + why)
 		"neighbours":
 			var n := NpcData.get_character(d["id"])
+			_icon.texture = Icons.portrait(d["id"])
 			_name.text = n["name"]
 			var likes: Array = Story.LIKES.get(n.get("personality", ""), [])
 			_desc.text = "%s. Loves being given %s." % [String(n.get("personality", "")).capitalize(),
@@ -265,7 +266,13 @@ class JournalRow:
 		var font := get_theme_default_font()
 		var x := 16.0
 		if kind == "neighbours":
-			draw_string(font, Vector2(16, 34), NpcData.display_name(data["id"]), HORIZONTAL_ALIGNMENT_LEFT, size.x - 190, 20, UIStyle.BROWN)
+			# Their face in a little round frame.
+			draw_circle(Vector2(32, 27), 23, Color(NpcData.get_character(data["id"]).get("home", {}).get("wall", "f3ead6")))
+			var face := Icons.portrait(data["id"])
+			if face:
+				draw_texture_rect(face, Rect2(8, 3, 48, 48), false)
+			draw_arc(Vector2(32, 27), 23, 0, TAU, 32, UIStyle.BROWN_LIGHT, 2.0, true)
+			draw_string(font, Vector2(66, 34), NpcData.display_name(data["id"]), HORIZONTAL_ALIGNMENT_LEFT, size.x - 240, 20, UIStyle.BROWN)
 			for i in 5:
 				var c := Vector2(size.x - 120 + i * 22, size.y * 0.5)
 				UIIcons.draw(self, "heart", c, 22, Color("e0656b") if i < Story.hearts(data["id"]) else UIStyle.BROWN_LIGHT * Color(1, 1, 1, 0.35))

@@ -1,9 +1,9 @@
 class_name IslandPhone
 extends Control
 ## The Island Phone: slides up from the bottom of the screen with a status bar and a
-## home screen of apps. Some apps open a page on the phone (time travel, controls),
-## others hand over to another screen (map, wardrobe). Cancel goes back a page, then
-## puts the phone away.
+## home screen of apps. Some apps open a page on the phone (options, and from there
+## time travel and the controls), others hand over to another screen (map, wardrobe).
+## Cancel goes back a page, then puts the phone away.
 
 signal app_chosen(app: String)
 
@@ -11,8 +11,7 @@ const APPS := [
 	["journal", "Journal", "journal", "f6e3a1"],
 	["map", "Map", "map", "c7e6c1"],
 	["wardrobe", "Wardrobe", "wardrobe", "f6c9c0"],
-	["time", "Time travel", "clock", "c9d8f2"],
-	["controls", "Controls", "leaf", "f4e1a8"],
+	["options", "Options", "gear", "c9d8f2"],
 	["save", "Save", "save", "d9cfee"],
 	["sos", "SOS", "sos", "fbe3d6"],
 	["title", "Title screen", "back", "cfe6e0"],
@@ -33,6 +32,8 @@ var _travel_note: Label
 var _controls_list: Label
 var _first_app: Button
 var _first_time_button: Button
+var _music_button: Button
+var _first_option: Button
 
 
 func _ready() -> void:
@@ -93,6 +94,7 @@ func _ready() -> void:
 	pages.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	stack.add_child(pages)
 	_pages["home"] = _build_home()
+	_pages["options"] = _build_options()
 	_pages["time"] = _build_time()
 	_pages["controls"] = _build_controls()
 	for p in _pages.values():
@@ -119,6 +121,29 @@ func _build_home() -> Control:
 		if _first_app == null:
 			_first_app = b
 	return grid
+
+
+func _build_options() -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 8)
+	box.add_child(_page_title("Options"))
+	_music_button = Button.new()
+	_music_button.pressed.connect(func():
+		Music.muted = not Music.muted
+		_update_options())
+	box.add_child(_music_button)
+	_first_option = _music_button
+	for entry: Array in [["Time travel", "time"], ["Controls", "controls"]]:
+		var b := Button.new()
+		b.text = entry[0]
+		b.pressed.connect(_show_page.bind(entry[1]))
+		box.add_child(b)
+	_update_options()
+	return box
+
+
+func _update_options() -> void:
+	_music_button.text = "Music: %s" % ("off" if Music.muted else "on")
 
 
 func _build_time() -> Control:
@@ -199,9 +224,11 @@ func close() -> void:
 	tw.tween_callback(func(): visible = false)
 
 
-## Back a page, or away if already home.
+## Back a page (time travel and controls are in the options), or away if already home.
 func back() -> void:
-	if _page != "home":
+	if _page in ["time", "controls"]:
+		_show_page("options")
+	elif _page != "home":
 		_show_page("home")
 	else:
 		close()
@@ -216,11 +243,13 @@ func _show_page(page: String) -> void:
 			_first_app.grab_focus.call_deferred()
 		"time":
 			_first_time_button.grab_focus.call_deferred()
+		"options":
+			_first_option.grab_focus.call_deferred()
 
 
 func _open_app(app: String) -> void:
 	match app:
-		"time", "controls":
+		"options":
 			_show_page(app)
 		_:
 			# Apps that leave the phone.

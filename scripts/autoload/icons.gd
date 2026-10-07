@@ -1,7 +1,8 @@
 extends Node
 ## Item icons rendered from the items' own 3D models, one per frame in the background,
 ## and cached. UI asks for an icon with get_icon(); it returns null until it's ready and
-## icon_ready fires when it is.
+## icon_ready fires when it is. Characters' faces (portrait()) are rendered the same way,
+## as icons named "face:<id>".
 
 signal icon_ready(item_id: String)
 
@@ -53,6 +54,11 @@ func _ready() -> void:
 	_viewport.add_child(_mesh)
 
 
+## A character's face, head and shoulders, from the front (null until it's ready).
+func portrait(character_id: String) -> Texture2D:
+	return get_icon("face:" + character_id)
+
+
 func get_icon(item_id: String) -> Texture2D:
 	if _icons.has(item_id):
 		return _icons[item_id]
@@ -67,15 +73,35 @@ func _render_queue() -> void:
 	_busy = true
 	while not _queue.is_empty():
 		var id: String = _queue.pop_front()
-		_frame(Models.get_mesh(model_key(id)))
+		var sitter: CharacterModel = null
+		if id.begins_with("face:"):
+			sitter = _sit_for_portrait(id.trim_prefix("face:"))
+		else:
+			_frame(Models.get_mesh(model_key(id)))
 		_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
 		# Wait for a frame that has actually drawn the viewport.
 		await RenderingServer.frame_post_draw
 		await RenderingServer.frame_post_draw
 		var image := _viewport.get_texture().get_image()
+		if sitter:
+			sitter.queue_free()
+			_mesh.visible = true
 		_icons[id] = ImageTexture.create_from_image(image)
 		icon_ready.emit(id)
 	_busy = false
+
+
+## Puts a character in front of the camera, framed on their face.
+func _sit_for_portrait(character_id: String) -> CharacterModel:
+	_mesh.visible = false
+	var m := NpcData.model(character_id, false)
+	m.fixed_light = true
+	_viewport.add_child(m)
+	var head := m.find_child("Head", true, false) as Node3D
+	var centre := (head.global_position if head else Vector3(0, 1.0, 0)) + CharacterParts.HEAD_CENTRE + Vector3(0, 0.03, 0)
+	var eye := centre + Vector3(0.0, 0.08, 1.0).normalized() * 2.45
+	_camera.transform = Transform3D(Basis.looking_at(centre - eye), eye)
+	return m
 
 
 ## Which model shows an item: its placed model, the tool in hand, or its dropped look.

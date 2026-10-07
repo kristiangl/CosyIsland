@@ -1,7 +1,7 @@
 class_name IslandMap
 extends Control
 ## The island from above: a painted image of the terrain with markers for the player,
-## homes, the workbench and (on the full map) furniture. Used for the corner minimap
+## homes (neighbours' with their faces), the workbench and (on the full map) furniture. Used for the corner minimap
 ## and the full map.
 
 ## Image pixels per tile.
@@ -37,12 +37,16 @@ var _offices: Array[Rect2] = []
 var _benches: Array[Rect2] = []
 var _furniture: Array[Vector2] = []
 var _bridges: Array[Rect2] = []
+## Neighbours' houses: [rect, who lives there].
+var _residents: Array[Array] = []
 
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	clip_contents = true
 	Events.placed_changed.connect(_collect_markers)
+	visibility_changed.connect(_collect_markers)
+	Icons.icon_ready.connect(func(_id): queue_redraw())
 	_collect_markers()
 
 
@@ -211,6 +215,7 @@ func _collect_markers() -> void:
 	_benches.clear()
 	_furniture.clear()
 	_bridges.clear()
+	_residents.clear()
 	if Game.outdoors() == null:
 		return
 	for obj in Game.outdoors().objects():
@@ -228,6 +233,8 @@ func _collect_markers() -> void:
 				var def := ItemDB.placeable(obj["item"])
 				if obj["item"] == "island_office":
 					_offices.append(rect)
+				elif obj.has("resident"):
+					_residents.append([rect, String(obj["resident"])])
 				elif def.get("structure", false):
 					_homes.append(rect)
 				elif def.get("workbench", false):
@@ -276,6 +283,8 @@ func _draw() -> void:
 		_draw_home(o + r.get_center() * s, icon, HOME)
 	for r in _offices:
 		_draw_home(o + r.get_center() * s, icon * 1.3, OFFICE)
+	for entry in _residents:
+		_draw_face(o + (entry[0] as Rect2).get_center() * s, icon * (1.5 if detailed else 1.05), entry[1])
 	var player := Game.player
 	if player and player.world == Game.outdoors():
 		_draw_player(o + Vector2(player.position.x, player.position.z) * s, Vector2(player.facing.x, player.facing.z), icon)
@@ -286,6 +295,15 @@ func _draw_home(c: Vector2, sz: float, colour: Color) -> void:
 	draw_colored_polygon(pts, colour)
 	pts.append(pts[0])
 	draw_polyline(pts, UIStyle.CREAM, maxf(1.0, sz * 0.12))
+
+
+## A neighbour's face in a round frame, over their house.
+func _draw_face(c: Vector2, sz: float, who: String) -> void:
+	draw_circle(c, sz * 1.08, UIStyle.CREAM)
+	draw_circle(c, sz * 0.94, Color(NpcData.get_character(who).get("home", {}).get("roof", "6cbfb0")))
+	var face := Icons.portrait(who)
+	if face:
+		draw_texture_rect(face, Rect2(c - Vector2(sz, sz), Vector2(sz, sz) * 2.0), false)
 
 
 func _draw_player(c: Vector2, dir: Vector2, sz: float) -> void:

@@ -103,6 +103,16 @@ static func draw(c: CanvasItem, id: String, o: Vector2, s: float, col: Color) ->
 			c.draw_circle(o + Vector2(s * 0.06, -s * 0.04), s * 0.15, light)
 			c.draw_colored_polygon(PackedVector2Array([o + Vector2(s * 0.16, s * 0.36), o + Vector2(s * 0.26, s * 0.36),
 				o + Vector2(s * 0.26, s * 0.5), o + Vector2(s * 0.21, s * 0.44), o + Vector2(s * 0.16, s * 0.5)]), Color(0.86, 0.36, 0.34))
+		"gear":
+			# A cog: teeth round a ring.
+			for k in 8:
+				var a := k * TAU / 8.0
+				var dir := Vector2(cos(a), sin(a))
+				var side := Vector2(-dir.y, dir.x)
+				c.draw_colored_polygon(PackedVector2Array([o + dir * s * 0.24 - side * s * 0.09, o + dir * s * 0.4 - side * s * 0.07,
+					o + dir * s * 0.4 + side * s * 0.07, o + dir * s * 0.24 + side * s * 0.09]), col)
+			c.draw_circle(o, s * 0.29, col)
+			c.draw_circle(o, s * 0.12, light)
 		"leaf":
 			c.draw_colored_polygon(PackedVector2Array([o + Vector2(-s * 0.32, s * 0.32), o + Vector2(-s * 0.2, -s * 0.12),
 				o + Vector2(s * 0.08, -s * 0.32), o + Vector2(s * 0.36, -s * 0.36), o + Vector2(s * 0.28, -s * 0.04),

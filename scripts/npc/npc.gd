@@ -28,6 +28,10 @@ var _hop := 0.0
 var _target := Vector3.ZERO
 var _wait := 0.0
 var _rng := RandomNumberGenerator.new()
+## A "..." bubble over the head of a neighbour who's thinking of moving away.
+var _thought: Label3D
+var _thought_check := 0.0
+var _time := 0.0
 
 
 ## Out and about (for neighbours: from 7am until 6pm).
@@ -45,9 +49,31 @@ func setup(character_id: String, w: World, spot: Vector3, facing: Vector3) -> vo
 	add_child(model)
 	model.rotation.y = _yaw
 	add_to_group("npcs")
+	if NpcData.is_neighbour(character_id):
+		_thought = Label3D.new()
+		_thought.text = "..."
+		_thought.font = UIStyle.font(700)
+		_thought.font_size = 96
+		_thought.pixel_size = 0.009
+		_thought.modulate = UIStyle.BROWN
+		_thought.outline_modulate = UIStyle.CREAM
+		_thought.outline_size = 44
+		_thought.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		_thought.no_depth_test = false
+		_thought.position = Vector3(0, 2.05, 0)
+		_thought.visible = false
+		add_child(_thought)
 
 
 func _process(delta: float) -> void:
+	_time += delta
+	if _thought:
+		_thought_check -= delta
+		if _thought_check <= 0.0:
+			_thought_check = 0.5
+			_thought.visible = Story.thinking_of_moving() == id
+		if _thought.visible:
+			_thought.position.y = 2.05 + sin(_time * 2.4) * 0.05
 	var speed := 0.0
 	if wanders:
 		visible = always_out or out_at(GameClock.hour_float())

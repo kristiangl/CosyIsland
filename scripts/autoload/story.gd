@@ -1167,8 +1167,99 @@ func move_in(island: World) -> Array[String]:
 		island.refresh_node(obj)
 		here.append(who)
 		arrived.append(who)
+		var moved: Dictionary = flags.get("moved_in", {})
+		moved[who] = island.day_key
+		flags["moved_in"] = moved
 	flags["invited"] = waiting
 	return arrived
+
+
+# --- Moving out ----------------------------------------------------------------------
+
+## Now and then someone who's lived here a while wonders about moving on: they've a
+## thought bubble that day, and tell you when you talk to them. They only go if you
+## tell them to follow their heart; then they pack overnight and their plot is free
+## for someone new. Nobody else wonders for a while after.
+const SETTLE_DAYS := 10
+const MOVE_GAP_DAYS := 14
+const MOVE_CHANCE := 0.15
+## It takes a few neighbours before anyone thinks of leaving.
+const MOVE_MIN_RESIDENTS := 3
+
+
+## Who's thinking of moving today ("" for nobody).
+func thinking_of_moving() -> String:
+	var m: Dictionary = flags.get("moving", {})
+	if m.get("state", "") == "thinking" and int(m.get("day", -1)) == GameClock.day_key():
+		return m["id"]
+	return ""
+
+
+## Who's packed and leaving tomorrow ("" for nobody).
+func leaving() -> String:
+	var m: Dictionary = flags.get("moving", {})
+	return m["id"] if m.get("state", "") == "leaving" else ""
+
+
+## Each morning: whoever agreed to go yesterday leaves, their house going back to an
+## empty plot (returns {"who", "uid"}); someone who wasn't asked has decided to stay;
+## and now and then a settled neighbour starts wondering.
+func check_moving(island: World) -> Dictionary:
+	var day := GameClock.day_key()
+	var m: Dictionary = flags.get("moving", {})
+	if m.get("state", "") == "leaving" and day > int(m["day"]):
+		flags.erase("moving")
+		flags["last_move"] = day
+		var who: String = m["id"]
+		var house := island.building_of(who)
+		if house.is_empty():
+			return {}
+		house["item"] = "plot_kit"
+		house.erase("resident")
+		house["plot_day"] = day
+		island.refresh_node(house)
+		return {"who": who, "uid": house["uid"]}
+	if m.get("state", "") == "thinking" and day > int(m["day"]):
+		flags.erase("moving")
+	if flags.has("moving") or day - int(flags.get("last_move", -999)) < MOVE_GAP_DAYS:
+		return {}
+	var residents: Array = []
+	var moved: Dictionary = flags.get("moved_in", {})
+	for obj in island.objects():
+		if obj.has("resident"):
+			residents.append(obj["resident"])
+	var settled := residents.filter(func(id): return day - int(moved.get(id, 0)) >= SETTLE_DAYS)
+	if residents.size() < MOVE_MIN_RESIDENTS or settled.is_empty():
+		return {}
+	settled.sort()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(["moving", day, island.data.seed_value])
+	if rng.randf() >= MOVE_CHANCE:
+		return {}
+	flags["moving"] = {"id": settled[rng.randi() % settled.size()], "day": day, "state": "thinking"}
+	return {}
+
+
+func _moving_talk(who: Npc, data: Dictionary) -> void:
+	var catch: String = data.get("catchphrase", "")
+	await say(who.id, ["Oh, {player}. Can I tell you something? I've been thinking...",
+		"I love it here, I really do. But I wonder if it's time I saw somewhere new."])
+	var pick := await ask(who.id, "What do you think I should do?", ["Please don't go!", "Follow your heart"])
+	if pick == 0:
+		flags.erase("moving")
+		flags["last_move"] = GameClock.day_key()
+		befriend(who.id, 2)
+		who.hop()
+		await say(who.id, ["You really want me to stay? ...Then I'm staying! What was I thinking? %s!" % catch.capitalize()])
+		return
+	flags["moving"]["state"] = "leaving"
+	await say(who.id, ["You're right. You always know what to say, {player}.",
+		"I'll pack up tonight and catch Marlow's boat in the morning."])
+	var piece := _their_piece(data)
+	if piece != "":
+		await say(who.id, ["Here. I'd like you to have this, to remember me by."])
+		_give(piece)
+	await say(who.id, ["I'll write! And maybe we'll meet again on one of your trips. %s." % catch.capitalize()])
 
 
 const NEIGHBOUR_TALK := {
@@ -1270,6 +1361,12 @@ func _neighbour(who: Npc) -> void:
 		await say(who.id, [("Oh, hello! I'm %s. I've just moved in, isn't it exciting? %s!" % [data["name"], catch.capitalize()]),
 			"Poppy told me all about you, {player}. I think we're going to be great friends.",
 			"Come and visit me in the evening. I'll be home after six!"])
+		return
+	if thinking_of_moving() == who.id:
+		await _moving_talk(who, data)
+		return
+	if leaving() == who.id:
+		await say(who.id, ["Nearly all packed! It's funny, the boxes take up more room than I did. %s." % catch.capitalize()])
 		return
 	# The first chat each day counts towards being friends.
 	var chatted: Dictionary = flags.get("chatted", {})

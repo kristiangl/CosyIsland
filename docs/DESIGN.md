@@ -217,8 +217,16 @@ Milestone 3b:
 - [x] Options on the phone (music on or off, time travel, controls); neighbours' faces in
   the journal and over their houses on the map
 
+- [x] Daily visitors: Fennel (fabrics), Tansy (seeds, a rare flower, fruit from away),
+  Basil (buys bugs) and Marina (buys fish), half as much again as Lucy pays) take turns by
+  the plaza most days
+- [x] Neighbours moving out: now and then a settled neighbour has a "..." bubble and
+  wonders about moving on; asked to stay they stay, told to follow their heart they leave
+  a keepsake and pack up overnight, freeing their plot
+- [x] DIY Recipes on the phone: the recipes you know and what they need
+
 Next milestones (suggested order):
-4. Daily visitors; more neighbour life (moving out). A try-on mirror at the tailors.
+4. A try-on mirror at the tailors.
 5. More to find on tours: other kinds of tree on rare islands, flower breeding for the
    rare colours.
 6. Path tool, terraforming, waterscaping, rock moving.

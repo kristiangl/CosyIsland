@@ -80,6 +80,10 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   on the biggest piece. The HUD draws a sandy border round the screen while on a tour
   (`shaders/tour_border.gdshader`). Campers you've met (`Story.flags["met"]`) visit your
   plaza some days (`Story.visitor_today`, `Npc.visiting`, `main.gd` `_check_visitor`).
+  Travelling visitors (`Story.DAILY_VISITORS`, `daily_visitor_today`, in
+  `data/characters.json`) set up east of the plaza with a stall (`Shop.KEEPERS`).
+  Neighbours sometimes think of moving (`Story.check_moving` each morning,
+  `flags["moving"]`, a "..." bubble on the `Npc`); they leave only if told to.
 - Movement: `World.can_move` (the middle steps; edge points must land level with
   themselves or the middle, so ramps never snag). The vaulting pole (tool "pole")
   hops rivers and ponds via `World.vault_landing`; the phone's SOS (`Main.rescue_spot`)

@@ -1355,6 +1355,53 @@ func _test_tour_visitors() -> void:
 	plot["resident"] = "kiwi"
 	check(Story.visitor_today() == "", "and stop visiting once they live here")
 
+	# Moving out: with three settled neighbours, now and then one wonders about leaving.
+	Story.reset()
+	var homes: Array = []
+	for r in range(3, 30):
+		for dx: int in [-12, -6, 4, 10]:
+			var rect := Rect2i(d.spawn + Vector2i(dx, r), Vector2i(3, 3))
+			if homes.size() < 3 and w.can_place(rect, Vector3(-10, 0, -10)) and w.door_clear("plot_kit", rect, 0):
+				var house := w.place_item("plot_kit", rect, 0)
+				house["item"] = "neighbour_house"
+				house["resident"] = ["biscuit", "maple", "clover"][homes.size()]
+				homes.append(house)
+	check(homes.size() == 3, "three neighbours for the moving-out checks")
+	var start := GameClock.offset_seconds
+	var thought := 0
+	var last_day := -100
+	var too_soon := false
+	for day in 120:
+		GameClock.offset_seconds += 86400
+		Story.check_moving(w)
+		if Story.thinking_of_moving() != "":
+			thought += 1
+			too_soon = too_soon or GameClock.day_key() - last_day < Story.MOVE_GAP_DAYS
+			last_day = GameClock.day_key()
+			# Asked to stay: nobody else wonders for a while.
+			Story.flags.erase("moving")
+			Story.flags["last_move"] = GameClock.day_key()
+	GameClock.offset_seconds = start
+	check(thought > 0 and thought <= 120 / Story.MOVE_GAP_DAYS + 1 and not too_soon, "now and then someone wonders about moving (%d times in 120 days)" % thought)
+	Story.flags.erase("last_move")
+	Story.flags["moving"] = {"id": "maple", "day": GameClock.day_key() - 1, "state": "thinking"}
+	check(Story.check_moving(w).is_empty() and not Story.flags.has("moving") and not w.building_of("maple").is_empty(),
+		"if nobody asked them, they stay")
+	Story.flags["moving"] = {"id": "maple", "day": GameClock.day_key() - 1, "state": "leaving"}
+	var house_uid: int = w.building_of("maple")["uid"]
+	var gone := Story.check_moving(w)
+	check(gone.get("who", "") == "maple" and gone.get("uid", -1) == house_uid and w.building_of("maple").is_empty()
+		and w.get_object(house_uid)["item"] == "plot_kit", "told to follow their heart, they leave and the plot is free")
+	Story.flags["invited"] = ["rosie"]
+	check(Story.move_in(w).is_empty(), "nobody moves into it the same day")
+	GameClock.offset_seconds += 86400
+	w.day_key += 1
+	check(Story.move_in(w) == ["rosie"], "and someone new can move in the next")
+	w.day_key -= 1
+	GameClock.offset_seconds = start
+	for house in homes:
+		w.remove_object(house["uid"])
+
 	# Travelling visitors: from the day after you meet Lucy, most days, never two days running.
 	Story.reset()
 	var today := GameClock.day_key()

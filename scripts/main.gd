@@ -23,7 +23,8 @@ extends Node3D
 ##                     --island=orchard|meadow|quarry|buggy|fishy for a rare island)
 ##   --demo=orchard     a row of planted fruit trees, one at each stage of growing
 ##   --demo=site        Lucy's shop kit staked out, waiting to be built
-##   --demo=neighbours  two neighbours have just moved in (--visit: go inside one's home, --who=id,id: who)
+##   --demo=neighbours  two neighbours have just moved in (--visit: go inside one's home, --who=id,id: who,
+##                      --moving: the first is thinking of moving away)
 ##   --demo=visitor     someone met on a tour is visiting by the plaza (--who=id; or a travelling
 ##                      visitor: --who=fennel|tansy|basil|marina)
 ##   --demo=fishing     fishing off the beach with fish about (--demo=bugs: bugs nearby)
@@ -484,6 +485,14 @@ func _check_house() -> void:
 	if Story.finish_dock(world):
 		Events.toast.emit("A ferry has tied up at the beach! Go and say hello.")
 		_place_marlow(world)
+	var gone := Story.check_moving(world)
+	if not gone.is_empty():
+		Events.toast.emit("%s has moved away. Their plot is free for someone new." % NpcData.display_name(gone["who"]))
+		_rooms.erase(str(gone["uid"]))
+		var npc := Story.npc(gone["who"])
+		if npc:
+			Game.npcs.erase(npc)
+			npc.queue_free()
 	for who in Story.move_in(world):
 		Events.toast.emit("%s has moved in! Go and say hello." % NpcData.display_name(who))
 		_spawn_neighbour(world.building_of(who))
@@ -962,6 +971,9 @@ func _run_demo() -> void:
 					placed += 1
 		_check_house()
 		var homes := world.objects().filter(func(o): return o.has("resident"))
+		if Game.args.has("moving") and not homes.is_empty():
+			# The first of them is wondering about moving away.
+			Story.flags["moving"] = {"id": homes[0]["resident"], "day": GameClock.day_key(), "state": "thinking"}
 		if not homes.is_empty():
 			var at := world.outside_door(homes[0])
 			player.position = at["position"] + Vector3(0.6, 0, 1.8)

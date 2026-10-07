@@ -165,6 +165,9 @@ func _use_slot(i: int) -> void:
 		Game.player.model.play("pickup")
 		Events.toast.emit("Planted! It'll flower every day.")
 		return
+	if def.has("construct"):
+		_construct(i, def["construct"])
+		return
 	if ItemDB.is_tool(id):
 		Inventory.equip(-1 if Inventory.equipped_slot == i else i)
 	elif not ItemDB.placeable(id).is_empty():
@@ -192,6 +195,38 @@ func _use_slot(i: int) -> void:
 		_use_fruit(i)
 	else:
 		_drop_slot(i)
+
+
+## A bridge or incline kit: built where you're standing and facing, if it fits there.
+func _construct(i: int, what: String) -> void:
+	var here: World = Game.world
+	var player := Game.player
+	var facing := World.cardinal(player.facing)
+	var plan := here.bridge_plan(player.tile(), facing) if what == "bridge" else here.incline_plan(player.tile(), facing)
+	if plan.has("why"):
+		Events.toast.emit(plan["why"])
+		return
+	close()
+	Game.mode = Game.Mode.MENU
+	Game.dialogue.ask("", "Build a %s here?" % ("bridge" if what == "bridge" else "slope"), ["Yes, build it!", "Not here"])
+	var pick: int = await Game.dialogue.picked
+	Game.mode = Game.Mode.PLAY
+	if pick != 0:
+		return
+	Inventory.remove_from_slot(i)
+	var at := player.position + Vector3(facing.x, 0, facing.y) * 1.5
+	if what == "bridge":
+		here.build_bridge(plan)
+	else:
+		here.build_incline(plan)
+		var top: Vector2i = plan["top"]
+		var dir: Vector2i = plan["dir"]
+		at = Vector3(top.x + 0.5 + dir.x * 1.5, here.ground_height(top.x + 0.5, top.y + 0.5), top.y + 0.5 + dir.y * 1.5)
+	Effects.burst("confetti", at + Vector3(0, 0.8, 0))
+	Effects.burst("chips", at + Vector3(0, 0.3, 0))
+	player.model.play("cheer")
+	Journal.add("built")
+	Events.toast.emit("Lucy dashed over and built it! What a lovely new %s." % ("bridge" if what == "bridge" else "slope"))
 
 
 ## Fruit: eat it, or (facing open grass at home) plant it to grow a tree.

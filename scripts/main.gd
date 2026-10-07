@@ -18,6 +18,7 @@ extends Node3D
 ##   --demo=home        pitch the tent, go inside and furnish it (--room=wallpaper,flooring)
 ##   --demo=door        pitch the tent and stand outside its door
 ##   --demo=office      inside Poppy's office
+##   --demo=construct   a slope and a bridge built near the plaza (--bridge stands by the bridge)
 ##   --demo=shop        Lucy's shop has been built; stand in front of it (--demo=museum: Bramble's,
 ##                      --demo=tailors: Daisy and Morris's, --visit to go in;
 ##                      --built for the finished museum, --visit to go in)
@@ -1055,6 +1056,39 @@ func _run_demo() -> void:
 						player.position = n.position + Vector3(0.8, 0, 1.6)
 						player.facing = Vector3(-0.4, 0, -1).normalized()
 						camera_rig.snap()
+		return
+	if Game.args["demo"] == "construct":
+		# A slope and a bridge built by the player near the plaza (`--bridge` stands by the bridge).
+		var dirs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
+		var best := {"slope": {}, "bridge": {}}
+		var near := {"slope": INF, "bridge": INF}
+		for z in range(2, world.data.height - 2):
+			for x in range(2, world.data.width - 2):
+				if not world.is_walkable(x + 0.5, z + 0.5):
+					continue
+				var dist := Vector2(x, z).distance_to(Vector2(spawn))
+				for f: Vector2i in dirs:
+					for what: String in ["slope", "bridge"]:
+						if dist < near[what]:
+							var plan := world.incline_plan(Vector2i(x, z), f) if what == "slope" else world.bridge_plan(Vector2i(x, z), f)
+							if not plan.has("why"):
+								near[what] = dist
+								best[what] = {"plan": plan, "tile": Vector2i(x, z), "facing": f}
+		for what: String in ["slope", "bridge"]:
+			if best[what].is_empty():
+				continue
+			if what == "slope":
+				world.build_incline(best[what]["plan"])
+			else:
+				world.build_bridge(best[what]["plan"])
+		var at: Dictionary = best["bridge" if Game.args.has("bridge") else "slope"]
+		if not at.is_empty():
+			var t: Vector2i = at["tile"]
+			var f: Vector2i = at["facing"]
+			player.position = Vector3(t.x + 0.5 - f.x * 2.0, 0, t.y + 0.5 - f.y * 2.0)
+			player.position.y = world.ground_height(player.position.x, player.position.z)
+			player.facing = Vector3(f.x, 0, f.y)
+			camera_rig.snap()
 		return
 	if Game.args["demo"] == "orchard":
 		# Fruit planted over the last few days, one tree at each stage of growing.

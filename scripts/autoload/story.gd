@@ -23,6 +23,9 @@ const MUSEUM_DONATIONS := 15
 const MUSEUM_MATERIALS := {"wood": 40, "stone": 30, "iron_nugget": 10}
 ## What Marlow charges for a tour ticket.
 const TICKET_COST := 1000
+## What Poppy charges for a bridge kit and an incline kit.
+const KIT_COSTS := {"bridge_kit": 4000, "incline_kit": 5000}
+const BUILD_OPTION := "About bridges and slopes..."
 var talking := false
 ## How many times each character has been chatted to today, to cycle their small talk.
 var _chats: Dictionary = {}
@@ -193,10 +196,15 @@ func _poppy_questions() -> void:
 		var museum_offer := museum_project_open()
 		if museum_offer:
 			options.insert(2, "About fish and bugs..." if not flags.has("museum_gifts") else "I've brought specimens")
+		if flags.get("plots_given", false):
+			options.insert(options.size() - 1, BUILD_OPTION)
 		var home := player_house()
 		if not home.is_empty():
 			options.insert(options.size() - 1, "About my house's paint...")
 		var pick := await ask("poppy", "Anything you'd like to know?", options)
+		if options[pick] == BUILD_OPTION:
+			await _kit_talk()
+			continue
 		if not home.is_empty() and pick == options.size() - 2:
 			await _paint_talk(home)
 			continue
@@ -301,6 +309,27 @@ func _paint_talk(home: Dictionary) -> void:
 	Game.island.refresh_node(home)
 	_npc_cheer("poppy")
 	await say("poppy", ["Lucy's on it! ...And she's done. That was quick. She must have been waiting with the brush."])
+
+
+## Poppy sells the kits for bridges over rivers and slopes up cliffs.
+func _kit_talk() -> void:
+	await say("poppy", ["Getting about can be tricky with all these rivers and cliffs, can't it?",
+		"A bridge kit spans a river up to four tiles wide: stand on the bank facing the water and use it from your pockets.",
+		"An incline kit makes a slope up a cliff: stand at the bottom or the top, facing the drop.",
+		"Bridges are %d acorns, slopes are %d." % [KIT_COSTS["bridge_kit"], KIT_COSTS["incline_kit"]]])
+	var pick := await ask("poppy", "Which would you like?", ["A bridge kit", "An incline kit", "Neither, thanks"])
+	if pick > 1:
+		await say("poppy", ["Just say the word if you change your mind!"])
+		return
+	var kit: String = ["bridge_kit", "incline_kit"][pick]
+	var cost: int = KIT_COSTS[kit]
+	if Inventory.currency < cost:
+		await say("poppy", ["Oh, you're a little short. It's %d acorns, and you've got %d." % [cost, Inventory.currency]])
+		return
+	Inventory.add_currency(-cost)
+	_give(kit)
+	_npc_cheer("poppy")
+	await say("poppy", ["Here you are! Lucy and I will do the heavy lifting, you just choose the spot."])
 
 
 func _npc_cheer(id: String) -> void:

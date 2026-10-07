@@ -92,6 +92,11 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   themselves or the middle, so ramps never snag). The vaulting pole (tool "pole")
   hops rivers and ponds via `World.vault_landing`; the phone's SOS (`Main.rescue_spot`)
   fetches you back to the plaza.
+- Bridge and incline kits (items with "construct", used from the pockets): `World.bridge_plan`
+  / `build_bridge` (a "built" bridge object; its bank tiles lose their rounded corners,
+  `_square_banks`) and `incline_plan` / `build_incline` (`IslandData.add_ramp`, kept in
+  `World.built_ramps` and saved as "ramps", laid again on load). `rebuild_terrain()` remakes
+  the ground meshes after a change. `--demo=construct` (`--bridge`).
 - Building kits (`placeable.builds`, category "kit"): placed like furniture, stamped with
   `plot_day`, and turned into their building the next night by `Story.build_kit`.
 - `Story` (autoload) holds conversation progress and every character's lines;

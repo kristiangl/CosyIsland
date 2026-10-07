@@ -383,6 +383,24 @@
 			"color": "#9cc4e4",
 			"desc": "Show it to Marlow at the dock for a trip to a little island nobody lives on."
 		},
+		"bridge_kit": {
+			"name": "Bridge Kit",
+			"category": "construction",
+			"stack": 1,
+			"price": 0,
+			"color": "#b98a5c",
+			"desc": "Stand on a bank facing the water and use it: Lucy puts up a bridge on the spot.",
+			"construct": "bridge"
+		},
+		"incline_kit": {
+			"name": "Incline Kit",
+			"category": "construction",
+			"stack": 1,
+			"price": 0,
+			"color": "#a8c890",
+			"desc": "Stand at the foot or top of a cliff, facing it, and use it: Lucy builds a slope.",
+			"construct": "incline"
+		},
 		"neighbour_house": {
 			"name": "Neighbour's House",
 			"category": "building",

@@ -1220,6 +1220,18 @@ static func _drop(k: MeshKit, item: String) -> void:
 			k.xform = Transform3D.IDENTITY
 		"iron_nugget", "gold_nugget":
 			k.sphere(Vector3(0, 0.09, 0), Vector3(0.13, 0.1, 0.12), col, 3, 5, 0.3, 0.4, 5)
+		"bridge_kit":
+			# A bundle of planks tied with rope.
+			for i in 3:
+				k.box(Vector3(0, 0.04 + i * 0.07, (i - 1) * 0.02), Vector3(0.42, 0.06, 0.12), MeshKit.lin(Color("c9a072") if i % 2 == 0 else Color("b98a5c")))
+			for sx: float in [-1.0, 1.0]:
+				k.box(Vector3(sx * 0.12, 0.12, 0), Vector3(0.03, 0.22, 0.16), MeshKit.lin(Color("dcc69c")))
+		"incline_kit":
+			# A little wedge of turf on a board.
+			k.box(Vector3(0, 0.02, 0), Vector3(0.4, 0.04, 0.3), MeshKit.lin(Color("b98a5c")))
+			k.flat_quad(Vector3(-0.18, 0.04, 0.13), Vector3(0.18, 0.04, 0.13), Vector3(0.18, 0.24, -0.13), Vector3(-0.18, 0.24, -0.13),
+				Vector3(0, 0.8, 0.6).normalized(), MeshKit.lin(Color("8fbf73")))
+			k.box(Vector3(0, 0.14, -0.13), Vector3(0.36, 0.2, 0.02), MeshKit.lin(Color("a08a6a")))
 		_:
 			# Generic parcel, like a wrapped leaf.
 			k.leaf(Vector3(-0.15, 0.05, 0.0), Vector3(1, 0.2, 0), 0.32, 0.26, MeshKit.lin(Color("9bbf5a")))

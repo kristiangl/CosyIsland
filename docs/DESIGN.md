@@ -238,11 +238,15 @@ Milestone 3b:
   deckchairs, hammocks, swings, rose arches, bird baths, picnic blankets, globes,
   gramophones, rocking horses, fish tanks, fountains, lamp posts, bunting, telescopes and
   toy boxes; some neighbours furnish with them. 27 more wallpapers and floors
+- [x] Bridges and slopes: Poppy sells a bridge kit (spans one to four tiles of river or pond
+  between banks of the same height) and an incline kit (a two-tile slope up a straight
+  cliff, used from the foot or the top). Used from the pockets where you stand, built on
+  the spot.
 
 Next milestones (suggested order):
 4. More to find on tours: other kinds of tree on rare islands, flower breeding for the
    rare colours.
-5. Path tool, terraforming, waterscaping, rock moving.
+5. Path tool, terraforming, waterscaping, rock moving (bridges and slopes are in).
 6. Weather and seasons; sound effects (music is in: four pieces each for morning,
    afternoon and evening, taking turns by the hour).
 7. Platform work: touch controls, performance passes, Switch porting.

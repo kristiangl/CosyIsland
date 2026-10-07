@@ -12,6 +12,14 @@ func _ready() -> void:
 
 
 func _run() -> void:
+	# `-- --only=name` runs just _test_<name>.
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--only="):
+			call("_test_" + arg.substr(7))
+			print("\n%d checks, %d failures" % [_checks, _failures])
+			IslandMap.finish()
+			get_tree().quit(1 if _failures > 0 else 0)
+			return
 	_test_items()
 	_test_inventory()
 	_test_generation()
@@ -43,8 +51,10 @@ func _run() -> void:
 	_test_save_slots()
 	_test_music()
 	_test_ramps_and_sos()
+	_test_built_crossings()
 	_test_tour_crossings_and_pole()
 	print("\n%d checks, %d failures" % [_checks, _failures])
+	IslandMap.finish()
 	get_tree().quit(1 if _failures > 0 else 0)
 
 
@@ -1693,6 +1703,82 @@ func _test_ramps_and_sos() -> void:
 				var end := _walk(w, Vector2(x + 0.5, z + 0.5), Vector2(0, 1), 40)
 				blocked += 1 if end.y > IslandData.tier_height(2) - 0.05 else 0
 	check(edges > 5 and blocked == edges, "but you can't walk off a cliff (%d of %d held)" % [blocked, edges])
+	w.free()
+
+
+func _test_built_crossings() -> void:
+	check(ItemDB.get_item("bridge_kit").get("construct", "") == "bridge" and ItemDB.get_item("incline_kit").get("construct", "") == "incline",
+		"there are bridge and incline kits")
+	check(Models.get_mesh("drop:bridge_kit").get_faces().size() > 30 and Models.get_mesh("drop:incline_kit").get_faces().size() > 30, "and they have models")
+	var d := IslandGenerator.generate(7)
+	var w := World.new()
+	add_child(w)
+	w.setup(d)
+	var dirs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
+	# A slope from the foot of a cliff.
+	var plan := {}
+	var stand := Vector2i.ZERO
+	for z in range(2, d.height - 2):
+		for x in range(2, d.width - 2):
+			for f: Vector2i in dirs:
+				if plan.is_empty() and d.tier(x, z) == 1 and w.is_walkable(x + 0.5, z + 0.5):
+					var p := w.incline_plan(Vector2i(x, z), f)
+					if p.has("top"):
+						plan = p
+						stand = Vector2i(x, z)
+	check(not plan.is_empty(), "somewhere on the island a slope fits at the foot of a cliff")
+	if not plan.is_empty():
+		var top: Vector2i = plan["top"]
+		var dir: Vector2i = plan["dir"]
+		var low := IslandData.tier_height(1)
+		var high := IslandData.tier_height(2)
+		check(w.incline_plan(top, dir).has("top"), "and from the top of it, facing down")
+		w.build_incline(plan)
+		check(d.is_ramp(top.x + dir.x, top.y + dir.y) and d.is_ramp(top.x + dir.x * 2, top.y + dir.y * 2), "building it lays a two-tile ramp")
+		var foot := top + dir * 3
+		var end := _walk(w, Vector2(foot) + Vector2(0.5, 0.5), -Vector2(dir), 90)
+		check(end.y > high - 0.05, "you can walk up the new slope (got to %.2f of %.2f)" % [end.y, high])
+		var back := _walk(w, Vector2(top) + Vector2(0.5, 0.5), Vector2(dir), 90)
+		check(back.y < low + 0.05, "and back down it")
+		check(w.incline_plan(foot, -dir).has("why"), "a second slope can't go on top of it")
+		# Saved with the island and laid again on loading.
+		var saved: Dictionary = JSON.parse_string(JSON.stringify(w.to_save()))
+		var w2 := World.new()
+		add_child(w2)
+		w2.setup(IslandGenerator.generate(7), saved)
+		check(w2.data.is_ramp(top.x + dir.x, top.y + dir.y) and w2.built_ramps.size() == 1, "the slope is still there after saving")
+		w2.free()
+	# A bridge over the river.
+	var bridge := {}
+	for z in range(2, d.height - 2):
+		for x in range(2, d.width - 2):
+			for f: Vector2i in dirs:
+				if bridge.is_empty() and d.tile(x, z) == IslandData.Tile.GRASS and d.tile(x + f.x, z + f.y) == IslandData.Tile.WATER \
+						and w.is_walkable(x + 0.5, z + 0.5):
+					var p := w.bridge_plan(Vector2i(x, z), f)
+					if p.has("length"):
+						bridge = p
+						stand = Vector2i(x, z)
+	check(not bridge.is_empty(), "somewhere on the river a bridge fits")
+	if not bridge.is_empty():
+		var obj := w.build_bridge(bridge)
+		var step := Vector2i(1, 0) if bridge["axis"] == "x" else Vector2i(0, 1)
+		var first := Vector2i(bridge["x"], bridge["z"])
+		var walkway := true
+		for k in bridge["length"]:
+			var t: Vector2i = first + step * int(k)
+			walkway = walkway and w.is_walkable(t.x + 0.5, t.y + 0.5)
+		check(obj["kind"] == "bridge" and walkway, "building it puts a walkable bridge over the water")
+		var going := Vector2(first - stand).sign()
+		var across := _walk(w, Vector2(stand) + Vector2(0.5, 0.5), going, 60 + 40 * int(bridge["length"]))
+		var far := Vector2(stand) + Vector2(0.5, 0.5) + going * (int(bridge["length"]) + 1)
+		check(Vector2(across.x, across.z).distance_to(far) < 0.6 or (Vector2(across.x, across.z) - Vector2(stand)).dot(going) > bridge["length"] + 0.5,
+			"and you can walk across it")
+		check(w.bridge_plan(stand, Vector2i(going)).has("why"), "but not build another in the same place")
+	var sea := Vector2i(d.width / 2, d.height - 1)
+	while sea.y > 0 and d.tile(sea.x, sea.y) != IslandData.Tile.SAND:
+		sea.y -= 1
+	check(w.bridge_plan(sea, Vector2i(0, 1)).has("why"), "no bridges out to sea")
 	w.free()
 
 

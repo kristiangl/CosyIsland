@@ -87,6 +87,31 @@ func is_ramp(x: int, z: int) -> bool:
 	return ramps.has(idx(x, z))
 
 
+## Lays a two-tile ramp down from the cliff top `top`, heading `dir` (as the generator
+## does, for slopes built later): both tiles slope from the top's height to the tier below.
+func add_ramp(top: Vector2i, dir: Vector2i) -> void:
+	var level := tier(top.x, top.y)
+	var high := tier_height(level)
+	var low := tier_height(level - 1)
+	var mid := (high + low) * 0.5
+	var steps := [[top + dir, high, mid], [top + dir * 2, mid, low]]
+	for step: Array in steps:
+		var t: Vector2i = step[0]
+		var ramp := {"up": -dir, "high": step[1], "low": step[2]}
+		ramps[idx(t.x, t.y)] = ramp
+		var hi: float = ramp["high"]
+		var lo: float = ramp["low"]
+		match -dir:
+			Vector2i(0, -1):
+				set_corners(t.x, t.y, hi, hi, lo, lo)
+			Vector2i(0, 1):
+				set_corners(t.x, t.y, lo, lo, hi, hi)
+			Vector2i(1, 0):
+				set_corners(t.x, t.y, lo, hi, hi, lo)
+			_:
+				set_corners(t.x, t.y, hi, lo, lo, hi)
+
+
 ## Height of the flat ground for a tier.
 static func tier_height(t: int) -> float:
 	if t <= 0:

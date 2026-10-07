@@ -24,6 +24,9 @@ var room_look: Dictionary = {}
 ## Doors through a room's walls to the home's other rooms: {"tile": the floor tile in
 ## front of the door, "out": Vector2i through the wall, "to": room index}.
 var room_doors: Array[Dictionary] = []
+## Slopes the player has built, laid on the generated island when it loads (saved):
+## [top x, top z, dir x, dir z] each.
+var built_ramps: Array = []
 var day_key: int
 var money_rock_uid: int = -1
 var grass: GrassField
@@ -69,6 +72,15 @@ func setup(island: IslandData, saved: Dictionary = {}) -> void:
 		for obj in data.objects:
 			_register(obj)
 		return
+	for r: Array in saved.get("ramps", []):
+		var top := Vector2i(int(r[0]), int(r[1]))
+		var dir := Vector2i(int(r[2]), int(r[3]))
+		if not data.is_ramp(top.x + dir.x, top.y + dir.y):
+			data.add_ramp(top, dir)
+			built_ramps.append([top.x, top.y, dir.x, dir.y])
+	for obj in data.objects:
+		if obj["kind"] == "bridge" and obj.get("built", false):
+			_square_banks(obj)
 	_build_terrain()
 	for obj in data.objects:
 		_register(obj)
@@ -106,6 +118,8 @@ func to_save() -> Dictionary:
 	var out := {"objects": data.objects, "next_uid": data.next_uid, "day_key": day_key, "money_rock_uid": money_rock_uid}
 	if interior:
 		out["look"] = room_look
+	elif not built_ramps.is_empty():
+		out["ramps"] = built_ramps
 	return out
 
 
@@ -158,6 +172,128 @@ func _build_terrain() -> void:
 	grass.name = "Grass"
 	grass.build(data, float(Game.args.get("grass", "1.0")))
 	add_child(grass)
+
+
+## Builds the ground, water and grass again (after a slope's been built).
+func rebuild_terrain() -> void:
+	for part: String in ["Ground", "Sea", "FreshWater", "BankFoam", "Grass"]:
+		var node := get_node_or_null(part)
+		if node:
+			node.free()
+	_build_terrain()
+	IslandMap.invalidate()
+	IslandMap.terrain_texture(data)
+	Events.placed_changed.emit()
+
+
+# --- Building slopes and bridges ------------------------------------------------------
+
+## The nearest of the four directions to `v`.
+static func cardinal(v: Vector3) -> Vector2i:
+	if absf(v.x) > absf(v.z):
+		return Vector2i(signi(int(signf(v.x))), 0)
+	return Vector2i(0, signi(int(signf(v.z))))
+
+
+## Where a slope would go from standing on `tile` facing `facing`: at the foot of a
+## cliff facing up it, or at the top facing down. {"top", "dir"} if it fits, else
+## {"why": what's wrong}.
+func incline_plan(tile: Vector2i, facing: Vector2i) -> Dictionary:
+	if interior or tour:
+		return {"why": "Slopes are for building on your own island."}
+	var ahead := tile + facing
+	var top := Vector2i(-1, -1)
+	var dir := Vector2i.ZERO
+	if data.tier(ahead.x, ahead.y) == data.tier(tile.x, tile.y) + 1:
+		top = ahead
+		dir = -facing
+	elif data.tier(ahead.x, ahead.y) == data.tier(tile.x, tile.y) - 1:
+		top = tile
+		dir = facing
+	else:
+		return {"why": "Stand at the foot or the top of a cliff, facing it."}
+	var level := data.tier(top.x, top.y)
+	if data.tile(top.x, top.y) != IslandData.Tile.GRASS or level < 2 or data.is_ramp(top.x, top.y):
+		return {"why": "A slope can't go here."}
+	var side := Vector2i(dir.y, dir.x)
+	for s in [-1, 1]:
+		var t: Vector2i = top + side * s
+		if data.tier(t.x, t.y) != level:
+			return {"why": "The cliff needs to run straight here for a slope."}
+	for k in [1, 2, 3]:
+		var q: Vector2i = top + dir * k
+		if not data.in_bounds(q.x, q.y) or data.tile(q.x, q.y) != IslandData.Tile.GRASS or data.tier(q.x, q.y) != level - 1 \
+				or data.is_ramp(q.x, q.y):
+			return {"why": "A slope needs flat ground below the cliff, two tiles long and one more to step off."}
+		if not object_at(q.x, q.y).is_empty() or _rugs.has(data.idx(q.x, q.y)):
+			return {"why": "Clear the way first: the slope needs %s empty." % ("these tiles" if k < 3 else "the tile at its foot")}
+		if k < 3:
+			for s in [-1, 1]:
+				var r: Vector2i = q + side * s
+				if data.tile(r.x, r.y) != IslandData.Tile.GRASS or data.tier(r.x, r.y) != level - 1 or data.is_ramp(r.x, r.y):
+					return {"why": "There isn't room beside it for a slope here."}
+	return {"top": top, "dir": dir}
+
+
+func build_incline(plan: Dictionary) -> void:
+	var top: Vector2i = plan["top"]
+	var dir: Vector2i = plan["dir"]
+	data.add_ramp(top, dir)
+	built_ramps.append([top.x, top.y, dir.x, dir.y])
+	rebuild_terrain()
+
+
+## A bridge from the bank at `tile` straight across the water ahead (one to four tiles
+## of river or pond) to the same height on the other side: {"x", "z", "length", "axis"}
+## like the island's own bridges, or {"why": what's wrong}.
+func bridge_plan(tile: Vector2i, facing: Vector2i) -> Dictionary:
+	if interior or tour:
+		return {"why": "Bridges are for building on your own island."}
+	if data.tile(tile.x, tile.y) == IslandData.Tile.WATER or not data.is_land(tile.x, tile.y):
+		return {"why": "Stand on the bank, facing the water you want to cross."}
+	var length := 0
+	while data.tile(tile.x + facing.x * (length + 1), tile.y + facing.y * (length + 1)) == IslandData.Tile.WATER:
+		length += 1
+		var w := tile + facing * length
+		if _deck.has(data.idx(w.x, w.y)):
+			return {"why": "There's already a bridge there."}
+		if length > 4:
+			return {"why": "That's too far to bridge. Find a narrower spot."}
+	if length == 0:
+		return {"why": "Stand on the bank, facing the water you want to cross."}
+	var far := tile + facing * (length + 1)
+	if not data.is_land(far.x, far.y) or data.tier(far.x, far.y) != data.tier(tile.x, tile.y) \
+			or absf(data.height_at(far.x + 0.5, far.y + 0.5) - data.height_at(tile.x + 0.5, tile.y + 0.5)) > 0.05:
+		return {"why": "The banks either side need to be the same height."}
+	if not is_walkable(far.x + 0.5, far.y + 0.5):
+		return {"why": "Clear the far bank first."}
+	var water := tile + facing
+	if absf(IslandData.tier_height(data.tier(water.x, water.y)) - data.height_at(tile.x + 0.5, tile.y + 0.5)) > 0.05:
+		return {"why": "The banks are too high above the water here for a bridge."}
+	var first := tile + facing if facing.x + facing.y > 0 else tile + facing * length
+	return {"x": first.x, "z": first.y, "length": length, "axis": "x" if facing.x != 0 else "z"}
+
+
+func build_bridge(plan: Dictionary) -> Dictionary:
+	var obj := add_object({"kind": "bridge", "x": plan["x"], "z": plan["z"], "length": plan["length"], "axis": plan["axis"], "built": true})
+	if _square_banks(obj):
+		rebuild_terrain()
+	else:
+		Events.placed_changed.emit()
+	return obj
+
+
+## Squares off rounded riverbank corners where a bridge lands (as the generator does
+## for its own bridges), so the banks meet the deck. True if any changed.
+func _square_banks(bridge: Dictionary) -> bool:
+	var axis := Vector2i(1, 0) if bridge["axis"] == "x" else Vector2i(0, 1)
+	var changed := false
+	for k in range(-1, int(bridge["length"]) + 1):
+		var q := Vector2i(bridge["x"], bridge["z"]) + axis * k
+		if data.in_bounds(q.x, q.y) and data.splits.has(data.idx(q.x, q.y)):
+			data.splits.erase(data.idx(q.x, q.y))
+			changed = true
+	return changed
 
 
 # --- Objects -------------------------------------------------------------------------

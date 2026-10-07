@@ -18,6 +18,7 @@ extends Node3D
 ##   --demo=home        pitch the tent, go inside and furnish it (--room=wallpaper,flooring)
 ##   --demo=door        pitch the tent and stand outside its door
 ##   --demo=shop        Lucy's shop has been built; stand in front of it (--demo=museum: Bramble's,
+##                      --demo=tailors: Daisy and Morris's, --visit to go in;
 ##                      --built for the finished museum, --visit to go in)
 ##   --demo=dock        Marlow's ferry dock (--demo=tour: off on a tour, --camper with someone camping there,
 ##                     --island=orchard|meadow|quarry|buggy|fishy for a rare island)
@@ -32,7 +33,7 @@ extends Node3D
 ##   --house            with --demo: the tent has already become a house (--big: the big house,
 ##                      --in=N: go into its room N with --demo=home, --paint=wall,roof,door hex colours)
 ##   --series=ID        with --demo or --demo=home: furniture from one series (--variant=ID)
-##   --ui=pockets|pause|map|creator|crafting|recipes|customise|journal|exchange|critters|friends|neighbour|placing (--place=ID)|intro|ask|lucy|sleep|asleep|shop|sell (--sold: just sold one)|paint (--big)  (--tab=N picks a creator tab, --try=key:id,... dresses up, --closet=TEXT opens the wardrobe with clothes whose ids contain TEXT)  open a menu or mode (for screenshots)
+##   --ui=pockets|pause|map|creator|crafting|recipes|customise|journal|exchange|critters|friends|neighbour|placing (--place=ID)|intro|ask|lucy|sleep|asleep|shop|sell (--sold: just sold one)|paint (--big)|fitting (--tab=N)  (--tab=N picks a creator tab, --try=key:id,... dresses up, --closet=TEXT opens the wardrobe with clothes whose ids contain TEXT)  open a menu or mode (for screenshots)
 
 const AUTOSAVE_SECONDS := 60.0
 
@@ -183,6 +184,13 @@ func _ready() -> void:
 				hud.shop._sell(1, 1)
 		"paint":
 			Game.house_paint.open({"roof": "3a7a9a", "wall": "dcecf4", "door": "f2d68a"}, Game.args.has("big"))
+		"fitting":
+			var rail: Array[String] = []
+			for id in Shop.stock(_seed, GameClock.day_key(), "", "tailors"):
+				rail.append(id)
+			Inventory.own_outfit(player.model.look)
+			hud.creator.open_fitting(player.model.look, rail)
+			hud.creator._select_tab(int(Game.args.get("tab", 7)))
 		"tailors":
 			Inventory.add_currency(9000)
 			hud.shop.open("buy", "tailors")
@@ -323,7 +331,7 @@ func _on_creator_finished(look: Dictionary, player_name: String, island_name: St
 func save_game() -> void:
 	if Game.args.has("screenshot"):
 		return
-	if room and not ItemDB.placeable(world.get_object(_home_uid).get("item", "")).get("museum", false):
+	if room and _kept(ItemDB.placeable(world.get_object(_home_uid).get("item", ""))):
 		_rooms[room_key(_home_uid, _room_index)] = room.to_save()
 	var me := player.to_save()
 	if tour:
@@ -594,22 +602,16 @@ func _place_marlow(w: World) -> Npc:
 
 ## Daisy and Morris stand either side of their shop door.
 func _place_tailors() -> void:
-	var shop := world.building("tailor_shop")
-	if shop.is_empty():
-		return
-	var at := world.outside_door(shop)
-	var side := Vector3(at["facing"].z, 0, -at["facing"].x)
-	for pair: Array in [["daisy", -0.7], ["morris", 0.7]]:
-		var npc := Story.npc(pair[0])
-		if npc == null:
-			npc = Npc.new()
-			world.add_child(npc)
-			npc.setup(pair[0], world, at["position"], at["facing"])
-			Game.npcs.append(npc)
-		npc.position = at["position"] + side * float(pair[1])
-		npc.position.y = world.ground_height(npc.position.x, npc.position.z)
-		npc.rest_facing = at["facing"]
-		world.reserve(Vector2i(floori(npc.position.x), floori(npc.position.z)))
+	# Daisy and Morris work inside their shop now (see fill_tailors); anyone left
+	# standing outside from before goes in, and so does the mirror.
+	for id: String in ["daisy", "morris"]:
+		var outside := Story.npc(id)
+		if outside and outside.world == world:
+			Game.npcs.erase(outside)
+			outside.queue_free()
+	var mirror := world.building("fitting_mirror")
+	if not mirror.is_empty():
+		world.remove_object(mirror["uid"])
 
 
 ## Lucy stands in front of her shop once it's built.
@@ -687,6 +689,7 @@ func _open_room(uid: int, index: int) -> void:
 	var spec: Dictionary = defs[index]
 	var resident: String = home.get("resident", "")
 	var museum: bool = def.get("museum", false)
+	var shop_room: bool = def.get("shop_room", false)
 	var size: Array = spec["size"]
 	var key := room_key(uid, index)
 	room = World.new()
@@ -700,10 +703,19 @@ func _open_room(uid: int, index: int) -> void:
 		room.room_doors = World.doors_for(size[0], size[1], walls)
 	add_child(room)
 	var first_visit := not _rooms.has(key)
-	room.visitor = resident != "" or museum
-	room.setup(IslandData.room(size[0], size[1]), {} if museum else _rooms.get(key, {}))
+	room.visitor = resident != "" or museum or shop_room
+	room.setup(IslandData.room(size[0], size[1]), {} if not _kept(def) else _rooms.get(key, {}))
 	if museum:
 		fill_museum(room)
+	elif shop_room:
+		fill_tailors(room)
+		for entry: Array in TAILORS_INSIDE:
+			var keeper := Npc.new()
+			room.add_child(keeper)
+			keeper.setup(entry[0], room, Vector3(entry[1].x, 0, entry[1].y), entry[2].normalized())
+			room.reserve(Vector2i(floori(entry[1].x), floori(entry[1].y)))
+			Game.npcs.append(keeper)
+			room.tree_exiting.connect(func(): Game.npcs.erase(keeper))
 	elif first_visit and resident != "":
 		_furnish_for(room, resident)
 	elif first_visit and index == 0:
@@ -734,9 +746,15 @@ func _open_room(uid: int, index: int) -> void:
 	camera_rig.room = Rect2(0, 0, size[0], size[1])
 
 
-## Saves the room we're in (not the museum, rebuilt every visit) and takes it down.
+## Is a building's inside kept between visits? (The museum and the tailors' are set out
+## afresh every time.)
+static func _kept(def: Dictionary) -> bool:
+	return not def.get("museum", false) and not def.get("shop_room", false)
+
+
+## Saves the room we're in (if it's kept) and takes it down.
 func _close_room() -> void:
-	if not ItemDB.placeable(world.get_object(_home_uid).get("item", "")).get("museum", false):
+	if _kept(ItemDB.placeable(world.get_object(_home_uid).get("item", ""))):
 		_rooms[room_key(_home_uid, _room_index)] = room.to_save()
 	room.queue_free()
 	room = null
@@ -1080,6 +1098,8 @@ func _run_demo() -> void:
 			player.position = world.outside_door(tailors)["position"] + Vector3(0.6, 0, 2.4)
 			player.facing = Vector3(-0.2, 0, -1).normalized()
 			camera_rig.snap()
+			if Game.args.has("visit"):
+				await _enter_home(tailors["uid"], true)
 		return
 	if Game.args["demo"] in ["fishing", "bugs"]:
 		var tool := "flimsy_rod" if Game.args["demo"] == "fishing" else "flimsy_net"
@@ -1218,6 +1238,23 @@ func _take_screenshot(path: String, frames: int) -> void:
 	image.save_png(path)
 	print("Saved screenshot to ", path)
 	get_tree().quit()
+
+
+## Inside Daisy and Morris's: rails of clothes and the mirror along the back, mannequins
+## and shelves down the sides, a counter, and plants by the door. Set out every visit.
+const TAILORS_FITTINGS := [["clothes_rail", Vector2i(1, 0), 0], ["fitting_mirror", Vector2i(4, 0), 0],
+	["clothes_rail", Vector2i(6, 0), 0], ["mannequin", Vector2i(0, 2), 3], ["mannequin", Vector2i(0, 4), 3],
+	["wooden_shelf", Vector2i(8, 2), 1], ["wooden_shelf", Vector2i(8, 3), 1], ["wooden_table", Vector2i(6, 4), 0],
+	["potted_plant", Vector2i(0, 6), 0], ["potted_plant", Vector2i(8, 6), 0]]
+## Where Daisy (behind the counter) and Morris (by the rails) stand, and which way.
+const TAILORS_INSIDE := [["daisy", Vector2(6.5, 3.5), Vector3(-0.3, 0, 1)], ["morris", Vector2(2.5, 1.6), Vector3(0.4, 0, 1)]]
+
+
+static func fill_tailors(r: World) -> void:
+	for entry: Array in TAILORS_FITTINGS:
+		var size: Array = ItemDB.placeable(entry[0])["footprint"]
+		var dims := Vector2i(size[0], size[1]) if entry[2] % 2 == 0 else Vector2i(size[1], size[0])
+		r.place_item(entry[0], Rect2i(entry[1], dims), entry[2])
 
 
 ## The museum's hall: a fish tank for every fish round the walls and a glass case for

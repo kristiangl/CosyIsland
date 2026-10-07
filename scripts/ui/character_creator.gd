@@ -8,6 +8,8 @@ extends Control
 ## Moving the focus over a style or colour tries it on straight away.
 
 signal finished(look: Dictionary, player_name: String, island_name: String)
+## The fitting room is done: what you had on at the end (see open_fitting).
+signal fitted(look: Dictionary)
 
 ## Each tab: icon, title, the camera view, and what it holds. "styles"/"colours" name
 ## appearance keys; "adjust" lists [key, label]; "patterns" adds the top's pattern rows.
@@ -210,8 +212,22 @@ func _text_row(list: VBoxContainer, label_text: String) -> LineEdit:
 	return edit
 
 
+## The tailors' fitting room: the wardrobe, plus clothes from the rail to try on.
+var _rail: Array[String] = []
+
+
+## Opens the fitting room: your own clothes and `rail` (today's clothes at the tailors)
+## to try on. Emits fitted, not finished, so nothing is yours until it's bought.
+func open_fitting(current: Dictionary, rail: Array[String]) -> void:
+	_rail = rail
+	open(current, false)
+	_title.text = "Fitting room"
+
+
 ## Opens the creator. With naming off it's the wardrobe (no name fields).
 func open(current: Dictionary, naming: bool, player_name: String = "", island_name: String = "") -> void:
+	if naming:
+		_rail = []
 	look = Appearance.sanitise(current)
 	_naming = naming
 	_name_edit.text = player_name if player_name != "" else NAMES[randi() % NAMES.size()]
@@ -326,8 +342,19 @@ func _style_grid(key: String, view: String, title: String = "Style") -> GridCont
 func _closet_grid(slot: String, view: String) -> GridContainer:
 	var owned := Inventory.closet.filter(func(id): return ItemDB.get_item(id).get("slot", "") == slot)
 	var can_remove := not _naming and slot in ["hat", "shoes"]
+	var rail := _rail.filter(func(id): return ItemDB.get_item(id).get("slot", "") == slot and not id in owned)
+	var rail_grid: GridContainer = null
+	if not rail.is_empty():
+		_section("On the rail (try them on!)")
+		rail_grid = GridContainer.new()
+		rail_grid.columns = 8
+		rail_grid.add_theme_constant_override("h_separation", 8)
+		rail_grid.add_theme_constant_override("v_separation", 8)
+		_content.add_child(rail_grid)
+		for id: String in rail:
+			rail_grid.add_child(OptionTile.new(self, "item", id, view, false))
 	if owned.is_empty() and not can_remove:
-		return null
+		return rail_grid
 	_section("Your clothes")
 	var grid := GridContainer.new()
 	grid.columns = 8
@@ -448,6 +475,10 @@ func _done() -> void:
 	visible = false
 	thumbs.clear_queue()
 	Game.mode = Game.Mode.PLAY
+	if not _rail.is_empty():
+		_rail = []
+		fitted.emit(look.duplicate())
+		return
 	var player_name := _name_edit.text.strip_edges()
 	var island_name := _island_edit.text.strip_edges()
 	finished.emit(look.duplicate(), player_name if player_name != "" else "Kit", island_name if island_name != "" else "Driftwood")

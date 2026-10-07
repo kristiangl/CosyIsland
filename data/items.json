@@ -241,6 +241,58 @@
 				]
 			}
 		},
+		"fitting_mirror": {
+			"name": "Fitting Mirror",
+			"category": "building",
+			"stack": 1,
+			"price": 0,
+			"color": "#a9d7e6",
+			"desc": "Daisy and Morris's mirror, for trying things on.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "fitting_mirror",
+				"structure": true,
+				"rotatable": true,
+				"mirror": true
+			}
+		},
+		"clothes_rail": {
+			"name": "Clothes Rail",
+			"category": "building",
+			"stack": 1,
+			"price": 0,
+			"color": "#b08463",
+			"desc": "A rail of the tailors' latest.",
+			"placeable": {
+				"footprint": [
+					2,
+					1
+				],
+				"model": "clothes_rail",
+				"structure": true,
+				"rotatable": true
+			}
+		},
+		"mannequin": {
+			"name": "Mannequin",
+			"category": "building",
+			"stack": 1,
+			"price": 0,
+			"color": "#f2b8c8",
+			"desc": "Modelling today's best dress.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "mannequin",
+				"structure": true,
+				"rotatable": true
+			}
+		},
 		"plot_kit": {
 			"name": "Neighbour Plot",
 			"category": "kit",
@@ -415,7 +467,7 @@
 			"stack": 1,
 			"price": 0,
 			"color": "#c9a8d8",
-			"desc": "Daisy and Morris's clothes shop. Something new to wear every day.",
+			"desc": "Daisy and Morris's clothes shop. Something new to wear every day, and a mirror to try it on.",
 			"placeable": {
 				"footprint": [
 					3,
@@ -425,8 +477,14 @@
 				"structure": true,
 				"rotatable": false,
 				"door": true,
-				"shopfront": true,
-				"keeper": "daisy"
+				"room": {
+					"size": [
+						9,
+						7
+					],
+					"style": "boutique"
+				},
+				"shop_room": true
 			}
 		},
 		"museum_tent": {

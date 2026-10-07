@@ -162,16 +162,21 @@ static func is_sold_out(id: String, day: int, keeper: String = "lucy") -> bool:
 	return not id in STAPLES and id in sold_today(day, keeper)
 
 
-## Buys one of an item. Returns "" on success, or why not.
-static func buy(id: String, day: int, keeper: String = "lucy") -> String:
+## Buys one of an item. Returns "" on success, or why not. Clothes bought in the fitting
+## room (`wearing`) go straight into the wardrobe.
+static func buy(id: String, day: int, keeper: String = "lucy", wearing := false) -> String:
 	if is_sold_out(id, day, keeper):
 		return "That's sold out today, sorry!"
 	var cost := buy_price(id)
 	if Inventory.currency < cost:
 		return "You need %d %s for that." % [cost, Game.CURRENCY_NAME.to_lower()]
-	if not Inventory.can_fit(id):
+	if wearing:
+		if not id in Inventory.closet:
+			Inventory.closet.append(id)
+	elif not Inventory.can_fit(id):
 		return "Your pockets are full!"
-	Inventory.add_item(id)
+	else:
+		Inventory.add_item(id)
 	Inventory.add_currency(-cost)
 	Journal.add("bought")
 	if not id in STAPLES:

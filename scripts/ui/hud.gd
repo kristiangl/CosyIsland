@@ -122,6 +122,7 @@ func _ready() -> void:
 
 	creator = CharacterCreator.new()
 	root.add_child(creator)
+	Game.creator = creator
 
 	var centre := CenterContainer.new()
 	centre.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)

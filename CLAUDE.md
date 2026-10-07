@@ -68,7 +68,9 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   the start; a plot only becomes a house when someone invited on a tour moves in overnight
   (`Story.invited()`, `Story.move_in`; placed objects with a "resident"); their rooms are visitor
   `World`s (`visitor = true`: nothing can be moved). The museum's hall is a visitor room
-  rebuilt from `Journal.donated` on every visit (`main.gd` `fill_museum`), never saved.
+  rebuilt from `Journal.donated` on every visit (`main.gd` `fill_museum`), never saved;
+  so is the tailors' shop (`shop_room`, `fill_tailors`), where Daisy and Morris work and
+  the fitting mirror opens `CharacterCreator.open_fitting` (`Story._fitting`).
 - Island tours: `main.gd` swaps to a tour `World` (`tour = true`, `Game.tour`; nothing
   can be placed) built from `IslandGenerator.generate_tour`, and frees it on the way home.
   `Game.island` stays the home island; `Game.outdoors()` is whichever one you're on (the

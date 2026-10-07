@@ -114,6 +114,12 @@ static func get_mesh(key: String) -> ArrayMesh:
 			var home: Dictionary = NpcData.get_character(p[1]).get("home", {})
 			k = _kit_from("hex_home_a")
 			Palette.repaint(k.colours, {"blue": _ramp(Color(home.get("roof", "e0857a"))), "white": _ramp(Color(home.get("wall", "fbf0d9")))})
+		"fitting_mirror":
+			_fitting_mirror(k)
+		"clothes_rail":
+			_clothes_rail(k)
+		"mannequin":
+			_mannequin(k)
 		"plot":
 			_plot(k)
 		"dock":
@@ -640,6 +646,63 @@ static func _house(k: MeshKit, wall_col: Color = HOUSE_WALL, roof_col: Color = H
 			k.box(side + Vector3(sx * 0.02, 1.05, 0), Vector3(0.04, 0.4, 0.4), glass)
 	if tall:
 		k.box(Vector3(0, 1.52, d + 0.02), Vector3(w * 2 + 0.1, 0.09, 0.08), trim)
+
+
+## A wooden rail two tiles long with shirts and dresses hanging from it, side on.
+static func _clothes_rail(k: MeshKit) -> void:
+	var wood := MeshKit.lin(PLANK_DARK)
+	for sx: float in [-1.0, 1.0]:
+		k.cylinder(Vector3(sx * 0.85, 0.0, 0), Vector3(sx * 0.85, 1.45, 0), 0.04, 0.04, wood, 6, true)
+		k.box(Vector3(sx * 0.85, 0.03, 0), Vector3(0.1, 0.06, 0.45), wood)
+	k.cylinder(Vector3(-0.88, 1.42, 0), Vector3(0.88, 1.42, 0), 0.025, 0.025, MeshKit.lin(Color("c8c0b8")), 6, true)
+	var colours: Array[Color] = [Color("f2a7a0"), Color("9fd3c7"), Color("f6d58c"), Color("b9b3e6"), Color("f6c9c0"),
+		Color("8fc58a"), Color("6a9ac8")]
+	for i in colours.size():
+		var x := -0.66 + i * 0.22
+		var col := MeshKit.lin(colours[i])
+		# A hanger, then a shirt (or a longer dress every third one) seen side on.
+		k.cylinder(Vector3(x, 1.42, 0), Vector3(x, 1.33, 0), 0.01, 0.01, MeshKit.lin(Color("8a6b4f")), 4, false)
+		var long := i % 3 == 1
+		k.rounded_box(Vector3(x, 1.1 if not long else 0.98, 0), Vector3(0.07, 0.42 if not long else 0.66, 0.46), col, 0.3)
+		k.box(Vector3(x, 1.27, 0), Vector3(0.06, 0.08, 0.6), col)
+
+
+## A dressmaker's dummy on a stand, in a summer dress.
+static func _mannequin(k: MeshKit) -> void:
+	var wood := MeshKit.lin(PLANK_DARK)
+	k.cylinder(Vector3(0, 0.0, 0), Vector3(0, 0.05, 0), 0.24, 0.24, wood, 12, true)
+	k.cylinder(Vector3(0, 0.05, 0), Vector3(0, 0.7, 0), 0.03, 0.03, wood, 6, false)
+	var dress := MeshKit.lin(Color("f2b8c8"))
+	k.cylinder(Vector3(0, 0.62, 0), Vector3(0, 0.98, 0), 0.3, 0.16, dress, 12, true)
+	k.rounded_box(Vector3(0, 1.12, 0), Vector3(0.34, 0.32, 0.22), MeshKit.lin(Color("f3e4c4")), 0.4)
+	k.rounded_box(Vector3(0, 1.08, 0.01), Vector3(0.35, 0.22, 0.23), dress, 0.4)
+	k.cylinder(Vector3(0, 1.28, 0), Vector3(0, 1.36, 0), 0.04, 0.04, wood, 6, false)
+	k.sphere(Vector3(0, 1.4, 0), Vector3.ONE * 0.06, wood, 4, 8)
+	# A sash and a flower.
+	k.box(Vector3(0, 0.96, 0.0), Vector3(0.34, 0.05, 0.24), MeshKit.lin(Color("e0656b")))
+	k.sphere(Vector3(0.1, 1.14, 0.12), Vector3.ONE * 0.04, MeshKit.lin(Color("fff4c8")), 3, 6)
+
+
+## A tall oval mirror in a painted wooden frame on two feet, for the tailors.
+static func _fitting_mirror(k: MeshKit) -> void:
+	var frame := MeshKit.lin(Color("e8b8a8"))
+	var wood := MeshKit.lin(PLANK_DARK)
+	var glass := MeshKit.lin(Color("cfe8f0"))
+	var centre := Vector3(0, 1.0, 0)
+	var segments := 20
+	for i in segments:
+		var a0 := TAU * i / segments
+		var a1 := TAU * (i + 1) / segments
+		k.cylinder(centre + Vector3(cos(a0) * 0.32, sin(a0) * 0.62, 0), centre + Vector3(cos(a1) * 0.32, sin(a1) * 0.62, 0),
+			0.05, 0.05, frame, 6, false)
+	k.sphere(centre + Vector3(0, 0, 0.005), Vector3(0.3, 0.6, 0.02), glass, 8, 16)
+	# A shine across the glass.
+	k.box(centre + Vector3(-0.1, 0.18, 0.03), Vector3(0.05, 0.36, 0.01), MeshKit.lin(Color("ffffff")))
+	k.box(centre + Vector3(-0.02, 0.26, 0.03), Vector3(0.03, 0.2, 0.01), MeshKit.lin(Color("ffffff")))
+	for sx: float in [-1.0, 1.0]:
+		k.cylinder(Vector3(sx * 0.3, 0.0, 0), Vector3(sx * 0.33, 0.95, 0), 0.04, 0.035, wood, 6, true)
+		k.box(Vector3(sx * 0.3, 0.03, 0), Vector3(0.12, 0.06, 0.4), wood)
+	k.sphere(centre + Vector3(0, 0.66, 0.02), Vector3.ONE * 0.06, frame, 4, 8)
 
 
 ## The island office: a striped marquee with a leaf sign over the entrance.

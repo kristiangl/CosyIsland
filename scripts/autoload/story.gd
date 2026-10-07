@@ -547,11 +547,13 @@ func _tailors(who: Npc) -> void:
 		"Mm. You'd suit something in green.",
 		"Daisy chose today's things. I hemmed them.",
 	])
-	var pick := await ask(speaker, greeting, ["Let's see the clothes", "Just chatting", "Bye!"])
+	var pick := await ask(speaker, greeting, ["Let's see the clothes", "Try things on", "Just chatting", "Bye!"])
 	match pick:
 		0:
 			await _shop("buy", "tailors", speaker)
 		1:
+			await _fitting(speaker)
+		2:
 			await say(speaker, [_small_talk(speaker, [
 				"Lucy sold us our very first thimble, you know. She was six.",
 				"Morris can tell a fabric just by touching it. Blindfolded. Don't ask how I know.",
@@ -565,6 +567,66 @@ func _tailors(who: Npc) -> void:
 			])])
 		_:
 			await say(speaker, ["Come back soon!" if speaker == "daisy" else "...Bye."])
+
+
+## The mirror by the tailors' door: straight into the fitting room, Daisy minding it.
+func use_mirror() -> void:
+	if talking or Game.dialogue == null:
+		return
+	var daisy := npc("daisy")
+	if daisy:
+		await _begin(daisy)
+	else:
+		talking = true
+		Game.mode = Game.Mode.MENU
+	await _fitting("daisy")
+	_end()
+
+
+## The fitting room: try on anything from today's rail with your own clothes, in front
+## of the mirror. Whatever new you've still got on at the end can be bought, straight
+## into the wardrobe; otherwise it all goes back on the rail.
+func _fitting(speaker: String) -> void:
+	var day := GameClock.day_key()
+	var rail: Array[String] = []
+	for id in Shop.stock(Game.island.data.seed_value if Game.island else 0, day, "", "tailors"):
+		if not Shop.is_sold_out(id, day, "tailors") and not id in Inventory.closet:
+			rail.append(id)
+	if rail.is_empty() or Game.creator == null or Game.player == null:
+		await say(speaker, ["Oh! We've nothing left to try today. New things tomorrow!" if speaker == "daisy" else "...Sold out. Tomorrow."])
+		return
+	await say(speaker, ["The fitting room's just here. Try on whatever you like!" if speaker == "daisy" else "...Mirror's there. Take your time."])
+	var before: Dictionary = Game.player.model.look.duplicate()
+	Game.creator.open_fitting(before, rail)
+	var look: Dictionary = await Game.creator.fitted
+	Game.mode = Game.Mode.MENU
+	var wanted: Array[String] = []
+	var cost := 0
+	for slot: String in ItemDB.SLOT_KEYS:
+		var id := ItemDB.worn_item(slot, look)
+		if id in rail:
+			wanted.append(id)
+			cost += Shop.buy_price(id)
+	if wanted.is_empty():
+		Game.player.model.set_look(look)
+		await say(speaker, ["Lovely! Come back and try more whenever you like." if speaker == "daisy" else "...Suits you."])
+		return
+	var names := " and ".join(wanted.map(func(id): return ItemDB.display_name(id)))
+	if await ask(speaker, "The %s: that's %d acorns. Would you like to keep them on?" % [names, cost],
+			["Yes please!", "Just trying"]) != 0:
+		Game.player.model.set_look(before)
+		await say(speaker, ["No trouble! I'll pop them back on the rail." if speaker == "daisy" else "...Back on the rail."])
+		return
+	if Inventory.currency < cost:
+		Game.player.model.set_look(before)
+		await say(speaker, ["Oh dear, that's a bit more than you've got. They'll keep for today!" if speaker == "daisy" \
+			else "...Not enough acorns. Another day."])
+		return
+	for id in wanted:
+		Shop.buy(id, day, "tailors", true)
+	Game.player.model.set_look(look)
+	_npc_cheer(speaker)
+	await say(speaker, ["They're yours! You look wonderful. Wear them well!" if speaker == "daisy" else "...Good choice. Very good."])
 
 
 # --- The museum ----------------------------------------------------------------------

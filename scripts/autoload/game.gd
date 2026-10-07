@@ -21,6 +21,7 @@ var camera: CameraRig
 var dialogue: DialogueBox
 var shop: ShopMenu
 var house_paint: HousePaint
+var creator: CharacterCreator
 ## The characters standing about on the island.
 var npcs: Array[Npc] = []
 var player_name := ""

@@ -21,6 +21,12 @@ const STYLES := {
 		"wall": {"pattern": 2, "a": "dfe8d6", "b": "d2dcc8"},
 		"trim": "f3eee2", "base": "8a7a68", "mat": "b8cf9a", "bunting": false,
 	},
+	"boutique": {
+		"height": 2.5,
+		"floor": {"pattern": 1, "a": "e6c8a0", "b": "cfae84"},
+		"wall": {"pattern": 2, "a": "efe2f2", "b": "e2d0ea"},
+		"trim": "fbf3dc", "base": "8a6b4f", "mat": "c9a8d8", "bunting": true,
+	},
 	"cottage": {
 		"height": 2.3,
 		"floor": {"pattern": 1, "a": "d9b083", "b": "b48a5e"},

@@ -338,6 +338,8 @@ func _interact(obj: Dictionary) -> void:
 		_sit_on(obj)
 	elif def.get("workbench", false):
 		Events.workbench_opened.emit()
+	elif def.get("mirror", false):
+		Story.use_mirror()
 	elif def.has("room"):
 		Events.home_entered.emit(obj["uid"])
 	elif def.get("shopfront", false) and Story.npc(def.get("keeper", "lucy")):

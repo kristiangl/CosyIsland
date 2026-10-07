@@ -590,7 +590,7 @@ func _test_tailors() -> void:
 	check(not Story.finish_tailors(w), "the shop takes a night")
 	Story.flags["tailors_day"] = GameClock.day_key() - 1
 	check(Story.finish_tailors(w) and not w.building("tailor_shop").is_empty(), "then Daisy and Morris's shop opens")
-	check(ItemDB.placeable("tailor_shop").get("keeper", "") == "daisy", "Daisy minds the shop")
+	check(ItemDB.placeable("tailor_shop").get("shop_room", false) and not w.door_of(w.building("tailor_shop")).is_empty(), "and you can walk in")
 	w.free()
 	Inventory.reset()
 	Story.flags = saved_flags
@@ -700,6 +700,37 @@ func _test_clothes() -> void:
 	var dressed := Appearance.DEFAULT.duplicate()
 	dressed.merge(ItemDB.get_item("raincoat_yellow")["wear"], true)
 	check(ItemDB.worn_item("top", dressed) == "raincoat_yellow", "a designed piece being worn is found as itself")
+	# The fitting room: clothes bought there go straight into the wardrobe.
+	Inventory.add_currency(5000)
+	var rail := Shop.stock(7, 100, "", "tailors")
+	check(Shop.buy(rail[0], 100, "tailors", true) == "" and rail[0] in Inventory.closet and Inventory.count_of(rail[0]) == 0
+		and Shop.is_sold_out(rail[0], 100, "tailors"), "a piece bought in the fitting room goes into the wardrobe")
+	var fitting := CharacterCreator.new()
+	add_child(fitting)
+	fitting.open_fitting(Appearance.DEFAULT.duplicate(), rail)
+	fitting._select_tab(7)
+	check(fitting._content.find_children("*", "", true, false).any(func(n): return n is Label and n.text.begins_with("On the rail")),
+		"the fitting room shows the rail")
+	var got := [{}]
+	fitting.fitted.connect(func(l): got[0] = l)
+	fitting._done()
+	check(not got[0].is_empty(), "and hands back what you had on, without buying it")
+	fitting.free()
+	Game.mode = Game.Mode.PLAY
+	check(ItemDB.placeable("fitting_mirror").get("mirror", false) and Models.get_mesh("fitting_mirror").get_surface_count() > 0,
+		"there's a mirror to try things on at")
+	var shop_def := ItemDB.placeable("tailor_shop")
+	check(shop_def.has("room") and not Main._kept(shop_def), "the tailors have an inside, set out afresh each visit")
+	var inside := World.new()
+	inside.interior = true
+	add_child(inside)
+	inside.setup(IslandData.room(shop_def["room"]["size"][0], shop_def["room"]["size"][1]))
+	Main.fill_tailors(inside)
+	check(not inside.building("fitting_mirror").is_empty() and inside.objects().size() == Main.TAILORS_FITTINGS.size(),
+		"rails, mannequins and the mirror all fit inside")
+	for entry: Array in Main.TAILORS_INSIDE:
+		check(inside.object_at(floori(entry[1].x), floori(entry[1].y)).is_empty(), "%s has somewhere to stand" % entry[0])
+	inside.free()
 	var lucy := Shop.stock(7, 100)
 	check(lucy.any(func(id): return ItemDB.get_item(id).get("basic", false)), "Lucy sells everyday clothes")
 	check(Shop.stock(7, 100, "", "tailors").all(func(id): return ItemDB.get_item(id).has("base")), "the tailors sell designed ones")
@@ -1354,6 +1385,15 @@ func _test_tour_visitors() -> void:
 	plot["item"] = "neighbour_house"
 	plot["resident"] = "kiwi"
 	check(Story.visitor_today() == "", "and stop visiting once they live here")
+
+	# A second island (a tour) keeps its plaza to itself.
+	var other := World.new()
+	add_child(other)
+	other.setup(IslandGenerator.generate_tour(99, d.native_fruit, d.native_flower))
+	var home_plaza: Vector4 = (w.get_node("Ground") as MeshInstance3D).material_override.get_shader_parameter("plaza")
+	check(home_plaza == Vector4(d.plaza.position.x, d.plaza.position.y, d.plaza.size.x, d.plaza.size.y),
+		"the home island's paving stays where its plaza is, whatever island was built since")
+	other.free()
 
 	# Moving out: with three settled neighbours, now and then one wonders about leaving.
 	Story.reset()

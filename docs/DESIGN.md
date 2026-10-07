@@ -225,14 +225,17 @@ Milestone 3b:
   a keepsake and pack up overnight, freeing their plot
 - [x] DIY Recipes on the phone: the recipes you know and what they need
 
+- [x] Inside the tailors: walk in to find Daisy at the counter and Morris by the rails;
+  the fitting mirror (or "Try things on" with Daisy) opens the wardrobe with today's
+  rail, and what you keep on is bought straight into the wardrobe
+
 Next milestones (suggested order):
-4. A try-on mirror at the tailors.
-5. More to find on tours: other kinds of tree on rare islands, flower breeding for the
+4. More to find on tours: other kinds of tree on rare islands, flower breeding for the
    rare colours.
-6. Path tool, terraforming, waterscaping, rock moving.
-7. Weather and seasons; sound effects (music is in: four pieces each for morning,
+5. Path tool, terraforming, waterscaping, rock moving.
+6. Weather and seasons; sound effects (music is in: four pieces each for morning,
    afternoon and evening, taking turns by the hour).
-8. Platform work: touch controls, performance passes, Switch porting.
+7. Platform work: touch controls, performance passes, Switch porting.
 
 ## Characters
 

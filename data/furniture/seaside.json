@@ -1,0 +1,237 @@
+{
+	"id": "seaside",
+	"name": "Seaside",
+	"desc": "Stripes, rope and sunshine, for a beach-hut feel.",
+	"variants": [
+		{
+			"id": "sailor",
+			"name": "Sailor",
+			"wood": "f4f1ea",
+			"trim": "3a5a8a",
+			"fabric": [
+				"f7f4ee",
+				"3a66b0",
+				"wide_stripes"
+			],
+			"accent": "e0656b"
+		},
+		{
+			"id": "sunset",
+			"name": "Sunset",
+			"wood": "f6e2c8",
+			"trim": "d8905a",
+			"fabric": [
+				"fff4e6",
+				"f2994a",
+				"stripes"
+			],
+			"accent": "f6d58c"
+		},
+		{
+			"id": "mint",
+			"name": "Mint",
+			"wood": "dff0e2",
+			"trim": "8fc0a8",
+			"fabric": [
+				"f2fbf6",
+				"56aaa6",
+				"waves"
+			],
+			"accent": "f6aac4"
+		},
+		{
+			"id": "sand",
+			"name": "Sandcastle",
+			"wood": "eedcb8",
+			"trim": "c4a87a",
+			"fabric": [
+				"fdf6e3",
+				"e0656b",
+				"wide_stripes"
+			],
+			"accent": "78a6dc"
+		}
+	],
+	"pieces": [
+		{
+			"id": "seaside_deckchair",
+			"name": "Striped Deckchair",
+			"kind": "deckchair",
+			"footprint": [
+				1,
+				1
+			],
+			"price": 520,
+			"desc": "A classic striped deckchair.",
+			"params": {},
+			"seat": 0.3,
+			"recipe": {
+				"wood": 4
+			}
+		},
+		{
+			"id": "seaside_parasol",
+			"name": "Beach Umbrella",
+			"kind": "parasol",
+			"footprint": [
+				1,
+				1
+			],
+			"price": 680,
+			"desc": "A big striped umbrella.",
+			"params": {}
+		},
+		{
+			"id": "seaside_hammock",
+			"name": "Hammock",
+			"kind": "hammock",
+			"footprint": [
+				2,
+				1
+			],
+			"price": 1100,
+			"desc": "A sling between two posts, for lazing in.",
+			"params": {},
+			"recipe": {
+				"wood": 6,
+				"tree_branch": 4
+			}
+		},
+		{
+			"id": "seaside_bunting",
+			"name": "Bunting Poles",
+			"kind": "bunting",
+			"footprint": [
+				2,
+				1
+			],
+			"price": 560,
+			"desc": "Flags strung between two poles.",
+			"params": {},
+			"recipe": {
+				"wood": 3,
+				"tree_branch": 2
+			}
+		},
+		{
+			"id": "seaside_chair",
+			"name": "Beach Hut Chair",
+			"kind": "chair",
+			"footprint": [
+				1,
+				1
+			],
+			"price": 480,
+			"desc": "A slatted chair in beach-hut paint.",
+			"params": {
+				"back": "slat",
+				"legs": "plank",
+				"cushion": true
+			},
+			"seat": 0.48
+		},
+		{
+			"id": "seaside_table",
+			"name": "Beach Hut Table",
+			"kind": "table",
+			"footprint": [
+				2,
+				1
+			],
+			"price": 640,
+			"desc": "A long painted table.",
+			"params": {
+				"shape": "rect",
+				"legs": "plank"
+			},
+			"surface": 0.76
+		},
+		{
+			"id": "seaside_crate",
+			"name": "Fish Crate",
+			"kind": "crate",
+			"footprint": [
+				1,
+				1
+			],
+			"price": 360,
+			"desc": "A painted crate with rope handles.",
+			"params": {
+				"rope": true
+			},
+			"surface": 0.56
+		},
+		{
+			"id": "seaside_aquarium",
+			"name": "Rock Pool Tank",
+			"kind": "aquarium",
+			"footprint": [
+				2,
+				1
+			],
+			"price": 1500,
+			"desc": "A tank of little fish and sea weed.",
+			"params": {}
+		},
+		{
+			"id": "seaside_cushion",
+			"name": "Beach Pouf",
+			"kind": "floor_cushion",
+			"footprint": [
+				1,
+				1
+			],
+			"price": 320,
+			"desc": "A squashy pouf to sit on.",
+			"params": {},
+			"seat": 0.2
+		},
+		{
+			"id": "seaside_lamp",
+			"name": "Lantern",
+			"kind": "table_lamp",
+			"footprint": [
+				1,
+				1
+			],
+			"price": 420,
+			"desc": "A little lantern for the windowsill.",
+			"params": {
+				"shade": "lantern"
+			},
+			"light": true,
+			"small": true
+		},
+		{
+			"id": "seaside_rug",
+			"name": "Beach Towel Rug",
+			"kind": "rug",
+			"footprint": [
+				3,
+				2
+			],
+			"price": 620,
+			"desc": "A towel-striped rug.",
+			"params": {
+				"shape": "rect",
+				"border": false,
+				"fringe": true
+			},
+			"rug": true
+		},
+		{
+			"id": "seaside_pot",
+			"name": "Palm Pot",
+			"kind": "potted_plant",
+			"footprint": [
+				1,
+				1
+			],
+			"price": 420,
+			"desc": "A little palm in a painted pot.",
+			"params": {
+				"plant": "palm"
+			}
+		}
+	]
+}

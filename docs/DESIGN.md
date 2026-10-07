@@ -232,6 +232,12 @@ Milestone 3b:
   rugged canvas tent, with poles) where they work; Bramble stands in the museum too.
   Marlow's dock is on the south shore; neighbours stay off cliffs; the KayKit buildings
   are a size up
+- [x] Five more furniture series (Garden Party, Seaside, Scholar's Study, Hearth & Home,
+  Playroom; 240 items) from 27 new kinds of piece: planters, pots, vases, clocks,
+  wardrobes, desks, fireplaces, pianos, screens, floor cushions, coat stands, parasols,
+  deckchairs, hammocks, swings, rose arches, bird baths, picnic blankets, globes,
+  gramophones, rocking horses, fish tanks, fountains, lamp posts, bunting, telescopes and
+  toy boxes; some neighbours furnish with them. 27 more wallpapers and floors
 
 Next milestones (suggested order):
 4. More to find on tours: other kinds of tree on rare islands, flower breeding for the

@@ -74,6 +74,33 @@ static func build(main: MeshKit, fabric: MeshKit, spec: Dictionary, glowing: Mes
 		"bench": s._bench()
 		"crate": s._crate()
 		"rug": s._rug()
+		"planter": s._planter()
+		"potted_plant": s._potted_plant()
+		"vase": s._vase()
+		"clock": s._clock()
+		"wardrobe": s._wardrobe()
+		"desk": s._desk()
+		"fireplace": s._fireplace()
+		"piano": s._piano()
+		"screen": s._screen()
+		"floor_cushion": s._floor_cushion()
+		"coat_rack": s._coat_rack()
+		"parasol": s._parasol()
+		"deckchair": s._deckchair()
+		"hammock": s._hammock()
+		"swing": s._swing()
+		"arch": s._arch()
+		"bird_bath": s._bird_bath()
+		"picnic": s._picnic()
+		"globe": s._globe()
+		"record_player": s._record_player()
+		"rocking_horse": s._rocking_horse()
+		"aquarium": s._aquarium()
+		"fountain": s._fountain()
+		"lamp_post": s._lamp_post()
+		"bunting": s._bunting_poles()
+		"telescope": s._telescope()
+		"toy_box": s._toy_box()
 		"curtains":
 			# A window dressed with the curtains, for icons.
 			main.box(Vector3(0, 0.75, -0.06), Vector3(1.3, 1.5, 0.04), MeshKit.lin(Color("fbf0d9")))
@@ -290,6 +317,15 @@ func _table() -> void:
 			f.cylinder(Vector3(0, top - 0.08, 0), Vector3(0, top, 0), r, r - 0.02, FABRIC, 20, true)
 			f.xform = Transform3D.IDENTITY
 			sprouts(Vector2(0.55, 0.45), 3)
+		"round":
+			# A round top on a turned pedestal with three feet, a cloth in the middle.
+			var r := minf(size.x, size.y) * 0.46
+			k.cylinder(Vector3(0, top - 0.06, 0), Vector3(0, top, 0), r, r, wood, 18, true, wood_light)
+			leg(Vector3(0, 0.08, 0), Vector3(0, top - 0.06, 0), style, 0.06)
+			for i in 3:
+				var a := TAU * i / 3.0 + 0.5
+				k.cylinder(Vector3(0, 0.1, 0), Vector3(cos(a) * r * 0.7, 0.0, sin(a) * r * 0.7), 0.04, 0.03, wood, 6, true)
+			f.cylinder(Vector3(0, top, 0), Vector3(0, top + 0.006, 0), r * 0.62, r * 0.62, FABRIC, 16, true)
 		"slab":
 			k.box(Vector3(0, top - 0.06, 0), Vector3(1.84, 0.12, 0.84), wood, wood_light)
 			for sz: float in [-1.0, 1.0]:
@@ -652,6 +688,468 @@ func _rug() -> void:
 		f.cylinder(Vector3(0, 0.0, 0), Vector3(0, 0.02, 0), r, r, FABRIC_TRIM, 28, true)
 	f.cylinder(Vector3(0, 0.0, 0), Vector3(0, 0.024, 0), r - (0.09 if border else 0.0), r - (0.09 if border else 0.0), FABRIC, 28, true)
 	f.xform = Transform3D.IDENTITY
+
+
+# --- More pieces: plants, cabinets and things for the garden and the beach ----------
+
+const LEAF := Color("7fbf6a")
+const LEAF_DARK := Color("5e9a50")
+const STONE := Color("cfc6b8")
+const WATER := Color("8fd0e0")
+const PETALS := [Color("f2a7a0"), Color("f6d58c"), Color("c6b2ea"), Color("fbf3e6"), Color("f6aac4")]
+
+
+## A few flowers on stalks round `at` (petals in the accent and soft pastels).
+func _blooms(at: Vector3, spread: float, count: int, height: float) -> void:
+	for i in count:
+		var a := TAU * i / count + 0.4
+		var r := spread * (0.4 + 0.6 * float(i % 2))
+		var base := at + Vector3(cos(a) * r, 0, sin(a) * r)
+		var top := base + Vector3(0, height * (0.8 + 0.25 * float(i % 3) / 2.0), 0)
+		k.cylinder(base, top, 0.008, 0.008, MeshKit.lin(LEAF_DARK), 4, false)
+		var petal: Color = accent if i % 3 == 0 else MeshKit.lin(PETALS[i % PETALS.size()])
+		k.sphere(top, Vector3(0.045, 0.03, 0.045), petal, 3, 7)
+		k.sphere(top + Vector3(0, 0.02, 0), Vector3.ONE * 0.016, MeshKit.lin(Color("f6d58c")), 2, 5)
+
+
+## A leafy mound (a bush in a pot or planter), swaying a little.
+func _foliage(centre: Vector3, r: Vector3) -> void:
+	k.sphere(centre, r, MeshKit.lin(LEAF, 0.4), 5, 10, 0.25)
+	for i in 5:
+		var a := TAU * i / 5.0
+		k.sphere(centre + Vector3(cos(a) * r.x * 0.55, r.y * 0.35, sin(a) * r.z * 0.55), r * 0.55, MeshKit.lin(LEAF_DARK if i % 2 == 0 else LEAF, 0.5), 4, 8, 0.25)
+
+
+func _planter() -> void:
+	var w := size.x * 0.84
+	# A plank box, painted, full of soil and flowers.
+	k.box(Vector3(0, 0.2, 0), Vector3(w, 0.4, 0.62), wood, wood_light)
+	for sx: float in [-1.0, 1.0]:
+		k.box(Vector3(sx * (w * 0.5 - 0.03), 0.21, 0), Vector3(0.08, 0.44, 0.66), trim)
+	k.box(Vector3(0, 0.39, 0), Vector3(w - 0.08, 0.04, 0.54), MeshKit.lin(Color("8a6a50")))
+	var count := int(w / 0.12)
+	for i in count:
+		var x := lerpf(-w * 0.5 + 0.1, w * 0.5 - 0.1, i / maxf(count - 1.0, 1.0))
+		_blooms(Vector3(x, 0.4, (i % 2) * 0.12 - 0.06), 0.05, 2, 0.22)
+	for sz: float in [-1.0, 1.0]:
+		k.box(Vector3(0, 0.12, sz * 0.32), Vector3(w * 0.7, 0.05, 0.01), accent)
+
+
+func _potted_plant() -> void:
+	# A painted pot with a rim.
+	k.cylinder(Vector3.ZERO, Vector3(0, 0.34, 0), 0.17, 0.22, accent, 12, true)
+	k.cylinder(Vector3(0, 0.32, 0), Vector3(0, 0.38, 0), 0.24, 0.24, trim, 12, true)
+	k.cylinder(Vector3(0, 0.37, 0), Vector3(0, 0.38, 0), 0.21, 0.21, MeshKit.lin(Color("8a6a50")), 12, true)
+	match params.get("plant", "leafy"):
+		"cactus":
+			k.cylinder(Vector3(0, 0.37, 0), Vector3(0, 0.95, 0), 0.11, 0.1, MeshKit.lin(Color("8fbf73")), 10, true)
+			k.sphere(Vector3(0, 0.95, 0), Vector3(0.1, 0.06, 0.1), MeshKit.lin(Color("8fbf73")), 4, 10)
+			for sx: float in [-1.0, 1.0]:
+				k.cylinder(Vector3(sx * 0.1, 0.62, 0), Vector3(sx * 0.2, 0.62, 0), 0.05, 0.05, MeshKit.lin(Color("8fbf73")), 8, false)
+				k.cylinder(Vector3(sx * 0.2, 0.6, 0), Vector3(sx * 0.2, 0.8, 0), 0.05, 0.045, MeshKit.lin(Color("8fbf73")), 8, true)
+			k.sphere(Vector3(0, 1.02, 0), Vector3(0.05, 0.03, 0.05), accent, 3, 7)
+		"palm":
+			k.cylinder(Vector3(0, 0.37, 0), Vector3(0.04, 1.05, 0), 0.035, 0.03, MeshKit.lin(Color("a07a52")), 6, true)
+			for i in 6:
+				var a := TAU * i / 6.0
+				k.leaf(Vector3(0.04, 1.05, 0), Vector3(cos(a), 0.35, sin(a)), 0.45, 0.13, MeshKit.lin(LEAF, 0.6), 0.25)
+		_:
+			_foliage(Vector3(0, 0.62, 0), Vector3(0.26, 0.26, 0.26))
+
+
+func _vase() -> void:
+	k.sphere(Vector3(0, 0.1, 0), Vector3(0.1, 0.11, 0.1), accent, 6, 12)
+	k.cylinder(Vector3(0, 0.17, 0), Vector3(0, 0.27, 0), 0.05, 0.065, accent, 12, false)
+	k.cylinder(Vector3(0, 0.26, 0), Vector3(0, 0.28, 0), 0.07, 0.07, trim, 12, true)
+	_blooms(Vector3(0, 0.27, 0), 0.04, 4, 0.18)
+
+
+func _clock() -> void:
+	# A grandfather clock: a tall case, a round face and a pendulum behind glass.
+	k.box(Vector3(0, 0.06, -0.12), Vector3(0.6, 0.12, 0.44), trim)
+	k.box(Vector3(0, 0.75, -0.12), Vector3(0.46, 1.3, 0.36), wood, wood_light)
+	k.box(Vector3(0, 1.62, -0.12), Vector3(0.58, 0.46, 0.42), wood, wood_light)
+	k.box(Vector3(0, 1.88, -0.12), Vector3(0.64, 0.08, 0.46), trim)
+	k.cylinder(Vector3(0, 1.62, 0.09), Vector3(0, 1.62, 0.11), 0.19, 0.19, trim, 18, true)
+	k.cylinder(Vector3(0, 1.62, 0.1), Vector3(0, 1.62, 0.12), 0.16, 0.16, MeshKit.lin(Color("fbf3e6")), 18, true)
+	k.box(Vector3(0, 1.66, 0.125), Vector3(0.015, 0.1, 0.01), MeshKit.lin(Color("4a3a32")))
+	k.box(Vector3(0.03, 1.62, 0.125), Vector3(0.08, 0.015, 0.01), MeshKit.lin(Color("4a3a32")))
+	for i in 12:
+		var a := TAU * i / 12.0
+		k.box(Vector3(cos(a) * 0.13, 1.62 + sin(a) * 0.13, 0.125), Vector3(0.015, 0.015, 0.01), MeshKit.lin(Color("4a3a32")))
+	k.box(Vector3(0, 0.8, 0.07), Vector3(0.3, 0.8, 0.02), MeshKit.lin(Color("e6d8b8")))
+	k.cylinder(Vector3(0, 1.15, 0.085), Vector3(0, 0.62, 0.085), 0.012, 0.012, accent, 5, false)
+	k.cylinder(Vector3(0, 0.56, 0.08), Vector3(0, 0.56, 0.1), 0.07, 0.07, accent, 12, true)
+
+
+func _wardrobe() -> void:
+	var hw := size.x * 0.44
+	var z := -0.22
+	k.box(Vector3(0, 0.05, z), Vector3(hw * 2.0 + 0.04, 0.1, 0.56), trim)
+	k.box(Vector3(0, 0.95, z), Vector3(hw * 2.0, 1.7, 0.52), wood, wood_light)
+	k.box(Vector3(0, 1.84, z), Vector3(hw * 2.0 + 0.1, 0.1, 0.6), trim)
+	var front := z + 0.27
+	for sx: float in [-1.0, 1.0]:
+		k.box(Vector3(sx * hw * 0.5, 0.98, front), Vector3(hw - 0.07, 1.5, 0.03), wood_light)
+		k.box(Vector3(sx * hw * 0.5, 0.98, front + 0.01), Vector3(hw - 0.22, 1.25, 0.03), wood)
+		k.sphere(Vector3(sx * 0.07, 1.0, front + 0.04), Vector3(0.035, 0.035, 0.03), accent, 3, 6)
+	if params.get("hearts", false):
+		heart(Vector3(0, 1.72, front + 0.03), 0.6, accent)
+
+
+func _desk() -> void:
+	var hw := size.x * 0.44
+	var top := 0.76
+	k.box(Vector3(0, top - 0.03, -0.05), Vector3(hw * 2.0, 0.06, 0.6), wood, wood_light)
+	# Drawers on the right, legs on the left.
+	k.box(Vector3(hw - 0.24, (top - 0.06) * 0.5, -0.05), Vector3(0.44, top - 0.06, 0.56), wood)
+	for r in 3:
+		drawer(Vector3(hw - 0.24, 0.13 + r * 0.22, 0.24), Vector2(0.38, 0.17), wood_light)
+	for sz: float in [-1.0, 1.0]:
+		leg(Vector3(-hw + 0.06, 0, -0.05 + sz * 0.24), Vector3(-hw + 0.06, top - 0.06, -0.05 + sz * 0.24), params.get("legs", "turned"))
+	# A lamp, a book and a pen pot.
+	k.cylinder(Vector3(-hw + 0.3, top, -0.2), Vector3(-hw + 0.3, top + 0.02, -0.2), 0.08, 0.08, trim, 10, true)
+	k.cylinder(Vector3(-hw + 0.3, top, -0.2), Vector3(-hw + 0.38, top + 0.3, -0.2), 0.012, 0.012, trim, 5, false)
+	k.cone(Vector3(-hw + 0.4, top + 0.24, -0.15), Vector3(-hw + 0.38, top + 0.36, -0.2), 0.1, accent, 10)
+	k.box(Vector3(0.0, top + 0.02, 0.05), Vector3(0.3, 0.03, 0.22), MeshKit.lin(BOOKS[1]))
+	k.cylinder(Vector3(0.25, top, -0.2), Vector3(0.25, top + 0.12, -0.2), 0.04, 0.04, accent, 8, true)
+
+
+func _fireplace() -> void:
+	var hw := size.x * 0.45
+	var z := -0.25
+	var stone := MeshKit.lin(Color(params.get("stone", "cfc6b8")))
+	# A chimney breast with an opening, a hearth and a wooden mantel.
+	k.box(Vector3(0, 0.6, z), Vector3(hw * 2.0, 1.2, 0.5), stone)
+	k.box(Vector3(0, 0.38, z + 0.2), Vector3(0.9, 0.62, 0.12), MeshKit.lin(Color("3a2e2a")))
+	k.box(Vector3(0, 0.04, z + 0.32), Vector3(hw * 2.0 + 0.1, 0.08, 0.32), stone.darkened(0.08))
+	k.box(Vector3(0, 1.22, z + 0.06), Vector3(hw * 2.0 + 0.14, 0.08, 0.62), wood, wood_light)
+	k.box(Vector3(0, 1.7, z - 0.05), Vector3(hw * 1.3, 0.9, 0.36), stone)
+	for sx: float in [-1.0, 1.0]:
+		k.box(Vector3(sx * 0.5, 0.42, z + 0.26), Vector3(0.12, 0.84, 0.06), stone.lightened(0.06))
+	# Logs, and a fire that glows at night.
+	for i in 3:
+		k.cylinder(Vector3(-0.28 + i * 0.02, 0.12 + (i % 2) * 0.06, z + 0.2 + i * 0.04), Vector3(0.28, 0.12 + (i % 2) * 0.06, z + 0.24 - i * 0.03),
+			0.05, 0.05, MeshKit.lin(Color("8a6040")), 7, true, log_end)
+	for i in 3:
+		g.cone(Vector3(-0.15 + i * 0.15, 0.17, z + 0.24), Vector3(-0.15 + i * 0.15, 0.42 - absf(i - 1.0) * 0.08, z + 0.24), 0.09, MeshKit.lin(Color("f6a050")), 7)
+	g.cone(Vector3(0, 0.17, z + 0.26), Vector3(0, 0.33, z + 0.26), 0.07, MeshKit.lin(Color("ffe08a")), 7)
+	# Things on the mantel.
+	_blooms(Vector3(-hw + 0.25, 1.26, z + 0.08), 0.03, 3, 0.14)
+	k.cylinder(Vector3(hw - 0.25, 1.26, z + 0.08), Vector3(hw - 0.25, 1.4, z + 0.08), 0.03, 0.03, MeshKit.lin(PILLOW), 6, true)
+	g.sphere(Vector3(hw - 0.25, 1.44, z + 0.08), Vector3(0.02, 0.03, 0.02), glow, 3, 5)
+
+
+func _piano() -> void:
+	var hw := size.x * 0.44
+	var z := -0.2
+	k.box(Vector3(0, 0.62, z), Vector3(hw * 2.0, 1.24, 0.44), wood, wood_light)
+	k.box(Vector3(0, 1.27, z), Vector3(hw * 2.0 + 0.06, 0.06, 0.5), trim)
+	# The keyboard sticking out, white keys and black.
+	k.box(Vector3(0, 0.7, z + 0.33), Vector3(hw * 2.0 - 0.1, 0.06, 0.24), wood)
+	k.box(Vector3(0, 0.74, z + 0.35), Vector3(hw * 2.0 - 0.2, 0.025, 0.16), MeshKit.lin(Color("fbf6ea")))
+	var keys := int((hw * 2.0 - 0.2) / 0.06)
+	for i in keys:
+		if i % 7 in [0, 1, 3, 4, 5]:
+			k.box(Vector3(-hw + 0.13 + i * 0.06, 0.765, z + 0.31), Vector3(0.03, 0.025, 0.09), MeshKit.lin(Color("3a3236")))
+	for sx: float in [-1.0, 1.0]:
+		k.box(Vector3(sx * (hw - 0.04), 0.35, z + 0.32), Vector3(0.06, 0.7, 0.08), wood)
+	k.box(Vector3(0, 1.0, z + 0.235), Vector3(0.5, 0.3, 0.02), MeshKit.lin(Color("fbf3e6")))
+	k.box(Vector3(0, 0.25, z + 0.235), Vector3(hw * 1.4, 0.28, 0.02), wood_light)
+
+
+func _screen() -> void:
+	var hw := size.x * 0.44
+	for i in 3:
+		var x := lerpf(-hw * 0.66, hw * 0.66, i / 2.0)
+		var turn := 0.25 if i != 1 else 0.0
+		k.xform = Transform3D(Basis(Vector3.UP, turn * (1.0 if i == 0 else -1.0)), Vector3(x, 0, (0.08 if i != 1 else -0.05)))
+		f.xform = k.xform
+		for sx: float in [-1.0, 1.0]:
+			k.box(Vector3(sx * hw * 0.32, 0.8, 0), Vector3(0.05, 1.6, 0.05), wood)
+		k.box(Vector3(0, 1.6, 0), Vector3(hw * 0.68, 0.05, 0.05), wood_light)
+		k.box(Vector3(0, 0.12, 0), Vector3(hw * 0.68, 0.05, 0.05), wood_light)
+		f.box(Vector3(0, 0.86, 0), Vector3(hw * 0.6, 1.4, 0.02), FABRIC)
+	k.xform = Transform3D.IDENTITY
+	f.xform = Transform3D.IDENTITY
+
+
+func _floor_cushion() -> void:
+	cushion(Vector3(0, 0.1, 0), Vector3(0.62, 0.2, 0.62), 0.06)
+	k.sphere(Vector3(0, 0.27, 0), Vector3(0.04, 0.02, 0.04), accent, 3, 6)
+
+
+func _coat_rack() -> void:
+	k.cylinder(Vector3.ZERO, Vector3(0, 0.04, 0), 0.2, 0.2, wood, 10, true, wood_light)
+	leg(Vector3(0, 0.04, 0), Vector3(0, 1.62, 0), "turned", 0.035)
+	k.sphere(Vector3(0, 1.66, 0), Vector3.ONE * 0.05, wood_light, 3, 7)
+	for i in 4:
+		var a := TAU * i / 4.0 + 0.4
+		k.cylinder(Vector3(0, 1.48, 0), Vector3(cos(a) * 0.17, 1.58, sin(a) * 0.17), 0.015, 0.015, trim, 5, true)
+	# A scarf and a hat hanging up.
+	f.box(Vector3(0.12, 1.32, 0.06), Vector3(0.1, 0.42, 0.04), FABRIC)
+	k.cylinder(Vector3(-0.14, 1.48, -0.06), Vector3(-0.14, 1.62, -0.06), 0.11, 0.09, accent, 12, true)
+	k.cylinder(Vector3(-0.14, 1.47, -0.06), Vector3(-0.14, 1.49, -0.06), 0.17, 0.17, accent, 12, true)
+
+
+func _parasol() -> void:
+	k.cylinder(Vector3.ZERO, Vector3(0, 0.08, 0), 0.22, 0.2, MeshKit.lin(STONE), 12, true)
+	k.cylinder(Vector3(0, 0.08, 0), Vector3(0, 1.9, 0), 0.03, 0.03, trim, 6, false)
+	# A canopy of eight panels, alternating fabric and its trim.
+	var r := 0.95
+	for i in 8:
+		var a0 := TAU * i / 8.0
+		var a1 := TAU * (i + 1) / 8.0
+		var tip := Vector3(0, 1.98, 0)
+		var p0 := Vector3(cos(a0) * r, 1.62, sin(a0) * r)
+		var p1 := Vector3(cos(a1) * r, 1.62, sin(a1) * r)
+		var col := FABRIC if i % 2 == 0 else FABRIC_TRIM
+		var n := (p0 - tip).cross(p1 - tip).normalized()
+		if n.y < 0.0:
+			n = -n
+		var ia := f.vertex(tip, n, col, Vector2(tip.x, tip.z))
+		var ib := f.vertex(p0, n, col, Vector2(p0.x, p0.z))
+		var ic := f.vertex(p1, n, col, Vector2(p1.x, p1.z))
+		f.tri(ia, ib, ic, n)
+		f.tri(ia, ic, ib, -n)
+	k.sphere(Vector3(0, 2.0, 0), Vector3.ONE * 0.04, trim, 3, 6)
+
+
+func _deckchair() -> void:
+	# A folding frame with a fabric sling, leaning back.
+	for sx: float in [-1.0, 1.0]:
+		k.cylinder(Vector3(sx * 0.24, 0, 0.3), Vector3(sx * 0.24, 0.78, -0.28), 0.025, 0.025, wood, 5, true)
+		k.cylinder(Vector3(sx * 0.24, 0, -0.18), Vector3(sx * 0.24, 0.42, 0.18), 0.025, 0.025, wood, 5, true)
+	for z: float in [0.3, -0.28]:
+		var y := 0.0 if z > 0.0 else 0.78
+		k.cylinder(Vector3(-0.24, y + 0.02, z), Vector3(0.24, y + 0.02, z), 0.022, 0.022, wood_light, 5, true)
+	var a := Vector3(0, 0.28, 0.22)
+	var b := Vector3(0, 0.74, -0.26)
+	for i in 4:
+		var t0 := i / 4.0
+		var t1 := (i + 1) / 4.0
+		var sag := func(t: float) -> float: return -sin(t * PI) * 0.06
+		var c0: Vector3 = a.lerp(b, t0) + Vector3(0, sag.call(t0), 0)
+		var c1: Vector3 = a.lerp(b, t1) + Vector3(0, sag.call(t1), 0)
+		f.flat_quad(c0 + Vector3(-0.22, 0, 0), c0 + Vector3(0.22, 0, 0), c1 + Vector3(0.22, 0, 0), c1 + Vector3(-0.22, 0, 0),
+			Vector3(0, 0.7, 0.7).normalized(), FABRIC)
+		f.flat_quad(c1 + Vector3(-0.22, 0, 0), c1 + Vector3(0.22, 0, 0), c0 + Vector3(0.22, 0, 0), c0 + Vector3(-0.22, 0, 0),
+			Vector3(0, -0.7, -0.7).normalized(), FABRIC)
+
+
+func _hammock() -> void:
+	var hw := size.x * 0.46
+	for sx: float in [-1.0, 1.0]:
+		k.cylinder(Vector3(sx * hw, 0, 0), Vector3(sx * hw, 1.2, 0), 0.05, 0.045, wood, 7, true, log_end)
+		k.cylinder(Vector3(sx * hw, 0, 0), Vector3(sx * hw * 0.8, 0.02, 0.25), 0.03, 0.03, wood, 5, true)
+		k.cylinder(Vector3(sx * hw, 0, 0), Vector3(sx * hw * 0.8, 0.02, -0.25), 0.03, 0.03, wood, 5, true)
+	# A sling hanging between them.
+	var steps := 8
+	for i in steps:
+		var t0 := float(i) / steps
+		var t1 := float(i + 1) / steps
+		var x0 := lerpf(-hw * 0.82, hw * 0.82, t0)
+		var x1 := lerpf(-hw * 0.82, hw * 0.82, t1)
+		var y0 := 0.95 - sin(t0 * PI) * 0.4
+		var y1 := 0.95 - sin(t1 * PI) * 0.4
+		f.flat_quad(Vector3(x0, y0, -0.28), Vector3(x0, y0, 0.28), Vector3(x1, y1, 0.28), Vector3(x1, y1, -0.28), Vector3.UP, FABRIC if i % 2 == 0 else FABRIC_TRIM)
+		f.flat_quad(Vector3(x1, y1 - 0.01, -0.28), Vector3(x1, y1 - 0.01, 0.28), Vector3(x0, y0 - 0.01, 0.28), Vector3(x0, y0 - 0.01, -0.28), Vector3.DOWN, FABRIC)
+	for sx: float in [-1.0, 1.0]:
+		k.cylinder(Vector3(sx * hw, 1.05, 0), Vector3(sx * hw * 0.82, 0.95, 0), 0.012, 0.012, MeshKit.lin(ROPE), 4, false)
+	cushion(Vector3(-hw * 0.5, 0.78, 0), Vector3(0.3, 0.1, 0.36), 0.03)
+
+
+func _swing() -> void:
+	var hw := size.x * 0.46
+	var top := 1.75
+	for sx: float in [-1.0, 1.0]:
+		for sz: float in [-1.0, 1.0]:
+			k.cylinder(Vector3(sx * hw, 0, sz * 0.35), Vector3(sx * hw, top, 0), 0.04, 0.04, wood, 6, true)
+	k.cylinder(Vector3(-hw - 0.06, top, 0), Vector3(hw + 0.06, top, 0), 0.05, 0.05, wood, 8, true, log_end)
+	var seat := 0.45
+	k.box(Vector3(0, seat - 0.03, 0), Vector3(1.0, 0.06, 0.36), wood_light)
+	k.box(Vector3(0, seat + 0.25, -0.17), Vector3(1.0, 0.36, 0.05), wood_light)
+	for sx: float in [-1.0, 1.0]:
+		k.cylinder(Vector3(sx * 0.46, top, 0), Vector3(sx * 0.46, seat, 0.05), 0.012, 0.012, MeshKit.lin(ROPE), 4, false)
+	cushion(Vector3(0, seat + 0.03, 0.02), Vector3(0.9, 0.05, 0.3), 0.02)
+	_blooms(Vector3(-hw, top, 0), 0.08, 4, 0.06)
+
+
+func _arch() -> void:
+	var hw := size.x * 0.44
+	var h := 1.9
+	for sx: float in [-1.0, 1.0]:
+		for sz: float in [-1.0, 1.0]:
+			k.box(Vector3(sx * hw, h * 0.5, sz * 0.15), Vector3(0.06, h, 0.06), wood)
+		for y in 5:
+			k.box(Vector3(sx * hw, 0.3 + y * 0.32, 0), Vector3(0.05, 0.04, 0.36), wood_light)
+	# The curved top, and leaves and flowers climbing it.
+	var steps := 8
+	for i in steps:
+		var a0 := PI * i / steps
+		var a1 := PI * (i + 1) / steps
+		for sz: float in [-1.0, 1.0]:
+			k.cylinder(Vector3(cos(a0) * hw, h + sin(a0) * hw * 0.5, sz * 0.15), Vector3(cos(a1) * hw, h + sin(a1) * hw * 0.5, sz * 0.15),
+				0.035, 0.035, wood, 5, false)
+	for i in 14:
+		var t := float(i) / 13.0
+		var a := PI * t
+		var p := Vector3(cos(a) * hw, h + sin(a) * hw * 0.5, 0) if i > 2 and i < 11 else Vector3((-1.0 if i <= 2 else 1.0) * hw, 0.5 + float(i % 3) * 0.45, 0)
+		k.sphere(p, Vector3(0.12, 0.1, 0.16), MeshKit.lin(LEAF if i % 2 == 0 else LEAF_DARK, 0.4), 4, 7)
+		if i % 2 == 0:
+			k.sphere(p + Vector3(0, 0.05, 0.13), Vector3.ONE * 0.045, accent if i % 4 == 0 else MeshKit.lin(PETALS[i % PETALS.size()]), 3, 6)
+
+
+func _bird_bath() -> void:
+	var stone := MeshKit.lin(Color(params.get("stone", "cfc6b8")))
+	k.cylinder(Vector3.ZERO, Vector3(0, 0.08, 0), 0.22, 0.2, stone, 12, true)
+	k.cylinder(Vector3(0, 0.08, 0), Vector3(0, 0.6, 0), 0.08, 0.06, stone, 10, false)
+	k.cylinder(Vector3(0, 0.6, 0), Vector3(0, 0.72, 0), 0.08, 0.34, stone, 14, true)
+	k.cylinder(Vector3(0, 0.72, 0), Vector3(0, 0.76, 0), 0.34, 0.34, stone, 14, false)
+	k.cylinder(Vector3(0, 0.73, 0), Vector3(0, 0.745, 0), 0.29, 0.29, MeshKit.lin(WATER), 14, true)
+	# A little bird on the rim.
+	k.sphere(Vector3(0.24, 0.84, 0.1), Vector3(0.06, 0.05, 0.08), accent, 4, 8)
+	k.sphere(Vector3(0.24, 0.9, 0.16), Vector3.ONE * 0.04, accent, 4, 8)
+	k.cone(Vector3(0.24, 0.9, 0.19), Vector3(0.24, 0.9, 0.24), 0.015, MeshKit.lin(Color("f2b14a")), 4)
+
+
+func _picnic() -> void:
+	# A blanket (a rug with a border) and a basket with a loaf.
+	cushion(Vector3(0, 0.012, 0), Vector3(size.x - 0.2, 0.02, size.y - 0.2), 0.0, FABRIC_TRIM, 1)
+	cushion(Vector3(0, 0.014, 0), Vector3(size.x - 0.36, 0.02, size.y - 0.36), 0.0, FABRIC, 1)
+	k.box(Vector3(0.5, 0.13, -0.45), Vector3(0.42, 0.24, 0.28), wood, wood_light)
+	k.cylinder(Vector3(0.32, 0.25, -0.45), Vector3(0.5, 0.42, -0.45), 0.015, 0.015, wood, 5, false)
+	k.cylinder(Vector3(0.5, 0.42, -0.45), Vector3(0.68, 0.25, -0.45), 0.015, 0.015, wood, 5, false)
+	k.sphere(Vector3(-0.3, 0.06, 0.25), Vector3(0.14, 0.06, 0.09), MeshKit.lin(Color("e0b070")), 4, 8)
+	k.sphere(Vector3(0.1, 0.05, 0.4), Vector3.ONE * 0.06, MeshKit.lin(Color("e05a4a")), 4, 8)
+
+
+func _globe() -> void:
+	k.cylinder(Vector3.ZERO, Vector3(0, 0.03, 0), 0.1, 0.1, trim, 10, true)
+	k.cylinder(Vector3(0, 0.03, 0), Vector3(0, 0.12, 0), 0.015, 0.015, trim, 5, false)
+	k.sphere(Vector3(0, 0.24, 0), Vector3.ONE * 0.12, MeshKit.lin(Color("8fc8e0")), 8, 12)
+	for spot: Vector3 in [Vector3(0.05, 0.28, 0.1), Vector3(-0.08, 0.2, 0.08), Vector3(0.02, 0.17, 0.11)]:
+		k.sphere(spot, Vector3(0.05, 0.04, 0.02), MeshKit.lin(Color("9fcf7a")), 3, 6)
+	for i in 8:
+		var a0 := PI * 0.1 + PI * 0.8 * i / 8.0
+		var a1 := PI * 0.1 + PI * 0.8 * (i + 1) / 8.0
+		k.cylinder(Vector3(sin(a0) * 0.14, 0.24 + cos(a0) * 0.14, 0), Vector3(sin(a1) * 0.14, 0.24 + cos(a1) * 0.14, 0), 0.008, 0.008, accent, 4, false)
+
+
+func _record_player() -> void:
+	k.box(Vector3(0, 0.05, 0), Vector3(0.4, 0.1, 0.32), wood, wood_light)
+	k.cylinder(Vector3(-0.04, 0.1, 0), Vector3(-0.04, 0.115, 0), 0.13, 0.13, MeshKit.lin(Color("3a3236")), 16, true)
+	k.cylinder(Vector3(-0.04, 0.115, 0), Vector3(-0.04, 0.12, 0), 0.04, 0.04, accent, 10, true)
+	k.cylinder(Vector3(0.15, 0.11, -0.1), Vector3(0.06, 0.13, 0.05), 0.01, 0.01, MeshKit.lin(IRON), 4, true)
+	# The horn.
+	k.cylinder(Vector3(0.12, 0.1, -0.1), Vector3(0.14, 0.3, -0.12), 0.02, 0.03, accent, 8, false)
+	k.cylinder(Vector3(0.14, 0.3, -0.12), Vector3(0.16, 0.42, -0.08), 0.03, 0.14, accent, 12, false)
+
+
+func _rocking_horse() -> void:
+	# Rockers, a body, a head with a mane, and a little saddle.
+	for sx: float in [-1.0, 1.0]:
+		for i in 6:
+			var a0 := lerpf(-0.6, 0.6, i / 6.0)
+			var a1 := lerpf(-0.6, 0.6, (i + 1) / 6.0)
+			k.cylinder(Vector3(sx * 0.14, 0.45 - cos(a0) * 0.42, sin(a0) * 0.42), Vector3(sx * 0.14, 0.45 - cos(a1) * 0.42, sin(a1) * 0.42),
+				0.025, 0.025, trim, 5, false)
+		for sz: float in [-1.0, 1.0]:
+			k.cylinder(Vector3(sx * 0.12, 0.08, sz * 0.18), Vector3(sx * 0.08, 0.4, sz * 0.14), 0.025, 0.025, wood, 5, false)
+	k.rounded_box(Vector3(0, 0.46, 0), Vector3(0.22, 0.2, 0.46), wood, 0.5)
+	k.rounded_box(Vector3(0, 0.66, 0.22), Vector3(0.14, 0.32, 0.14), wood, 0.5)
+	k.rounded_box(Vector3(0, 0.8, 0.32), Vector3(0.13, 0.12, 0.2), wood, 0.5)
+	k.box(Vector3(0, 0.75, 0.15), Vector3(0.05, 0.3, 0.1), accent)
+	f.box(Vector3(0, 0.57, -0.02), Vector3(0.24, 0.03, 0.2), FABRIC)
+	k.sphere(Vector3(0.05, 0.84, 0.38), Vector3.ONE * 0.015, MeshKit.lin(Color("3a3236")), 2, 4)
+
+
+func _aquarium() -> void:
+	var hw := size.x * 0.42
+	k.box(Vector3(0, 0.3, -0.1), Vector3(hw * 2.0, 0.6, 0.5), wood, wood_light)
+	k.box(Vector3(0, 0.62, -0.1), Vector3(hw * 2.0 - 0.06, 0.04, 0.46), trim)
+	# The tank: water, sand, weed, stones and fish.
+	k.box(Vector3(0, 0.92, -0.1), Vector3(hw * 2.0 - 0.1, 0.56, 0.4), MeshKit.lin(WATER))
+	k.box(Vector3(0, 0.67, -0.1), Vector3(hw * 2.0 - 0.12, 0.06, 0.42), MeshKit.lin(Color("f2e2b2")))
+	for sx: float in [-1.0, 1.0]:
+		k.box(Vector3(sx * (hw - 0.05), 0.92, -0.1), Vector3(0.03, 0.58, 0.42), trim)
+	k.box(Vector3(0, 1.21, -0.1), Vector3(hw * 2.0 - 0.06, 0.04, 0.44), trim)
+	for i in 4:
+		k.leaf(Vector3(-hw * 0.6 + i * 0.12, 0.7, -0.15), Vector3(0.1 * (i % 2 - 0.5), 1, 0), 0.3 + 0.08 * (i % 2), 0.06, MeshKit.lin(LEAF, 0.5))
+	for fish: Array in [[Vector3(0.1, 0.95, 0.11), Color("f6a050")], [Vector3(-0.2, 1.05, 0.11), Color("f6d58c")], [Vector3(0.35, 0.85, 0.11), Color("78a6dc")]]:
+		k.sphere(fish[0], Vector3(0.06, 0.035, 0.015), MeshKit.lin(fish[1]), 3, 7)
+		k.cone(fish[0] + Vector3(0.05, 0, 0), fish[0] + Vector3(0.1, 0, 0), 0.03, MeshKit.lin(fish[1]), 4)
+	k.sphere(Vector3(hw * 0.5, 0.72, -0.15), Vector3(0.08, 0.05, 0.06), MeshKit.lin(Color("b0a898")), 3, 6)
+
+
+func _fountain() -> void:
+	var stone := MeshKit.lin(Color(params.get("stone", "cfc6b8")))
+	var r := minf(size.x, size.y) * 0.45
+	k.cylinder(Vector3.ZERO, Vector3(0, 0.35, 0), r, r, stone, 20, true)
+	k.cylinder(Vector3(0, 0.35, 0), Vector3(0, 0.36, 0), r - 0.1, r - 0.1, MeshKit.lin(WATER), 20, true)
+	k.cylinder(Vector3(0, 0.33, 0), Vector3(0, 1.0, 0), 0.1, 0.08, stone, 10, false)
+	k.cylinder(Vector3(0, 1.0, 0), Vector3(0, 1.08, 0), 0.08, 0.36, stone, 14, true)
+	k.cylinder(Vector3(0, 1.08, 0), Vector3(0, 1.09, 0), 0.3, 0.3, MeshKit.lin(WATER), 14, true)
+	k.sphere(Vector3(0, 1.2, 0), Vector3(0.08, 0.12, 0.08), stone, 4, 8)
+	# Water spilling over the top bowl.
+	for i in 8:
+		var a := TAU * i / 8.0
+		k.cylinder(Vector3(cos(a) * 0.36, 1.07, sin(a) * 0.36), Vector3(cos(a) * 0.46, 0.36, sin(a) * 0.46), 0.035, 0.02, MeshKit.lin(WATER.lightened(0.2)), 5, false)
+	k.box(Vector3(0, 0.36, r - 0.02), Vector3(0.3, 0.04, 0.04), accent)
+
+
+func _lamp_post() -> void:
+	k.cylinder(Vector3.ZERO, Vector3(0, 0.1, 0), 0.16, 0.14, trim, 10, true)
+	k.cylinder(Vector3(0, 0.1, 0), Vector3(0, 1.85, 0), 0.04, 0.035, trim, 8, false)
+	k.cylinder(Vector3(0, 1.8, 0), Vector3(0.3, 1.86, 0), 0.025, 0.025, trim, 6, false)
+	k.cylinder(Vector3(0.3, 1.86, 0), Vector3(0.3, 1.74, 0), 0.01, 0.01, trim, 4, false)
+	g.box(Vector3(0.3, 1.58, 0), Vector3(0.16, 0.22, 0.16), glow)
+	for sx: float in [-1.0, 1.0]:
+		for sz: float in [-1.0, 1.0]:
+			k.box(Vector3(0.3 + sx * 0.085, 1.58, sz * 0.085), Vector3(0.025, 0.24, 0.025), trim)
+	k.cone(Vector3(0.3, 1.69, 0), Vector3(0.3, 1.78, 0), 0.15, accent, 4)
+
+
+func _bunting_poles() -> void:
+	var hw := size.x * 0.46
+	for sx: float in [-1.0, 1.0]:
+		k.cylinder(Vector3(sx * hw, 0, 0), Vector3(sx * hw, 1.9, 0), 0.04, 0.035, wood, 6, true)
+		k.sphere(Vector3(sx * hw, 1.93, 0), Vector3.ONE * 0.05, accent, 3, 6)
+	var count := int(hw * 2.0 / 0.22)
+	for i in count:
+		var t0 := float(i) / count
+		var t1 := float(i + 1) / count
+		var p0 := Vector3(lerpf(-hw, hw, t0), 1.8 - sin(t0 * PI) * 0.3, 0)
+		var p1 := Vector3(lerpf(-hw, hw, t1), 1.8 - sin(t1 * PI) * 0.3, 0)
+		k.cylinder(p0, p1, 0.006, 0.006, MeshKit.lin(ROPE), 3, false)
+		var mid := (p0 + p1) * 0.5 + Vector3(0, -0.2, 0)
+		var col := FABRIC if i % 2 == 0 else FABRIC_TRIM
+		var ia := f.vertex(p0, Vector3.BACK, col)
+		var ib := f.vertex(p1, Vector3.BACK, col)
+		var ic := f.vertex(mid, Vector3.BACK, col)
+		f.tri(ia, ib, ic, Vector3.BACK)
+		f.tri(ia, ic, ib, Vector3.FORWARD)
+
+
+func _telescope() -> void:
+	for i in 3:
+		var a := TAU * i / 3.0 + 0.5
+		k.cylinder(Vector3(cos(a) * 0.3, 0, sin(a) * 0.3), Vector3(0, 0.95, 0), 0.02, 0.02, wood, 5, true)
+	k.sphere(Vector3(0, 0.97, 0), Vector3.ONE * 0.05, trim, 3, 6)
+	k.cylinder(Vector3(0, 0.98, -0.35), Vector3(0, 1.3, 0.35), 0.06, 0.09, accent, 12, true)
+	k.cylinder(Vector3(0, 1.3, 0.35), Vector3(0, 1.33, 0.4), 0.1, 0.1, trim, 12, true)
+	k.cylinder(Vector3(0, 0.98, -0.35), Vector3(0, 0.95, -0.42), 0.03, 0.025, trim, 8, true)
+
+
+func _toy_box() -> void:
+	k.box(Vector3(0, 0.22, 0), Vector3(0.66, 0.44, 0.5), wood, wood_light)
+	k.box(Vector3(0, 0.47, -0.05), Vector3(0.7, 0.06, 0.56), accent)
+	k.box(Vector3(0, 0.25, 0.255), Vector3(0.5, 0.2, 0.01), wood_light)
+	heart(Vector3(0, 0.27, 0.27), 0.6, accent)
+	# Toys peeking out: a ball, a block and a teddy's ear.
+	k.sphere(Vector3(0.18, 0.56, 0.1), Vector3.ONE * 0.09, MeshKit.lin(Color("f28e7e")), 5, 8)
+	k.box(Vector3(-0.15, 0.55, 0.12), Vector3(0.12, 0.12, 0.12), MeshKit.lin(Color("78a6dc")))
+	k.sphere(Vector3(-0.02, 0.58, -0.12), Vector3.ONE * 0.07, MeshKit.lin(Color("c89a6a")), 4, 8)
 
 
 ## A window in a wall, centred at `centre` and facing +Z (the room), `size` across and

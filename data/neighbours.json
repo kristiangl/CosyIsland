@@ -83,7 +83,7 @@
 			"species": {"kind": "ferret", "fur": "#d6bc9a", "fur2": "#fbf4e8", "stripes": "#a88664", "eyes": "#3a2418", "inner_ear": "#e8bcb4", "nose": "#e3a0a8"},
 			"look": {"eyes": "almond", "mouth": "cat", "cheeks": "none", "top": "waistcoat", "top_color": "navy", "top_color2": "cream", "bottom": "trousers", "bottom_color": "tan", "glasses": "round"},
 			"home": {"wall": "f3ecdf", "roof": "5a6a9a", "door": "c8a060"},
-			"inside": {"series": "lodge", "variant": "birch", "wall": "striped_wallpaper", "floor": "woven_flooring"}
+			"inside": {"series": "study", "variant": "oak", "wall": "striped_wallpaper", "floor": "woven_flooring"}
 		},
 		"crumb": {
 			"name": "Crumb", "personality": "sleepy", "catchphrase": "squeak",
@@ -118,35 +118,35 @@
 			"species": {"kind": "cat", "cactus": true, "fur": "#a8c84a", "fur2": "#a8c84a", "stripes": "#5e8a2a", "eyes": "#2a2a20", "inner_ear": "#7ea03a", "nose": "#f0703a"},
 			"look": {"eyes": "happy", "mouth": "cat", "cheeks": "none", "top": "sundress", "top_color": "cream", "top_color2": "white", "hair_flower": "pansy_red"},
 			"home": {"wall": "f6f0dc", "roof": "7ea03a", "door": "e8603a"},
-			"inside": {"series": "meadow", "variant": "sage", "wall": "mint_dot_wallpaper", "floor": "cream_tile_flooring"}
+			"inside": {"series": "hearth", "variant": "sage", "wall": "mint_dot_wallpaper", "floor": "cream_tile_flooring"}
 		},
 		"pudding": {
 			"name": "Pudding", "personality": "sleepy", "catchphrase": "snug",
 			"species": {"kind": "rabbit", "lop": true, "fur": "#a8a2a8", "fur2": "#ece8ec", "eyes": "#3a2a30", "inner_ear": "#e8b4bc", "nose": "#d88a98"},
 			"look": {"eyes": "happy", "mouth": "smile", "cheeks": "blush", "top": "sweater", "top_color": "lavender", "top_color2": "white", "bottom": "leggings", "bottom_color": "grey"},
 			"home": {"wall": "efeaf2", "roof": "9a8ab8", "door": "f2c8d0"},
-			"inside": {"series": "comfy", "variant": "rose", "wall": "striped_wallpaper", "floor": "rosy_carpet"}
+			"inside": {"series": "hearth", "variant": "rose", "wall": "striped_wallpaper", "floor": "rosy_carpet"}
 		},
 		"mochi": {
 			"name": "Mochi", "personality": "cheerful", "catchphrase": "yum yum",
 			"species": {"kind": "mouse", "fur": "#f6f2ee", "fur2": "#fffaf6", "eyes": "#3a1a24", "inner_ear": "#f4a8b8", "nose": "#f08aa0"},
 			"look": {"eyes": "sparkle", "mouth": "cat", "cheeks": "blush", "top": "dress", "top_color": "pink", "top_color2": "white", "top_pattern": "cherries"},
 			"home": {"wall": "fff2f4", "roof": "f08aa0", "door": "a8d0a0"},
-			"inside": {"series": "kitchen", "variant": "rose", "wall": "peach_dot_wallpaper", "floor": "cream_tile_flooring"}
+			"inside": {"series": "playroom", "variant": "candy", "wall": "peach_dot_wallpaper", "floor": "cream_tile_flooring"}
 		},
 		"truffle": {
 			"name": "Truffle", "personality": "bookish", "catchphrase": "hmm hmm",
 			"species": {"kind": "ferret", "fur": "#4a3a34", "fur2": "#efe4d4", "stripes": "#2a2220", "eyes": "#8a5a34", "inner_ear": "#d8a098", "nose": "#2a2220"},
 			"look": {"eyes": "wide", "mouth": "cat", "cheeks": "none", "top": "turtleneck", "top_color": "mint", "top_color2": "white", "bottom": "trousers", "bottom_color": "charcoal", "glasses": "square"},
 			"home": {"wall": "ece6dc", "roof": "4a5a4a", "door": "c8a060"},
-			"inside": {"series": "lodge", "variant": "walnut", "wall": "cabin_wall", "floor": "woven_flooring"}
+			"inside": {"series": "study", "variant": "walnut", "wall": "cabin_wall", "floor": "woven_flooring"}
 		},
 		"wren": {
 			"name": "Wren", "personality": "sporty", "catchphrase": "flap",
 			"species": {"kind": "bird", "fur": "#b08a62", "fur2": "#f2e2c8", "stripes": "#7a5a3e", "crest": "#8a6a4a", "beak": "#e0a050", "eyes": "#1a1214"},
 			"look": {"eyes": "sparkle", "mouth": "smile", "cheeks": "blush", "top": "raincoat", "top_color": "yellow", "top_color2": "white", "bottom": "shorts", "bottom_color": "navy"},
 			"home": {"wall": "f6eedf", "roof": "b07a4a", "door": "6a9ac8"},
-			"inside": {"series": "driftwood", "variant": "bleached", "wall": "sky_wallpaper", "floor": "wooden_flooring"}
+			"inside": {"series": "seaside", "variant": "sunset", "wall": "sky_wallpaper", "floor": "wooden_flooring"}
 		}
 	}
 }

@@ -1,0 +1,245 @@
+{
+	"id": "study",
+	"name": "Scholar's Study",
+	"desc": "Dark wood, brass and books for quiet hours.",
+	"variants": [
+		{
+			"id": "walnut",
+			"name": "Walnut",
+			"wood": "8a6448",
+			"trim": "5e4434",
+			"fabric": [
+				"f3e8d2",
+				"5a6a9a",
+				"tartan"
+			],
+			"accent": "d8b060"
+		},
+		{
+			"id": "oak",
+			"name": "Oak",
+			"wood": "c8a070",
+			"trim": "8a6a48",
+			"fabric": [
+				"f6eedc",
+				"6a8a4a",
+				"checks"
+			],
+			"accent": "d8b060"
+		},
+		{
+			"id": "ebony",
+			"name": "Ebony",
+			"wood": "4a3e3a",
+			"trim": "2e2626",
+			"fabric": [
+				"eee6d8",
+				"a03a3a",
+				"argyle"
+			],
+			"accent": "e0c070"
+		},
+		{
+			"id": "cherry",
+			"name": "Cherrywood",
+			"wood": "b06a50",
+			"trim": "7a4434",
+			"fabric": [
+				"fbf0e2",
+				"3a6a6a",
+				"stripes"
+			],
+			"accent": "e0c070"
+		}
+	],
+	"pieces": [
+		{
+			"id": "study_desk",
+			"name": "Writing Desk",
+			"kind": "desk",
+			"footprint": [
+				2,
+				1
+			],
+			"price": 1100,
+			"desc": "A desk with drawers, a lamp and a book.",
+			"params": {
+				"legs": "turned"
+			},
+			"surface": 0.76,
+			"recipe": {
+				"wood": 10
+			}
+		},
+		{
+			"id": "study_bookcase",
+			"name": "Tall Bookcase",
+			"kind": "bookcase",
+			"footprint": [
+				2,
+				1
+			],
+			"price": 1200,
+			"desc": "Shelves of well-loved books.",
+			"params": {
+				"top": "cap"
+			}
+		},
+		{
+			"id": "study_clock",
+			"name": "Grandfather Clock",
+			"kind": "clock",
+			"footprint": [
+				1,
+				1
+			],
+			"price": 1400,
+			"desc": "Tick, tock. Tick, tock.",
+			"params": {},
+			"recipe": {
+				"wood": 8,
+				"iron_nugget": 1
+			}
+		},
+		{
+			"id": "study_globe",
+			"name": "Globe",
+			"kind": "globe",
+			"footprint": [
+				1,
+				1
+			],
+			"price": 560,
+			"desc": "The whole world, on a stand.",
+			"params": {},
+			"small": true
+		},
+		{
+			"id": "study_chair",
+			"name": "Study Chair",
+			"kind": "chair",
+			"footprint": [
+				1,
+				1
+			],
+			"price": 520,
+			"desc": "A straight-backed chair with a padded seat.",
+			"params": {
+				"back": "ladder",
+				"legs": "turned",
+				"cushion": true
+			},
+			"seat": 0.48
+		},
+		{
+			"id": "study_armchair",
+			"name": "Reading Chair",
+			"kind": "armchair",
+			"footprint": [
+				1,
+				1
+			],
+			"price": 980,
+			"desc": "Deep enough to get lost in a book.",
+			"params": {
+				"legs": "turned",
+				"frame": true
+			},
+			"seat": 0.46
+		},
+		{
+			"id": "study_lamp",
+			"name": "Banker's Lamp",
+			"kind": "table_lamp",
+			"footprint": [
+				1,
+				1
+			],
+			"price": 480,
+			"desc": "A lamp for late reading.",
+			"params": {
+				"shade": "lantern"
+			},
+			"light": true,
+			"small": true
+		},
+		{
+			"id": "study_floor_lamp",
+			"name": "Reading Lamp",
+			"kind": "floor_lamp",
+			"footprint": [
+				1,
+				1
+			],
+			"price": 640,
+			"desc": "A tall lamp with a fabric shade.",
+			"params": {},
+			"light": true
+		},
+		{
+			"id": "study_wardrobe",
+			"name": "Study Cupboard",
+			"kind": "wardrobe",
+			"footprint": [
+				2,
+				1
+			],
+			"price": 1300,
+			"desc": "Tall doors, with room for everything.",
+			"params": {}
+		},
+		{
+			"id": "study_telescope",
+			"name": "Telescope",
+			"kind": "telescope",
+			"footprint": [
+				1,
+				1
+			],
+			"price": 1100,
+			"desc": "For looking at stars, or the neighbours' roofs.",
+			"params": {}
+		},
+		{
+			"id": "study_record_player",
+			"name": "Gramophone",
+			"kind": "record_player",
+			"footprint": [
+				1,
+				1
+			],
+			"price": 900,
+			"desc": "Plays the old songs.",
+			"params": {},
+			"small": true
+		},
+		{
+			"id": "study_piano",
+			"name": "Upright Piano",
+			"kind": "piano",
+			"footprint": [
+				2,
+				1
+			],
+			"price": 2400,
+			"desc": "A piano with keys that stick a little.",
+			"params": {}
+		},
+		{
+			"id": "study_rug",
+			"name": "Study Rug",
+			"kind": "rug",
+			"footprint": [
+				3,
+				2
+			],
+			"price": 760,
+			"desc": "A thick patterned rug.",
+			"params": {
+				"shape": "rect",
+				"border": true
+			},
+			"rug": true
+		}
+	]
+}

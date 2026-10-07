@@ -1,0 +1,250 @@
+{
+	"id": "garden",
+	"name": "Garden Party",
+	"desc": "Painted iron and wood for summer afternoons outside.",
+	"variants": [
+		{
+			"id": "white",
+			"name": "Lace White",
+			"wood": "f4f1ea",
+			"trim": "c9c2b4",
+			"fabric": [
+				"fbf8f2",
+				"f2a7a0",
+				"gingham"
+			],
+			"accent": "f2a7a0"
+		},
+		{
+			"id": "sage",
+			"name": "Sage",
+			"wood": "b9cfa8",
+			"trim": "8aa47a",
+			"fabric": [
+				"f6f8ee",
+				"8fb07a",
+				"stripes"
+			],
+			"accent": "f6d58c"
+		},
+		{
+			"id": "sky",
+			"name": "Sky",
+			"wood": "bcd8ec",
+			"trim": "86aac4",
+			"fabric": [
+				"f4f9fd",
+				"78a6dc",
+				"dots"
+			],
+			"accent": "fbf3e6"
+		},
+		{
+			"id": "coral",
+			"name": "Coral",
+			"wood": "f2b8a8",
+			"trim": "c88a78",
+			"fabric": [
+				"fff6f0",
+				"e0656b",
+				"flowers"
+			],
+			"accent": "f6d58c"
+		}
+	],
+	"pieces": [
+		{
+			"id": "garden_chair",
+			"name": "Garden Chair",
+			"kind": "chair",
+			"footprint": [
+				1,
+				1
+			],
+			"price": 560,
+			"desc": "A slatted chair for the lawn, with a seat cushion.",
+			"params": {
+				"back": "slat",
+				"legs": "plank",
+				"cushion": true
+			},
+			"seat": 0.48,
+			"recipe": {
+				"wood": 5,
+				"iron_nugget": 1
+			}
+		},
+		{
+			"id": "garden_table",
+			"name": "Garden Table",
+			"kind": "table",
+			"footprint": [
+				1,
+				1
+			],
+			"price": 620,
+			"desc": "A little round table for tea in the sun.",
+			"params": {
+				"shape": "round",
+				"legs": "turned"
+			},
+			"surface": 0.76
+		},
+		{
+			"id": "garden_bench",
+			"name": "Garden Bench",
+			"kind": "bench",
+			"footprint": [
+				2,
+				1
+			],
+			"price": 780,
+			"desc": "A bench with a high back and a long cushion.",
+			"params": {
+				"legs": "plank",
+				"back": true,
+				"pad": true
+			},
+			"seat": 0.46
+		},
+		{
+			"id": "garden_planter",
+			"name": "Flower Planter",
+			"kind": "planter",
+			"footprint": [
+				2,
+				1
+			],
+			"price": 640,
+			"desc": "A long planter box, full of flowers.",
+			"params": {},
+			"recipe": {
+				"wood": 6
+			}
+		},
+		{
+			"id": "garden_pot",
+			"name": "Garden Pot",
+			"kind": "potted_plant",
+			"footprint": [
+				1,
+				1
+			],
+			"price": 380,
+			"desc": "A painted pot with a leafy bush.",
+			"params": {
+				"plant": "leafy"
+			}
+		},
+		{
+			"id": "garden_parasol",
+			"name": "Parasol",
+			"kind": "parasol",
+			"footprint": [
+				1,
+				1
+			],
+			"price": 720,
+			"desc": "Shade for a sunny afternoon.",
+			"params": {}
+		},
+		{
+			"id": "garden_deckchair",
+			"name": "Deckchair",
+			"kind": "deckchair",
+			"footprint": [
+				1,
+				1
+			],
+			"price": 520,
+			"desc": "Lean back and watch the clouds.",
+			"params": {},
+			"seat": 0.3
+		},
+		{
+			"id": "garden_swing",
+			"name": "Garden Swing",
+			"kind": "swing",
+			"footprint": [
+				2,
+				1
+			],
+			"price": 1200,
+			"desc": "A swing seat on a sturdy frame.",
+			"params": {},
+			"seat": 0.45
+		},
+		{
+			"id": "garden_arch",
+			"name": "Rose Arch",
+			"kind": "arch",
+			"footprint": [
+				2,
+				1
+			],
+			"price": 980,
+			"desc": "A trellis arch with roses climbing over it.",
+			"params": {},
+			"recipe": {
+				"wood": 8
+			}
+		},
+		{
+			"id": "garden_bird_bath",
+			"name": "Bird Bath",
+			"kind": "bird_bath",
+			"footprint": [
+				1,
+				1
+			],
+			"price": 640,
+			"desc": "A stone bath for passing birds.",
+			"params": {},
+			"recipe": {
+				"stone": 6
+			}
+		},
+		{
+			"id": "garden_fountain",
+			"name": "Garden Fountain",
+			"kind": "fountain",
+			"footprint": [
+				2,
+				2
+			],
+			"price": 1800,
+			"desc": "A tiered fountain that spills over the top.",
+			"params": {},
+			"recipe": {
+				"stone": 15,
+				"iron_nugget": 2
+			}
+		},
+		{
+			"id": "garden_lamp_post",
+			"name": "Lamp Post",
+			"kind": "lamp_post",
+			"footprint": [
+				1,
+				1
+			],
+			"price": 760,
+			"desc": "A painted lamp post with a lantern.",
+			"params": {},
+			"light": true
+		},
+		{
+			"id": "garden_picnic",
+			"name": "Picnic Blanket",
+			"kind": "picnic",
+			"footprint": [
+				2,
+				2
+			],
+			"price": 560,
+			"desc": "A blanket, a basket and a loaf.",
+			"params": {},
+			"rug": true
+		}
+	]
+}

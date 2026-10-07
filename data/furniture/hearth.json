@@ -1,0 +1,231 @@
+{
+	"id": "hearth",
+	"name": "Hearth & Home",
+	"desc": "Painted cupboards, a fire in the grate and something cosy on every chair.",
+	"variants": [
+		{
+			"id": "rose",
+			"name": "Rose",
+			"wood": "f2d0c8",
+			"trim": "c8988a",
+			"fabric": [
+				"fff4ee",
+				"e0657a",
+				"flowers"
+			],
+			"accent": "e0657a"
+		},
+		{
+			"id": "sage",
+			"name": "Sage",
+			"wood": "d4e0c4",
+			"trim": "9aaa88",
+			"fabric": [
+				"f8faf2",
+				"6a8a4a",
+				"gingham"
+			],
+			"accent": "f6d58c"
+		},
+		{
+			"id": "butter",
+			"name": "Butter",
+			"wood": "f6e6b0",
+			"trim": "c8b47a",
+			"fabric": [
+				"fffaee",
+				"d8a050",
+				"checks"
+			],
+			"accent": "78a6dc"
+		},
+		{
+			"id": "blue",
+			"name": "Cornflower",
+			"wood": "c8d8ee",
+			"trim": "8aa0c4",
+			"fabric": [
+				"f6f9fd",
+				"5a7ac8",
+				"hearts"
+			],
+			"accent": "f2a7a0"
+		}
+	],
+	"pieces": [
+		{
+			"id": "hearth_fireplace",
+			"name": "Fireplace",
+			"kind": "fireplace",
+			"footprint": [
+				2,
+				1
+			],
+			"price": 2200,
+			"desc": "A stone fireplace with a crackling fire.",
+			"params": {},
+			"light": true,
+			"recipe": {
+				"stone": 20,
+				"wood": 5
+			}
+		},
+		{
+			"id": "hearth_clock",
+			"name": "Painted Clock",
+			"kind": "clock",
+			"footprint": [
+				1,
+				1
+			],
+			"price": 1300,
+			"desc": "A tall clock with flowers painted on.",
+			"params": {}
+		},
+		{
+			"id": "hearth_wardrobe",
+			"name": "Painted Wardrobe",
+			"kind": "wardrobe",
+			"footprint": [
+				2,
+				1
+			],
+			"price": 1300,
+			"desc": "Two tall doors with a heart on top.",
+			"params": {
+				"hearts": true
+			}
+		},
+		{
+			"id": "hearth_armchair",
+			"name": "Fireside Chair",
+			"kind": "armchair",
+			"footprint": [
+				1,
+				1
+			],
+			"price": 900,
+			"desc": "Pulled up close to the fire.",
+			"params": {
+				"legs": "turned",
+				"frame": true
+			},
+			"seat": 0.46
+		},
+		{
+			"id": "hearth_sofa",
+			"name": "Cottage Sofa",
+			"kind": "sofa",
+			"footprint": [
+				2,
+				1
+			],
+			"price": 1500,
+			"desc": "Soft cushions in a pretty print.",
+			"params": {
+				"legs": "turned",
+				"frame": true
+			},
+			"seat": 0.46
+		},
+		{
+			"id": "hearth_coat_rack",
+			"name": "Coat Stand",
+			"kind": "coat_rack",
+			"footprint": [
+				1,
+				1
+			],
+			"price": 560,
+			"desc": "Somewhere to hang your scarf.",
+			"params": {},
+			"recipe": {
+				"wood": 5
+			}
+		},
+		{
+			"id": "hearth_vase",
+			"name": "Flower Vase",
+			"kind": "vase",
+			"footprint": [
+				1,
+				1
+			],
+			"price": 320,
+			"desc": "A painted vase of fresh flowers.",
+			"params": {},
+			"small": true
+		},
+		{
+			"id": "hearth_pot",
+			"name": "Fern Pot",
+			"kind": "potted_plant",
+			"footprint": [
+				1,
+				1
+			],
+			"price": 380,
+			"desc": "A leafy fern in a painted pot.",
+			"params": {
+				"plant": "leafy"
+			}
+		},
+		{
+			"id": "hearth_screen",
+			"name": "Folding Screen",
+			"kind": "screen",
+			"footprint": [
+				2,
+				1
+			],
+			"price": 880,
+			"desc": "Three panels in a pretty print.",
+			"params": {}
+		},
+		{
+			"id": "hearth_cushion",
+			"name": "Floor Cushion",
+			"kind": "floor_cushion",
+			"footprint": [
+				1,
+				1
+			],
+			"price": 320,
+			"desc": "For sitting by the fire.",
+			"params": {},
+			"seat": 0.2
+		},
+		{
+			"id": "hearth_side_table",
+			"name": "Lamp Table",
+			"kind": "side_table",
+			"footprint": [
+				1,
+				1
+			],
+			"price": 460,
+			"desc": "A little table with a drawer.",
+			"params": {
+				"legs": "turned",
+				"drawer": true
+			},
+			"surface": 0.58
+		},
+		{
+			"id": "hearth_rug",
+			"name": "Rag Rug",
+			"kind": "rug",
+			"footprint": [
+				2,
+				2
+			],
+			"price": 580,
+			"desc": "A round rug made from scraps.",
+			"params": {
+				"shape": "round",
+				"border": true
+			},
+			"rug": true
+		}
+	]
+}

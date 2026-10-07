@@ -1,0 +1,208 @@
+{
+	"id": "playroom",
+	"name": "Playroom",
+	"desc": "Toys, bright paint and soft things to tumble on.",
+	"variants": [
+		{
+			"id": "candy",
+			"name": "Candy",
+			"wood": "f6c8d4",
+			"trim": "d890a8",
+			"fabric": [
+				"fff4f8",
+				"f28eb0",
+				"dots"
+			],
+			"accent": "78a6dc"
+		},
+		{
+			"id": "mint",
+			"name": "Mint",
+			"wood": "c8ecd8",
+			"trim": "88c0a0",
+			"fabric": [
+				"f4fdf8",
+				"56aa86",
+				"stars"
+			],
+			"accent": "f6d58c"
+		},
+		{
+			"id": "lemon",
+			"name": "Lemon",
+			"wood": "f8eaa0",
+			"trim": "d0b860",
+			"fabric": [
+				"fffbee",
+				"f2a24a",
+				"cherries"
+			],
+			"accent": "e0656b"
+		},
+		{
+			"id": "lilac",
+			"name": "Lilac",
+			"wood": "dcd0f0",
+			"trim": "a898c8",
+			"fabric": [
+				"faf6ff",
+				"8a6ac8",
+				"clouds"
+			],
+			"accent": "f6aac4"
+		}
+	],
+	"pieces": [
+		{
+			"id": "play_rocking_horse",
+			"name": "Rocking Horse",
+			"kind": "rocking_horse",
+			"footprint": [
+				1,
+				1
+			],
+			"price": 980,
+			"desc": "Giddy up!",
+			"params": {},
+			"recipe": {
+				"wood": 8
+			}
+		},
+		{
+			"id": "play_toy_box",
+			"name": "Toy Box",
+			"kind": "toy_box",
+			"footprint": [
+				1,
+				1
+			],
+			"price": 620,
+			"desc": "Full to the brim with toys.",
+			"params": {},
+			"surface": 0.5,
+			"recipe": {
+				"wood": 6
+			}
+		},
+		{
+			"id": "play_cushion",
+			"name": "Bean Bag",
+			"kind": "floor_cushion",
+			"footprint": [
+				1,
+				1
+			],
+			"price": 360,
+			"desc": "Squash down into it.",
+			"params": {},
+			"seat": 0.2
+		},
+		{
+			"id": "play_bed",
+			"name": "Little Bed",
+			"kind": "bed",
+			"footprint": [
+				2,
+				2
+			],
+			"price": 1100,
+			"desc": "A small bed with a patterned quilt.",
+			"params": {
+				"headboard": "arched"
+			},
+			"bed": true,
+			"seat": 0.45
+		},
+		{
+			"id": "play_table",
+			"name": "Play Table",
+			"kind": "table",
+			"footprint": [
+				1,
+				1
+			],
+			"price": 520,
+			"desc": "A low round table for drawing at.",
+			"params": {
+				"shape": "round",
+				"legs": "turned"
+			},
+			"surface": 0.76
+		},
+		{
+			"id": "play_chair",
+			"name": "Play Chair",
+			"kind": "chair",
+			"footprint": [
+				1,
+				1
+			],
+			"price": 420,
+			"desc": "A little chair with a heart on the back.",
+			"params": {
+				"back": "ladder",
+				"legs": "turned",
+				"cushion": true
+			},
+			"seat": 0.48
+		},
+		{
+			"id": "play_lamp",
+			"name": "Star Lamp",
+			"kind": "table_lamp",
+			"footprint": [
+				1,
+				1
+			],
+			"price": 460,
+			"desc": "A star that glows at bedtime.",
+			"params": {
+				"shade": "star"
+			},
+			"light": true,
+			"small": true
+		},
+		{
+			"id": "play_wardrobe",
+			"name": "Toy Cupboard",
+			"kind": "wardrobe",
+			"footprint": [
+				2,
+				1
+			],
+			"price": 1100,
+			"desc": "Painted doors with a heart.",
+			"params": {
+				"hearts": true
+			}
+		},
+		{
+			"id": "play_screen",
+			"name": "Puppet Theatre",
+			"kind": "screen",
+			"footprint": [
+				2,
+				1
+			],
+			"price": 880,
+			"desc": "Three panels to put on a show behind.",
+			"params": {}
+		},
+		{
+			"id": "play_rug",
+			"name": "Play Mat",
+			"kind": "rug",
+			"footprint": [
+				2,
+				2
+			],
+			"price": 520,
+			"desc": "A soft round mat.",
+			"params": {
+				"shape": "round",
+				"border": true
+			},
+			"rug": true
+		}
+	]
+}

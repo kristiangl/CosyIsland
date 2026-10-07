@@ -1392,6 +1392,384 @@
 				"b": "e0b0ac"
 			}
 		},
+		"lilac_stripe_wallpaper": {
+			"name": "Lilac Stripe Wallpaper",
+			"category": "interior",
+			"stack": 1,
+			"price": 300,
+			"color": "#efe2f2",
+			"desc": "Soft lilac stripes.",
+			"interior": {
+				"part": "wall",
+				"pattern": 2,
+				"a": "efe2f2",
+				"b": "d8c4e6"
+			}
+		},
+		"butter_stripe_wallpaper": {
+			"name": "Butter Stripe Wallpaper",
+			"category": "interior",
+			"stack": 1,
+			"price": 300,
+			"color": "#fbf2d0",
+			"desc": "Stripes like a sunny morning.",
+			"interior": {
+				"part": "wall",
+				"pattern": 2,
+				"a": "fbf2d0",
+				"b": "f0dc98"
+			}
+		},
+		"sage_stripe_wallpaper": {
+			"name": "Sage Stripe Wallpaper",
+			"category": "interior",
+			"stack": 1,
+			"price": 300,
+			"color": "#e8f0de",
+			"desc": "Calm green stripes.",
+			"interior": {
+				"part": "wall",
+				"pattern": 2,
+				"a": "e8f0de",
+				"b": "c4d6b0"
+			}
+		},
+		"navy_stripe_wallpaper": {
+			"name": "Sailor Wallpaper",
+			"category": "interior",
+			"stack": 1,
+			"price": 300,
+			"color": "#f4f1ea",
+			"desc": "Bold blue and white, like a beach hut.",
+			"interior": {
+				"part": "wall",
+				"pattern": 2,
+				"a": "f4f1ea",
+				"b": "5a7ac8"
+			}
+		},
+		"rose_dot_wallpaper": {
+			"name": "Rose Dot Wallpaper",
+			"category": "interior",
+			"stack": 1,
+			"price": 300,
+			"color": "#fdeef0",
+			"desc": "Little pink dots.",
+			"interior": {
+				"part": "wall",
+				"pattern": 6,
+				"a": "fdeef0",
+				"b": "f2a7b4"
+			}
+		},
+		"sky_dot_wallpaper": {
+			"name": "Raindrop Wallpaper",
+			"category": "interior",
+			"stack": 1,
+			"price": 300,
+			"color": "#e6f2fb",
+			"desc": "Pale blue raindrops.",
+			"interior": {
+				"part": "wall",
+				"pattern": 6,
+				"a": "e6f2fb",
+				"b": "a8cce8"
+			}
+		},
+		"lemon_dot_wallpaper": {
+			"name": "Lemon Dot Wallpaper",
+			"category": "interior",
+			"stack": 1,
+			"price": 300,
+			"color": "#fff8dc",
+			"desc": "Cheerful yellow spots.",
+			"interior": {
+				"part": "wall",
+				"pattern": 6,
+				"a": "fff8dc",
+				"b": "f2d06a"
+			}
+		},
+		"plank_white_wallpaper": {
+			"name": "Whitewashed Boards",
+			"category": "interior",
+			"stack": 1,
+			"price": 360,
+			"color": "#f4f1ea",
+			"desc": "Painted boards, like a seaside cottage.",
+			"interior": {
+				"part": "wall",
+				"pattern": 1,
+				"a": "f4f1ea",
+				"b": "dcd6ca"
+			}
+		},
+		"plank_dark_wallpaper": {
+			"name": "Dark Panelling",
+			"category": "interior",
+			"stack": 1,
+			"price": 360,
+			"color": "#8a6448",
+			"desc": "Rich dark wood panels.",
+			"interior": {
+				"part": "wall",
+				"pattern": 1,
+				"a": "8a6448",
+				"b": "6a4a34"
+			}
+		},
+		"canvas_wallpaper": {
+			"name": "Canvas Wall",
+			"category": "interior",
+			"stack": 1,
+			"price": 360,
+			"color": "#e8dcc0",
+			"desc": "Like the inside of a big tent.",
+			"interior": {
+				"part": "wall",
+				"pattern": 4,
+				"a": "e8dcc0",
+				"b": "cfbf9c"
+			}
+		},
+		"green_canvas_wallpaper": {
+			"name": "Green Canvas Wall",
+			"category": "interior",
+			"stack": 1,
+			"price": 360,
+			"color": "#bccb94",
+			"desc": "A camping tent's green canvas.",
+			"interior": {
+				"part": "wall",
+				"pattern": 4,
+				"a": "bccb94",
+				"b": "a3b47e"
+			}
+		},
+		"tile_wallpaper": {
+			"name": "Kitchen Tiles",
+			"category": "interior",
+			"stack": 1,
+			"price": 360,
+			"color": "#f4f6f2",
+			"desc": "Clean little square tiles.",
+			"interior": {
+				"part": "wall",
+				"pattern": 5,
+				"a": "f4f6f2",
+				"b": "cfdcd4"
+			}
+		},
+		"blush_wallpaper": {
+			"name": "Blush Wallpaper",
+			"category": "interior",
+			"stack": 1,
+			"price": 300,
+			"color": "#f8e2e0",
+			"desc": "Plain and rosy.",
+			"interior": {
+				"part": "wall",
+				"pattern": 0,
+				"a": "f8e2e0",
+				"b": "eccac6"
+			}
+		},
+		"mint_wallpaper": {
+			"name": "Mint Wallpaper",
+			"category": "interior",
+			"stack": 1,
+			"price": 300,
+			"color": "#e2f4ea",
+			"desc": "Plain and fresh.",
+			"interior": {
+				"part": "wall",
+				"pattern": 0,
+				"a": "e2f4ea",
+				"b": "c8e6d4"
+			}
+		},
+		"night_wallpaper": {
+			"name": "Midnight Wallpaper",
+			"category": "interior",
+			"stack": 1,
+			"price": 300,
+			"color": "#3a4a7a",
+			"desc": "Little stars on deep blue.",
+			"interior": {
+				"part": "wall",
+				"pattern": 6,
+				"a": "3a4a7a",
+				"b": "f6e27a"
+			}
+		},
+		"dark_wood_flooring": {
+			"name": "Dark Wood Flooring",
+			"category": "interior",
+			"stack": 1,
+			"price": 360,
+			"color": "#8a6448",
+			"desc": "Deep brown boards.",
+			"interior": {
+				"part": "floor",
+				"pattern": 1,
+				"a": "8a6448",
+				"b": "6a4a34"
+			}
+		},
+		"whitewash_flooring": {
+			"name": "Whitewashed Floor",
+			"category": "interior",
+			"stack": 1,
+			"price": 360,
+			"color": "#efe8dc",
+			"desc": "Pale painted planks.",
+			"interior": {
+				"part": "floor",
+				"pattern": 1,
+				"a": "efe8dc",
+				"b": "d6ccbc"
+			}
+		},
+		"grey_plank_flooring": {
+			"name": "Driftwood Floor",
+			"category": "interior",
+			"stack": 1,
+			"price": 360,
+			"color": "#cfc8be",
+			"desc": "Weathered grey boards.",
+			"interior": {
+				"part": "floor",
+				"pattern": 1,
+				"a": "cfc8be",
+				"b": "aea69a"
+			}
+		},
+		"rose_tile_flooring": {
+			"name": "Rose Tile Flooring",
+			"category": "interior",
+			"stack": 1,
+			"price": 360,
+			"color": "#f6dcd8",
+			"desc": "Pink clay tiles.",
+			"interior": {
+				"part": "floor",
+				"pattern": 5,
+				"a": "f6dcd8",
+				"b": "e0b0a8"
+			}
+		},
+		"sky_tile_flooring": {
+			"name": "Blue Tile Flooring",
+			"category": "interior",
+			"stack": 1,
+			"price": 360,
+			"color": "#dcecf6",
+			"desc": "Cool blue tiles.",
+			"interior": {
+				"part": "floor",
+				"pattern": 5,
+				"a": "dcecf6",
+				"b": "a8c8e0"
+			}
+		},
+		"check_tile_flooring": {
+			"name": "Chequer Floor",
+			"category": "interior",
+			"stack": 1,
+			"price": 360,
+			"color": "#f4f1ea",
+			"desc": "Black and white squares.",
+			"interior": {
+				"part": "floor",
+				"pattern": 5,
+				"a": "f4f1ea",
+				"b": "4a4a52"
+			}
+		},
+		"rush_flooring": {
+			"name": "Rush Mat Flooring",
+			"category": "interior",
+			"stack": 1,
+			"price": 360,
+			"color": "#e6d6a8",
+			"desc": "A woven rush mat, edge to edge.",
+			"interior": {
+				"part": "floor",
+				"pattern": 3,
+				"a": "e6d6a8",
+				"b": "c8b47a"
+			}
+		},
+		"lilac_carpet": {
+			"name": "Lilac Carpet",
+			"category": "interior",
+			"stack": 1,
+			"price": 300,
+			"color": "#e6dcf0",
+			"desc": "Soft and purple.",
+			"interior": {
+				"part": "floor",
+				"pattern": 0,
+				"a": "e6dcf0",
+				"b": "d4c6e6"
+			}
+		},
+		"moss_carpet": {
+			"name": "Moss Carpet",
+			"category": "interior",
+			"stack": 1,
+			"price": 300,
+			"color": "#c8dca8",
+			"desc": "Green and springy.",
+			"interior": {
+				"part": "floor",
+				"pattern": 0,
+				"a": "c8dca8",
+				"b": "a8c488"
+			}
+		},
+		"dotty_carpet": {
+			"name": "Dotty Carpet",
+			"category": "interior",
+			"stack": 1,
+			"price": 300,
+			"color": "#f6eedc",
+			"desc": "A carpet sprinkled with dots.",
+			"interior": {
+				"part": "floor",
+				"pattern": 6,
+				"a": "f6eedc",
+				"b": "e0a890"
+			}
+		},
+		"stone_flooring": {
+			"name": "Flagstone Floor",
+			"category": "interior",
+			"stack": 1,
+			"price": 360,
+			"color": "#d4ccc0",
+			"desc": "Big worn stone slabs.",
+			"interior": {
+				"part": "floor",
+				"pattern": 5,
+				"a": "d4ccc0",
+				"b": "b0a898"
+			}
+		},
+		"sand_flooring": {
+			"name": "Sandy Floor",
+			"category": "interior",
+			"stack": 1,
+			"price": 300,
+			"color": "#f2e2b2",
+			"desc": "Like walking on the beach.",
+			"interior": {
+				"part": "floor",
+				"pattern": 0,
+				"a": "f2e2b2",
+				"b": "e2cc92"
+			}
+		},
 		"woodstove": {
 			"name": "Wood Stove",
 			"category": "furniture",

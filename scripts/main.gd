@@ -1357,7 +1357,10 @@ func _series_layout(series_id: String, variant: String) -> Array:
 			["sofa", Vector2i(0, 3), 3], ["bench", Vector2i(0, 3), 3], ["armchair", Vector2i(5, 4), 1],
 			["side_table", Vector2i(5, 2), 0], ["dresser", Vector2i(1, 5), 0], ["crate", Vector2i(5, 0), 0],
 			["fridge", Vector2i(0, 0), 0], ["counter", Vector2i(1, 0), 0], ["stove", Vector2i(2, 0), 0], ["sink", Vector2i(3, 0), 0],
-			["oven", Vector2i(4, 0), 0], ["cupboard", Vector2i(5, 0), 0], ["round_table", Vector2i(2, 3), 0], ["tree", Vector2i(4, 0), 0]]:
+			["oven", Vector2i(4, 0), 0], ["cupboard", Vector2i(5, 0), 0], ["round_table", Vector2i(2, 3), 0], ["tree", Vector2i(4, 0), 0],
+			["clock", Vector2i(6, 0), 0], ["wardrobe", Vector2i(6, 1), 1], ["potted_plant", Vector2i(6, 5), 0], ["vase", Vector2i(5, 2), 0],
+			["fireplace", Vector2i(3, 0), 0], ["piano", Vector2i(3, 0), 0], ["desk", Vector2i(3, 0), 0], ["aquarium", Vector2i(3, 0), 0],
+			["toy_box", Vector2i(6, 2), 3], ["rocking_horse", Vector2i(5, 3), 1], ["floor_cushion", Vector2i(1, 4), 0], ["coat_rack", Vector2i(6, 4), 0]]:
 		if by_kind.has(entry[0]):
 			var at: Vector2i = entry[1]
 			# Seats go in front of the table, however deep it is.

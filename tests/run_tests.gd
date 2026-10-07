@@ -680,8 +680,30 @@ func _test_clothes() -> void:
 	creator.open(worn, false)
 	creator._select_tab(7)
 	check(creator._content.find_children("*", "", true, false).any(func(n): return n is Label and n.text == "Your clothes"), "the wardrobe lists your clothes")
+	var owned_tops := creator._content.find_children("*", "", true, false).filter(func(n): return n is CharacterCreator.OptionTile)
+	check(not owned_tops.is_empty() and owned_tops.all(func(t): return t.key == "item"), "and in the wardrobe, only the clothes you own")
 	creator.free()
 	Game.mode = Game.Mode.PLAY
+
+	# Everyday clothes: any plain style in any colour is an item, made when needed.
+	var tee := ItemDB.basic_id("top", {"top": "tee", "top_color": "sky", "top_color2": "white", "top_pattern": "stripes"})
+	check(tee == "basic.top.tee.sky.white.stripes" and ItemDB.is_clothing(tee) and ItemDB.has_item(tee), "a striped sky tee is an item")
+	check(ItemDB.display_name(tee) == "Sky Tee (Stripes)" and ItemDB.get_item(tee)["wear"]["top_pattern"] == "stripes", "named after its colour, style and pattern")
+	check(not ItemDB.has_item("basic.top.raincoat.sky.white.plain") and not ItemDB.has_item("basic.hat.none.red")
+		and not ItemDB.has_item("basic.top.tee.tartan_blue.white.plain"), "only real everyday options")
+	check(Shop.sell_price(tee) > 0 and Models.get_mesh("clothing:" + tee).get_surface_count() > 0, "they sell and have a model")
+	var start := Appearance.DEFAULT.duplicate()
+	start["hat"] = "beanie"
+	Inventory.reset()
+	Inventory.own_outfit(start)
+	check(Inventory.closet.size() == 4 and "basic.hat.beanie.red" in Inventory.closet, "the outfit you start in is yours")
+	var dressed := Appearance.DEFAULT.duplicate()
+	dressed.merge(ItemDB.get_item("raincoat_yellow")["wear"], true)
+	check(ItemDB.worn_item("top", dressed) == "raincoat_yellow", "a designed piece being worn is found as itself")
+	var lucy := Shop.stock(7, 100)
+	check(lucy.any(func(id): return ItemDB.get_item(id).get("basic", false)), "Lucy sells everyday clothes")
+	check(Shop.stock(7, 100, "", "tailors").all(func(id): return ItemDB.get_item(id).has("base")), "the tailors sell designed ones")
+	check(lucy == Shop.stock(7, 100), "the same each time on the same day")
 	Inventory.reset()
 
 

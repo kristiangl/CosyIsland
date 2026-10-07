@@ -206,10 +206,18 @@ Milestone 3b:
   your plaza, brings a souvenir (fruit or a flower you don't grow) and can be asked to
   stay if a plot is free
 
+- [x] The big house: after the house, Poppy offers an extension (25,000 acorns, built
+  overnight): an upstairs outside, and inside a bigger living room with doors through to
+  three more rooms
+- [x] House paint: Poppy has Lucy repaint the roof, walls and door (500 acorns), picked
+  from swatches with a preview
+- [x] Everyday clothes are items too (`basic.<slot>.<style>.<colour>...`): the wardrobe
+  shows only clothes you own, the outfit you start in included; Lucy sells a few
+  everyday pieces each day and the tailors the designed ones
+- [x] Options on the phone (music on or off, time travel, controls); neighbours' faces in
+  the journal and over their houses on the map
+
 Next milestones (suggested order):
-3c. Bigger house (more rooms) and outdoor house colours. Clothes as items instead of
-   everything unlocked, sold by Lucy. Time travel moves out of the phone into an
-   options menu.
 4. Daily visitors; more neighbour life (moving out). A try-on mirror at the tailors.
 5. More to find on tours: other kinds of tree on rare islands, flower breeding for the
    rare colours.

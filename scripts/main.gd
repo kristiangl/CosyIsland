@@ -107,6 +107,9 @@ func _ready() -> void:
 	var look: Dictionary = saved.get("player", {}).get("look", Appearance.DEFAULT)
 	player.setup(world, start, look)
 	Game.player = player
+	if saved.has("player"):
+		# Older saves had every everyday style free: what you had on is yours now.
+		Inventory.own_outfit(player.model.look)
 	Effects.warm_up(player.position)
 
 	camera_rig = CameraRig.new()
@@ -218,6 +221,12 @@ func _ready() -> void:
 				for id in ItemDB.items:
 					if ItemDB.is_clothing(id) and Game.args["closet"] in id:
 						Inventory.closet.append(id)
+				Inventory.own_outfit(trying)
+				var rng := RandomNumberGenerator.new()
+				for i in 12:
+					var basic := ItemDB.random_basic(rng)
+					if basic != "" and not basic in Inventory.closet:
+						Inventory.closet.append(basic)
 			hud.creator.open(trying, not Game.args.has("closet"))
 			if Game.args.has("tab"):
 				hud.creator._select_tab(int(Game.args["tab"]))
@@ -294,6 +303,8 @@ func _new_game_pockets() -> void:
 
 func _on_creator_finished(look: Dictionary, player_name: String, island_name: String) -> void:
 	player.model.set_look(look)
+	# The outfit you start in is the first thing in your wardrobe.
+	Inventory.own_outfit(player.model.look)
 	if _welcome_pending:
 		_welcome_pending = false
 		Game.player_name = player_name

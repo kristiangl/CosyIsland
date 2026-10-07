@@ -1,9 +1,9 @@
 class_name Shop
 extends RefCounted
 ## The island's shops. Lucy's ("lucy"): a few things for sale each day (furniture,
-## wallpaper and flooring, and clothes, chosen by the island and the day), and buying
-## back anything with a price. Daisy and Morris's ("tailors"): clothes only, more of
-## them, and they don't buy.
+## wallpaper and flooring, and everyday clothes, chosen by the island and the day), and
+## buying back anything with a price. Daisy and Morris's ("tailors"): designed clothes
+## only, more of them, and they don't buy.
 ## Things sell to Lucy for their listed price and cost four times that to buy. Once her
 ## shop is built (Story "shop_done") she stocks twice as much, plus flower plants from
 ## other islands.
@@ -61,7 +61,9 @@ static func stock(island_seed: int, day: int, native_flower: String = "", keeper
 			"interior":
 				interiors.append(id)
 			"clothing":
-				clothes.append(id)
+				# Designed pieces; everyday ones are made up for Lucy's rail below.
+				if not def.get("basic", false):
+					clothes.append(id)
 			"flower_plant":
 				if def.get("species", "") != native_flower and not ItemDB.is_rare_flower(def["species"], def["flower_color"]):
 					plants.append(id)
@@ -76,7 +78,14 @@ static func stock(island_seed: int, day: int, native_flower: String = "", keeper
 	out.append_array(STAPLES)
 	out.append_array(_pick(rng, furniture, FURNITURE_PER_DAY * more))
 	out.append_array(_pick(rng, interiors, INTERIORS_PER_DAY * more))
-	out.append_array(_pick(rng, clothes, CLOTHES_PER_DAY * more))
+	var everyday: Array[String] = []
+	for i in CLOTHES_PER_DAY * more * 4:
+		var id := ItemDB.random_basic(rng)
+		if id != "" and not id in everyday:
+			everyday.append(id)
+		if everyday.size() == CLOTHES_PER_DAY * more:
+			break
+	out.append_array(everyday)
 	if level() > 0:
 		out.append_array(_pick(rng, plants, PLANTS_PER_DAY))
 	return out

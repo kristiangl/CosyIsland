@@ -53,7 +53,11 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   `FurnitureModels`, `SeriesModels` for furniture series), `scripts/character/` (appearance, parts, animal parts, the
   character model), `scripts/npc/` (island characters).
 - Rooms inside homes are a second `World` with `interior = true` on a small
-  `IslandData.room()`; `main.gd` swaps between the island and the room.
+  `IslandData.room()`; `main.gd` swaps between the island and the room. A home's
+  placeable has its main "room" and maybe more "rooms" (the big house), reached through
+  doors in the main room's walls (`World.room_doors`, `room_door_ahead`); each is saved
+  under `Main.room_key(uid, index)`. The player's house can carry "paint" (wall, roof,
+  door), drawn by `Models` and chosen in `HousePaint`.
 - `Journal` (autoload, `data/journal.json`) counts what the player does (`Journal.add(stat)`)
   and pays stamps for milestones and daily tasks; its exchange sells pocket upgrades etc.
 - `Critters` (a child of the island `World`, `data/creatures.json`): fish shadows and bugs
@@ -117,6 +121,11 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   (`placeable.rug`) sit on their own floor layer in `World`, under furniture. Parts that
   glow at night go in a series model's glow surface (`night_glow` global). Effects: `Effects.burst(kind, pos)` / `Effects.emitter(kind)`.
   `data/recipes.json`: DIY recipes. `data/appearance.json`: character options.
+  Everyday clothes (the plain styles there) are items made on demand,
+  `basic.<slot>.<style>.<colour>[.<colour2>.<pattern>]` (`ItemDB.basic_id`); the
+  wardrobe (`Inventory.closet`) only offers clothes you own.
+- `Icons.portrait(id)` renders a character's face (journal, map); `Music.muted` is the
+  phone's Options setting, kept in `user://settings.cfg`.
 
 ## Conventions
 

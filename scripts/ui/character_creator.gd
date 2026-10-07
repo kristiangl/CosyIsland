@@ -254,7 +254,12 @@ func _select_tab(i: int) -> void:
 		child.free()
 	var first: Control = null
 	var designed := false
-	if tab.has("styles"):
+	# In the wardrobe, clothes are what you own: no free styles or colours.
+	var owned_only: bool = not _naming and tab.has("styles") and ItemDB.SLOT_KEYS.has(tab["styles"])
+	if owned_only:
+		first = _closet_grid(tab["styles"], tab["view"])
+		designed = true
+	elif tab.has("styles"):
 		first = _style_grid(tab["styles"], tab["view"])
 		# Clothes you own sit under the everyday styles; they come in their own colours.
 		if ItemDB.SLOT_KEYS.has(tab["styles"]):
@@ -316,19 +321,24 @@ func _style_grid(key: String, view: String, title: String = "Style") -> GridCont
 	return grid
 
 
-## Owned clothes for a slot, from the closet.
-func _closet_grid(slot: String, view: String) -> void:
+## Owned clothes for a slot, from the closet (in the wardrobe, hats and shoes can also
+## come off). Returns the grid, or null if there's nothing to show.
+func _closet_grid(slot: String, view: String) -> GridContainer:
 	var owned := Inventory.closet.filter(func(id): return ItemDB.get_item(id).get("slot", "") == slot)
-	if owned.is_empty():
-		return
+	var can_remove := not _naming and slot in ["hat", "shoes"]
+	if owned.is_empty() and not can_remove:
+		return null
 	_section("Your clothes")
 	var grid := GridContainer.new()
 	grid.columns = 8
 	grid.add_theme_constant_override("h_separation", 8)
 	grid.add_theme_constant_override("v_separation", 8)
 	_content.add_child(grid)
+	if can_remove:
+		grid.add_child(OptionTile.new(self, slot, "none", view, false))
 	for id: String in owned:
 		grid.add_child(OptionTile.new(self, "item", id, view, false))
+	return grid
 
 
 func _swatches(key: String, title: String) -> GridContainer:
@@ -420,7 +430,16 @@ func _process(delta: float) -> void:
 func _randomise() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
-	look = Appearance.random(rng)
+	if _naming:
+		look = Appearance.random(rng)
+	else:
+		# In the wardrobe: a random outfit from the clothes you own.
+		for slot: String in ItemDB.SLOT_KEYS:
+			var owned := Inventory.closet.filter(func(id): return ItemDB.get_item(id).get("slot", "") == slot)
+			if slot in ["hat", "shoes"] and (owned.is_empty() or rng.randf() < 0.3):
+				look[ItemDB.SLOT_KEYS[slot][0]] = "none"
+			elif not owned.is_empty():
+				look.merge(ItemDB.get_item(owned[rng.randi() % owned.size()])["wear"], true)
 	changed()
 	_select_tab(_tab)
 

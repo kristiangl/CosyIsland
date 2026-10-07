@@ -18,6 +18,8 @@ const WHERE_TEXT := {
 const PIECE_PLACEABLE := ["seat", "surface", "small", "light", "bed", "effects", "rug"]
 ## Which appearance keys a piece of clothing sets, by slot: style, colour, second colour,
 ## pattern.
+## What Lucy pays for everyday clothes (see _make_basic).
+const BASIC_PRICE := {"top": 240, "bottom": 200, "shoes": 160, "hat": 140}
 const SLOT_KEYS := {
 	"top": ["top", "top_color", "top_color2", "top_pattern"],
 	"bottom": ["bottom", "bottom_color", "", ""],
@@ -207,7 +209,7 @@ func _add_variant(base: String, id: String) -> void:
 
 ## Every variant of the same base as `id` (including itself), or [] if it has none.
 func variants_of(id: String) -> Array:
-	var list: Array = _variants.get(items.get(id, {}).get("base", ""), [])
+	var list: Array = _variants.get(_def(id).get("base", ""), [])
 	return list if list.size() > 1 else []
 
 
@@ -220,43 +222,133 @@ func variant_name(id: String) -> String:
 
 ## Two colours that tell a variant apart (wood and fabric, or a garment's two colours).
 func swatch(id: String) -> Array[Color]:
-	var s: Array = items.get(id, {}).get("swatch", [])
+	var s: Array = _def(id).get("swatch", [])
 	if s.size() < 2:
 		return [color_of(id), color_of(id)]
 	return [Color(s[0]), Color(s[1])]
 
 
 func is_clothing(id: String) -> bool:
-	return items.get(id, {}).get("category", "") == "clothing"
+	return _def(id).get("category", "") == "clothing"
 
 
 func get_item(id: String) -> Dictionary:
-	return items.get(id, {})
+	return _def(id)
+
+
+## An item's definition, making an everyday garment's the first time it's asked for.
+func _def(id: String) -> Dictionary:
+	var def: Dictionary = items.get(id, {})
+	if def.is_empty() and id.begins_with("basic."):
+		def = _make_basic(id)
+	return def
+
+
+## The everyday garment for a slot of `look` (its style and colours), or "" if what's
+## worn there is a designed piece or nothing.
+func basic_id(slot: String, look: Dictionary) -> String:
+	var keys: Array = SLOT_KEYS[slot]
+	var id := "basic.%s.%s.%s" % [slot, look.get(keys[0], ""), look.get(keys[1], "")]
+	if keys[2] != "":
+		id += ".%s.%s" % [look.get(keys[2], ""), look.get(keys[3], "")]
+	return id if not _def(id).is_empty() else ""
+
+
+## The garment `look` has on in a slot: a designed piece whose look matches, or the
+## everyday one. "" for nothing (no hat, say).
+func worn_item(slot: String, look: Dictionary) -> String:
+	var keys: Array = SLOT_KEYS[slot]
+	var style: Dictionary = Appearance.option(look, keys[0])
+	if not style.get("designed", false):
+		return basic_id(slot, look)
+	for id: String in items:
+		var def: Dictionary = items[id]
+		if def.get("slot", "") == slot and def.has("base"):
+			var wear: Dictionary = def["wear"]
+			var same := true
+			for k: String in wear:
+				if look.get(k, "") != wear[k]:
+					same = false
+			if same:
+				return id
+	return ""
+
+
+## Makes "basic.<slot>.<style>.<colour>[.<colour2>.<pattern>]" into an item, if each
+## part is a real everyday option. {} if not.
+func _make_basic(id: String) -> Dictionary:
+	var p := id.split(".")
+	if p.size() < 4 or not SLOT_KEYS.has(p[1]):
+		return {}
+	var slot := p[1]
+	var keys: Array = SLOT_KEYS[slot]
+	var look := {keys[0]: p[2], keys[1]: p[3]}
+	if keys[2] != "":
+		if p.size() < 6:
+			return {}
+		look[keys[2]] = p[4]
+		look[keys[3]] = p[5]
+	var names := {}
+	for key: String in look:
+		var found := {}
+		for opt: Dictionary in Appearance.options(key):
+			if opt["id"] == look[key]:
+				found = opt
+		if found.is_empty() or found.get("designed", false) or found["id"] == "none":
+			return {}
+		names[key] = found.get("name", String(found["id"]).capitalize())
+	var hex: String = Appearance.option(look, keys[1]).get("color", "#ffffff")
+	var hex2 := hex
+	var name := "%s %s" % [names[keys[1]], names[keys[0]]]
+	if keys[2] != "":
+		hex2 = Appearance.option(look, keys[2]).get("color", hex)
+		if look[keys[3]] != "plain":
+			name += " (%s)" % names[keys[3]]
+	items[id] = {
+		"name": name, "category": "clothing", "stack": 1, "price": BASIC_PRICE[slot], "color": hex,
+		"desc": "An everyday %s." % String(names[keys[0]]).to_lower(), "slot": slot, "wear": look,
+		"basic": true, "swatch": [hex, hex2],
+	}
+	return items[id]
+
+
+## A random everyday garment, for Lucy's rail.
+func random_basic(rng: RandomNumberGenerator) -> String:
+	var slot: String = ["top", "top", "top", "bottom", "bottom", "shoes", "hat", "hat"][rng.randi() % 8]
+	var keys: Array = SLOT_KEYS[slot]
+	var styles := Appearance.options(keys[0]).filter(func(o): return not o.get("designed", false) and o["id"] != "none")
+	var colours := Appearance.options(keys[1])
+	var look := {keys[0]: styles[rng.randi() % styles.size()]["id"], keys[1]: colours[rng.randi() % colours.size()]["id"]}
+	if keys[2] != "":
+		var patterns := Appearance.options(keys[3])
+		look[keys[2]] = colours[rng.randi() % colours.size()]["id"]
+		look[keys[3]] = "plain" if rng.randf() < 0.6 else patterns[rng.randi() % patterns.size()]["id"]
+	return basic_id(slot, look)
 
 
 func has_item(id: String) -> bool:
-	return items.has(id)
+	return items.has(id) or not _def(id).is_empty()
 
 
 func display_name(id: String) -> String:
-	return items.get(id, {}).get("name", id)
+	return _def(id).get("name", id)
 
 
 func color_of(id: String) -> Color:
-	return Color(items.get(id, {}).get("color", "#ffffff"))
+	return Color(_def(id).get("color", "#ffffff"))
 
 
 func max_stack(id: String) -> int:
-	return int(items.get(id, {}).get("stack", 1))
+	return int(_def(id).get("stack", 1))
 
 
 func is_tool(id: String) -> bool:
-	return items.get(id, {}).get("category", "") == "tool"
+	return _def(id).get("category", "") == "tool"
 
 
 func tool_type(id: String) -> String:
-	return items.get(id, {}).get("tool", "")
+	return _def(id).get("tool", "")
 
 
 func placeable(id: String) -> Dictionary:
-	return items.get(id, {}).get("placeable", {})
+	return _def(id).get("placeable", {})

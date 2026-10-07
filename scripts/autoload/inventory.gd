@@ -147,6 +147,14 @@ func wear_from_slot(index: int, look: Dictionary) -> Dictionary:
 	return worn
 
 
+## Puts whatever `look` is wearing into the closet, if it isn't there already.
+func own_outfit(look: Dictionary) -> void:
+	for slot: String in ItemDB.SLOT_KEYS:
+		var id := ItemDB.worn_item(slot, look)
+		if id != "" and not id in closet:
+			closet.append(id)
+
+
 ## Grows the pockets to `size` slots (they never shrink).
 func expand(size: int) -> void:
 	while slots.size() < size:

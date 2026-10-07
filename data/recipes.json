@@ -276,6 +276,48 @@
 				"wood": 2,
 				"clay": 2
 			}
+		},
+		"sturdy_rod": {
+			"materials": {
+				"flimsy_rod": 1,
+				"iron_nugget": 1
+			}
+		},
+		"sturdy_net": {
+			"materials": {
+				"flimsy_net": 1,
+				"iron_nugget": 1
+			}
+		},
+		"golden_axe": {
+			"materials": {
+				"stone_axe": 1,
+				"gold_nugget": 1
+			}
+		},
+		"golden_pickaxe": {
+			"materials": {
+				"sturdy_pickaxe": 1,
+				"gold_nugget": 1
+			}
+		},
+		"golden_shovel": {
+			"materials": {
+				"sturdy_shovel": 1,
+				"gold_nugget": 1
+			}
+		},
+		"golden_rod": {
+			"materials": {
+				"sturdy_rod": 1,
+				"gold_nugget": 1
+			}
+		},
+		"golden_net": {
+			"materials": {
+				"sturdy_net": 1,
+				"gold_nugget": 1
+			}
 		}
 	}
 }

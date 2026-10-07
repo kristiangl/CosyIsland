@@ -92,6 +92,13 @@ func learn_random(rng: RandomNumberGenerator) -> String:
 	return id
 
 
+## Learns a particular recipe (from a milestone or the stamp exchange).
+func learn(id: String) -> void:
+	if recipes.has(id) and not known.has(id):
+		known.append(id)
+		learned.emit(id)
+
+
 func to_save() -> Array:
 	return known.duplicate()
 

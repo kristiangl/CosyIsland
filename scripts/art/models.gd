@@ -1284,10 +1284,14 @@ static func _tool(k: MeshKit, item: String) -> void:
 			k.box(Vector3(0, 0.72, 0), Vector3(0.18, 0.22, 0.03), head)
 		"rod":
 			k.cylinder(Vector3(0, -0.1, 0), Vector3(0, 0.9, 0), 0.025, 0.012, handle, 5)
-			k.cylinder(Vector3(0.03, 0.05, 0), Vector3(0.03, 0.08, 0), 0.04, 0.04, MeshKit.lin(Color("7d8790")), 8, true)
+			# The reel in the rod's own metal (iron, gold...).
+			k.cylinder(Vector3(0.03, 0.05, 0), Vector3(0.03, 0.08, 0), 0.04, 0.04, head if not item.begins_with("flimsy") else MeshKit.lin(Color("7d8790")), 8, true)
 			k.sphere(Vector3(0, 0.9, 0), Vector3.ONE * 0.016, MeshKit.lin(Color("e0453a")), 3, 5)
 		"net":
 			k.cylinder(Vector3(0, -0.1, 0), Vector3(0, 0.62, 0), 0.025, 0.025, handle, 5)
+			if not item.begins_with("flimsy"):
+				# A metal collar where the hoop meets the handle.
+				k.cylinder(Vector3(0, 0.56, 0), Vector3(0, 0.64, 0), 0.034, 0.034, head, 6, true)
 			_net_head(k, Vector3(0, 0.79, 0), 0.17)
 		"pole":
 			# A long pole, taller than its owner, with painted bands.

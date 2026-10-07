@@ -609,6 +609,76 @@
 			"color": "#7d8790",
 			"desc": "An iron shovel built to last."
 		},
+		"sturdy_rod": {
+			"name": "Sturdy Fishing Rod",
+			"category": "tool",
+			"tool": "rod",
+			"durability": 90,
+			"stack": 1,
+			"price": 600,
+			"color": "#7d8790",
+			"desc": "A proper rod with a reel that doesn't squeak."
+		},
+		"sturdy_net": {
+			"name": "Sturdy Net",
+			"category": "tool",
+			"tool": "net",
+			"durability": 90,
+			"stack": 1,
+			"price": 600,
+			"color": "#7d8790",
+			"desc": "A tight-woven net on a stout handle."
+		},
+		"golden_axe": {
+			"name": "Golden Axe",
+			"category": "tool",
+			"tool": "axe",
+			"durability": 250,
+			"stack": 1,
+			"price": 2400,
+			"color": "#e8b84f",
+			"desc": "Gleaming, and very nearly unbreakable."
+		},
+		"golden_pickaxe": {
+			"name": "Golden Pickaxe",
+			"category": "tool",
+			"tool": "pickaxe",
+			"durability": 250,
+			"stack": 1,
+			"price": 2400,
+			"color": "#e8b84f",
+			"desc": "Rocks practically split themselves."
+		},
+		"golden_shovel": {
+			"name": "Golden Shovel",
+			"category": "tool",
+			"tool": "shovel",
+			"durability": 250,
+			"stack": 1,
+			"price": 2400,
+			"color": "#e8b84f",
+			"desc": "For digging in style."
+		},
+		"golden_rod": {
+			"name": "Golden Fishing Rod",
+			"category": "tool",
+			"tool": "rod",
+			"durability": 250,
+			"stack": 1,
+			"price": 2400,
+			"color": "#e8b84f",
+			"desc": "The fish line up to be caught. Nearly."
+		},
+		"golden_net": {
+			"name": "Golden Net",
+			"category": "tool",
+			"tool": "net",
+			"durability": 250,
+			"stack": 1,
+			"price": 2400,
+			"color": "#e8b84f",
+			"desc": "Even the shyest bugs are curious about it."
+		},
 		"message_bottle": {
 			"name": "Message Bottle",
 			"category": "bottle",

@@ -976,6 +976,17 @@ func _test_journal() -> void:
 	var surprise: Dictionary = Journal.exchange.filter(func(o): return o["id"] == "furniture_box")[0]
 	var got := Journal.buy(surprise, rng)
 	check(got != "" and Inventory.slots.any(func(sl): return ItemDB.get_item(sl.get("id", "")).get("category", "") == "furniture"), "surprise furniture arrives in the pockets")
+	# Tool recipes: one offer per better tool.
+	var tool_offers := Journal.exchange.filter(func(o): return o.has("learn"))
+	check(tool_offers.size() >= 10 and tool_offers.all(func(o): return Recipes.recipes.has(o["learn"]) and ItemDB.is_tool(o["learn"])),
+		"the exchange has recipes for better tools")
+	var golden: Dictionary = tool_offers.filter(func(o): return o["learn"] == "golden_axe")[0]
+	Journal.stamps = 5000
+	check(Journal.buy(golden, rng) != "" and Recipes.is_known("golden_axe") and Journal.stamps == 5000 - int(golden["cost"]),
+		"buying one teaches you the recipe")
+	check(Journal.can_buy(golden) != "", "and you can't buy it twice")
+	check(Recipes.materials("golden_axe").has("gold_nugget") and Models.get_mesh("tool:golden_net").get_surface_count() > 0,
+		"golden tools take gold and have models")
 	Inventory.add_item("wood", 4)
 	before = Journal.stats.get("crafted", 0)
 	Recipes.craft("wooden_stool")

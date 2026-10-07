@@ -150,6 +150,8 @@ func can_buy(offer: Dictionary) -> String:
 			return "One size at a time!"
 	if offer.get("recipe", false) and Recipes.known.size() >= Recipes.recipes.size():
 		return "You know every recipe there is!"
+	if offer.has("learn") and Recipes.is_known(offer["learn"]):
+		return "You know that one already."
 	if stamps < int(offer["cost"]):
 		return "You need %d stamps for that." % int(offer["cost"])
 	if offer.has("item") and not Inventory.can_fit(offer["item"], int(offer.get("count", 1))):
@@ -169,6 +171,9 @@ func buy(offer: Dictionary, rng: RandomNumberGenerator) -> String:
 		got = "%d pocket spaces" % int(offer["pockets"])
 	elif offer.get("recipe", false):
 		got = "the %s recipe" % ItemDB.display_name(Recipes.learn_random(rng))
+	elif offer.has("learn"):
+		Recipes.learn(offer["learn"])
+		got = "the %s recipe" % ItemDB.display_name(offer["learn"])
 	elif offer.has("item"):
 		Inventory.add_item(offer["item"], int(offer.get("count", 1)))
 		got = offer["name"]

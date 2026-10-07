@@ -218,7 +218,7 @@ Milestone 3b:
   the journal and over their houses on the map
 
 - [x] Daily visitors: Fennel (fabrics), Tansy (seeds, a rare flower, fruit from away),
-  Basil (buys bugs) and Marina (buys fish), half as much again as Lucy pays) take turns by
+  Basil and Marina (buy bugs and fish for half as much again as Lucy pays) take turns by
   the plaza most days
 - [x] Neighbours moving out: now and then a settled neighbour has a "..." bubble and
   wonders about moving on; asked to stay they stay, told to follow their heart they leave

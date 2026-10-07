@@ -20,6 +20,8 @@ var _seat_uid := -1
 var _stand_spot := Vector3.ZERO
 ## True while the line is out.
 var fishing := false
+## The landscaping tool in hand ("" when they're put away): see LANDSCAPE_TOOLS.
+var landscaping := ""
 var _line: MeshInstance3D
 ## A vault with the pole under way: from, to, and how far through (0 to 1; -1 if not).
 var _vault_from := Vector3.ZERO
@@ -34,7 +36,7 @@ func setup(w: World, start: Vector3, look: Dictionary) -> void:
 	model = CharacterModel.new(look)
 	add_child(model)
 	model.set_tool(Inventory.equipped_id())
-	Events.equipped_changed.connect(model.set_tool)
+	Events.equipped_changed.connect(func(id: String): if landscaping == "": model.set_tool(id))
 	_line = MeshInstance3D.new()
 	var thread := CylinderMesh.new()
 	thread.top_radius = 0.006
@@ -101,6 +103,19 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.is_action_pressed("use"):
 			_reel()
 		return
+	if landscaping != "":
+		if event.is_action_pressed("use"):
+			var npc := _facing_npc()
+			if npc:
+				Story.talk_to(npc)
+			else:
+				_landscape()
+			return
+		for step: Array in [["tool_next", 1], ["tool_prev", -1]]:
+			if event.is_action_pressed(step[0]):
+				var at := LANDSCAPE_TOOLS.find(landscaping)
+				set_landscaping(LANDSCAPE_TOOLS[posmod(at + step[1], LANDSCAPE_TOOLS.size())])
+				return
 	if event.is_action_pressed("use"):
 		_use()
 	elif event.is_action_pressed("pickup"):
@@ -213,8 +228,6 @@ func _use() -> void:
 			_swing_net()
 		"pole":
 			_start_vault()
-		"cliff", "water":
-			_terraform(tool_kind)
 		"axe", "shovel", "pickaxe":
 			# Each tool has one job: the axe chops trees, the pickaxe breaks rocks and the
 			# shovel digs up flowers. Anything else just gets a bump.
@@ -249,20 +262,62 @@ func _use() -> void:
 
 # --- Landscaping ----------------------------------------------------------------------
 
-## The cliff pick or water spade on the tile ahead.
-func _terraform(what: String) -> void:
-	var plan := world.terraform_plan(tile(), cardinal(), what)
+## The landscaping tools, in the order the D-pad goes through them.
+const LANDSCAPE_TOOLS := ["cliff", "water", "slope", "path:stone", "path:brick", "path:wood",
+	"path:terracotta", "path:sand", "path:dirt"]
+
+## Takes out a landscaping tool from the phone's app ("" puts them away).
+func set_landscaping(what: String) -> void:
+	landscaping = what
+	model.set_tool("landscape:" + what.get_slice(":", 0) if what != "" else Inventory.equipped_id())
+	Events.landscaping_changed.emit(what)
+
+
+## A tool's name for the HUD.
+static func landscape_name(what: String) -> String:
+	match what:
+		"cliff":
+			return "Cliffs"
+		"water":
+			return "Water"
+		"slope":
+			return "Slopes"
+	return World.PATH_NAMES.get(what.get_slice(":", 1), "Path")
+
+
+## The landscaping tool in hand on the tile ahead.
+func _landscape() -> void:
+	var what := landscaping
+	var kind := what.get_slice(":", 0)
+	var plan: Dictionary
+	match kind:
+		"cliff", "water":
+			plan = world.terraform_plan(tile(), cardinal(), what)
+		"slope":
+			plan = world.slope_plan(tile(), cardinal())
+		_:
+			plan = world.path_plan(tile(), cardinal(), what.get_slice(":", 1))
 	if plan.has("why"):
 		Events.toast.emit(plan["why"])
 		return
 	_busy = SWING_TIME
-	model.play("mine" if what == "cliff" else "dig")
+	model.play("mine" if kind == "cliff" else "dig")
 	await get_tree().create_timer(IMPACT_TIME).timeout
-	var t: Vector2i = plan["tile"]
-	world.terraform(plan)
+	var t: Vector2i = plan.get("tile", tile() + cardinal())
+	match kind:
+		"cliff", "water":
+			world.terraform(plan)
+		"slope":
+			if plan.has("remove"):
+				world.remove_slope(plan)
+			else:
+				world.build_incline(plan)
+				t = plan["top"] + plan["dir"]
+		_:
+			world.set_path(plan)
 	var at := Vector3(t.x + 0.5, world.ground_height(t.x + 0.5, t.y + 0.5), t.y + 0.5)
-	Effects.burst("splash" if plan["verb"] == "dig" else "dust", at + Vector3(0, 0.2, 0))
-	if what == "cliff":
+	Effects.burst("splash" if plan.get("verb", "") == "dig" else "dust", at + Vector3(0, 0.2, 0))
+	if kind == "cliff":
 		Effects.burst("pebbles", at + Vector3(0, 0.3, 0))
 	Journal.add("landscaped")
 
@@ -364,6 +419,8 @@ func _interact(obj: Dictionary) -> void:
 		Events.workbench_opened.emit()
 	elif def.get("mirror", false):
 		Story.use_mirror()
+	elif def.get("storage", false) and world.interior and not world.visitor:
+		Events.storage_opened.emit()
 	elif def.has("room"):
 		Events.home_entered.emit(obj["uid"])
 	elif def.get("shopfront", false) and Story.npc(def.get("keeper", "lucy")):

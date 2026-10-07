@@ -17,6 +17,7 @@ static var _terrain_material: ShaderMaterial
 static var _sea_material: ShaderMaterial
 static var _fresh_material: ShaderMaterial
 static var _foam_material: ShaderMaterial
+static var _path_material: ShaderMaterial
 
 
 static func terrain_material() -> ShaderMaterial:
@@ -38,6 +39,89 @@ static func foam_material() -> ShaderMaterial:
 		_foam_material = ShaderMaterial.new()
 		_foam_material.shader = load("res://shaders/foam.gdshader")
 	return _foam_material
+
+
+static func path_material() -> ShaderMaterial:
+	if _path_material == null:
+		_path_material = ShaderMaterial.new()
+		_path_material.shader = load("res://shaders/path.gdshader")
+	return _path_material
+
+
+## Neighbours of a tile and their bits in the path shader's mask.
+const PATH_NEIGHBOURS := [
+	[Vector2i(0, -1), 1], [Vector2i(1, 0), 2], [Vector2i(0, 1), 4], [Vector2i(-1, 0), 8],
+	[Vector2i(1, -1), 16], [Vector2i(1, 1), 32], [Vector2i(-1, 1), 64], [Vector2i(-1, -1), 128],
+]
+## Steps on each tile of a slope laid with stairs.
+const STEPS_PER_TILE := 3
+
+
+## Paths (tile index -> kind, World.PATH_KINDS) as one mesh: laid just above the ground
+## (their outer corners are rounded by the shader), and on slopes either stairs or, for
+## sand and dirt, laid on the slope.
+static func build_paths(d: IslandData, paths: Dictionary) -> ArrayMesh:
+	var k := MeshKit.new()
+	for i: int in paths:
+		var x := i % d.width
+		var z := i / d.width
+		var kind: int = World.PATH_KINDS.find(paths[i])
+		var mask := 0
+		for nb: Array in PATH_NEIGHBOURS:
+			var q: Vector2i = Vector2i(x, z) + nb[0]
+			if d.in_bounds(q.x, q.y) and (paths.has(d.idx(q.x, q.y)) or d.plaza.has_point(q)):
+				mask |= nb[1]
+		if d.is_ramp(x, z) and paths[i] in World.STAIR_KINDS:
+			_stairs(k, d.ramps[i], x, z, Color(kind / 8.0, 1.0, 1.0, 1.0))
+			continue
+		var col := Color(kind / 8.0, mask / 255.0, 1.0, 1.0)
+		var lift := 0.012
+		var p: Array[Vector3] = [
+			Vector3(x, d.corner(x, z, IslandData.NW) + lift, z),
+			Vector3(x + 1, d.corner(x, z, IslandData.NE) + lift, z),
+			Vector3(x + 1, d.corner(x, z, IslandData.SE) + lift, z + 1),
+			Vector3(x, d.corner(x, z, IslandData.SW) + lift, z + 1),
+		]
+		var n := (p[2] - p[0]).cross(p[1] - p[3]).normalized()
+		if n.y < 0.0:
+			n = -n
+		var a := k.vertex(p[0], n, col, Vector2(0, 0))
+		var b := k.vertex(p[1], n, col, Vector2(1, 0))
+		var c := k.vertex(p[2], n, col, Vector2(1, 1))
+		var e := k.vertex(p[3], n, col, Vector2(0, 1))
+		k.quad(a, b, c, e, n)
+	return k.commit()
+
+
+## How high the stair tread is at (fx, fz) across a slope tile: the slope in steps,
+## each tread level with the top of its stretch (so the slope never shows through).
+static func stair_height(ramp: Dictionary, fx: float, fz: float) -> float:
+	var up: Vector2i = ramp["up"]
+	var s := fx if up.x > 0 else (1.0 - fx if up.x < 0 else (fz if up.y > 0 else 1.0 - fz))
+	var step := mini(floori(s * STEPS_PER_TILE), STEPS_PER_TILE - 1)
+	return lerpf(ramp["low"], ramp["high"], float(step + 1) / STEPS_PER_TILE) + 0.02
+
+
+## Stairs up a slope tile (treads at `stair_height`), with risers and sides.
+static func _stairs(k: MeshKit, ramp: Dictionary, x: int, z: int, col: Color) -> void:
+	var up: Vector2i = ramp["up"]
+	var high: float = ramp["high"]
+	var low: float = ramp["low"]
+	var u := Vector3(up.x, 0, up.y)
+	var v := Vector3(-up.y, 0, up.x)
+	var centre := Vector3(x + 0.5, 0, z + 0.5)
+	var side := Color(col.r, col.g, 0.5, 1.0)
+	var at := func(s: float, t: float, y: float) -> Vector3:
+		return centre + u * (s - 0.5) + v * (t - 0.5) + Vector3(0, y, 0)
+	for j in STEPS_PER_TILE:
+		var s0 := float(j) / STEPS_PER_TILE
+		var s1 := float(j + 1) / STEPS_PER_TILE
+		var top := lerpf(low, high, s1) + 0.02
+		var foot := lerpf(low, high, s0) - 0.12
+		k.flat_quad(at.call(s0, 0.0, top), at.call(s1, 0.0, top), at.call(s1, 1.0, top), at.call(s0, 1.0, top), Vector3.UP, col)
+		k.flat_quad(at.call(s0, 0.0, foot), at.call(s0, 1.0, foot), at.call(s0, 1.0, top), at.call(s0, 0.0, top), -u, side)
+		for t: float in [0.0, 1.0]:
+			k.flat_quad(at.call(s0, t, foot), at.call(s1, t, foot), at.call(s1, t, top), at.call(s0, t, top), v * (t * 2.0 - 1.0), side)
 
 
 static func fresh_material() -> ShaderMaterial:

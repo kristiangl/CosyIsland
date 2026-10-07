@@ -340,22 +340,16 @@ func _kit_talk() -> void:
 	await say("poppy", ["Here you are! Lucy and I will do the heavy lifting, you just choose the spot."])
 
 
-## Poppy's landscaping permit: the cliff pick and the water spade, for reshaping the island.
+## Poppy's landscaping permit: it adds the Landscaping app to the phone, for reshaping
+## the island.
 func _landscaping_talk() -> void:
-	var tools := ["cliff_pick", "water_spade"]
 	if flags.get("landscaping", false):
-		var lost := tools.filter(func(t): return Inventory.count_of(t) == 0)
-		if lost.is_empty():
-			await say("poppy", ["Equip the cliff pick and face the ground beside you to raise it, or face a low cliff to cut it back.",
-				"The water spade digs out ponds and rivers, and fills them in again. Have fun!"])
-			return
-		await say("poppy", ["Misplaced something? Lucy always keeps spares. Here you go."])
-		for t: String in lost:
-			_give(t)
+		await say("poppy", ["Open the Landscaping app on your phone and pick a tool: cliffs, water, slopes or paths.",
+			"{tools} swaps between them, and the app puts them away again when you're done. Have fun!"])
 		return
 	await say("poppy", ["Fancy reshaping the island? Ooh, I've always wanted a waterfall. Well, a pond.",
-		"With a landscaping permit you can raise cliffs, cut them back, dig ponds and rivers and fill them in.",
-		"It's %d acorns, and you get a cliff pick and a water spade that never wear out." % LANDSCAPING_COST])
+		"With a landscaping permit you can raise cliffs and cut them back, dig ponds and rivers, lay slopes and paths.",
+		"It's %d acorns, and it all goes on your phone. No tools to carry about!" % LANDSCAPING_COST])
 	if Inventory.currency < LANDSCAPING_COST:
 		await say("poppy", ["You've got %d so far. Come back when you've saved up!" % Inventory.currency])
 		return
@@ -364,10 +358,8 @@ func _landscaping_talk() -> void:
 		return
 	Inventory.add_currency(-LANDSCAPING_COST)
 	flags["landscaping"] = true
-	for t: String in tools:
-		_give(t)
 	_npc_cheer("poppy")
-	await say("poppy", ["There! Equip one, face the spot next to you and press {use}.",
+	await say("poppy", ["There! Open the Landscaping app on your phone, pick a tool, face the spot next to you and press {use}.",
 		"Don't worry about getting it wrong. Everything can be put back the way it was."])
 
 

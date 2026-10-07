@@ -12,10 +12,10 @@ const APPS := [
 	["map", "Map", "map", "c7e6c1"],
 	["wardrobe", "Wardrobe", "wardrobe", "f6c9c0"],
 	["recipes", "DIY Recipes", "hammer", "f6d8a8"],
+	["landscape", "Landscaping", "landscape", "cfe6c0"],
 	["options", "Options", "gear", "c9d8f2"],
 	["save", "Save", "save", "d9cfee"],
 	["sos", "SOS", "sos", "fbe3d6"],
-	["title", "Title screen", "back", "cfe6e0"],
 	["quit", "Save & quit", "door", "f2c6a8"],
 ]
 const PHONE_SIZE := Vector2(360, 590)
@@ -35,6 +35,10 @@ var _first_app: Button
 var _first_time_button: Button
 var _music_button: Button
 var _first_option: Button
+## Only there once Poppy's sold you the permit.
+var _landscape_app: Button
+var _landscape_buttons: Array[Button] = []
+var _put_away: Button
 
 
 func _ready() -> void:
@@ -98,6 +102,7 @@ func _ready() -> void:
 	_pages["options"] = _build_options()
 	_pages["time"] = _build_time()
 	_pages["controls"] = _build_controls()
+	_pages["landscape"] = _build_landscape()
 	for p in _pages.values():
 		p.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		pages.add_child(p)
@@ -119,6 +124,8 @@ func _build_home() -> Control:
 		var b := AppButton.new(app[1], app[2], Color(app[3]))
 		b.pressed.connect(_open_app.bind(app[0]))
 		grid.add_child(b)
+		if app[0] == "landscape":
+			_landscape_app = b
 		if _first_app == null:
 			_first_app = b
 	return grid
@@ -139,6 +146,10 @@ func _build_options() -> Control:
 		b.text = entry[0]
 		b.pressed.connect(_show_page.bind(entry[1]))
 		box.add_child(b)
+	var title := Button.new()
+	title.text = "Back to the title screen"
+	title.pressed.connect(_open_app.bind("title"))
+	box.add_child(title)
 	_update_options()
 	return box
 
@@ -193,6 +204,31 @@ func _build_controls() -> Control:
 	return box
 
 
+## The landscaping tools: pick one to take it out, or put them away.
+func _build_landscape() -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 6)
+	box.add_child(_page_title("Landscaping"))
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 6)
+	grid.add_theme_constant_override("v_separation", 6)
+	box.add_child(grid)
+	for what: String in Player.LANDSCAPE_TOOLS:
+		var b := Button.new()
+		b.text = Player.landscape_name(what)
+		b.add_theme_font_size_override("font_size", 15)
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		b.pressed.connect(_open_app.bind("landscape:" + what))
+		grid.add_child(b)
+		_landscape_buttons.append(b)
+	_put_away = Button.new()
+	_put_away.text = "Put the tools away"
+	_put_away.pressed.connect(_open_app.bind("landscape:"))
+	box.add_child(_put_away)
+	return box
+
+
 func _page_title(text: String) -> Label:
 	var l := Label.new()
 	l.text = text
@@ -207,6 +243,7 @@ func open() -> void:
 	if _acorn_icon.texture == null:
 		_acorn_icon.texture = Icons.get_icon("acorn_pouch")
 	visible = true
+	_landscape_app.visible = Story.flags.get("landscaping", false)
 	_show_page("home")
 	# Slide up from below the screen.
 	var area := get_parent_area_size()
@@ -246,11 +283,16 @@ func _show_page(page: String) -> void:
 			_first_time_button.grab_focus.call_deferred()
 		"options":
 			_first_option.grab_focus.call_deferred()
+		"landscape":
+			var holding: String = Game.player.landscaping if Game.player else ""
+			_put_away.visible = holding != ""
+			var at := maxi(0, Player.LANDSCAPE_TOOLS.find(holding))
+			_landscape_buttons[at].grab_focus.call_deferred()
 
 
 func _open_app(app: String) -> void:
 	match app:
-		"options":
+		"options", "landscape":
 			_show_page(app)
 		_:
 			# Apps that leave the phone.

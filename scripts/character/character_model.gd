@@ -355,7 +355,8 @@ func set_look(appearance: Dictionary) -> void:
 func set_tool(item_id: String) -> void:
 	_tool_id = item_id
 	if _tool:
-		_tool.mesh = Models.get_mesh("tool:" + item_id) if item_id != "" else null
+		# Landscaping tools are model keys of their own ("landscape:cliff").
+		_tool.mesh = null if item_id == "" else Models.get_mesh(item_id if ":" in item_id else "tool:" + item_id)
 
 
 ## Plays a one-off action from ACTIONS: "chop", "dig", "net", "shake", "pickup",

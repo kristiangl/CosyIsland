@@ -122,6 +122,14 @@ static func draw(c: CanvasItem, id: String, o: Vector2, s: float, col: Color) ->
 					o + dir * s * 0.4 + side * s * 0.07, o + dir * s * 0.24 + side * s * 0.09]), col)
 			c.draw_circle(o, s * 0.29, col)
 			c.draw_circle(o, s * 0.12, light)
+		"landscape":
+			# A hill with a path winding up it, and a little flag on top.
+			_arc(c, o + Vector2(0, s * 0.36), s * 0.42, PI, TAU, col, s * 0.2, true)
+			c.draw_line(o + Vector2(-s * 0.1, s * 0.36), o + Vector2(s * 0.08, s * 0.12), light, w * 1.6)
+			c.draw_line(o + Vector2(s * 0.08, s * 0.12), o + Vector2(-s * 0.06, -s * 0.02), light, w * 1.6)
+			c.draw_line(o + Vector2(0, -s * 0.06), o + Vector2(0, -s * 0.4), col, w)
+			c.draw_colored_polygon(PackedVector2Array([o + Vector2(0, -s * 0.4), o + Vector2(s * 0.22, -s * 0.32),
+				o + Vector2(0, -s * 0.24)]), Color(0.88, 0.42, 0.36))
 		"leaf":
 			c.draw_colored_polygon(PackedVector2Array([o + Vector2(-s * 0.32, s * 0.32), o + Vector2(-s * 0.2, -s * 0.12),
 				o + Vector2(s * 0.08, -s * 0.32), o + Vector2(s * 0.36, -s * 0.36), o + Vector2(s * 0.28, -s * 0.04),

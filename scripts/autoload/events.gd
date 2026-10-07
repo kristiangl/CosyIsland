@@ -9,6 +9,10 @@ signal currency_changed(amount: int)
 signal equipped_changed(item_id: String)
 signal day_changed(day_key: int)
 signal mode_changed(mode: int)
+## Home storage was asked for (the pockets at home, or a cupboard there).
+signal storage_opened
+## A landscaping tool was taken out of the phone's app, swapped, or put away ("").
+signal landscaping_changed(tool: String)
 signal workbench_opened
 ## Furniture or a building was placed or packed away.
 signal placed_changed

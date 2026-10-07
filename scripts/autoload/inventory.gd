@@ -11,6 +11,9 @@ var currency: int = 0
 var equipped_slot: int = -1
 ## Clothes you own (item ids), worn from the wardrobe any time.
 var closet: Array[String] = []
+## Home storage: stacks put away at home, like pocket slots but never empty ones.
+var storage: Array[Dictionary] = []
+const STORAGE_SIZE := 400
 
 
 func _ready() -> void:
@@ -24,6 +27,7 @@ func reset() -> void:
 	currency = 0
 	equipped_slot = -1
 	closet.clear()
+	storage.clear()
 
 
 ## Adds items, filling existing stacks first. Returns how many didn't fit.
@@ -163,13 +167,73 @@ func expand(size: int) -> void:
 	Events.pockets_resized.emit()
 
 
+## Puts a pocket slot away in storage, joining a stack there if it can. Returns false
+## (and leaves it in the pockets) if storage is full.
+func store(index: int) -> bool:
+	var slot := slots[index]
+	if slot.is_empty():
+		return false
+	var id: String = slot["id"]
+	var count: int = slot["count"]
+	if not slot.has("durability"):
+		var stack := ItemDB.max_stack(id)
+		for s in storage:
+			if count <= 0:
+				break
+			if s["id"] == id and not s.has("durability") and s["count"] < stack:
+				var moved: int = mini(stack - s["count"], count)
+				s["count"] += moved
+				count -= moved
+	if count > 0:
+		if storage.size() >= STORAGE_SIZE:
+			if count != slot["count"]:
+				slot["count"] = count
+				Events.inventory_changed.emit()
+			return false
+		var kept := slot.duplicate()
+		kept["count"] = count
+		storage.append(kept)
+	slots[index] = {}
+	if index == equipped_slot:
+		equip(-1)
+	Events.inventory_changed.emit()
+	return true
+
+
+## Takes a stack out of storage into the pockets (as much as fits). Returns false if
+## none of it fit.
+func retrieve(index: int) -> bool:
+	var s := storage[index]
+	var before: int = s["count"]
+	if s.has("durability"):
+		var free := -1
+		for i in slots.size():
+			if free < 0 and slots[i].is_empty():
+				free = i
+		if free < 0:
+			return false
+		slots[free] = s.duplicate()
+		storage.remove_at(index)
+	else:
+		var left := add_item(s["id"], s["count"])
+		if left == before:
+			return false
+		if left > 0:
+			s["count"] = left
+		else:
+			storage.remove_at(index)
+	Events.inventory_changed.emit()
+	return true
+
+
 func add_currency(amount: int) -> void:
 	currency += amount
 	Events.currency_changed.emit(currency)
 
 
 func to_save() -> Dictionary:
-	return {"slots": slots.duplicate(true), "currency": currency, "equipped_slot": equipped_slot, "closet": closet.duplicate()}
+	return {"slots": slots.duplicate(true), "currency": currency, "equipped_slot": equipped_slot, "closet": closet.duplicate(),
+		"storage": storage.duplicate(true)}
 
 
 func from_save(data: Dictionary) -> void:
@@ -184,6 +248,12 @@ func from_save(data: Dictionary) -> void:
 			if s.has("durability"):
 				s["durability"] = int(s["durability"])
 			slots[i] = s
+	for s: Dictionary in data.get("storage", []):
+		if ItemDB.has_item(s.get("id", "")):
+			s["count"] = int(s["count"])
+			if s.has("durability"):
+				s["durability"] = int(s["durability"])
+			storage.append(s)
 	currency = int(data.get("currency", 0))
 	for id in data.get("closet", []):
 		if ItemDB.is_clothing(id) and not id in closet:

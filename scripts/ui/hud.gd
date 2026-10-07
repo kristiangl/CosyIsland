@@ -12,6 +12,8 @@ signal wardrobe_requested
 var _time_label: Label
 var _date_label: Label
 var _tool_label: Label
+var _play_hints: Label
+var _landscape_hints: Label
 var _tool_panel: PanelContainer
 var _hint_panel: PanelContainer
 var _toast_panel: PanelContainer
@@ -24,6 +26,7 @@ var creator: CharacterCreator
 var crafting: CraftingMenu
 var journal: JournalMenu
 var shop: ShopMenu
+var storage: StorageMenu
 var phone: IslandPhone
 var _minimap: PanelContainer
 var _map: PanelContainer
@@ -97,6 +100,13 @@ func _ready() -> void:
 	hints.add_theme_color_override("font_color", UIStyle.BROWN_LIGHT)
 	hints.add_theme_font_size_override("font_size", 16)
 	hint_panel.add_child(hints)
+	_play_hints = hints
+	_landscape_hints = Label.new()
+	Prompts.bind_label(_landscape_hints, "{use} landscape   {tools} change tool   {pause} phone (to put away)")
+	_landscape_hints.add_theme_color_override("font_color", UIStyle.BROWN_LIGHT)
+	_landscape_hints.add_theme_font_size_override("font_size", 16)
+	_landscape_hints.visible = false
+	hint_panel.add_child(_landscape_hints)
 
 	# Toast, bottom centre.
 	_toast_panel = PanelContainer.new()
@@ -135,6 +145,9 @@ func _ready() -> void:
 	journal = JournalMenu.new()
 	centre.add_child(journal)
 	Game.shop = shop
+	storage = StorageMenu.new()
+	root.add_child(storage)
+	Events.storage_opened.connect(storage.open)
 	var paint := HousePaint.new()
 	centre.add_child(paint)
 	Game.house_paint = paint
@@ -156,6 +169,7 @@ func _ready() -> void:
 	root.move_child(_toast_panel, -1)
 	Events.toast.connect(_on_toast)
 	Events.equipped_changed.connect(_on_equipped)
+	Events.landscaping_changed.connect(_on_landscaping)
 	_on_equipped(Inventory.equipped_id())
 
 
@@ -285,7 +299,18 @@ func _update_toast(delta: float) -> void:
 			_toast_timer = 2.2
 
 
+func _on_landscaping(what: String) -> void:
+	_play_hints.visible = what == ""
+	_landscape_hints.visible = what != ""
+	if what == "":
+		_on_equipped(Inventory.equipped_id())
+	else:
+		_tool_label.text = "Landscaping: " + Player.landscape_name(what)
+
+
 func _on_equipped(item_id: String) -> void:
+	if Game.player and Game.player.landscaping != "":
+		return
 	_tool_label.text = "Empty hands" if item_id == "" else "Holding: " + ItemDB.display_name(item_id)
 
 
@@ -310,3 +335,9 @@ func _on_phone_app(app: String) -> void:
 			title_requested.emit()
 		"sos":
 			sos_requested.emit()
+		_ when app.begins_with("landscape:"):
+			var what := app.get_slice(":", 1) + (":" + app.get_slice(":", 2) if app.get_slice_count(":") > 2 else "")
+			if what != "" and (Game.world != Game.island or Game.world == null):
+				Events.toast.emit("Landscaping is for outdoors on your own island.")
+			elif Game.player:
+				Game.player.set_landscaping(what)

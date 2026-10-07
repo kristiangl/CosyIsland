@@ -18,7 +18,7 @@ extends Node3D
 ##   --demo=home        pitch the tent, go inside and furnish it (--room=wallpaper,flooring)
 ##   --demo=door        pitch the tent and stand outside its door
 ##   --demo=office      inside Poppy's office
-##   --demo=terraform   a raised lawn and a pond made with the landscaping tools
+##   --demo=terraform   a raised lawn with stairs and a slope, paths and a pond (--landscape=TOOL in hand)
 ##   --demo=construct   a slope and a bridge built near the plaza (--bridge stands by the bridge)
 ##   --demo=shop        Lucy's shop has been built; stand in front of it (--demo=museum: Bramble's,
 ##                      --demo=tailors: Daisy and Morris's, --visit to go in;
@@ -36,7 +36,7 @@ extends Node3D
 ##   --house            with --demo: the tent has already become a house (--big: the big house,
 ##                      --in=N: go into its room N with --demo=home, --paint=wall,roof,door hex colours)
 ##   --series=ID        with --demo or --demo=home: furniture from one series (--variant=ID)
-##   --ui=pockets|pause|map|creator|crafting|recipes|customise|journal|exchange|critters|friends|neighbour|placing (--place=ID)|intro|ask|lucy|sleep|asleep|shop|sell (--sold: just sold one)|paint (--big)|fitting (--tab=N)  (--tab=N picks a creator tab, --try=key:id,... dresses up, --closet=TEXT opens the wardrobe with clothes whose ids contain TEXT)  open a menu or mode (for screenshots)
+##   --ui=pockets|storage|landscape|pause|map|creator|crafting|recipes|customise|journal|exchange|critters|friends|neighbour|placing (--place=ID)|intro|ask|lucy|sleep|asleep|shop|sell (--sold: just sold one)|paint (--big)|fitting (--tab=N)  (--tab=N picks a creator tab, --try=key:id,... dresses up, --closet=TEXT opens the wardrobe with clothes whose ids contain TEXT)  open a menu or mode (for screenshots)
 
 const AUTOSAVE_SECONDS := 60.0
 
@@ -175,6 +175,19 @@ func _ready() -> void:
 			for id in ["wood", "stone", "clay", "iron_nugget", "tree_branch", "wooden_chair", "campfire", "apple", "tulip_red", "tour_ticket", "shop_kit"]:
 				Inventory.add_item(id, 3)
 			hud._pockets.open()
+		"storage":
+			for id in ["wood", "stone", "apple", "wooden_chair", "flimsy_axe"]:
+				Inventory.add_item(id, 2)
+			for id in ["meadow_dresser_sage", "comfy_cabinet_sage", "tulip_red", "wood", "stone", "clay", "campfire", "tour_ticket", "flimsy_net"]:
+				Inventory.add_item(id, 5)
+				for i in Inventory.slots.size():
+					if Inventory.slots[i].get("id", "") == id:
+						Inventory.store(i)
+			hud.storage.open()
+		"landscape":
+			Story.flags["landscaping"] = true
+			hud.phone.open()
+			hud.phone._open_app("landscape")
 		"pause":
 			hud.phone.open()
 		"map":
@@ -926,6 +939,8 @@ func _switch_world(to: World) -> void:
 	world.visible = to == world
 	world.process_mode = Node.PROCESS_MODE_INHERIT if to == world else Node.PROCESS_MODE_DISABLED
 	Game.world = to
+	if to != world and player.landscaping != "":
+		player.set_landscaping("")
 	player.world = to
 	placement.world = to
 	day_night.indoors = not outside
@@ -1092,43 +1107,69 @@ func _run_demo() -> void:
 			camera_rig.snap()
 		return
 	if Game.args["demo"] == "terraform":
-		# A little raised lawn and a pond dug beside it, near the plaza, with the tools in hand.
-		for t: String in ["water_spade", "cliff_pick"]:
-			Inventory.add_item(t)
-		Inventory.equip(Inventory.slots.find_custom(func(sl): return sl != null and sl.get("id", "") == "cliff_pick"))
+		# Near the plaza: a raised lawn with wide stone stairs up the front and a sandy slope
+		# up the side, paths of a few kinds, and a pond, with the landscaping app out.
+		Story.flags["landscaping"] = true
 		var best := Vector2i(-1, -1)
 		var near := INF
-		for z in range(4, world.data.height - 8):
-			for x in range(4, world.data.width - 10):
+		for z in range(4, world.data.height - 12):
+			for x in range(4, world.data.width - 16):
 				var dist := Vector2(x, z).distance_to(Vector2(spawn))
-				if dist >= near or dist < 8.0:
+				if dist >= near or dist < 9.0:
 					continue
 				var ok := true
-				for dz in range(-1, 5):
-					for dx in range(-1, 9):
+				for dz in range(-1, 10):
+					for dx in range(-1, 14):
 						var q := Vector2i(x + dx, z + dz)
-						var edited := dz >= 0 and dz <= 2 and dx >= 0 and dx <= 7
 						ok = ok and world.data.tile(q.x, q.y) == IslandData.Tile.GRASS and world.data.tier(q.x, q.y) == 1 \
 							and not world.data.is_ramp(q.x, q.y) and not world.data.plaza.grow(2).has_point(q) \
-							and (not edited or world.object_at(q.x, q.y).is_empty())
+							and world.object_at(q.x, q.y).get("kind", "tree") in ["tree", "bush", "flower", "rock", "fruit_tree"]
 				if ok:
 					near = dist
 					best = Vector2i(x, z)
 		if best.x >= 0:
+			for dz in range(-1, 10):
+				for dx in range(-1, 14):
+					var obj := world.object_at(best.x + dx, best.y + dz)
+					if not obj.is_empty():
+						world.remove_object(obj["uid"])
 			var started := Time.get_ticks_msec()
 			var edits := 0
 			for dz in 3:
-				for dx in 3:
+				for dx in 6:
 					world.terraform({"tile": best + Vector2i(dx, dz), "type": IslandData.Tile.GRASS, "tier": 2, "verb": "raise"})
 					edits += 1
 			for dz in range(1, 3):
-				for dx in range(5, 8):
+				for dx in range(10, 13):
 					world.terraform({"tile": best + Vector2i(dx, dz), "type": IslandData.Tile.WATER, "tier": 1, "verb": "dig"})
 					edits += 1
 			print("Landscaped %d tiles, %d ms each" % [edits, (Time.get_ticks_msec() - started) / edits])
-			player.position = Vector3(best.x + 4.5, 0, best.y + 5.5)
+			for top: Vector2i in [best + Vector2i(2, 2), best + Vector2i(3, 2)]:
+				var plan := world.incline_plan(top, Vector2i(0, 1))
+				if plan.has("top"):
+					world.build_incline(plan)
+				else:
+					print("No slope: ", plan)
+			var side := world.incline_plan(best + Vector2i(5, 1), Vector2i(1, 0))
+			if side.has("top"):
+				world.build_incline(side)
+			var lay := func(t: Vector2i, kind: String) -> void:
+				var plan := world.path_plan(t - Vector2i(0, 1), Vector2i(0, 1), kind)
+				if plan.has("tile"):
+					world.set_path(plan)
+			for dz in range(0, 9):
+				for dx in [2, 3]:
+					lay.call(best + Vector2i(dx, dz), "stone")
+			for dx in range(6, 9):
+				lay.call(best + Vector2i(dx, 1), "sand")
+			for dx in range(4, 9):
+				lay.call(best + Vector2i(dx, 7), "brick")
+			for dz in range(3, 7):
+				lay.call(best + Vector2i(9, dz), "wood")
+			player.position = Vector3(best.x + 3.0, 0, best.y + (6.5 if Game.args.has("close") else 9.5))
 			player.position.y = world.ground_height(player.position.x, player.position.z)
 			player.facing = Vector3(0, 0, -1)
+			player.set_landscaping(Game.args.get("landscape", "path:stone"))
 			camera_rig.snap()
 		return
 	if Game.args["demo"] == "orchard":

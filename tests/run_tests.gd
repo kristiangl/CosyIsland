@@ -53,6 +53,8 @@ func _run() -> void:
 	_test_ramps_and_sos()
 	_test_built_crossings()
 	_test_landscaping()
+	_test_paths_and_stairs()
+	_test_storage()
 	_test_tour_crossings_and_pole()
 	print("\n%d checks, %d failures" % [_checks, _failures])
 	IslandMap.finish()
@@ -1784,7 +1786,8 @@ func _test_built_crossings() -> void:
 
 
 func _test_landscaping() -> void:
-	check(ItemDB.tool_type("cliff_pick") == "cliff" and ItemDB.tool_type("water_spade") == "water", "there's a cliff pick and a water spade")
+	check(not ItemDB.has_item("cliff_pick") and IslandPhone.APPS.any(func(a): return a[0] == "landscape")
+		and Player.LANDSCAPE_TOOLS.size() == 3 + World.PATH_KINDS.size(), "landscaping tools come from a phone app, not the pockets")
 	# Working the ground out again gives the same island as the generator.
 	var fresh := IslandGenerator.generate(7)
 	var again := IslandGenerator.generate(7)
@@ -1858,6 +1861,88 @@ func _test_landscaping() -> void:
 				blocked += 1 if w.terraform_plan(Vector2i(x - 1, z), Vector2i(1, 0), "water").has("why") else 0
 	check(tries > 0 and blocked == tries, "no ponds dug against the beach (%d of %d)" % [blocked, tries])
 	w.free()
+
+
+func _test_paths_and_stairs() -> void:
+	var d := IslandGenerator.generate(7)
+	var w := World.new()
+	add_child(w)
+	w.setup(d)
+	# Open, flat, low ground below a straight stretch of cliff to the north.
+	var top := Vector2i(-1, -1)
+	for z in range(4, d.height - 6):
+		for x in range(4, d.width - 6):
+			if top.x >= 0:
+				break
+			var plan := w.incline_plan(Vector2i(x, z), Vector2i(0, 1))
+			if plan.has("top") and w.incline_plan(Vector2i(x + 1, z), Vector2i(0, 1)).has("top") and plan["dir"] == Vector2i(0, 1):
+				top = Vector2i(x, z)
+	check(top.x >= 0, "there's a cliff top with room for two slopes side by side")
+	if top.x < 0:
+		w.free()
+		return
+	w.build_incline(w.incline_plan(top, Vector2i(0, 1)))
+	var beside := w.incline_plan(top + Vector2i(1, 0), Vector2i(0, 1))
+	check(beside.has("top"), "a slope can go right beside another to make it wider (%s)" % beside.get("why", ""))
+	w.build_incline(beside)
+	check(d.is_ramp(top.x + 1, top.y + 1) and d.is_ramp(top.x + 1, top.y + 2), "and it does")
+	# Paths: on the grass at the foot, then up the slope as stairs.
+	var foot := top + Vector2i(0, 3)
+	var lay := w.path_plan(foot + Vector2i(0, 1), Vector2i(0, -1), "stone")
+	check(lay.get("kind", "") == "stone", "the path tool lays a stone path on grass")
+	w.set_path(lay)
+	check(w.path_plan(foot + Vector2i(0, 1), Vector2i(0, -1), "stone")["kind"] == "", "and the same path again takes it up")
+	check(w.path_plan(foot + Vector2i(0, 1), Vector2i(0, -1), "brick")["kind"] == "brick", "or another kind swaps it")
+	for k in [1, 2]:
+		w.set_path(w.path_plan(top + Vector2i(0, k + 1), Vector2i(0, -1), "stone"))
+	var stairs: float = w.ground_height(top.x + 0.5, top.y + 1.2)
+	check(not is_equal_approx(stairs, d.height_at(top.x + 0.5, top.y + 1.2)), "a stone path turns the slope into stairs")
+	var end := _walk(w, Vector2(foot) + Vector2(0.5, 0.5), Vector2(0, -1), 120)
+	check(end.y > IslandData.tier_height(d.tier(top.x, top.y)) - 0.05, "which you can climb (got to %.2f)" % end.y)
+	w.set_path(w.path_plan(top + Vector2i(0, 3), Vector2i(0, -1), "sand"))
+	check(is_equal_approx(w.ground_height(top.x + 0.5, top.y + 2.5), d.height_at(top.x + 0.5, top.y + 2.5)), "sand on a slope stays a slope")
+	var saved: Dictionary = JSON.parse_string(JSON.stringify(w.to_save()))
+	var w2 := World.new()
+	add_child(w2)
+	w2.setup(IslandGenerator.generate(7), saved)
+	check(w2.paths.size() == w.paths.size() and w2.paths.get(d.idx(top.x, top.y + 1), "") == "stone", "paths are kept with the island")
+	w2.free()
+	# The slope tool takes away slopes you built, but not the island's own.
+	var remove := w.slope_plan(top + Vector2i(1, 3), Vector2i(0, -1))
+	check(remove.has("remove"), "facing a slope you built, the slope tool takes it away")
+	w.remove_slope(remove)
+	check(not d.is_ramp(top.x + 1, top.y + 1) and w.built_ramps.size() == 1, "and it's gone")
+	for i: int in d.ramps:
+		var t := Vector2i(i % d.width, i / d.width)
+		if w.built_ramps.all(func(r): return Vector2i(r[0], r[1]) + Vector2i(r[2], r[3]) != t and Vector2i(r[0], r[1]) + Vector2i(r[2], r[3]) * 2 != t):
+			check(w.slope_plan(t, Vector2i(1, 0)).has("why"), "the island's own slopes stay")
+			break
+	check(w.path_plan(d.plaza.get_center() - Vector2i(1, 0), Vector2i(1, 0), "stone").has("why"), "no paths over the plaza")
+	w.free()
+
+
+func _test_storage() -> void:
+	Inventory.reset()
+	Inventory.add_item("wood", 15)
+	Inventory.add_item("flimsy_axe")
+	var axe := -1
+	for i in Inventory.slots.size():
+		if Inventory.slots[i].get("id", "") == "flimsy_axe":
+			axe = i
+	Inventory.slots[axe]["durability"] = 7
+	check(Inventory.store(0) and Inventory.store(axe) and Inventory.count_of("wood") == 0 and Inventory.storage.size() == 2,
+		"pockets can be put away in storage")
+	Inventory.add_item("wood", 5)
+	Inventory.store(0)
+	check(Inventory.storage.size() == 2 and Inventory.storage[0]["count"] == 20, "and join the stack already there")
+	var saved: Dictionary = JSON.parse_string(JSON.stringify(Inventory.to_save()))
+	Inventory.reset()
+	Inventory.from_save(saved)
+	check(Inventory.storage.size() == 2 and int(Inventory.storage[1]["durability"]) == 7, "storage is saved, tools' wear and all")
+	check(Inventory.retrieve(1) and Inventory.count_of("flimsy_axe") == 1 and Inventory.storage.size() == 1, "and things come back out")
+	check(StorageMenu.group_of("wood") == "nature" and StorageMenu.group_of("meadow_dresser_sage") == "furniture", "storage sorts by kind")
+	check(ItemDB.placeable("meadow_dresser_sage").get("storage", false), "dressers open storage at home")
+	Inventory.reset()
 
 
 func _test_tour_crossings_and_pole() -> void:

@@ -120,6 +120,10 @@ func _load_clothing() -> void:
 ## Furniture series (data/furniture/*.json): every piece comes in each of its series'
 ## variants, as an item "<piece>_<variant>" built by SeriesModels from its "build" entry,
 ## or, for a piece with "kaykit", that KayKit model repainted by the variant's "paint".
+## Cupboards that open home storage.
+const STORAGE_KINDS := ["dresser", "wardrobe", "toy_box"]
+
+
 func _load_furniture() -> void:
 	var files := Array(DirAccess.get_files_at(FURNITURE_DIR))
 	files.sort()
@@ -146,6 +150,8 @@ func _load_furniture() -> void:
 					items[id]["interior"] = {"part": piece["room"]}
 				else:
 					var placeable := {"footprint": footprint, "model": "series:" + id, "rotatable": true}
+					if piece.get("kind", "") in STORAGE_KINDS:
+						placeable["storage"] = true
 					for key: String in PIECE_PLACEABLE:
 						if piece.has(key):
 							placeable[key] = piece[key]

@@ -15,6 +15,8 @@ var _currency_icon: TextureRect
 var _buttons: Array[SlotButton] = []
 ## Shown while you've a flower in your hair: takes it out, back into the pockets.
 var _flower_button: Button
+## Shown at home: opens storage.
+var _storage_button: Button
 var _selected := 0
 
 
@@ -45,6 +47,13 @@ func _ready() -> void:
 	_flower_button.expand_icon = true
 	_flower_button.pressed.connect(_take_out_flower)
 	header.add_child(_flower_button)
+	_storage_button = Button.new()
+	_storage_button.text = "Storage"
+	_storage_button.add_theme_font_size_override("font_size", 16)
+	_storage_button.pressed.connect(func():
+		close()
+		Events.storage_opened.emit())
+	header.add_child(_storage_button)
 	var pill := UIStyle.acorn_pill(20)
 	header.add_child(pill)
 	_currency_label = pill.get_meta("label")
@@ -118,6 +127,7 @@ func _refresh() -> void:
 	_currency_label.text = UIStyle.acorns(Inventory.currency)
 	var wearing: String = Game.player.model.look.get("hair_flower", "") if Game.player else ""
 	_flower_button.visible = wearing != ""
+	_storage_button.visible = Game.world != null and Game.world.interior and not Game.world.visitor
 	_flower_button.icon = Icons.get_icon(wearing) if wearing != "" else null
 	# The icon renders in the background the first time.
 	if _currency_icon.texture == null:

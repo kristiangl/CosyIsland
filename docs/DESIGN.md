@@ -242,11 +242,15 @@ Milestone 3b:
   between banks of the same height) and an incline kit (a two-tile slope up a straight
   cliff, used from the foot or the top). Used from the pockets where you stand, built on
   the spot.
-- [x] Landscaping: once the house is built, Poppy sells a permit with a cliff pick (raise
-  the ground beside you, or cut back a cliff one step up) and a water spade (dig out
-  ponds and rivers, or fill them in). Cliffs only ever step one level at a time, water
-  sits level with its banks, and nothing changes against the beach, slopes, bridges or
-  the plaza.
+- [x] Landscaping: once the house is built, Poppy sells a permit that adds a Landscaping
+  app to the phone. Pick a tool there (cliffs, water, slopes, or one of six paths: stone,
+  brick, wood, terracotta, sand, dirt), swap with the D-pad, and put them away from the
+  app. Cliffs only ever step one level at a time, water sits level with its banks, and
+  nothing changes against the beach, slopes, bridges or the plaza. Slopes laid side by side
+  make a wider one; a stone, brick, wooden or terracotta path on a slope turns it into
+  stairs, while sand and dirt stay slopes. Paths round off their outer corners.
+- [x] Home storage: put things away from the pockets while at home (or at a dresser,
+  wardrobe or toy box there), sorted by kind, 400 stacks.
 
 Next milestones (suggested order):
 4. More to find on tours: other kinds of tree on rare islands, flower breeding for the

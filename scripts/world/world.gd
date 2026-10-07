@@ -30,6 +30,13 @@ var built_ramps: Array = []
 ## Landscaping (saved): tile index -> [tile type, tier] for tiles the player has
 ## raised, lowered, dug out or filled in.
 var land_edits: Dictionary = {}
+## Paths laid with the landscaping app (saved): tile index -> kind.
+var paths: Dictionary = {}
+const PATH_KINDS := ["stone", "brick", "wood", "terracotta", "sand", "dirt"]
+const PATH_NAMES := {"stone": "Stone path", "brick": "Brick path", "wood": "Wooden path",
+	"terracotta": "Terracotta path", "sand": "Sandy path", "dirt": "Dirt path"}
+## A slope laid with one of these becomes stairs; sand and dirt stay slopes.
+const STAIR_KINDS := ["stone", "brick", "wood", "terracotta"]
 ## The ground is built in chunks this many tiles across.
 const GROUND_CHUNK := 32
 var _ground_material: ShaderMaterial
@@ -84,6 +91,9 @@ func setup(island: IslandData, saved: Dictionary = {}) -> void:
 		data.tiers[i] = int(e[3])
 		data.ramps.erase(i)
 		land_edits[i] = [int(e[2]), int(e[3])]
+	for p: Array in saved.get("paths", []):
+		if str(p[2]) in PATH_KINDS:
+			paths[data.idx(int(p[0]), int(p[1]))] = str(p[2])
 	for r: Array in saved.get("ramps", []):
 		var top := Vector2i(int(r[0]), int(r[1]))
 		var dir := Vector2i(int(r[2]), int(r[3]))
@@ -133,6 +143,11 @@ func to_save() -> Dictionary:
 	else:
 		if not built_ramps.is_empty():
 			out["ramps"] = built_ramps
+		if not paths.is_empty():
+			var laid := []
+			for i: int in paths:
+				laid.append([i % data.width, i / data.width, paths[i]])
+			out["paths"] = laid
 		if not land_edits.is_empty():
 			var land := []
 			for i: int in land_edits:
@@ -197,6 +212,12 @@ func _build_terrain() -> void:
 	grass.name = "Grass"
 	grass.build(data, float(Game.args.get("grass", "1.0")))
 	add_child(grass)
+	var laid := MeshInstance3D.new()
+	laid.name = "Paths"
+	laid.material_override = TerrainBuilder.path_material()
+	laid.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(laid)
+	_build_paths()
 
 
 func _build_chunk(chunk: MeshInstance3D, cx: int, cz: int) -> void:
@@ -216,6 +237,7 @@ func rebuild_terrain(area: Rect2i) -> void:
 			if chunk:
 				_build_chunk(chunk, cx, cz)
 	(get_node("FreshWater") as MeshInstance3D).mesh = TerrainBuilder.build_fresh_water(data)
+	_build_paths()
 	(get_node("BankFoam") as MeshInstance3D).mesh = TerrainBuilder.build_bank_foam(data)
 	grass.settle(data, area)
 	IslandMap.invalidate()
@@ -267,7 +289,14 @@ func incline_plan(tile: Vector2i, facing: Vector2i) -> Dictionary:
 		if k < 3:
 			for s in [-1, 1]:
 				var r: Vector2i = q + side * s
-				if data.tile(r.x, r.y) != IslandData.Tile.GRASS or data.tier(r.x, r.y) != level - 1 or data.is_ramp(r.x, r.y):
+				if data.is_ramp(r.x, r.y):
+					# Beside another slope going the same way: together they make a wider one.
+					var other: Dictionary = data.ramps[data.idx(r.x, r.y)]
+					var high := IslandData.tier_height(level) if k == 1 else (IslandData.tier_height(level) + IslandData.tier_height(level - 1)) * 0.5
+					if other["up"] == -dir and is_equal_approx(other["high"], high):
+						continue
+					return {"why": "There isn't room beside it for a slope here."}
+				if data.tile(r.x, r.y) != IslandData.Tile.GRASS or data.tier(r.x, r.y) != level - 1:
 					return {"why": "There isn't room beside it for a slope here."}
 	return {"top": top, "dir": dir}
 
@@ -428,12 +457,91 @@ func _bridge_ends() -> Dictionary:
 	return ends
 
 
+## The slope tool: takes away a slope you built if you face one (or stand on it), or
+## lays a new one (`incline_plan`). {"remove": index in built_ramps}, the incline plan,
+## or {"why"}.
+func slope_plan(tile: Vector2i, facing: Vector2i) -> Dictionary:
+	for t: Vector2i in [tile + facing, tile]:
+		if data.is_ramp(t.x, t.y):
+			for n in built_ramps.size():
+				var r: Array = built_ramps[n]
+				var top := Vector2i(int(r[0]), int(r[1]))
+				var dir := Vector2i(int(r[2]), int(r[3]))
+				if t == top + dir or t == top + dir * 2:
+					return {"remove": n}
+			return {"why": "That slope's always been here. Best leave it be."}
+	return incline_plan(tile, facing)
+
+
+func remove_slope(plan: Dictionary) -> void:
+	var r: Array = built_ramps[plan["remove"]]
+	var top := Vector2i(int(r[0]), int(r[1]))
+	var dir := Vector2i(int(r[2]), int(r[3]))
+	for t: Vector2i in [top + dir, top + dir * 2]:
+		data.ramps.erase(data.idx(t.x, t.y))
+		paths.erase(data.idx(t.x, t.y))
+	built_ramps.remove_at(plan["remove"])
+	var area := Rect2i(top, Vector2i.ONE).expand(top + dir * 2).grow(RESHAPE_REACH)
+	_reshape(area)
+	rebuild_terrain(area)
+
+
+## The path tool laying `kind` on the tile ahead: {"tile", "kind"} ("" to take up a path
+## of the same kind that's there), or {"why"}. Paths go on flat grass and on slopes.
+func path_plan(tile: Vector2i, facing: Vector2i, kind: String) -> Dictionary:
+	if interior or tour:
+		return {"why": "Paths are for your own island."}
+	var t := tile + facing
+	if not data.in_bounds(t.x, t.y):
+		return {"why": "Not out here."}
+	var i := data.idx(t.x, t.y)
+	if data.plaza.has_point(t):
+		return {"why": "The plaza's paved already!"}
+	if _deck.has(i) or data.tile(t.x, t.y) != IslandData.Tile.GRASS:
+		return {"why": "Paths go on grassy ground."}
+	if not data.is_ramp(t.x, t.y) and (not data.is_flat(t.x, t.y)):
+		return {"why": "It's too bumpy there for a path."}
+	return {"tile": t, "kind": "" if paths.get(i, "") == kind else kind}
+
+
+func set_path(plan: Dictionary) -> void:
+	var t: Vector2i = plan["tile"]
+	var i := data.idx(t.x, t.y)
+	if plan["kind"] == "":
+		paths.erase(i)
+	else:
+		paths[i] = plan["kind"]
+	_build_paths()
+	grass.set_tile_visible(data, t.x, t.y, _grass_shown(t.x, t.y))
+	Events.placed_changed.emit()
+
+
+func _build_paths() -> void:
+	var laid := get_node_or_null("Paths") as MeshInstance3D
+	if laid:
+		laid.mesh = TerrainBuilder.build_paths(data, paths) if not paths.is_empty() else null
+	for i: int in paths:
+		grass.set_tile_visible(data, i % data.width, i / data.width, false)
+
+
+## Grass grows on a tile unless something covers it: furniture, a rug, a path or a
+## bridge's end.
+func _grass_shown(x: int, z: int) -> bool:
+	var i := data.idx(x, z)
+	if paths.has(i) or _rugs.has(i) or _bridge_ends().has(i):
+		return false
+	return _objects.get(_occupant.get(i, -1), {}).get("kind", "") != "placed"
+
+
 func terraform(plan: Dictionary) -> void:
 	var t: Vector2i = plan["tile"]
 	var i := data.idx(t.x, t.y)
 	data.tiles[i] = plan["type"]
 	data.tiers[i] = plan["tier"]
 	land_edits[i] = [plan["type"], plan["tier"]]
+	if paths.has(i):
+		paths.erase(i)
+		grass.set_tile_visible(data, t.x, t.y, _grass_shown(t.x, t.y))
 	var area := Rect2i(t, Vector2i.ONE).grow(RESHAPE_REACH)
 	_reshape(area)
 	rebuild_terrain(area)
@@ -492,8 +600,7 @@ func remove_object(uid: int) -> void:
 		if _rugs.get(i, -1) == uid:
 			_rugs.erase(i)
 		if obj["kind"] == "placed" and grass:
-			var covered: bool = _rugs.has(i) or _objects.get(_occupant.get(i, -1), {}).get("kind", "") == "placed"
-			grass.set_tile_visible(data, tile.x, tile.y, not covered)
+			grass.set_tile_visible(data, tile.x, tile.y, _grass_shown(tile.x, tile.y))
 	_objects.erase(uid)
 	data.objects.erase(obj)
 	if _nodes.has(uid):
@@ -629,6 +736,8 @@ func ground_height(px: float, pz: float) -> float:
 	var z := floori(pz)
 	if data.in_bounds(x, z) and _deck.has(data.idx(x, z)):
 		return _deck[data.idx(x, z)]
+	if not paths.is_empty() and data.in_bounds(x, z) and paths.get(data.idx(x, z), "") in STAIR_KINDS and data.is_ramp(x, z):
+		return TerrainBuilder.stair_height(data.ramps[data.idx(x, z)], px - x, pz - z)
 	return data.height_at(px, pz)
 
 

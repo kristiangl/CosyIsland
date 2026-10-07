@@ -133,6 +133,8 @@ static func get_mesh(key: String) -> ArrayMesh:
 			_bridge(k, int(p[1]))
 		"drop":
 			_drop(k, p[1])
+		"landscape":
+			_landscape_tool(k, p[1])
 		"tool":
 			if ItemDB.tool_type(p[1]) in ["axe", "shovel", "pickaxe"]:
 				k = _kit_from("tool_" + ItemDB.tool_type(p[1]))
@@ -1284,6 +1286,39 @@ static func _net_head(k: MeshKit, centre: Vector3, r: float) -> void:
 				k.quad(a[i], a[i2], b[i2], b[i], out if side == 0 else -out)
 
 
+## The landscaping app's tools, held while landscaping: "cliff", "water", "slope" or
+## "path" (any kind).
+static func _landscape_tool(k: MeshKit, what: String) -> void:
+	var handle := MeshKit.lin(Color("c19a6e"))
+	var metal := MeshKit.lin(Color("8a8f99"))
+	match what:
+		"cliff":
+			# A chunky mattock with a painted head and a band round the handle.
+			var head := MeshKit.lin(Color("c98a5a"))
+			k.cylinder(Vector3(0, -0.1, 0), Vector3(0, 0.62, 0), 0.03, 0.028, handle, 5)
+			k.rounded_box(Vector3(0, 0.6, 0), Vector3(0.36, 0.09, 0.09), head, 0.4)
+			k.box(Vector3(0.19, 0.6, 0), Vector3(0.05, 0.06, 0.07), metal)
+			k.box(Vector3(-0.19, 0.6, 0), Vector3(0.05, 0.12, 0.06), metal)
+			k.cylinder(Vector3(0, 0.2, 0), Vector3(0, 0.27, 0), 0.034, 0.034, MeshKit.lin(Color("e0685a")), 6)
+		"water":
+			# A spade with a rounded blue blade and a T grip.
+			k.cylinder(Vector3(0, -0.1, 0), Vector3(0, 0.6, 0), 0.028, 0.028, handle, 5)
+			k.box(Vector3(0, -0.12, 0), Vector3(0.14, 0.03, 0.03), handle)
+			k.rounded_box(Vector3(0, 0.74, 0), Vector3(0.2, 0.26, 0.035), MeshKit.lin(Color("6fb6d8")), 0.6)
+			k.sphere(Vector3(0, 0.74, 0.025), Vector3(0.04, 0.05, 0.01), MeshKit.lin(Color("fbf3dc")), 3, 5)
+		"slope":
+			# A square-bladed shovel in grassy green.
+			k.cylinder(Vector3(0, -0.1, 0), Vector3(0, 0.6, 0), 0.028, 0.028, handle, 5)
+			k.box(Vector3(0, 0.74, 0), Vector3(0.2, 0.24, 0.035), MeshKit.lin(Color("8cc47a")))
+			k.box(Vector3(0, 0.6, 0), Vector3(0.06, 0.05, 0.05), metal)
+		_:
+			# A paving tamper: a long handle on a flat square foot.
+			k.cylinder(Vector3(0, -0.1, 0), Vector3(0, 0.62, 0), 0.028, 0.028, handle, 5)
+			k.box(Vector3(0, -0.1, 0), Vector3(0.14, 0.03, 0.03), handle)
+			k.box(Vector3(0, 0.7, 0), Vector3(0.05, 0.12, 0.05), metal)
+			k.box(Vector3(0, 0.78, 0), Vector3(0.22, 0.04, 0.22), MeshKit.lin(Color("b9b1aa")))
+
+
 static func _tool(k: MeshKit, item: String) -> void:
 	var handle := MeshKit.lin(Color("c19a6e"))
 	var head := MeshKit.lin(ItemDB.color_of(item).lightened(0.15))
@@ -1310,18 +1345,5 @@ static func _tool(k: MeshKit, item: String) -> void:
 			k.cylinder(Vector3(0, -0.45, 0), Vector3(0, 1.55, 0), 0.026, 0.022, head, 6)
 			for y: float in [-0.35, 1.4]:
 				k.cylinder(Vector3(0, y, 0), Vector3(0, y + 0.08, 0), 0.03, 0.03, MeshKit.lin(Color("e0685a")), 6)
-		"cliff":
-			# A chunky mattock with a painted head and a band round the handle.
-			k.cylinder(Vector3(0, -0.1, 0), Vector3(0, 0.62, 0), 0.03, 0.028, handle, 5)
-			k.rounded_box(Vector3(0, 0.6, 0), Vector3(0.36, 0.09, 0.09), head, 0.4)
-			k.box(Vector3(0.19, 0.6, 0), Vector3(0.05, 0.06, 0.07), MeshKit.lin(Color("8a8f99")))
-			k.box(Vector3(-0.19, 0.6, 0), Vector3(0.05, 0.12, 0.06), MeshKit.lin(Color("8a8f99")))
-			k.cylinder(Vector3(0, 0.2, 0), Vector3(0, 0.27, 0), 0.034, 0.034, MeshKit.lin(Color("e0685a")), 6)
-		"water":
-			# A spade with a rounded blue blade and a T grip.
-			k.cylinder(Vector3(0, -0.1, 0), Vector3(0, 0.6, 0), 0.028, 0.028, handle, 5)
-			k.box(Vector3(0, -0.12, 0), Vector3(0.14, 0.03, 0.03), handle)
-			k.rounded_box(Vector3(0, 0.74, 0), Vector3(0.2, 0.26, 0.035), head, 0.6)
-			k.sphere(Vector3(0, 0.74, 0.025), Vector3(0.04, 0.05, 0.01), MeshKit.lin(Color("fbf3dc")), 3, 5)
 		_:
 			k.cylinder(Vector3(0, -0.1, 0), Vector3(0, 0.5, 0), 0.03, 0.03, handle, 5)

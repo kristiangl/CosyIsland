@@ -41,6 +41,10 @@ var _offices: Array[Rect2] = []
 var _benches: Array[Rect2] = []
 var _furniture: Array[Vector2] = []
 var _bridges: Array[Rect2] = []
+## Path tiles and their colours.
+var _paths: Array[Array] = []
+const PATH_COLOURS := {"stone": Color("c8c3be"), "brick": Color("c97a62"), "wood": Color("b48a62"),
+	"terracotta": Color("d9926c"), "sand": Color("f0dcb2"), "dirt": Color("a9886a")}
 ## Neighbours' houses: [rect, who lives there].
 var _residents: Array[Array] = []
 
@@ -232,8 +236,12 @@ func _collect_markers() -> void:
 	_furniture.clear()
 	_bridges.clear()
 	_residents.clear()
+	_paths.clear()
 	if Game.outdoors() == null:
 		return
+	var w := Game.outdoors().data.width
+	for i: int in Game.outdoors().paths:
+		_paths.append([Vector2(i % w, i / w), PATH_COLOURS.get(Game.outdoors().paths[i], Color.WHITE)])
 	for obj in Game.outdoors().objects():
 		match obj["kind"]:
 			"bridge":
@@ -286,6 +294,8 @@ func _draw() -> void:
 			draw_line(Vector2(o.x + gx * s.x, 0), Vector2(o.x + gx * s.x, size.y), line, 1.0)
 		for gz in range(16, data.height, 16):
 			draw_line(Vector2(0, o.y + gz * s.y), Vector2(size.x, o.y + gz * s.y), line, 1.0)
+	for p: Array in _paths:
+		draw_rect(Rect2(o + p[0] * s, s), p[1])
 	for r in _bridges:
 		draw_rect(Rect2(o + r.position * s, r.size * s), BRIDGE)
 	if detailed:

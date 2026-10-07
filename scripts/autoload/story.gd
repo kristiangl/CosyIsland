@@ -26,6 +26,9 @@ const TICKET_COST := 1000
 ## What Poppy charges for a bridge kit and an incline kit.
 const KIT_COSTS := {"bridge_kit": 4000, "incline_kit": 5000}
 const BUILD_OPTION := "About bridges and slopes..."
+## What Poppy charges for the landscaping permit (the cliff pick and water spade).
+const LANDSCAPING_COST := 8000
+const LANDSCAPE_OPTION := "About landscaping..."
 var talking := false
 ## How many times each character has been chatted to today, to cycle their small talk.
 var _chats: Dictionary = {}
@@ -198,12 +201,17 @@ func _poppy_questions() -> void:
 			options.insert(2, "About fish and bugs..." if not flags.has("museum_gifts") else "I've brought specimens")
 		if flags.get("plots_given", false):
 			options.insert(options.size() - 1, BUILD_OPTION)
+		if flags.get("house_done", false):
+			options.insert(options.size() - 1, LANDSCAPE_OPTION)
 		var home := player_house()
 		if not home.is_empty():
 			options.insert(options.size() - 1, "About my house's paint...")
 		var pick := await ask("poppy", "Anything you'd like to know?", options)
 		if options[pick] == BUILD_OPTION:
 			await _kit_talk()
+			continue
+		if options[pick] == LANDSCAPE_OPTION:
+			await _landscaping_talk()
 			continue
 		if not home.is_empty() and pick == options.size() - 2:
 			await _paint_talk(home)
@@ -330,6 +338,37 @@ func _kit_talk() -> void:
 	_give(kit)
 	_npc_cheer("poppy")
 	await say("poppy", ["Here you are! Lucy and I will do the heavy lifting, you just choose the spot."])
+
+
+## Poppy's landscaping permit: the cliff pick and the water spade, for reshaping the island.
+func _landscaping_talk() -> void:
+	var tools := ["cliff_pick", "water_spade"]
+	if flags.get("landscaping", false):
+		var lost := tools.filter(func(t): return Inventory.count_of(t) == 0)
+		if lost.is_empty():
+			await say("poppy", ["Equip the cliff pick and face the ground beside you to raise it, or face a low cliff to cut it back.",
+				"The water spade digs out ponds and rivers, and fills them in again. Have fun!"])
+			return
+		await say("poppy", ["Misplaced something? Lucy always keeps spares. Here you go."])
+		for t: String in lost:
+			_give(t)
+		return
+	await say("poppy", ["Fancy reshaping the island? Ooh, I've always wanted a waterfall. Well, a pond.",
+		"With a landscaping permit you can raise cliffs, cut them back, dig ponds and rivers and fill them in.",
+		"It's %d acorns, and you get a cliff pick and a water spade that never wear out." % LANDSCAPING_COST])
+	if Inventory.currency < LANDSCAPING_COST:
+		await say("poppy", ["You've got %d so far. Come back when you've saved up!" % Inventory.currency])
+		return
+	if await ask("poppy", "Shall I sign you up?", ["Yes please!", "Not just yet"]) != 0:
+		await say("poppy", ["No rush. The island's lovely as it is!"])
+		return
+	Inventory.add_currency(-LANDSCAPING_COST)
+	flags["landscaping"] = true
+	for t: String in tools:
+		_give(t)
+	_npc_cheer("poppy")
+	await say("poppy", ["There! Equip one, face the spot next to you and press {use}.",
+		"Don't worry about getting it wrong. Everything can be put back the way it was."])
 
 
 func _npc_cheer(id: String) -> void:

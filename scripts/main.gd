@@ -18,6 +18,7 @@ extends Node3D
 ##   --demo=home        pitch the tent, go inside and furnish it (--room=wallpaper,flooring)
 ##   --demo=door        pitch the tent and stand outside its door
 ##   --demo=office      inside Poppy's office
+##   --demo=terraform   a raised lawn and a pond made with the landscaping tools
 ##   --demo=construct   a slope and a bridge built near the plaza (--bridge stands by the bridge)
 ##   --demo=shop        Lucy's shop has been built; stand in front of it (--demo=museum: Bramble's,
 ##                      --demo=tailors: Daisy and Morris's, --visit to go in;
@@ -1088,6 +1089,46 @@ func _run_demo() -> void:
 			player.position = Vector3(t.x + 0.5 - f.x * 2.0, 0, t.y + 0.5 - f.y * 2.0)
 			player.position.y = world.ground_height(player.position.x, player.position.z)
 			player.facing = Vector3(f.x, 0, f.y)
+			camera_rig.snap()
+		return
+	if Game.args["demo"] == "terraform":
+		# A little raised lawn and a pond dug beside it, near the plaza, with the tools in hand.
+		for t: String in ["water_spade", "cliff_pick"]:
+			Inventory.add_item(t)
+		Inventory.equip(Inventory.slots.find_custom(func(sl): return sl != null and sl.get("id", "") == "cliff_pick"))
+		var best := Vector2i(-1, -1)
+		var near := INF
+		for z in range(4, world.data.height - 8):
+			for x in range(4, world.data.width - 10):
+				var dist := Vector2(x, z).distance_to(Vector2(spawn))
+				if dist >= near or dist < 8.0:
+					continue
+				var ok := true
+				for dz in range(-1, 5):
+					for dx in range(-1, 9):
+						var q := Vector2i(x + dx, z + dz)
+						var edited := dz >= 0 and dz <= 2 and dx >= 0 and dx <= 7
+						ok = ok and world.data.tile(q.x, q.y) == IslandData.Tile.GRASS and world.data.tier(q.x, q.y) == 1 \
+							and not world.data.is_ramp(q.x, q.y) and not world.data.plaza.grow(2).has_point(q) \
+							and (not edited or world.object_at(q.x, q.y).is_empty())
+				if ok:
+					near = dist
+					best = Vector2i(x, z)
+		if best.x >= 0:
+			var started := Time.get_ticks_msec()
+			var edits := 0
+			for dz in 3:
+				for dx in 3:
+					world.terraform({"tile": best + Vector2i(dx, dz), "type": IslandData.Tile.GRASS, "tier": 2, "verb": "raise"})
+					edits += 1
+			for dz in range(1, 3):
+				for dx in range(5, 8):
+					world.terraform({"tile": best + Vector2i(dx, dz), "type": IslandData.Tile.WATER, "tier": 1, "verb": "dig"})
+					edits += 1
+			print("Landscaped %d tiles, %d ms each" % [edits, (Time.get_ticks_msec() - started) / edits])
+			player.position = Vector3(best.x + 4.5, 0, best.y + 5.5)
+			player.position.y = world.ground_height(player.position.x, player.position.z)
+			player.facing = Vector3(0, 0, -1)
 			camera_rig.snap()
 		return
 	if Game.args["demo"] == "orchard":

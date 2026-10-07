@@ -78,6 +78,36 @@ static func generate_tour(seed_value: int, home_fruit: String, home_flower: Stri
 	return data
 
 
+## Works out the ground's corner heights and rounded corners again after the land has
+## changed (slopes, bridges, landscaping). Tiles in `keep` (index -> true: where things
+## stand) keep their square corners.
+## With `area`, only the tiles there are worked out (the area must reach three tiles past
+## anything that changed: that's as far as a change can round corners).
+static func reshape(data: IslandData, keep: Dictionary = {}, area := Rect2i()) -> void:
+	var g := IslandGenerator.new()
+	g.d = data
+	g.reserved.resize(data.width * data.height)
+	if area.size == Vector2i.ZERO:
+		data.splits = {}
+		g._compute_corners()
+		g._compute_splits(keep)
+		return
+	area = area.intersection(Rect2i(0, 0, data.width, data.height))
+	g._compute_corners(area)
+	var old := data.splits
+	data.splits = {}
+	g._compute_splits(keep, area)
+	var fresh := data.splits
+	data.splits = old
+	for z in range(area.position.y, area.end.y):
+		for x in range(area.position.x, area.end.x):
+			var i := data.idx(x, z)
+			if fresh.has(i):
+				data.splits[i] = fresh[i]
+			else:
+				data.splits.erase(i)
+
+
 func _run(seed_value: int, w: int, h: int) -> IslandData:
 	d = IslandData.new()
 	d.setup(w, h)
@@ -742,7 +772,9 @@ func _ramp_fits(u: Vector2i, dir: Vector2i, level: int) -> bool:
 	return true
 
 
-func _compute_corners() -> void:
+func _compute_corners(area := Rect2i()) -> void:
+	if area.size == Vector2i.ZERO:
+		area = Rect2i(0, 0, d.width, d.height)
 	# Tiles sharing each corner, as offsets from the tile, in NW/NE/SE/SW order.
 	var corner_tiles := [
 		[Vector2i(-1, -1), Vector2i(0, -1), Vector2i(-1, 0), Vector2i(0, 0)],
@@ -750,8 +782,8 @@ func _compute_corners() -> void:
 		[Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)],
 		[Vector2i(-1, 0), Vector2i(0, 0), Vector2i(-1, 1), Vector2i(0, 1)],
 	]
-	for z in d.height:
-		for x in d.width:
+	for z in range(area.position.y, area.end.y):
+		for x in range(area.position.x, area.end.x):
 			var i := d.idx(x, z)
 			var t: int = d.tiles[i]
 			if t == T.GRASS:
@@ -782,8 +814,13 @@ func _compute_corners() -> void:
 ## diagonal half to the level below; an inside corner of lower ground gains a half from
 ## the level above. Inside corners next to a cut are skipped, so diagonal staircases turn
 ## into one straight diagonal rather than a zigzag.
-func _compute_splits() -> void:
-	var no_split := {}
+func _compute_splits(keep: Dictionary = {}, area := Rect2i()) -> void:
+	var everywhere := Rect2i(0, 0, d.width, d.height)
+	if area.size == Vector2i.ZERO:
+		area = everywhere
+	# Fills look at the cuts beside them, so the cuts go one tile further.
+	var outer := area.grow(1).intersection(everywhere)
+	var no_split := keep.duplicate()
 	for o in d.objects:
 		if o["kind"] == "bridge":
 			var axis := Vector2i(1, 0) if o["axis"] == "x" else Vector2i(0, 1)
@@ -791,8 +828,8 @@ func _compute_splits() -> void:
 				var q := Vector2i(o["x"], o["z"]) + axis * k
 				no_split[d.idx(q.x, q.y)] = true
 	var cuts := {}
-	for z in d.height:
-		for x in d.width:
+	for z in range(outer.position.y, outer.end.y):
+		for x in range(outer.position.x, outer.end.x):
 			var i := d.idx(x, z)
 			if d.tiles[i] != T.GRASS or no_split.has(i):
 				continue
@@ -808,8 +845,8 @@ func _compute_splits() -> void:
 			if options.size() == 1:
 				cuts[i] = options[0]
 	var fills := {}
-	for z in d.height:
-		for x in d.width:
+	for z in range(area.position.y, area.end.y):
+		for x in range(area.position.x, area.end.x):
 			var i := d.idx(x, z)
 			if not d.tiles[i] in [T.GRASS, T.WATER] or no_split.has(i) or cuts.has(i):
 				continue

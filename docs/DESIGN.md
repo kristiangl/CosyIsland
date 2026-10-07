@@ -242,11 +242,16 @@ Milestone 3b:
   between banks of the same height) and an incline kit (a two-tile slope up a straight
   cliff, used from the foot or the top). Used from the pockets where you stand, built on
   the spot.
+- [x] Landscaping: once the house is built, Poppy sells a permit with a cliff pick (raise
+  the ground beside you, or cut back a cliff one step up) and a water spade (dig out
+  ponds and rivers, or fill them in). Cliffs only ever step one level at a time, water
+  sits level with its banks, and nothing changes against the beach, slopes, bridges or
+  the plaza.
 
 Next milestones (suggested order):
 4. More to find on tours: other kinds of tree on rare islands, flower breeding for the
    rare colours.
-5. Path tool, terraforming, waterscaping, rock moving (bridges and slopes are in).
+5. Path tool, rock moving (bridges, slopes, cliffs and water are in).
 6. Weather and seasons; sound effects (music is in: four pieces each for morning,
    afternoon and evening, taking turns by the hour).
 7. Platform work: touch controls, performance passes, Switch porting.

@@ -123,6 +123,24 @@
 			"color": "#a8784a",
 			"desc": "Face a river or pond, plant it and hop across. It never wears out."
 		},
+		"cliff_pick": {
+			"name": "Cliff Pick",
+			"category": "tool",
+			"tool": "cliff",
+			"stack": 1,
+			"price": 500,
+			"color": "#c98a5a",
+			"desc": "Face the ground beside you to raise a cliff, or face a cliff one step up to cut it back."
+		},
+		"water_spade": {
+			"name": "Water Spade",
+			"category": "tool",
+			"tool": "water",
+			"stack": 1,
+			"price": 500,
+			"color": "#6fb6d8",
+			"desc": "Face the ground beside you to dig a pond or river, or face water to fill it in."
+		},
 		"tent_kit": {
 			"name": "Tent Kit",
 			"category": "kit",

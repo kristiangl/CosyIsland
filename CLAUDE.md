@@ -93,10 +93,16 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   hops rivers and ponds via `World.vault_landing`; the phone's SOS (`Main.rescue_spot`)
   fetches you back to the plaza.
 - Bridge and incline kits (items with "construct", used from the pockets): `World.bridge_plan`
-  / `build_bridge` (a "built" bridge object; its bank tiles lose their rounded corners,
-  `_square_banks`) and `incline_plan` / `build_incline` (`IslandData.add_ramp`, kept in
-  `World.built_ramps` and saved as "ramps", laid again on load). `rebuild_terrain()` remakes
-  the ground meshes after a change. `--demo=construct` (`--bridge`).
+  / `build_bridge` (a "built" bridge object) and `incline_plan` / `build_incline` (`IslandData.add_ramp`, kept in
+  `World.built_ramps` and saved as "ramps", laid again on load). `--demo=construct` (`--bridge`).
+- Landscaping (Poppy's permit, `Story._landscaping_talk`): the cliff pick (tool "cliff") and
+  water spade (tool "water") work the tile ahead via `World.terraform_plan` / `terraform`
+  (rules in `_land_fits`). Edits are kept in `World.land_edits`, saved as "land" and laid on
+  the generated island when it loads. After any change to the land, `IslandGenerator.reshape`
+  works out corners and rounded corners again (only within `RESHAPE_REACH` of the change), and
+  `World.rebuild_terrain(area)` remakes the ground chunks it touches (`GROUND_CHUNK`), the
+  fresh water and foam, and settles the grass. The map paints a copy of the ground
+  (`IslandData.ground_copy`), so the island can change while it paints. `--demo=terraform`.
 - Building kits (`placeable.builds`, category "kit"): placed like furniture, stamped with
   `plot_day`, and turned into their building the next night by `Story.build_kit`.
 - `Story` (autoload) holds conversation progress and every character's lines;

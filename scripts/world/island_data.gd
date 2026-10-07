@@ -87,6 +87,22 @@ func is_ramp(x: int, z: int) -> bool:
 	return ramps.has(idx(x, z))
 
 
+## A copy of the ground's shape (tiles, tiers, heights, slopes and rounded corners) to
+## read on another thread while this one changes.
+func ground_copy() -> IslandData:
+	var c := IslandData.new()
+	c.width = width
+	c.height = height
+	c.seed_value = seed_value
+	c.tiles = tiles.duplicate()
+	c.tiers = tiers.duplicate()
+	c.corners = corners.duplicate()
+	c.ramps = ramps.duplicate(true)
+	c.splits = splits.duplicate(true)
+	c.plaza = plaza
+	return c
+
+
 ## Lays a two-tile ramp down from the cliff top `top`, heading `dir` (as the generator
 ## does, for slopes built later): both tiles slope from the top's height to the tier below.
 func add_ramp(top: Vector2i, dir: Vector2i) -> void:

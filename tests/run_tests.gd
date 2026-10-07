@@ -52,6 +52,7 @@ func _run() -> void:
 	_test_music()
 	_test_ramps_and_sos()
 	_test_built_crossings()
+	_test_landscaping()
 	_test_tour_crossings_and_pole()
 	print("\n%d checks, %d failures" % [_checks, _failures])
 	IslandMap.finish()
@@ -1478,7 +1479,7 @@ func _test_tour_visitors() -> void:
 	var other := World.new()
 	add_child(other)
 	other.setup(IslandGenerator.generate_tour(99, d.native_fruit, d.native_flower))
-	var home_plaza: Vector4 = (w.get_node("Ground") as MeshInstance3D).material_override.get_shader_parameter("plaza")
+	var home_plaza: Vector4 = (w.get_node("Ground").get_child(0) as MeshInstance3D).material_override.get_shader_parameter("plaza")
 	check(home_plaza == Vector4(d.plaza.position.x, d.plaza.position.y, d.plaza.size.x, d.plaza.size.y),
 		"the home island's paving stays where its plaza is, whatever island was built since")
 	other.free()
@@ -1779,6 +1780,83 @@ func _test_built_crossings() -> void:
 	while sea.y > 0 and d.tile(sea.x, sea.y) != IslandData.Tile.SAND:
 		sea.y -= 1
 	check(w.bridge_plan(sea, Vector2i(0, 1)).has("why"), "no bridges out to sea")
+	w.free()
+
+
+func _test_landscaping() -> void:
+	check(ItemDB.tool_type("cliff_pick") == "cliff" and ItemDB.tool_type("water_spade") == "water", "there's a cliff pick and a water spade")
+	# Working the ground out again gives the same island as the generator.
+	var fresh := IslandGenerator.generate(7)
+	var again := IslandGenerator.generate(7)
+	IslandGenerator.reshape(again)
+	check(again.corners == fresh.corners and again.splits.keys() == fresh.splits.keys(), "reshaping an untouched island changes nothing")
+	var d := IslandGenerator.generate(7)
+	var w := World.new()
+	add_child(w)
+	w.setup(d)
+	# A spot in open, flat, low ground with room all round.
+	var stand := Vector2i(-1, -1)
+	for z in range(4, d.height - 4):
+		for x in range(4, d.width - 4):
+			if stand.x >= 0:
+				break
+			var ok := true
+			for dz in range(-2, 3):
+				for dx in range(-1, 4):
+					var q := Vector2i(x + dx, z + dz)
+					ok = ok and d.tile(q.x, q.y) == IslandData.Tile.GRASS and d.tier(q.x, q.y) == 1 and not d.is_ramp(q.x, q.y) \
+						and w.object_at(q.x, q.y).is_empty() and w.is_walkable(q.x + 0.5, q.y + 0.5) and not d.plaza.grow(2).has_point(q)
+			if ok:
+				stand = Vector2i(x, z)
+	check(stand.x >= 0, "there's open ground to landscape")
+	if stand.x < 0:
+		w.free()
+		return
+	var t := stand + Vector2i(1, 0)
+	var raise := w.terraform_plan(stand, Vector2i(1, 0), "cliff")
+	check(raise.get("verb", "") == "raise" and raise["tier"] == 2, "the cliff pick raises the ground beside you")
+	w.terraform(raise)
+	check(d.tier(t.x, t.y) == 2 and is_equal_approx(w.ground_height(t.x + 0.5, t.y + 0.5), IslandData.tier_height(2)), "a step up")
+	var from := Vector3(stand.x + 0.5, w.ground_height(stand.x + 0.5, stand.y + 0.5), stand.y + 0.5)
+	check(_walk(w, Vector2(from.x, from.z), Vector2(1, 0), 60).x < t.x + 0.1, "that you can't walk up")
+	check(w.terraform_plan(stand, Vector2i(1, 0), "cliff").get("verb", "") == "lower", "and cuts it back again")
+	w.terraform(w.terraform_plan(stand, Vector2i(1, 0), "cliff"))
+	check(d.tier(t.x, t.y) == 1 and is_equal_approx(w.ground_height(t.x + 0.5, t.y + 0.5), IslandData.tier_height(1)), "back to level")
+	var dig := w.terraform_plan(stand, Vector2i(1, 0), "water")
+	check(dig.get("verb", "") == "dig", "the water spade digs out the ground beside you")
+	w.terraform(dig)
+	check(d.tile(t.x, t.y) == IslandData.Tile.WATER and not w.is_walkable(t.x + 0.5, t.y + 0.5) and w.critters.water_kind(t.x, t.y) != "",
+		"into water fish can live in")
+	check(w.terraform_plan(stand, Vector2i(1, 0), "cliff").has("why"), "the pick leaves water alone")
+	var whole := d.ground_copy()
+	whole.objects = d.objects
+	var keep := {}
+	for obj in d.objects:
+		if obj["kind"] != "bridge":
+			for q in w.footprint(obj):
+				if d.in_bounds(q.x, q.y):
+					keep[d.idx(q.x, q.y)] = true
+	IslandGenerator.reshape(whole, keep)
+	check(whole.corners == d.corners and whole.splits == d.splits, "reshaping just round a change gives the same ground as reshaping it all")
+	check(w.terraform_plan(stand, Vector2i(1, 0), "water").get("verb", "") == "fill", "the spade fills it in again")
+	# Kept with the island.
+	var saved: Dictionary = JSON.parse_string(JSON.stringify(w.to_save()))
+	var w2 := World.new()
+	add_child(w2)
+	w2.setup(IslandGenerator.generate(7), saved)
+	check(w2.data.tile(t.x, t.y) == IslandData.Tile.WATER and w2.land_edits.size() == 1, "landscaping is still there after saving")
+	w2.free()
+	# Somewhere it can't go.
+	var plaza := d.plaza.get_center()
+	check(w.terraform_plan(plaza, Vector2i(1, 0), "cliff").has("why"), "not in the plaza")
+	var blocked := 0
+	var tries := 0
+	for z in range(2, d.height - 2):
+		for x in range(2, d.width - 2):
+			if tries < 20 and d.tile(x, z) == IslandData.Tile.GRASS and d.tier(x, z) == 1 and d.tile(x + 1, z) == IslandData.Tile.SAND:
+				tries += 1
+				blocked += 1 if w.terraform_plan(Vector2i(x - 1, z), Vector2i(1, 0), "water").has("why") else 0
+	check(tries > 0 and blocked == tries, "no ponds dug against the beach (%d of %d)" % [blocked, tries])
 	w.free()
 
 

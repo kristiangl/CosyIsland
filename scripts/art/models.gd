@@ -1310,5 +1310,18 @@ static func _tool(k: MeshKit, item: String) -> void:
 			k.cylinder(Vector3(0, -0.45, 0), Vector3(0, 1.55, 0), 0.026, 0.022, head, 6)
 			for y: float in [-0.35, 1.4]:
 				k.cylinder(Vector3(0, y, 0), Vector3(0, y + 0.08, 0), 0.03, 0.03, MeshKit.lin(Color("e0685a")), 6)
+		"cliff":
+			# A chunky mattock with a painted head and a band round the handle.
+			k.cylinder(Vector3(0, -0.1, 0), Vector3(0, 0.62, 0), 0.03, 0.028, handle, 5)
+			k.rounded_box(Vector3(0, 0.6, 0), Vector3(0.36, 0.09, 0.09), head, 0.4)
+			k.box(Vector3(0.19, 0.6, 0), Vector3(0.05, 0.06, 0.07), MeshKit.lin(Color("8a8f99")))
+			k.box(Vector3(-0.19, 0.6, 0), Vector3(0.05, 0.12, 0.06), MeshKit.lin(Color("8a8f99")))
+			k.cylinder(Vector3(0, 0.2, 0), Vector3(0, 0.27, 0), 0.034, 0.034, MeshKit.lin(Color("e0685a")), 6)
+		"water":
+			# A spade with a rounded blue blade and a T grip.
+			k.cylinder(Vector3(0, -0.1, 0), Vector3(0, 0.6, 0), 0.028, 0.028, handle, 5)
+			k.box(Vector3(0, -0.12, 0), Vector3(0.14, 0.03, 0.03), handle)
+			k.rounded_box(Vector3(0, 0.74, 0), Vector3(0.2, 0.26, 0.035), head, 0.6)
+			k.sphere(Vector3(0, 0.74, 0.025), Vector3(0.04, 0.05, 0.01), MeshKit.lin(Color("fbf3dc")), 3, 5)
 		_:
 			k.cylinder(Vector3(0, -0.1, 0), Vector3(0, 0.5, 0), 0.03, 0.03, handle, 5)

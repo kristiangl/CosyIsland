@@ -53,9 +53,13 @@ static func fresh_material() -> ShaderMaterial:
 	return _fresh_material
 
 
-static func build_ground(d: IslandData) -> ArrayMesh:
+## The ground's tops and cliff walls, for the tiles in `area` (the whole island if empty:
+## the island builds it in chunks so a change only remakes the chunks it touches).
+static func build_ground(d: IslandData, area := Rect2i()) -> ArrayMesh:
 	var k := MeshKit.new()
-	var weights := _grass_weights(d)
+	if area.size == Vector2i.ZERO:
+		area = Rect2i(0, 0, d.width, d.height)
+	var weights := _grass_weights(d, area)
 	# Edge checks: direction, my two corners on that edge, the neighbour's matching corners.
 	var edges := [
 		[Vector2i(1, 0), IslandData.NE, IslandData.SE, IslandData.NW, IslandData.SW],
@@ -63,8 +67,8 @@ static func build_ground(d: IslandData) -> ArrayMesh:
 		[Vector2i(0, 1), IslandData.SW, IslandData.SE, IslandData.NW, IslandData.NE],
 		[Vector2i(0, -1), IslandData.NW, IslandData.NE, IslandData.SW, IslandData.SE],
 	]
-	for z in d.height:
-		for x in d.width:
+	for z in range(area.position.y, area.end.y):
+		for x in range(area.position.x, area.end.x):
 			var t := d.tile(x, z)
 			if t == T.OCEAN:
 				continue
@@ -133,12 +137,14 @@ static func _cliff(k: MeshKit, a: Vector3, b: Vector3, low_a: float, low_b: floa
 ## Three values per tile corner: the fraction of grass among the land tiles around it
 ## (for blending grass into sand along wobbly, rounded lines), 0 if the tiles around it
 ## are at different heights (a cliff edge) else 1, and the highest of them.
-static func _grass_weights(d: IslandData) -> PackedFloat32Array:
+## Per tile corner: how grassy it is, whether it's at a cliff edge, and the highest
+## ground round it (only the corners of tiles in `area` are filled in).
+static func _grass_weights(d: IslandData, area: Rect2i) -> PackedFloat32Array:
 	var w := d.width + 1
 	var out := PackedFloat32Array()
 	out.resize(w * (d.height + 1) * 3)
-	for cz in d.height + 1:
-		for cx in w:
+	for cz in range(area.position.y, area.end.y + 1):
+		for cx in range(area.position.x, area.end.x + 1):
 			var grass := 0
 			var sandy := 0
 			var lowest := INF

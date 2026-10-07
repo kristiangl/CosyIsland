@@ -11,6 +11,8 @@ const PER_TILE := 1
 var _first_instance: Dictionary = {}
 var _transforms: Array[Transform3D] = []
 var _per_tile := PER_TILE
+## Tiles whose tufts were hidden by landscaping (dug out or raised over).
+var _drowned: Dictionary = {}
 
 
 func build(d: IslandData, density: float = 1.0) -> void:
@@ -49,6 +51,35 @@ func build(d: IslandData, density: float = 1.0) -> void:
 	mat.shader = load("res://shaders/grass_tuft.gdshader")
 	material_override = mat
 	cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
+
+## After landscaping in `area`: tufts sit at the ground's new height, hide on tiles that
+## are no longer grass and come back when they are again. (Tiles that weren't grass when
+## the island loaded get their tufts next time it does.)
+func settle(d: IslandData, area: Rect2i) -> void:
+	if multimesh == null:
+		return
+	for z in range(area.position.y, area.end.y):
+		for x in range(area.position.x, area.end.x):
+			var first: int = _first_instance.get(d.idx(x, z), -1)
+			if first < 0:
+				continue
+			var grassy := d.tile(x, z) == IslandData.Tile.GRASS
+			for i in range(first, mini(first + _per_tile, _transforms.size())):
+				var t := _transforms[i]
+				t.origin.y = d.height_at(t.origin.x, t.origin.z)
+				_transforms[i] = t
+				var shown := multimesh.get_instance_transform(i)
+				var hidden := shown.basis.x.is_zero_approx() and not t.basis.x.is_zero_approx()
+				if not grassy or d.surface_at(t.origin.x, t.origin.z) != IslandData.Tile.GRASS:
+					if not hidden:
+						_drowned[i] = true
+					multimesh.set_instance_transform(i, Transform3D(Basis().scaled(Vector3.ZERO), t.origin))
+				elif hidden and not _drowned.has(i):
+					multimesh.set_instance_transform(i, Transform3D(Basis().scaled(Vector3.ZERO), t.origin))
+				else:
+					_drowned.erase(i)
+					multimesh.set_instance_transform(i, t)
 
 
 func set_tile_visible(d: IslandData, x: int, z: int, show: bool) -> void:

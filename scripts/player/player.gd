@@ -213,6 +213,8 @@ func _use() -> void:
 			_swing_net()
 		"pole":
 			_start_vault()
+		"cliff", "water":
+			_terraform(tool_kind)
 		"axe", "shovel", "pickaxe":
 			# Each tool has one job: the axe chops trees, the pickaxe breaks rocks and the
 			# shovel digs up flowers. Anything else just gets a bump.
@@ -243,6 +245,26 @@ func _use() -> void:
 				_busy = SWING_TIME
 				model.play("shake")
 				world.shake(obj, position)
+
+
+# --- Landscaping ----------------------------------------------------------------------
+
+## The cliff pick or water spade on the tile ahead.
+func _terraform(what: String) -> void:
+	var plan := world.terraform_plan(tile(), cardinal(), what)
+	if plan.has("why"):
+		Events.toast.emit(plan["why"])
+		return
+	_busy = SWING_TIME
+	model.play("mine" if what == "cliff" else "dig")
+	await get_tree().create_timer(IMPACT_TIME).timeout
+	var t: Vector2i = plan["tile"]
+	world.terraform(plan)
+	var at := Vector3(t.x + 0.5, world.ground_height(t.x + 0.5, t.y + 0.5), t.y + 0.5)
+	Effects.burst("splash" if plan["verb"] == "dig" else "dust", at + Vector3(0, 0.2, 0))
+	if what == "cliff":
+		Effects.burst("pebbles", at + Vector3(0, 0.3, 0))
+	Journal.add("landscaped")
 
 
 # --- Vaulting -------------------------------------------------------------------------

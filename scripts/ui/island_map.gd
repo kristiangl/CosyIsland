@@ -28,6 +28,10 @@ static var _texture: ImageTexture
 static var _texture_for: IslandData
 static var _task := -1
 static var _task_for: IslandData
+## The island the last picture was of, while it's being painted again.
+static var _stale: IslandData
+## True if the island changed while it was being painted.
+static var _outdated := false
 static var _painted: Image
 ## Tiles holding dry land, found while painting.
 static var _land: Rect2i
@@ -63,31 +67,43 @@ static func finish() -> void:
 		_task = -1
 
 
-## Forget the painted terrain, e.g. after landscaping or loading another island.
+## Paint the terrain again, e.g. after landscaping or loading another island. The old
+## picture is still shown while the new one is painted, if it's the same island.
 static func invalidate() -> void:
+	if _texture_for != null:
+		_stale = _texture_for
 	_texture_for = null
-	_task_for = null
+	_outdated = _task >= 0
 
 
 ## The painted terrain, or null while it's still being painted on a worker thread.
-## Call early (after loading an island) to get the painting started.
+## Call early (after loading an island) to get the painting started. The worker paints
+## a copy of the ground, so the island can change meanwhile; a change mid-painting
+## paints it again once that's done.
 static func terrain_texture(data: IslandData) -> ImageTexture:
-	if _texture_for == data and _texture != null:
-		return _texture
-	if _task_for != data:
-		if _task >= 0:
-			WorkerThreadPool.wait_for_task_completion(_task)
-		_task_for = data
-		_task = WorkerThreadPool.add_task(func(): _painted = paint(data), false, "Paint island map")
-		return null
 	if _task >= 0 and WorkerThreadPool.is_task_completed(_task):
 		WorkerThreadPool.wait_for_task_completion(_task)
 		_task = -1
 		_texture = ImageTexture.create_from_image(_painted)
 		_painted = null
-		_texture_for = data
+		if _outdated:
+			_stale = _task_for
+		else:
+			_texture_for = _task_for
+			_stale = null
+	if _texture_for == data and _texture != null:
 		return _texture
-	return null
+	if _task >= 0 and _task_for != data:
+		# Painting another island: that one's no use now.
+		WorkerThreadPool.wait_for_task_completion(_task)
+		_task = -1
+		_painted = null
+	if _task < 0:
+		_task_for = data
+		_outdated = false
+		var copy := data.ground_copy()
+		_task = WorkerThreadPool.add_task(func(): _painted = paint(copy), false, "Paint island map")
+	return _texture if _stale == data else null
 
 
 ## Paints the terrain at PX pixels per tile: tiers in steps of green, outlined cliffs,

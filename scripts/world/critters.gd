@@ -54,14 +54,15 @@ func setup(w: World) -> void:
 
 ## Marks each water tile: sea within a few tiles of land, and fresh water split into
 ## ponds (small pools on their own) and rivers.
-func _classify_water() -> void:
+func _classify_water(sea := true) -> void:
 	var d := world.data
-	_water.resize(d.width * d.height)
+	if _water.size() != d.width * d.height:
+		_water.resize(d.width * d.height)
 	var seen := {}
 	for z in d.height:
 		for x in d.width:
 			var t := d.tile(x, z)
-			if t == IslandData.Tile.OCEAN:
+			if t == IslandData.Tile.OCEAN and sea:
 				for dz in range(-2, 3):
 					for dx in range(-2, 3):
 						if d.is_land(x + dx, z + dz):
@@ -87,6 +88,14 @@ func _classify_water() -> void:
 				var kind := 3 if body.size() < 60 and not touches_sea else 2
 				for p in body:
 					_water[d.idx(p.x, p.y)] = kind
+
+
+## Sorts the water out again after landscaping.
+func refresh_water() -> void:
+	for i in _water.size():
+		if _water[i] >= 2:
+			_water[i] = 0
+	_classify_water(false)
 
 
 func water_kind(x: int, z: int) -> String:

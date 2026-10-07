@@ -27,6 +27,12 @@ var room_doors: Array[Dictionary] = []
 ## Slopes the player has built, laid on the generated island when it loads (saved):
 ## [top x, top z, dir x, dir z] each.
 var built_ramps: Array = []
+## Landscaping (saved): tile index -> [tile type, tier] for tiles the player has
+## raised, lowered, dug out or filled in.
+var land_edits: Dictionary = {}
+## The ground is built in chunks this many tiles across.
+const GROUND_CHUNK := 32
+var _ground_material: ShaderMaterial
 var day_key: int
 var money_rock_uid: int = -1
 var grass: GrassField
@@ -72,15 +78,21 @@ func setup(island: IslandData, saved: Dictionary = {}) -> void:
 		for obj in data.objects:
 			_register(obj)
 		return
+	for e: Array in saved.get("land", []):
+		var i := data.idx(int(e[0]), int(e[1]))
+		data.tiles[i] = int(e[2])
+		data.tiers[i] = int(e[3])
+		data.ramps.erase(i)
+		land_edits[i] = [int(e[2]), int(e[3])]
 	for r: Array in saved.get("ramps", []):
 		var top := Vector2i(int(r[0]), int(r[1]))
 		var dir := Vector2i(int(r[2]), int(r[3]))
 		if not data.is_ramp(top.x + dir.x, top.y + dir.y):
 			data.add_ramp(top, dir)
 			built_ramps.append([top.x, top.y, dir.x, dir.y])
-	for obj in data.objects:
-		if obj["kind"] == "bridge" and obj.get("built", false):
-			_square_banks(obj)
+	var built_bridge := data.objects.any(func(o): return o["kind"] == "bridge" and o.get("built", false))
+	if not land_edits.is_empty() or not built_ramps.is_empty() or built_bridge:
+		_reshape()
 	_build_terrain()
 	for obj in data.objects:
 		_register(obj)
@@ -118,8 +130,14 @@ func to_save() -> Dictionary:
 	var out := {"objects": data.objects, "next_uid": data.next_uid, "day_key": day_key, "money_rock_uid": money_rock_uid}
 	if interior:
 		out["look"] = room_look
-	elif not built_ramps.is_empty():
-		out["ramps"] = built_ramps
+	else:
+		if not built_ramps.is_empty():
+			out["ramps"] = built_ramps
+		if not land_edits.is_empty():
+			var land := []
+			for i: int in land_edits:
+				land.append([i % data.width, i / data.width, land_edits[i][0], land_edits[i][1]])
+			out["land"] = land
 	return out
 
 
@@ -141,15 +159,22 @@ func set_room_look(item_id: String) -> String:
 
 
 func _build_terrain() -> void:
-	var ground := MeshInstance3D.new()
+	# The ground in a few big chunks, so landscaping only remakes the ones it touches.
+	var ground := Node3D.new()
 	ground.name = "Ground"
-	ground.mesh = TerrainBuilder.build_ground(data)
+	add_child(ground)
 	# Its own copy: the plaza is this island's (a tour island mustn't move the home
 	# island's paving).
-	ground.material_override = TerrainBuilder.terrain_material().duplicate()
+	_ground_material = TerrainBuilder.terrain_material().duplicate()
 	var plaza := Rect2(data.plaza)
-	ground.material_override.set_shader_parameter("plaza", Vector4(plaza.position.x, plaza.position.y, plaza.size.x, plaza.size.y))
-	add_child(ground)
+	_ground_material.set_shader_parameter("plaza", Vector4(plaza.position.x, plaza.position.y, plaza.size.x, plaza.size.y))
+	for cz in ceili(data.height / float(GROUND_CHUNK)):
+		for cx in ceili(data.width / float(GROUND_CHUNK)):
+			var chunk := MeshInstance3D.new()
+			chunk.name = "%d_%d" % [cx, cz]
+			chunk.material_override = _ground_material
+			ground.add_child(chunk)
+			_build_chunk(chunk, cx, cz)
 	var sea := MeshInstance3D.new()
 	sea.name = "Sea"
 	sea.mesh = TerrainBuilder.build_sea(data)
@@ -174,13 +199,25 @@ func _build_terrain() -> void:
 	add_child(grass)
 
 
-## Builds the ground, water and grass again (after a slope's been built).
-func rebuild_terrain() -> void:
-	for part: String in ["Ground", "Sea", "FreshWater", "BankFoam", "Grass"]:
-		var node := get_node_or_null(part)
-		if node:
-			node.free()
-	_build_terrain()
+func _build_chunk(chunk: MeshInstance3D, cx: int, cz: int) -> void:
+	var area := Rect2i(cx * GROUND_CHUNK, cz * GROUND_CHUNK, GROUND_CHUNK, GROUND_CHUNK).intersection(Rect2i(0, 0, data.width, data.height))
+	chunk.mesh = TerrainBuilder.build_ground(data, area)
+
+
+## Builds the ground in `area` (and the rivers and ponds) again after the land changed
+## there, and settles the grass on it. The sea never changes.
+func rebuild_terrain(area: Rect2i) -> void:
+	var ground := get_node("Ground")
+	# Walls along the area's edge belong to the tiles just outside it too.
+	var walls := area.grow(1).intersection(Rect2i(0, 0, data.width, data.height))
+	for cz in range(walls.position.y / GROUND_CHUNK, (walls.end.y - 1) / GROUND_CHUNK + 1):
+		for cx in range(walls.position.x / GROUND_CHUNK, (walls.end.x - 1) / GROUND_CHUNK + 1):
+			var chunk: MeshInstance3D = ground.get_node_or_null("%d_%d" % [cx, cz])
+			if chunk:
+				_build_chunk(chunk, cx, cz)
+	(get_node("FreshWater") as MeshInstance3D).mesh = TerrainBuilder.build_fresh_water(data)
+	(get_node("BankFoam") as MeshInstance3D).mesh = TerrainBuilder.build_bank_foam(data)
+	grass.settle(data, area)
 	IslandMap.invalidate()
 	IslandMap.terrain_texture(data)
 	Events.placed_changed.emit()
@@ -240,7 +277,9 @@ func build_incline(plan: Dictionary) -> void:
 	var dir: Vector2i = plan["dir"]
 	data.add_ramp(top, dir)
 	built_ramps.append([top.x, top.y, dir.x, dir.y])
-	rebuild_terrain()
+	var area := Rect2i(top, Vector2i.ONE).expand(top + dir * 2).grow(RESHAPE_REACH)
+	_reshape(area)
+	rebuild_terrain(area)
 
 
 ## A bridge from the bank at `tile` straight across the water ahead (one to four tiles
@@ -276,24 +315,130 @@ func bridge_plan(tile: Vector2i, facing: Vector2i) -> Dictionary:
 
 func build_bridge(plan: Dictionary) -> Dictionary:
 	var obj := add_object({"kind": "bridge", "x": plan["x"], "z": plan["z"], "length": plan["length"], "axis": plan["axis"], "built": true})
-	if _square_banks(obj):
-		rebuild_terrain()
-	else:
-		Events.placed_changed.emit()
+	var axis := Vector2i(1, 0) if obj["axis"] == "x" else Vector2i(0, 1)
+	var start := Vector2i(obj["x"], obj["z"])
+	var area := Rect2i(start - axis, Vector2i.ONE).expand(start + axis * int(obj["length"])).grow(RESHAPE_REACH)
+	_reshape(area)
+	rebuild_terrain(area)
 	return obj
 
 
-## Squares off rounded riverbank corners where a bridge lands (as the generator does
-## for its own bridges), so the banks meet the deck. True if any changed.
-func _square_banks(bridge: Dictionary) -> bool:
-	var axis := Vector2i(1, 0) if bridge["axis"] == "x" else Vector2i(0, 1)
-	var changed := false
-	for k in range(-1, int(bridge["length"]) + 1):
-		var q := Vector2i(bridge["x"], bridge["z"]) + axis * k
-		if data.in_bounds(q.x, q.y) and data.splits.has(data.idx(q.x, q.y)):
-			data.splits.erase(data.idx(q.x, q.y))
-			changed = true
-	return changed
+## Recomputes the ground's corners after the land changed; where things stand (and
+## where bridges land) stays square.
+## (Only in `area` if given: it must reach RESHAPE_REACH past what changed.)
+func _reshape(area := Rect2i()) -> void:
+	var keep := {}
+	for obj in data.objects:
+		if obj["kind"] != "bridge":
+			for tile in footprint(obj):
+				if data.in_bounds(tile.x, tile.y):
+					keep[data.idx(tile.x, tile.y)] = true
+	IslandGenerator.reshape(data, keep, area)
+
+
+# --- Landscaping ----------------------------------------------------------------------
+
+## How far round a changed tile its corners can be rounded differently, plus one for the
+## beach corners next to it.
+const RESHAPE_REACH := 4
+
+## What the cliff pick ("cliff") or water spade ("water") would do to the tile ahead of
+## `tile`, facing `facing`: {"tile", "type", "tier", "verb"} or {"why": what's wrong}.
+## The pick raises a tile level with you, or cuts back a cliff one step up; the spade
+## digs out a tile level with you, or fills in water level with you.
+func terraform_plan(tile: Vector2i, facing: Vector2i, what: String) -> Dictionary:
+	if interior or tour:
+		return {"why": "Landscaping is for your own island."}
+	if data.is_ramp(tile.x, tile.y):
+		return {"why": "Step off the slope first."}
+	var t := tile + facing
+	if t.x < 2 or t.y < 2 or t.x >= data.width - 2 or t.y >= data.height - 2:
+		return {"why": "Not out here."}
+	var here := data.tier(tile.x, tile.y)
+	var type := data.tile(t.x, t.y)
+	var level := data.tier(t.x, t.y)
+	var plan := {}
+	if what == "cliff":
+		if type != IslandData.Tile.GRASS:
+			return {"why": "Cliffs are made of grassy ground."}
+		if level == here:
+			if level >= 3:
+				return {"why": "That's as high as cliffs go."}
+			plan = {"tile": t, "type": type, "tier": level + 1, "verb": "raise"}
+		elif level == here + 1:
+			plan = {"tile": t, "type": type, "tier": here, "verb": "lower"}
+		else:
+			return {"why": "Face the ground beside you, or a cliff one step up."}
+	else:
+		if type == IslandData.Tile.GRASS and level == here:
+			plan = {"tile": t, "type": IslandData.Tile.WATER, "tier": level, "verb": "dig"}
+		elif type == IslandData.Tile.WATER and level == here:
+			plan = {"tile": t, "type": IslandData.Tile.GRASS, "tier": level, "verb": "fill"}
+		else:
+			return {"why": "Face the ground or water beside you."}
+	if data.plaza.grow(1).has_point(t):
+		return {"why": "Not in the plaza!"}
+	var i := data.idx(t.x, t.y)
+	if data.is_ramp(t.x, t.y) or _deck.has(i) or _bridge_ends().has(i):
+		return {"why": "There's a slope or a bridge in the way."}
+	if not object_at(t.x, t.y).is_empty() or _rugs.has(i) or _keep_clear(t.x, t.y) or _door_fronts.has(i):
+		return {"why": "Clear the ground first."}
+	var why := _land_fits(t, plan["type"], plan["tier"])
+	if why != "":
+		return {"why": why}
+	return plan
+
+
+## Why the land around `t` wouldn't work with `t` as `type` at `tier` ("" if it would):
+## cliffs only ever one step at a time, water level with its banks or just below them,
+## and nothing changed up against the beach or a slope.
+func _land_fits(t: Vector2i, type: int, level: int) -> String:
+	for dz in range(-1, 2):
+		for dx in range(-1, 2):
+			if dx == 0 and dz == 0:
+				continue
+			var n := t + Vector2i(dx, dz)
+			var nt := data.tile(n.x, n.y)
+			var nl := data.tier(n.x, n.y)
+			if data.is_ramp(n.x, n.y):
+				return "That's too close to a slope."
+			if nt == IslandData.Tile.OCEAN or (nt == IslandData.Tile.SAND and (type == IslandData.Tile.WATER or level > 1)):
+				return "That's too close to the beach."
+			if type == IslandData.Tile.GRASS:
+				if nt == IslandData.Tile.GRASS and absi(nl - level) > 1:
+					return "The cliffs would be too steep there."
+				if nt == IslandData.Tile.WATER and level != nl and level != nl + 1:
+					return "The water would spill out there."
+			elif type == IslandData.Tile.WATER:
+				if nt == IslandData.Tile.WATER and nl != level:
+					return "The water would spill out there."
+				if nt == IslandData.Tile.GRASS and nl != level and nl != level + 1:
+					return "The water would spill out there."
+	return ""
+
+
+## Tiles where bridges land.
+func _bridge_ends() -> Dictionary:
+	var ends := {}
+	for obj in data.objects:
+		if obj["kind"] == "bridge":
+			var axis := Vector2i(1, 0) if obj["axis"] == "x" else Vector2i(0, 1)
+			for q: Vector2i in [Vector2i(obj["x"], obj["z"]) - axis, Vector2i(obj["x"], obj["z"]) + axis * int(obj["length"])]:
+				ends[data.idx(q.x, q.y)] = true
+	return ends
+
+
+func terraform(plan: Dictionary) -> void:
+	var t: Vector2i = plan["tile"]
+	var i := data.idx(t.x, t.y)
+	data.tiles[i] = plan["type"]
+	data.tiers[i] = plan["tier"]
+	land_edits[i] = [plan["type"], plan["tier"]]
+	var area := Rect2i(t, Vector2i.ONE).grow(RESHAPE_REACH)
+	_reshape(area)
+	rebuild_terrain(area)
+	if critters:
+		critters.refresh_water()
 
 
 # --- Objects -------------------------------------------------------------------------

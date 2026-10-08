@@ -249,13 +249,21 @@ Milestone 3b:
   stairs, while sand and dirt stay slopes. Paths round off their outer corners.
 - [x] Home storage: put things away from the pockets while at home (or at a dresser,
   wardrobe or toy box there), sorted by kind, 400 stacks.
+- [x] Weather and seasons: a forecast for every day (sunny, cloudy, showers, rain, storms with
+  lightning, misty mornings, breezy days), on the phone. Rain darkens the light and wets the
+  ground, rings the water and brings out snails, a rare fish or two and raindrop beetles
+  while butterflies hide; neighbours put up umbrellas (Lucy sells them, and Poppy gives you
+  one the first rainy day). Seasons follow the real calendar for your hemisphere: blossom in
+  spring, fireflies in summer, turning leaves in autumn, snow in deep winter. Hold the look-up
+  button to see the sky: drifting clouds, a rainbow after the showers, stars and shooting
+  stars.
 
 Next milestones (suggested order):
 4. More to find on tours: other kinds of tree on rare islands, flower breeding for the
    rare colours.
 5. Path tool, rock moving (bridges, slopes, cliffs and water are in).
-6. Weather and seasons; sound effects (music is in: four pieces each for morning,
-   afternoon and evening, taking turns by the hour).
+6. Sound effects (music is in: four pieces each for morning, afternoon and evening, taking
+   turns by the hour), including rain and thunder.
 7. Platform work: touch controls, performance passes, Switch porting.
 
 ## Characters

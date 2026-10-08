@@ -39,6 +39,7 @@ var _knee_r: Node3D
 var _hand_r: Node3D
 var _tail: Node3D
 var _tool: MeshInstance3D
+var _umbrella: MeshInstance3D
 ## True when the head is a generated model (assets/characters/heads/<kind>.res).
 var _model_head := false
 var _head_offset := Vector3.ZERO
@@ -138,7 +139,7 @@ func rebuild() -> void:
 	_rig = [_hips, _waist, _head, _leg_l, _knee_l, _leg_r, _knee_r, _arm_l, _elbow_l, _arm_r, _elbow_r, _hand_r]
 	_pose.clear()
 	_tool = MeshInstance3D.new()
-	_tool.material_override = Models.material()
+	_tool.material_override = Models.held_material()
 	_tool.transform = RigPose.slot()
 	_hand_r.add_child(_tool)
 	set_tool(_tool_id)
@@ -231,7 +232,7 @@ func rebuild() -> void:
 		# Tucked in above the left ear (an animal's, in front of it).
 		var flower := MeshInstance3D.new()
 		flower.mesh = Models.get_mesh("hairflower:" + look["hair_flower"])
-		flower.material_override = Models.material() if curved else _flat_prop()
+		flower.material_override = Models.held_material() if curved else _flat_prop()
 		var out := Vector3(0.68, 0.5, 0.55).normalized() if not animal else Vector3(0.5, 0.62, 0.6).normalized()
 		flower.position = P.HEAD_CENTRE + _head_offset + out * 0.41
 		flower.basis = Basis(Quaternion(Vector3.UP, out)).scaled(Vector3.ONE * (1.5 if not animal else 1.1))
@@ -354,9 +355,28 @@ func set_look(appearance: Dictionary) -> void:
 
 func set_tool(item_id: String) -> void:
 	_tool_id = item_id
+	# An umbrella is held up over the head instead of in the hand.
+	var umbrella := item_id != "" and not ":" in item_id and ItemDB.tool_type(item_id) == "umbrella"
+	set_umbrella(ItemDB.color_of(item_id).to_html(false) if umbrella else "")
 	if _tool:
 		# Landscaping tools are model keys of their own ("landscape:cliff").
-		_tool.mesh = null if item_id == "" else Models.get_mesh(item_id if ":" in item_id else "tool:" + item_id)
+		_tool.mesh = null if item_id == "" or umbrella else Models.get_mesh(item_id if ":" in item_id else "tool:" + item_id)
+
+
+## Holds an umbrella of colour `hex` up over the head ("" puts it away).
+func set_umbrella(hex: String) -> void:
+	if hex == "":
+		if _umbrella:
+			_umbrella.visible = false
+		return
+	if _umbrella == null:
+		_umbrella = MeshInstance3D.new()
+		_umbrella.material_override = Models.held_material()
+		_umbrella.position = Vector3(0.26, 0.7, 0.04)
+		_umbrella.rotation_degrees = Vector3(-8, 0, -6)
+		add_child(_umbrella)
+	_umbrella.mesh = Models.get_mesh("umbrella:" + hex)
+	_umbrella.visible = true
 
 
 ## Plays a one-off action from ACTIONS: "chop", "dig", "net", "shake", "pickup",

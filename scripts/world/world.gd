@@ -675,7 +675,14 @@ func _spawn_node(obj: Dictionary) -> void:
 	var node := Node3D.new()
 	var mesh := MeshInstance3D.new()
 	mesh.mesh = Models.get_mesh(Models.key_for(obj))
-	Models.dress(mesh, Models.flower_material() if obj["kind"] == "flower" else Models.material())
+	var base := Models.material()
+	if obj["kind"] == "flower":
+		base = Models.flower_material()
+	elif obj["kind"] in ["tree", "fruit_tree"]:
+		base = Models.foliage_material()
+	elif obj["kind"] == "bush":
+		base = Models.bush_material()
+	Models.dress(mesh, base)
 	if obj["kind"] == "drop" or is_rug(obj):
 		mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	node.add_child(mesh)

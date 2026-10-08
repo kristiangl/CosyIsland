@@ -176,6 +176,19 @@ func _poppy(poppy: Npc) -> void:
 		await say("poppy", ["A real house! With a chimney and everything!",
 			"There's much more room inside, so you can really spread out. Happy decorating, {player}!"])
 		return
+	if (Weather.rain > 0.1 or Weather.snow > 0.1) and not flags.get("umbrella_gift", false):
+		flags["umbrella_gift"] = true
+		poppy.hop()
+		await say("poppy", ["Oh, {player}, you're soaked! Here, have this. I keep a spare for exactly this sort of day."])
+		_give("umbrella_yellow")
+		await say("poppy", ["Hold it like a tool: choose it from your pockets, or switch to it with {tools}.",
+			"Lucy sells other colours, if yellow isn't your thing."])
+		return
+	var remark := weather_line()
+	if remark != "":
+		await say("poppy", [remark])
+		await _poppy_questions()
+		return
 	await say("poppy", [_small_talk("poppy", [
 		"The office is always open. Well, the flap is.",
 		"I keep a diary of everything that happens on the island. Today's entry: {player} said hello. Lovely.",
@@ -1494,6 +1507,9 @@ func _neighbour(who: Npc) -> void:
 		befriend(who.id, 1)
 	var lines: Array = NEIGHBOUR_TALK.get(data.get("personality", "cheerful"), NEIGHBOUR_TALK["cheerful"])
 	var greeting := String(_small_talk(who.id, lines)).replace("{catch}", catch)
+	var remark := weather_line(catch)
+	if remark != "":
+		greeting = remark
 	var wanted := request_for(who.id)
 	var options := ["Let's chat!", "I've got something for you", "Need anything?", "Bye!"]
 	if wanted != "" and Inventory.count_of(wanted) > 0:
@@ -1509,6 +1525,35 @@ func _neighbour(who: Npc) -> void:
 			await say(who.id, ["See you around, {player}! %s!" % catch.capitalize()])
 			return
 	await _maybe_present(who, data)
+
+
+## Something to say about the weather or the season today ("" if there's nothing much to
+## say, or now and then even if there is). `catch` is the speaker's catchphrase.
+func weather_line(catch: String = "") -> String:
+	var tail := (", %s!" % catch) if catch != "" else "!"
+	var lines: Array[String] = []
+	if Weather.storm > 0.3:
+		lines.append("What a storm" + tail + " Did you see the lightning? I counted to three and then hid.")
+	elif Weather.snow > 0.1:
+		lines.append("It's snowing" + tail + " Everything goes so quiet when it snows.")
+	elif Weather.rain > 0.1:
+		lines.append("Lovely weather for snails" + tail + " They come out on the rocks when it rains.")
+		lines.append("Rain, rain" + tail + " Good for the flowers, mind. And for the fish, I hear.")
+	elif Weather.rainbow > 0.2:
+		lines.append("Have you looked up? There's a rainbow" + tail + " Hold {look_up} to see the sky.")
+	elif Weather.mist > 0.3:
+		lines.append("Misty this morning" + tail + " It'll burn off by nine, you'll see.")
+	elif Weather.snow_cover > 0.5:
+		lines.append("The snow makes everything look like a cake" + tail)
+	elif Weather.autumn > 0.5:
+		lines.append("The leaves are turning" + tail + " Orange is my favourite colour this time of year.")
+	elif Weather.blossom > 0.5:
+		lines.append("The blossom's out" + tail + " Spring always smells of something sweet.")
+	if Weather.meteors > 0.5 or (Weather.plan(GameClock.day_key()).get("meteors", false) and GameClock.hour_float() > 15.0):
+		lines.append("Clear skies tonight" + tail + " They say there'll be shooting stars. Hold {look_up} after dark and look up!")
+	if lines.is_empty() or randf() < 0.35:
+		return ""
+	return lines[randi() % lines.size()]
 
 
 ## Chatter that warms up as you become friends.

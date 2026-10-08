@@ -24,8 +24,12 @@ void vertex() {
 void fragment() {
 	vec3 col = grass_colour(world_pos.xz);
 	col = mix(col * 0.88, col * 1.14 + vec3(0.03, 0.04, 0.0), tip);
+	col = wet(col);
+	// Under snow only the tips poke through.
+	col = mix(col, snow_colour(world_pos.xz), snow_cover * (1.0 - tip * 0.5));
 	ALBEDO = col;
 	ROUGHNESS = 1.0;
+	cloud_light = sky_light(VERTEX, INV_VIEW_MATRIX, TIME);
 	EMISSION = cel_ambient(ALBEDO);
 	// Light both sides of the blades like the ground beneath them.
 	NORMAL = normalize((VIEW_MATRIX * vec4(0.0, 1.0, 0.0, 0.0)).xyz);

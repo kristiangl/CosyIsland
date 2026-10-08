@@ -26,6 +26,7 @@ Story="*res://scripts/autoload/story.gd"
 Effects="*res://scripts/autoload/effects.gd"
 Journal="*res://scripts/autoload/journal.gd"
 Music="*res://scripts/autoload/music.gd"
+Weather="*res://scripts/autoload/weather.gd"
 
 [display]
 
@@ -76,4 +77,28 @@ night_glow={
 wind_strength={
 "type": "float",
 "value": 1.0
+}
+cloud_cover={
+"type": "float",
+"value": 0.0
+}
+wetness={
+"type": "float",
+"value": 0.0
+}
+rain={
+"type": "float",
+"value": 0.0
+}
+snow_cover={
+"type": "float",
+"value": 0.0
+}
+foliage={
+"type": "vec4",
+"value": Vector4(0, 0, 0, 0)
+}
+grass_tint={
+"type": "vec3",
+"value": Vector3(1, 1, 1)
 }

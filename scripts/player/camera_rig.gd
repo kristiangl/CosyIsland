@@ -19,6 +19,8 @@ var room := Rect2()
 ## While talking, the camera leans in on the player and this character.
 var talk_with: Node3D
 var _zoom := 1.0
+## Looking up at the sky (held "look_up" outdoors), 0 to 1.
+var _look := 0.0
 
 
 func _ready() -> void:
@@ -44,8 +46,15 @@ func _process(delta: float) -> void:
 	var pitch := deg_to_rad(52.0 if indoors else pitch_degrees)
 	# Bigger rooms need the camera further back to fit in.
 	var indoor_distance := 13.5 * maxf(1.0, maxf(room.size.x / 6.5, room.size.y / 6.0))
+	var wants := 0.0
+	if not indoors and Game.mode == Game.Mode.PLAY:
+		wants = 1.0 if Game.args.has("look") else Input.get_action_strength("look_up")
+	_look = move_toward(_look, wants, delta * 2.5)
+	var tilt := smoothstep(0.0, 1.0, _look)
 	camera.position = focus + Vector3(0, sin(pitch), cos(pitch)) * (indoor_distance if indoors else distance) * _zoom
-	camera.look_at(focus)
+	# Looking up: the camera drops behind the player's shoulder and tips up at the sky.
+	camera.position = camera.position.lerp(focus + Vector3(0, 1.4, 6.0), tilt)
+	camera.look_at(focus.lerp(focus + Vector3(0, 9.0, -24.0), tilt))
 	RenderingServer.global_shader_parameter_set("curve_origin", focus)
 
 

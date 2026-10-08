@@ -110,12 +110,14 @@ void fragment() {
 		float grass = smoothstep(0.47, 0.53, COLOR.r + wobble);
 		col = mix(sand_colour(xz, world_pos.y), grass_colour(xz), grass);
 		col = mix(col, paving_colour(xz), plaza_mask(xz));
+		col = wet(col);
+		col = mix(col, snow_colour(xz), snow_cover * smoothstep(0.55, 0.85, world_normal.y));
 		// Soft shade at the foot of cliffs (vertex green is 0 next to a higher tile), and
 		// a narrow light rim along their tops, so drops read from any side.
 		col *= mix(0.82, 1.0, smoothstep(0.0, 1.0, COLOR.g));
 		col = mix(col * 1.09 + vec3(0.015), col, smoothstep(0.12, 0.3, COLOR.b));
 	} else if (kind > 0.625) {
-		col = grass_colour(xz);
+		col = mix(wet(grass_colour(xz)), snow_colour(xz), snow_cover * 0.9);
 	} else if (kind > 0.375) {
 		col = cliff_colour(world_normal, world_pos);
 	} else {
@@ -123,5 +125,6 @@ void fragment() {
 	}
 	ALBEDO = col;
 	ROUGHNESS = 1.0;
+	cloud_light = sky_light(VERTEX, INV_VIEW_MATRIX, TIME);
 	EMISSION = cel_ambient(ALBEDO);
 }

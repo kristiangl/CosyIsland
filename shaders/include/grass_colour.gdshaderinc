@@ -29,6 +29,9 @@ float grass_marks(vec2 xz) {
 	return mark * (h > 0.8 ? 1.0 : -1.0);
 }
 
+// The season's tint on the grass (Weather): golden in autumn, paler in winter.
+global uniform vec3 grass_tint;
+
 vec3 grass_colour(vec2 xz) {
 	float patches = fbm(xz * 0.09);
 	float detail = value_noise(xz * 0.9);
@@ -39,5 +42,5 @@ vec3 grass_colour(vec2 xz) {
 	col *= 0.97 + detail * 0.05;
 	float mark = grass_marks(xz);
 	col *= 1.0 + (mark < 0.0 ? mark * 0.11 : mark * 0.07);
-	return col;
+	return col * grass_tint;
 }

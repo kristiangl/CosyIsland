@@ -25,6 +25,9 @@ static var _material: ShaderMaterial
 static var _fabrics: Dictionary = {}
 static var _glow: ShaderMaterial
 static var _flower: ShaderMaterial
+static var _foliage: ShaderMaterial
+static var _held: ShaderMaterial
+static var _bush: ShaderMaterial
 static var _glass: ShaderMaterial
 
 
@@ -135,8 +138,12 @@ static func get_mesh(key: String) -> ArrayMesh:
 			_drop(k, p[1])
 		"landscape":
 			_landscape_tool(k, p[1])
+		"umbrella":
+			_umbrella(k, Color(p[1]))
 		"tool":
-			if ItemDB.tool_type(p[1]) in ["axe", "shovel", "pickaxe"]:
+			if ItemDB.tool_type(p[1]) == "umbrella":
+				_umbrella(k, ItemDB.color_of(p[1]))
+			elif ItemDB.tool_type(p[1]) in ["axe", "shovel", "pickaxe"]:
 				k = _kit_from("tool_" + ItemDB.tool_type(p[1]))
 				_tint_metal(k, ItemDB.color_of(p[1]))
 				if ItemDB.tool_type(p[1]) == "axe":
@@ -203,6 +210,30 @@ static func dress(mi: MeshInstance3D, base: Material, icon: bool = false) -> voi
 			mi.set_surface_override_material(i, mat)
 	else:
 		mi.material_override = base
+
+
+## The prop material for trees and bushes: their leaves turn with the seasons.
+static func foliage_material() -> ShaderMaterial:
+	if _foliage == null:
+		_foliage = material().duplicate()
+		_foliage.set_shader_parameter("seasonal", 1.0)
+	return _foliage
+
+
+## Bushes turn in autumn like the trees, but don't blossom.
+static func bush_material() -> ShaderMaterial:
+	if _bush == null:
+		_bush = material().duplicate()
+		_bush.set_shader_parameter("seasonal", 0.5)
+	return _bush
+
+
+## The prop material for things held in the hand: no snow settles on them.
+static func held_material() -> ShaderMaterial:
+	if _held == null:
+		_held = material().duplicate()
+		_held.set_shader_parameter("weathered", false)
+	return _held
 
 
 ## The prop material for flowers: short, so they sway more for their height.
@@ -1278,6 +1309,39 @@ static func _net_head(k: MeshKit, centre: Vector3, r: float) -> void:
 				var ang := TAU * (i + 0.5) / segments
 				var out := (Vector3(0, cos(ang), sin(ang)) + Vector3(-0.6, 0, 0)).normalized()
 				k.quad(a[i], a[i2], b[i2], b[i], out if side == 0 else -out)
+
+
+## An open umbrella, handle at the origin and the canopy above: eight panels in the
+## colour and a lighter one, scalloped at the rim, with a tip on top.
+static func _umbrella(k: MeshKit, colour: Color) -> void:
+	var main := MeshKit.lin(colour)
+	var light := MeshKit.lin(colour.lerp(Color.WHITE, 0.45))
+	var under := MeshKit.lin(colour.darkened(0.25))
+	var wood := MeshKit.lin(Color("8a6a4a"))
+	var top := Vector3(0, 1.28, 0)
+	var panels := 8
+	for i in panels:
+		var a0 := TAU * i / panels
+		var a1 := TAU * (i + 1) / panels
+		var am := (a0 + a1) * 0.5
+		var r0 := Vector3(cos(a0) * 0.62, 1.0, sin(a0) * 0.62)
+		var r1 := Vector3(cos(a1) * 0.62, 1.0, sin(a1) * 0.62)
+		var mid := Vector3(cos(am) * 0.54, 1.05, sin(am) * 0.54)
+		var c := main if i % 2 == 0 else light
+		for tri: Array in [[top, r0, mid], [top, mid, r1]]:
+			var n: Vector3 = ((tri[1] - tri[0]).cross(tri[2] - tri[0])).normalized()
+			if n.y < 0.0:
+				n = -n
+			var ids := [k.vertex(tri[0], n, c), k.vertex(tri[1], n, c), k.vertex(tri[2], n, c)]
+			k.tri(ids[0], ids[1], ids[2], n)
+			var down := [k.vertex(tri[0], -n, under), k.vertex(tri[1], -n, under), k.vertex(tri[2], -n, under)]
+			k.tri(down[0], down[1], down[2], -n)
+	k.sphere(top + Vector3(0, 0.04, 0), Vector3.ONE * 0.04, wood, 3, 6)
+	k.cylinder(Vector3(0, 0.08, 0), top, 0.018, 0.018, MeshKit.lin(Color("c8c4c0")), 5)
+	# A crook handle.
+	k.cylinder(Vector3(0, 0.0, 0), Vector3(0, 0.1, 0), 0.03, 0.03, wood, 6)
+	k.cylinder(Vector3(0, 0.0, 0), Vector3(0.08, -0.03, 0), 0.03, 0.03, wood, 6)
+	k.cylinder(Vector3(0.08, -0.03, 0), Vector3(0.12, 0.04, 0), 0.03, 0.03, wood, 6)
 
 
 ## The landscaping app's tools, held while landscaping: "cliff", "water", "slope" or

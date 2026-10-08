@@ -1,5 +1,5 @@
 {
-	"_note": "Fish and bugs. hours: [from, to] in island time (wrapping past midnight when from > to). where: fish in sea, river or pond; bugs on flowers, in the air, on grass, on trees, on rocks, on the beach or over water. size (fish): tiny, small, medium, large, huge. shape picks the model. weight: how common, relative to others in the same place. islands: only found on those kinds of tour island (data/tour_islands.json).",
+	"_note": "Fish and bugs. hours: [from, to] in island time (wrapping past midnight when from > to). where: fish in sea, river or pond; bugs on flowers, in the air, on grass, on trees, on rocks, on the beach or over water. size (fish): tiny, small, medium, large, huge. shape picks the model. weight: how common, relative to others in the same place. islands: only found on those kinds of tour island (data/tour_islands.json). weather: only out in the \"rain\" or \"snow\", or when it's \"dry\".",
 	"fish": [
 		{"id": "anchovy", "name": "Anchovy", "where": "sea", "size": "tiny", "hours": [4, 21], "price": 200, "weight": 10, "colors": ["9fb4c8", "dfe8f0"]},
 		{"id": "horse_mackerel", "name": "Horse mackerel", "where": "sea", "size": "small", "hours": [0, 24], "price": 150, "weight": 12, "colors": ["8aa3b8", "e8eef2"]},
@@ -24,16 +24,18 @@
 		{"id": "catfish", "name": "Catfish", "where": "pond", "size": "large", "hours": [16, 9], "price": 800, "weight": 3, "colors": ["5f5a50", "c8c0b0"]},
 		{"id": "sunfish", "name": "Ocean sunfish", "where": "sea", "size": "huge", "hours": [0, 24], "price": 4000, "weight": 3, "colors": ["b8c4cc", "e8eef0"], "shape": "round", "islands": ["fishy"]},
 		{"id": "angelfish", "name": "Angelfish", "where": "sea", "size": "small", "hours": [0, 24], "price": 3000, "weight": 3, "colors": ["f2d04a", "3a3a3a"], "shape": "stripy", "islands": ["fishy"]},
-		{"id": "golden_koi", "name": "Golden koi", "where": "river", "size": "large", "hours": [0, 24], "price": 6000, "weight": 3, "colors": ["f2c14e", "fff4d0"], "islands": ["fishy"]}
+		{"id": "golden_koi", "name": "Golden koi", "where": "river", "size": "large", "hours": [0, 24], "price": 6000, "weight": 3, "colors": ["f2c14e", "fff4d0"], "islands": ["fishy"]},
+		{"id": "coelacanth", "name": "Coelacanth", "where": "sea", "size": "huge", "hours": [0, 24], "price": 15000, "weight": 1, "colors": ["4a5a7a", "a8bcd0"], "weather": "rain"},
+		{"id": "rain_char", "name": "Rain char", "where": "river", "size": "medium", "hours": [0, 24], "price": 1500, "weight": 3, "colors": ["6a7a8a", "f2b8a8"], "shape": "stripy", "weather": "rain"}
 	],
 	"bugs": [
-		{"id": "white_butterfly", "name": "White butterfly", "where": "flowers", "hours": [4, 19], "price": 160, "weight": 12, "colors": ["fbf8f0", "3a3a3a"], "shape": "butterfly"},
-		{"id": "yellow_butterfly", "name": "Yellow butterfly", "where": "flowers", "hours": [4, 19], "price": 160, "weight": 10, "colors": ["f6d34a", "3a3a3a"], "shape": "butterfly"},
-		{"id": "peacock_butterfly", "name": "Peacock butterfly", "where": "flowers", "hours": [4, 19], "price": 2500, "weight": 1, "colors": ["3a6f9a", "7ce0c8"], "shape": "butterfly"},
+		{"id": "white_butterfly", "name": "White butterfly", "where": "flowers", "hours": [4, 19], "price": 160, "weight": 12, "colors": ["fbf8f0", "3a3a3a"], "shape": "butterfly", "weather": "dry"},
+		{"id": "yellow_butterfly", "name": "Yellow butterfly", "where": "flowers", "hours": [4, 19], "price": 160, "weight": 10, "colors": ["f6d34a", "3a3a3a"], "shape": "butterfly", "weather": "dry"},
+		{"id": "peacock_butterfly", "name": "Peacock butterfly", "where": "flowers", "hours": [4, 19], "price": 2500, "weight": 1, "colors": ["3a6f9a", "7ce0c8"], "shape": "butterfly", "weather": "dry"},
 		{"id": "honeybee", "name": "Honeybee", "where": "flowers", "hours": [8, 17], "price": 200, "weight": 6, "colors": ["f2c14e", "3a3030"], "shape": "bee"},
 		{"id": "ladybug", "name": "Ladybug", "where": "flowers", "hours": [8, 17], "price": 200, "weight": 6, "colors": ["e0453a", "2a2a2a"], "shape": "ladybug"},
 		{"id": "moth", "name": "Moth", "where": "air", "hours": [19, 4], "price": 130, "weight": 10, "colors": ["c8b89a", "8a7a60"], "shape": "moth"},
-		{"id": "common_butterfly", "name": "Common butterfly", "where": "air", "hours": [4, 19], "price": 160, "weight": 8, "colors": ["f2a7a0", "3a3a3a"], "shape": "butterfly"},
+		{"id": "common_butterfly", "name": "Common butterfly", "where": "air", "hours": [4, 19], "price": 160, "weight": 8, "colors": ["f2a7a0", "3a3a3a"], "shape": "butterfly", "weather": "dry"},
 		{"id": "red_dragonfly", "name": "Red dragonfly", "where": "water", "hours": [8, 19], "price": 180, "weight": 8, "colors": ["e0453a", "dfeff2"], "shape": "dragonfly"},
 		{"id": "darner", "name": "Darner dragonfly", "where": "water", "hours": [8, 17], "price": 230, "weight": 5, "colors": ["4fa0c8", "dfeff2"], "shape": "dragonfly"},
 		{"id": "firefly", "name": "Firefly", "where": "water", "hours": [19, 4], "price": 300, "weight": 6, "colors": ["4a4030", "eaff9a"], "shape": "firefly"},
@@ -42,10 +44,13 @@
 		{"id": "cicada", "name": "Cicada", "where": "trees", "hours": [8, 17], "price": 250, "weight": 6, "colors": ["6a7a5a", "cfe8e0"], "shape": "cicada"},
 		{"id": "rhino_beetle", "name": "Rhinoceros beetle", "where": "trees", "hours": [23, 8], "price": 1350, "weight": 3, "colors": ["4a3020", "6a4a30"], "shape": "rhino"},
 		{"id": "stag_beetle", "name": "Stag beetle", "where": "trees", "hours": [23, 8], "price": 2000, "weight": 2, "colors": ["3a2a20", "6a4a30"], "shape": "stag"},
-		{"id": "snail", "name": "Snail", "where": "rocks", "hours": [0, 24], "price": 250, "weight": 5, "colors": ["c8a070", "b8b0a0"], "shape": "snail"},
+		{"id": "snail", "name": "Snail", "where": "rocks", "hours": [0, 24], "price": 250, "weight": 5, "colors": ["c8a070", "b8b0a0"], "shape": "snail", "weather": "rain"},
 		{"id": "hermit_crab", "name": "Hermit crab", "where": "beach", "hours": [19, 8], "price": 1000, "weight": 4, "colors": ["e0857a", "f2d8b0"], "shape": "crab"},
 		{"id": "blue_morpho", "name": "Blue morpho", "where": "flowers", "hours": [0, 24], "price": 4000, "weight": 3, "colors": ["3f7fe0", "1a2a50"], "shape": "butterfly", "islands": ["buggy"]},
 		{"id": "orchid_mantis", "name": "Orchid mantis", "where": "flowers", "hours": [0, 24], "price": 2400, "weight": 3, "colors": ["f4c0d8", "fbe8f0"], "shape": "hopper", "islands": ["buggy"]},
-		{"id": "golden_stag", "name": "Golden stag", "where": "trees", "hours": [0, 24], "price": 10000, "weight": 2, "colors": ["d8a83a", "8a6a20"], "shape": "stag", "islands": ["buggy"]}
+		{"id": "golden_stag", "name": "Golden stag", "where": "trees", "hours": [0, 24], "price": 10000, "weight": 2, "colors": ["d8a83a", "8a6a20"], "shape": "stag", "islands": ["buggy"]},
+		{"id": "giant_snail", "name": "Giant snail", "where": "rocks", "hours": [0, 24], "price": 1800, "weight": 1, "colors": ["e0b080", "d8c8b0"], "shape": "snail", "weather": "rain"},
+		{"id": "rain_beetle", "name": "Raindrop beetle", "where": "grass", "hours": [0, 24], "price": 900, "weight": 4, "colors": ["4f8fc0", "cfe8f4"], "shape": "ladybug", "weather": "rain"},
+		{"id": "snow_moth", "name": "Snow moth", "where": "air", "hours": [0, 24], "price": 1200, "weight": 5, "colors": ["f4f6fa", "c8d0e0"], "shape": "moth", "weather": "snow"}
 	]
 }

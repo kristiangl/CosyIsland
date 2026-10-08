@@ -65,6 +65,8 @@ func label(action: String) -> String:
 	for ev in InputMap.action_get_events(action):
 		if method == Method.KEYBOARD and ev is InputEventKey:
 			return _key_name(ev)
+		if method == Method.CONTROLLER and ev is InputEventJoypadMotion:
+			return "R stick" if ev.axis in [JOY_AXIS_RIGHT_X, JOY_AXIS_RIGHT_Y] else "L stick"
 		if method == Method.CONTROLLER and ev is InputEventJoypadButton:
 			var names: Dictionary = FACE_NAMES[pad_family]
 			return names.get(ev.button_index, OTHER_BUTTONS.get(ev.button_index, "?"))

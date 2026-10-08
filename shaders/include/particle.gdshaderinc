@@ -3,7 +3,7 @@
 #include "res://shaders/include/world.gdshaderinc"
 
 // 0 soft dot, 1 sparkle (four-point star), 2 leaf, 3 heart, 4 flame, 5 puff (smoke),
-// 6 square chip, 7 ring.
+// 6 square chip, 7 ring, 8 rain streak.
 uniform int shape = 0;
 // Off for effects shown outside the island.
 uniform bool curved = true;
@@ -64,6 +64,9 @@ void fragment() {
 		a = 1.0 - smoothstep(0.6, 0.75, max(abs(p.x), abs(p.y)));
 	} else if (shape == 7) {
 		a = 1.0 - smoothstep(0.08, 0.16, abs(length(p) - 0.75));
+	} else if (shape == 8) {
+		// Rain: a thin streak, fading at its ends.
+		a = (1.0 - smoothstep(0.03, 0.09, abs(p.x))) * (1.0 - smoothstep(0.5, 1.0, abs(p.y)));
 	} else {
 		a = 1.0 - smoothstep(0.2, 1.0, length(p));
 	}

@@ -8,7 +8,7 @@ extends Node
 ##
 ## Kinds are listed in KINDS. Colours are sRGB.
 
-const SHAPES := {"dot": 0, "sparkle": 1, "leaf": 2, "heart": 3, "flame": 4, "puff": 5, "chip": 6, "ring": 7}
+const SHAPES := {"dot": 0, "sparkle": 1, "leaf": 2, "heart": 3, "flame": 4, "puff": 5, "chip": 6, "ring": 7, "streak": 8}
 
 ## Each kind: shape, glow (added light), amount, lifetime, size [min, max], colours
 ## (picked at random per particle), speed [min, max], direction, spread (degrees),
@@ -76,6 +76,16 @@ const KINDS := {
 	"petals": {"shape": "leaf", "amount": 10, "lifetime": 7.0, "size": [0.08, 0.12],
 		"colours": ["f7c6d4", "fbe3ea", "fff1c9"], "speed": [0.5, 0.9], "direction": [1, -0.25, 0.3], "spread": 20.0,
 		"gravity": 0.0, "box": [16.0, 3.0, 12.0], "grow": 1.0, "spin": 2.0, "fade": true},
+	# Weather, round the camera (AmbientEffects).
+	"rain": {"shape": "streak", "amount": 340, "lifetime": 0.9, "size": [0.4, 0.55],
+		"colours": ["e6eef6", "cfdcea"], "speed": [10.0, 13.0], "direction": [0.1, -1, 0.04], "spread": 3.0,
+		"gravity": -4.0, "box": [28.0, 2.0, 22.0], "grow": 1.0, "alpha": 0.6},
+	"snowfall": {"shape": "dot", "amount": 170, "lifetime": 7.0, "size": [0.06, 0.11],
+		"colours": ["ffffff", "eef4ff"], "speed": [0.7, 1.1], "direction": [0.25, -1, 0.1], "spread": 18.0,
+		"gravity": -0.15, "box": [28.0, 2.0, 22.0], "grow": 1.0, "fade": true, "alpha": 0.95},
+	"falling_leaves": {"shape": "leaf", "amount": 16, "lifetime": 7.0, "size": [0.1, 0.15],
+		"colours": ["f2994a", "e8b44e", "d9643f", "c9853c"], "speed": [0.5, 0.9], "direction": [1, -0.35, 0.3],
+		"spread": 25.0, "gravity": -0.1, "box": [16.0, 3.0, 12.0], "grow": 1.0, "spin": 3.0, "fade": true},
 	"motes": {"shape": "dot", "glow": true, "amount": 14, "lifetime": 6.0, "size": [0.03, 0.05],
 		"colours": ["fff3d6"], "speed": [0.05, 0.12], "direction": [0, 1, 0], "spread": 180.0,
 		"gravity": 0.0, "box": [3.5, 1.2, 3.0], "grow": 1.0, "fade": true, "alpha": 0.6},

@@ -12,6 +12,9 @@ func _ready() -> void:
 
 
 func _run() -> void:
+	# The real day's weather mustn't decide whether butterflies are about.
+	Weather.force = "clear"
+	Weather.update(12.0)
 	# `-- --only=name` runs just _test_<name>.
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--only="):
@@ -55,6 +58,7 @@ func _run() -> void:
 	_test_landscaping()
 	_test_paths_and_stairs()
 	_test_storage()
+	_test_weather()
 	_test_tour_crossings_and_pole()
 	print("\n%d checks, %d failures" % [_checks, _failures])
 	IslandMap.finish()
@@ -642,7 +646,7 @@ func _test_shop_and_house() -> void:
 	var today := Shop.stock(42, 100)
 	check(today == Shop.stock(42, 100), "the shop's stock is the same all day")
 	check(today != Shop.stock(42, 101), "and changes the next day")
-	check(today.size() == Shop.STAPLES.size() + Shop.FURNITURE_PER_DAY + Shop.INTERIORS_PER_DAY + Shop.CLOTHES_PER_DAY, "the shop has a full stock")
+	check(today.size() == Shop.STAPLES.size() + 1 + Shop.FURNITURE_PER_DAY + Shop.INTERIORS_PER_DAY + Shop.CLOTHES_PER_DAY, "the shop has a full stock (and an umbrella)")
 	check(today.any(func(id): return ItemDB.is_clothing(id)), "the shop sells clothes")
 	var thing: String = today[Shop.STAPLES.size()]
 	check(Shop.buy(thing, 100) != "", "can't buy without acorns")
@@ -1954,6 +1958,53 @@ func _test_storage() -> void:
 	check(StorageMenu.group_of("wood") == "nature" and StorageMenu.group_of("meadow_dresser_sage") == "furniture", "storage sorts by kind")
 	check(ItemDB.placeable("meadow_dresser_sage").get("storage", false), "dressers open storage at home")
 	Inventory.reset()
+
+
+func _test_weather() -> void:
+	Story.reset()
+	Weather.force = ""
+	Weather.force_season = ""
+	# Seasons by hemisphere.
+	var october := {"month": 10, "day": 8}
+	check(Weather.season_on(october)[0] == "spring", "October is spring in the south (the default)")
+	Story.flags["hemisphere"] = "north"
+	check(Weather.season_on(october)[0] == "autumn" and Weather.season_on({"month": 1, "day": 20})[0] == "winter",
+		"and autumn in the north, where January's winter")
+	Story.flags.erase("hemisphere")
+	# Plans are the same however often you ask, and every kind of day turns up.
+	var kinds := {}
+	var sane := true
+	for key in range(20000, 20400):
+		var p := Weather.plan(key)
+		kinds[p["kind"]] = true
+		if p["kind"] in ["showers", "rain", "storm"]:
+			sane = sane and p["from"] < p["to"]
+		sane = sane and (not p["snow"] or Weather.season_on(Weather.date_of(key))[0] == "winter")
+	check(Weather.plan(20123) == Weather.plan(20123), "a day's weather is the same every time you look")
+	check(kinds.size() == Weather.KINDS.size() and sane, "a year has every kind of weather, and snow only in winter (%s)" % [kinds.keys()])
+	Weather.force = "rain"
+	Weather.update(12.0)
+	check(Weather.rain > 0.5 and Weather.wetness > 0.5 and Weather.clouds > 0.9 and Weather.forecast() != "", "rain: wet ground under grey skies")
+	var snail: Dictionary = ItemDB.bugs["snail"]
+	check(Critters.weather_suits(snail) and not Critters.weather_suits(ItemDB.bugs["white_butterfly"]), "snails come out in the rain, butterflies hide")
+	Weather.force = "clear"
+	Weather.update(12.0)
+	check(Weather.rain == 0.0 and Weather.wetness == 0.0 and not Critters.weather_suits(snail), "and not when it's dry")
+	Weather.force = "snow"
+	Weather.force_season = "winter"
+	Weather.update(12.0)
+	check(Weather.snow > 0.5 and Weather.rain == 0.0 and Weather.snow_cover > 0.5, "in deep winter it snows instead, and settles")
+	Weather.force = "clear"
+	Weather.force_season = "autumn"
+	Weather.update(12.0)
+	check(Weather.autumn > 0.0 and Weather.blossom == 0.0, "autumn turns the leaves")
+	Weather.force = "clear"
+	Weather.force_season = ""
+	Weather.update(12.0)
+	check(ItemDB.tool_type("umbrella_red") == "umbrella" and Models.get_mesh("umbrella:e0656b").get_faces().size() > 60,
+		"there are umbrellas to hold up in the rain")
+	check(InputMap.has_action("look_up"), "you can look up at the sky")
+	Story.reset()
 
 
 func _test_tour_crossings_and_pole() -> void:

@@ -160,7 +160,10 @@ void fragment() {
 		shade = 0.7;
 	}
 	vec2 p = abs(world_normal.y) > 0.5 ? xz : vec2(xz.x + xz.y, world_pos.y * 2.0);
-	ALBEDO = path_colour(kind, p) * shade;
+	vec3 col = wet(path_colour(kind, p)) * shade;
+	// Snow settles on paths too, thinner than on the grass so they still show.
+	ALBEDO = mix(col, snow_colour(xz), snow_cover * 0.75 * smoothstep(0.55, 0.85, world_normal.y));
 	ROUGHNESS = 1.0;
+	cloud_light = sky_light(VERTEX, INV_VIEW_MATRIX, TIME);
 	EMISSION = cel_ambient(ALBEDO);
 }

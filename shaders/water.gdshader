@@ -18,6 +18,8 @@ uniform float shore_waves = 1.0;
 uniform float ripple_strength = 0.45;
 
 varying vec3 world_pos;
+// Raindrops landing (Weather), 0 to 1.
+global uniform float rain;
 
 void vertex() {
 	world_pos = VERTEX;
@@ -74,8 +76,19 @@ void fragment() {
 	float depth = 0.5 - COLOR.g;
 	float edge = (1.0 - smoothstep(0.02, 0.09, depth)) * shore_waves;
 	col = mix(col, foam, clamp(waves * 0.8 + edge, 0.0, 1.0));
+	if (rain > 0.0) {
+		// Rings spreading where drops land: one per cell, each at its own moment.
+		vec2 rc = world_pos.xz * 2.2;
+		vec2 id = floor(rc);
+		vec2 f = fract(rc) - 0.5 - (vec2(hash21(id), hash21(id + 3.1)) - 0.5) * 0.5;
+		float age = fract(TIME * 1.3 + hash21(id + 9.7));
+		float ring = 1.0 - smoothstep(0.0, 0.05, abs(length(f) - age * 0.45));
+		float shown = step(hash21(id + floor(TIME * 1.3 + hash21(id + 9.7))), rain);
+		col = mix(col, foam, ring * (1.0 - age) * shown * 0.7);
+	}
 
 	ALBEDO = col;
 	ROUGHNESS = 0.6;
+	cloud_light = sky_light(VERTEX, INV_VIEW_MATRIX, TIME);
 	EMISSION = cel_ambient(ALBEDO);
 }

@@ -72,6 +72,7 @@ static func stock(island_seed: int, day: int, native_flower: String = "", keeper
 	var interiors: Array[String] = []
 	var clothes: Array[String] = []
 	var plants: Array[String] = []
+	var umbrellas: Array[String] = []
 	for id in ItemDB.items:
 		var def := ItemDB.get_item(id)
 		match def.get("category", ""):
@@ -84,6 +85,9 @@ static func stock(island_seed: int, day: int, native_flower: String = "", keeper
 				# Designed pieces; everyday ones are made up for Lucy's rail below.
 				if not def.get("basic", false):
 					clothes.append(id)
+			"tool":
+				if def.get("tool", "") == "umbrella":
+					umbrellas.append(id)
 			"flower_plant":
 				if def.get("species", "") != native_flower and not ItemDB.is_rare_flower(def["species"], def["flower_color"]):
 					plants.append(id)
@@ -105,6 +109,8 @@ static func stock(island_seed: int, day: int, native_flower: String = "", keeper
 	var more := 1 + level()
 	var out: Array[String] = []
 	out.append_array(STAPLES)
+	umbrellas.sort()
+	out.append_array(_pick(rng, umbrellas, 1))
 	out.append_array(_pick(rng, furniture, FURNITURE_PER_DAY * more))
 	out.append_array(_pick(rng, interiors, INTERIORS_PER_DAY * more))
 	var everyday: Array[String] = []

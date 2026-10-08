@@ -27,6 +27,8 @@ static func register() -> void:
 	_action("rotate", [KEY_R], [JOY_BUTTON_RIGHT_SHOULDER])
 	_action("cancel", [KEY_ESCAPE, KEY_BACKSPACE], [NINTENDO_B])
 	_action("map", [KEY_M], [JOY_BUTTON_BACK])
+	# Hold to tilt the camera up at the sky.
+	_action("look_up", [KEY_Q], [], [[JOY_AXIS_RIGHT_Y, -1.0]])
 	# Menus with tabs (character creator, phone apps).
 	_action("tab_prev", [KEY_Q], [JOY_BUTTON_LEFT_SHOULDER])
 	_action("tab_next", [KEY_E], [JOY_BUTTON_RIGHT_SHOULDER])

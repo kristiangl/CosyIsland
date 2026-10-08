@@ -31,7 +31,8 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   `model_gallery.tscn` (`--drops`, `--keys`, `--only=id,id`, `--series=id`, `--variant=id`), `effects_gallery.tscn`
   (`--night`, every particle effect), `calibrate.tscn`
   (`-- --shadows`, checks the cel lighting maths).
-- Game screenshot options are listed at the top of `scripts/main.gd` (`--demo`,
+- Game screenshot options are listed at the top of `scripts/main.gd` (`--weather=rain`,
+  `--season=autumn`, `--look` for the sky, `--demo`,
   `--demo=decor|sit|home|door|shop|site|tailors|museum|dock|tour|orchard|neighbours|visitor|flowers|fishing|bugs`
 (`--island=orchard|meadow|quarry|buggy|fishy` with `--demo=tour`) (`--house` builds the house first, `--series=id` furnishes
   the home from one series; `--built` turns the museum tent into the museum, `--visit`
@@ -58,6 +59,24 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   doors in the main room's walls (`World.room_doors`, `room_door_ahead`); each is saved
   under `Main.room_key(uid, index)`. The player's house can carry "paint" (wall, roof,
   door), drawn by `Models` and chosen in `HousePaint`.
+- `Weather` (autoload): each day's weather, planned from the island seed and the date
+  (`plan(day_key)`: clear, cloudy, showers, rain or storm, with misty mornings, windy days,
+  rainbows after showers and shooting-star nights), and seasons from the real date for the
+  island's hemisphere (`Story.flags["hemisphere"]`, "south" unless changed in the phone's
+  Options). Its numbers right now (`clouds`, `rain`, `snow`, `storm`, `wetness`,
+  `snow_cover`, `autumn`, `blossom`...) drive `DayNight` (flat grey light under cloud,
+  storms and lightning, mist as Environment fog) and shader globals: `cloud_cover` (cloud
+  shadows: every lit shader sets `cloud_light = sky_light(VERTEX, INV_VIEW_MATRIX, TIME);`
+  before EMISSION, read by `toon_light`'s light()), `wetness`, `rain` (rings on water),
+  `snow_cover` (snow on the ground and on top of props; held things use
+  `Models.held_material`), `foliage` (trees with `Models.foliage_material` turn in autumn
+  and blossom in spring; bushes `bush_material`) and `grass_tint`. `AmbientEffects` adds
+  rain, snow and falling leaves round the camera. Holding `look_up` tips the camera up at the
+  sky (`shaders/sky.gdshader`: clouds, stars, shooting stars, the rainbow). Creatures with
+  "weather" only come out in the rain, snow or dry (`Critters.weather_suits`); umbrellas
+  (tool "umbrella") are held over the head (`CharacterModel.set_umbrella`), and neighbours
+  put theirs up outdoors in the rain. `--weather=KIND` (`Weather.FORCES`), `--season=S`,
+  `--look`.
 - `Journal` (autoload, `data/journal.json`) counts what the player does (`Journal.add(stat)`)
   and pays stamps for milestones and daily tasks; its exchange sells pocket upgrades etc.
 - `Critters` (a child of the island `World`, `data/creatures.json`): fish shadows and bugs

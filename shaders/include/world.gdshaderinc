@@ -5,6 +5,9 @@
 global uniform vec3 curve_origin;
 global uniform float curve_amount;
 global uniform float wind_strength;
+// Weather: how wet the ground is, and how much snow lies on it (0 to 1).
+global uniform float wetness;
+global uniform float snow_cover;
 
 vec3 curve_world(vec3 p) {
 	float dz = p.z - curve_origin.z;
@@ -46,4 +49,14 @@ vec3 wind_offset(vec3 root, float height, float weight, float t) {
 	float gust = 0.6 + 0.4 * sin(t * 0.31 + root.x * 0.05);
 	float sway = sin(phase) * gust * height * weight * 0.035 * wind_strength;
 	return vec3(sway, 0.0, sway * 0.4);
+}
+
+// Snow lying on the ground, a little blue in the hollows.
+vec3 snow_colour(vec2 xz) {
+	return vec3(0.95, 0.97, 1.0) * (0.95 + value_noise(xz * 1.7) * 0.06);
+}
+
+// Wet ground: darker and a little cooler.
+vec3 wet(vec3 col) {
+	return mix(col, col * vec3(0.76, 0.8, 0.86), wetness * 0.85);
 }

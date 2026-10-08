@@ -127,6 +127,19 @@ static func _in_hours(c: Dictionary, hour: float) -> bool:
 	return hour >= from or hour < to
 
 
+## Creatures with "weather" come out only in the rain ("rain"), in the snow ("snow"), or
+## when it's dry ("dry": butterflies hide from the rain).
+static func weather_suits(c: Dictionary) -> bool:
+	match c.get("weather", ""):
+		"rain":
+			return Weather.rain > 0.1
+		"snow":
+			return Weather.snow > 0.1 or Weather.snow_cover > 0.5
+		"dry":
+			return Weather.rain < 0.1 and Weather.snow < 0.1
+	return true
+
+
 ## Creatures with "islands" only live on those kinds of tour island.
 static func lives_here(c: Dictionary, kind: String) -> bool:
 	return not c.has("islands") or kind in c["islands"]
@@ -143,7 +156,7 @@ func pick(table: Dictionary, where: String, hour: float) -> Dictionary:
 	var pool: Array = []
 	var total := 0.0
 	for c: Dictionary in table.values():
-		if c["where"] == where and _in_hours(c, hour) and lives_here(c, world.data.kind):
+		if c["where"] == where and _in_hours(c, hour) and lives_here(c, world.data.kind) and weather_suits(c):
 			pool.append(c)
 			total += _weight(c)
 	var roll := _rng.randf() * total

@@ -24,6 +24,8 @@ var _body: PanelContainer
 var _time: Label
 var _date: Label
 var _island: Label
+var _hemisphere_button: Button
+var _weather_button: Button
 var _acorns: Label
 var _acorn_icon: TextureRect
 var _pages: Dictionary = {}
@@ -86,7 +88,9 @@ func _ready() -> void:
 	status.add_child(_date)
 	_island = Label.new()
 	_island.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_island.add_theme_font_size_override("font_size", 16)
+	_island.add_theme_font_size_override("font_size", 15)
+	_island.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	_island.custom_minimum_size = Vector2(290, 0)
 	_island.add_theme_color_override("font_color", UIStyle.BROWN_LIGHT)
 	status.add_child(_island)
 	var pill := UIStyle.acorn_pill(17)
@@ -141,6 +145,12 @@ func _build_options() -> Control:
 		_update_options())
 	box.add_child(_music_button)
 	_first_option = _music_button
+	_hemisphere_button = Button.new()
+	_hemisphere_button.pressed.connect(func():
+		Story.flags["hemisphere"] = "north" if Weather.hemisphere() == "south" else "south"
+		Weather.update(GameClock.hour_float())
+		_update_options())
+	box.add_child(_hemisphere_button)
 	for entry: Array in [["Time travel", "time"], ["Controls", "controls"]]:
 		var b := Button.new()
 		b.text = entry[0]
@@ -156,6 +166,7 @@ func _build_options() -> Control:
 
 func _update_options() -> void:
 	_music_button.text = "Music: %s" % ("off" if Music.muted else "on")
+	_hemisphere_button.text = "Seasons: %s hemisphere" % Weather.hemisphere().capitalize()
 
 
 func _build_time() -> Control:
@@ -185,6 +196,13 @@ func _build_time() -> Control:
 	back.text = "Back to real time"
 	back.pressed.connect(GameClock.reset_travel)
 	box.add_child(back)
+	_weather_button = Button.new()
+	_weather_button.text = "Weather: as forecast"
+	_weather_button.pressed.connect(func():
+		Weather.force = Weather.FORCES[(Weather.FORCES.find(Weather.force) + 1) % Weather.FORCES.size()]
+		Weather.update(GameClock.hour_float())
+		_weather_button.text = "Weather: %s" % (Weather.force if Weather.force != "" else "as forecast"))
+	box.add_child(_weather_button)
 	_speed_button = Button.new()
 	_speed_button.text = "Clock speed: x1"
 	_speed_button.pressed.connect(func():
@@ -199,7 +217,7 @@ func _build_controls() -> Control:
 	box.add_child(_page_title("Controls"))
 	_controls_list = Label.new()
 	_controls_list.add_theme_font_size_override("font_size", 17)
-	Prompts.bind_label(_controls_list, "{use}  use, talk, sit, sleep\n{pickup}  pick up\n{run}  run\n{pockets}  pockets\n{tools}  switch tool\n{rotate}  turn while placing\n{map}  map\n{pause}  phone")
+	Prompts.bind_label(_controls_list, "{use}  use, talk, sit, sleep\n{pickup}  pick up\n{run}  run\n{pockets}  pockets\n{tools}  switch tool\n{rotate}  turn while placing\n{look_up}  (hold) look up at the sky\n{map}  map\n{pause}  phone")
 	box.add_child(_controls_list)
 	return box
 
@@ -238,7 +256,8 @@ func _page_title(text: String) -> Label:
 
 func open() -> void:
 	Game.mode = Game.Mode.MENU
-	_island.text = "%s Island" % Game.island_name if Game.island_name != "" else "Island Phone"
+	# The season and today's weather, where the island's name was.
+	_island.text = "%s: %s" % [Weather.season.capitalize(), Weather.forecast()]
 	_acorns.text = UIStyle.acorns(Inventory.currency)
 	if _acorn_icon.texture == null:
 		_acorn_icon.texture = Icons.get_icon("acorn_pouch")

@@ -123,6 +123,60 @@
 			"color": "#a8784a",
 			"desc": "Face a river or pond, plant it and hop across. It never wears out."
 		},
+		"umbrella_red": {
+			"name": "Red Umbrella",
+			"category": "tool",
+			"tool": "umbrella",
+			"stack": 1,
+			"price": 500,
+			"color": "#e0656b",
+			"desc": "Keeps the rain off. Bright as a postbox."
+		},
+		"umbrella_yellow": {
+			"name": "Yellow Umbrella",
+			"category": "tool",
+			"tool": "umbrella",
+			"stack": 1,
+			"price": 500,
+			"color": "#f2c94e",
+			"desc": "Keeps the rain off, and cheers up a grey day."
+		},
+		"umbrella_blue": {
+			"name": "Blue Umbrella",
+			"category": "tool",
+			"tool": "umbrella",
+			"stack": 1,
+			"price": 500,
+			"color": "#6a9ac8",
+			"desc": "Keeps the rain off. The colour of a clear sky, for luck."
+		},
+		"umbrella_green": {
+			"name": "Leaf Umbrella",
+			"category": "tool",
+			"tool": "umbrella",
+			"stack": 1,
+			"price": 500,
+			"color": "#8cc47a",
+			"desc": "Keeps the rain off, like a big leaf."
+		},
+		"umbrella_pink": {
+			"name": "Pink Umbrella",
+			"category": "tool",
+			"tool": "umbrella",
+			"stack": 1,
+			"price": 500,
+			"color": "#f2a7c0",
+			"desc": "Keeps the rain off, prettily."
+		},
+		"umbrella_lilac": {
+			"name": "Lilac Umbrella",
+			"category": "tool",
+			"tool": "umbrella",
+			"stack": 1,
+			"price": 500,
+			"color": "#b9a6e6",
+			"desc": "Keeps the rain off. Smells faintly of lavender. Somehow."
+		},
 		"tent_kit": {
 			"name": "Tent Kit",
 			"category": "kit",
@@ -549,8 +603,8 @@
 				"museum": true,
 				"room": {
 					"size": [
-						12,
-						9
+						14,
+						10
 					],
 					"style": "museum"
 				}

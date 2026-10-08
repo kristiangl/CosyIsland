@@ -32,6 +32,9 @@ var _rng := RandomNumberGenerator.new()
 var _thought: Label3D
 var _thought_check := 0.0
 var _time := 0.0
+var _umbrella_check := 0.0
+## Everyone has a favourite umbrella colour.
+const UMBRELLAS := ["e0656b", "f2c94e", "6a9ac8", "8cc47a", "f2a7c0", "b9a6e6", "f2a65a", "9fd3c7"]
 
 
 ## Out and about (for neighbours: from 7am until 6pm).
@@ -74,6 +77,10 @@ func _process(delta: float) -> void:
 			_thought.visible = Story.thinking_of_moving() == id
 		if _thought.visible:
 			_thought.position.y = 2.05 + sin(_time * 2.4) * 0.05
+	_umbrella_check -= delta
+	if _umbrella_check <= 0.0:
+		_umbrella_check = 1.0
+		_check_umbrella()
 	var speed := 0.0
 	if wanders:
 		visible = always_out or out_at(GameClock.hour_float())
@@ -144,6 +151,12 @@ func blocks(px: float, pz: float) -> bool:
 
 
 ## A little hop of excitement.
+## Out in the rain or snow, up goes the umbrella.
+func _check_umbrella() -> void:
+	var wet := (Weather.rain > 0.1 or Weather.snow > 0.1) and world != null and not world.interior
+	model.set_umbrella(UMBRELLAS[absi(hash(id)) % UMBRELLAS.size()] if wet else "")
+
+
 func hop() -> void:
 	_hop = 0.35
 

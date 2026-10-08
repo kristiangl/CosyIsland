@@ -42,5 +42,6 @@ void fragment() {
 	}
 	ALBEDO = col * COLOR.r;
 	ROUGHNESS = 1.0;
+	cloud_light = sky_light(VERTEX, INV_VIEW_MATRIX, TIME);
 	EMISSION = cel_ambient(ALBEDO);
 }

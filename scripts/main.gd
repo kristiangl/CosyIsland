@@ -7,6 +7,9 @@ extends Node3D
 ##   --seed=N           start a fresh island from seed N
 ##   --gen=N            ...made with an older generator version (see IslandGenerator.VERSION)
 ##   --hour=H           time travel to hour H today
+##   --weather=KIND     force the weather (Weather.FORCES: clear, rain, storm, snow, mist, rainbow...)
+##   --season=SEASON    force the season (spring, summer, autumn, winter)
+##   --look             look up at the sky
 ##   --screenshot=PATH  render a few frames, save a PNG and quit
 ##   --view=overview    frame the whole island (for screenshots)
 ##   --frames=N         frames to wait before the screenshot (default 45)
@@ -86,6 +89,8 @@ func _ready() -> void:
 	Game.world = world
 	Game.island = world
 	IslandMap.terrain_texture(island) # starts painting the map in the background
+	Weather.force = Game.args.get("weather", "")
+	Weather.force_season = Game.args.get("season", "")
 	_rooms = saved.get("rooms", {})
 
 	if saved.has("inventory"):

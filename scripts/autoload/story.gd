@@ -23,9 +23,9 @@ const MUSEUM_DONATIONS := 15
 const MUSEUM_MATERIALS := {"wood": 40, "stone": 30, "iron_nugget": 10}
 ## What Marlow charges for a tour ticket.
 const TICKET_COST := 1000
-## What Poppy charges for a bridge kit and an incline kit.
-const KIT_COSTS := {"bridge_kit": 4000, "incline_kit": 5000}
-const BUILD_OPTION := "About bridges and slopes..."
+## What Poppy charges for a bridge kit.
+const BRIDGE_COST := 4000
+const BUILD_OPTION := "About bridges..."
 ## What Poppy charges for the landscaping permit (the cliff pick and water spade).
 const LANDSCAPING_COST := 8000
 const LANDSCAPE_OPTION := "About landscaping..."
@@ -321,21 +321,17 @@ func _paint_talk(home: Dictionary) -> void:
 
 ## Poppy sells the kits for bridges over rivers and slopes up cliffs.
 func _kit_talk() -> void:
-	await say("poppy", ["Getting about can be tricky with all these rivers and cliffs, can't it?",
+	await say("poppy", ["Getting about can be tricky with all these rivers, can't it?",
 		"A bridge kit spans a river up to four tiles wide: stand on the bank facing the water and use it from your pockets.",
-		"An incline kit makes a slope up a cliff: stand at the bottom or the top, facing the drop.",
-		"Bridges are %d acorns, slopes are %d." % [KIT_COSTS["bridge_kit"], KIT_COSTS["incline_kit"]]])
-	var pick := await ask("poppy", "Which would you like?", ["A bridge kit", "An incline kit", "Neither, thanks"])
-	if pick > 1:
+		"Slopes are part of landscaping now, so ask me about that for those. Bridges are %d acorns." % BRIDGE_COST])
+	if await ask("poppy", "Would you like a bridge kit?", ["Yes please!", "Not just now"]) != 0:
 		await say("poppy", ["Just say the word if you change your mind!"])
 		return
-	var kit: String = ["bridge_kit", "incline_kit"][pick]
-	var cost: int = KIT_COSTS[kit]
-	if Inventory.currency < cost:
-		await say("poppy", ["Oh, you're a little short. It's %d acorns, and you've got %d." % [cost, Inventory.currency]])
+	if Inventory.currency < BRIDGE_COST:
+		await say("poppy", ["Oh, you're a little short. It's %d acorns, and you've got %d." % [BRIDGE_COST, Inventory.currency]])
 		return
-	Inventory.add_currency(-cost)
-	_give(kit)
+	Inventory.add_currency(-BRIDGE_COST)
+	_give("bridge_kit")
 	_npc_cheer("poppy")
 	await say("poppy", ["Here you are! Lucy and I will do the heavy lifting, you just choose the spot."])
 

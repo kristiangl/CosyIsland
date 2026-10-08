@@ -92,9 +92,11 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   themselves or the middle, so ramps never snag). The vaulting pole (tool "pole")
   hops rivers and ponds via `World.vault_landing`; the phone's SOS (`Main.rescue_spot`)
   fetches you back to the plaza.
-- Bridge and incline kits (items with "construct", used from the pockets): `World.bridge_plan`
-  / `build_bridge` (a "built" bridge object) and `incline_plan` / `build_incline` (`IslandData.add_ramp`, kept in
-  `World.built_ramps` and saved as "ramps", laid again on load). `--demo=construct` (`--bridge`).
+- Bridge kits (items with "construct", used from the pockets; Poppy sells them):
+  `World.bridge_plan` / `build_bridge` (a "built" bridge object). Slopes are built with the
+  landscaping app's slope tool: `incline_plan` / `build_incline` (`IslandData.add_ramp`, kept
+  in `World.built_ramps` and saved as "ramps", laid again on load); the island's own slopes
+  that get taken away are kept in `World.removed_ramps` ("unramps"). `--demo=construct` (`--bridge`).
 - Landscaping (Poppy's permit, `Story._landscaping_talk`, `flags["landscaping"]`): the phone's
   Landscaping app hands the player a tool (`Player.landscaping`, one of `LANDSCAPE_TOOLS`:
   "cliff", "water", "slope", "path:<kind>"; the D-pad swaps, the app puts them away, and
@@ -102,7 +104,7 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   Cliffs and water: `World.terraform_plan` / `terraform` (rules in `_land_fits`), kept in
   `World.land_edits`, saved as "land" and laid on the generated island when it loads.
   Slopes: `slope_plan` (builds via `incline_plan`, which allows a slope beside a parallel
-  one so they widen, or takes away one you built: `remove_slope`). Paths: `path_plan` /
+  one so they widen, or takes away the slope you face, built or not: `remove_slope`). Paths: `path_plan` /
   `set_path`, `World.paths` (tile index -> `PATH_KINDS`), saved as "paths", drawn by
   `TerrainBuilder.build_paths` with `shaders/path.gdshader` (corners rounded from a
   neighbour mask); a `STAIR_KINDS` path on a slope makes stairs, and `ground_height` follows

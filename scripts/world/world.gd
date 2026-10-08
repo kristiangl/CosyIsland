@@ -27,6 +27,8 @@ var room_doors: Array[Dictionary] = []
 ## Slopes the player has built, laid on the generated island when it loads (saved):
 ## [top x, top z, dir x, dir z] each.
 var built_ramps: Array = []
+## The island's own slopes the player has taken away (saved): [top x, top z, dir x, dir z].
+var removed_ramps: Array = []
 ## Landscaping (saved): tile index -> [tile type, tier] for tiles the player has
 ## raised, lowered, dug out or filled in.
 var land_edits: Dictionary = {}
@@ -94,6 +96,12 @@ func setup(island: IslandData, saved: Dictionary = {}) -> void:
 	for p: Array in saved.get("paths", []):
 		if str(p[2]) in PATH_KINDS:
 			paths[data.idx(int(p[0]), int(p[1]))] = str(p[2])
+	for r: Array in saved.get("unramps", []):
+		var top := Vector2i(int(r[0]), int(r[1]))
+		var dir := Vector2i(int(r[2]), int(r[3]))
+		for t: Vector2i in [top + dir, top + dir * 2]:
+			data.ramps.erase(data.idx(t.x, t.y))
+		removed_ramps.append([top.x, top.y, dir.x, dir.y])
 	for r: Array in saved.get("ramps", []):
 		var top := Vector2i(int(r[0]), int(r[1]))
 		var dir := Vector2i(int(r[2]), int(r[3]))
@@ -101,7 +109,7 @@ func setup(island: IslandData, saved: Dictionary = {}) -> void:
 			data.add_ramp(top, dir)
 			built_ramps.append([top.x, top.y, dir.x, dir.y])
 	var built_bridge := data.objects.any(func(o): return o["kind"] == "bridge" and o.get("built", false))
-	if not land_edits.is_empty() or not built_ramps.is_empty() or built_bridge:
+	if not land_edits.is_empty() or not built_ramps.is_empty() or not removed_ramps.is_empty() or built_bridge:
 		_reshape()
 	_build_terrain()
 	for obj in data.objects:
@@ -143,6 +151,8 @@ func to_save() -> Dictionary:
 	else:
 		if not built_ramps.is_empty():
 			out["ramps"] = built_ramps
+		if not removed_ramps.is_empty():
+			out["unramps"] = removed_ramps
 		if not paths.is_empty():
 			var laid := []
 			for i: int in paths:
@@ -457,30 +467,35 @@ func _bridge_ends() -> Dictionary:
 	return ends
 
 
-## The slope tool: takes away a slope you built if you face one (or stand on it), or
-## lays a new one (`incline_plan`). {"remove": index in built_ramps}, the incline plan,
-## or {"why"}.
+## The slope tool: takes away the slope you face (or stand on), whether you built it or
+## it was always there, or lays a new one (`incline_plan`). {"remove": [top, dir]}, the
+## incline plan, or {"why"}.
 func slope_plan(tile: Vector2i, facing: Vector2i) -> Dictionary:
+	if interior or tour:
+		return {"why": "Slopes are for building on your own island."}
 	for t: Vector2i in [tile + facing, tile]:
 		if data.is_ramp(t.x, t.y):
-			for n in built_ramps.size():
-				var r: Array = built_ramps[n]
-				var top := Vector2i(int(r[0]), int(r[1]))
-				var dir := Vector2i(int(r[2]), int(r[3]))
-				if t == top + dir or t == top + dir * 2:
-					return {"remove": n}
-			return {"why": "That slope's always been here. Best leave it be."}
+			# A slope is two tiles in a line going the same way: find its top.
+			var up: Vector2i = data.ramps[data.idx(t.x, t.y)]["up"]
+			var high := t
+			var q := t + up
+			if data.is_ramp(q.x, q.y) and data.ramps[data.idx(q.x, q.y)]["up"] == up:
+				high = q
+			return {"remove": [high + up, -up]}
 	return incline_plan(tile, facing)
 
 
 func remove_slope(plan: Dictionary) -> void:
-	var r: Array = built_ramps[plan["remove"]]
-	var top := Vector2i(int(r[0]), int(r[1]))
-	var dir := Vector2i(int(r[2]), int(r[3]))
+	var top: Vector2i = plan["remove"][0]
+	var dir: Vector2i = plan["remove"][1]
 	for t: Vector2i in [top + dir, top + dir * 2]:
 		data.ramps.erase(data.idx(t.x, t.y))
 		paths.erase(data.idx(t.x, t.y))
-	built_ramps.remove_at(plan["remove"])
+	var built := built_ramps.find_custom(func(r): return Vector2i(int(r[0]), int(r[1])) == top and Vector2i(int(r[2]), int(r[3])) == dir)
+	if built >= 0:
+		built_ramps.remove_at(built)
+	else:
+		removed_ramps.append([top.x, top.y, dir.x, dir.y])
 	var area := Rect2i(top, Vector2i.ONE).expand(top + dir * 2).grow(RESHAPE_REACH)
 	_reshape(area)
 	rebuild_terrain(area)

@@ -238,16 +238,14 @@ Milestone 3b:
   deckchairs, hammocks, swings, rose arches, bird baths, picnic blankets, globes,
   gramophones, rocking horses, fish tanks, fountains, lamp posts, bunting, telescopes and
   toy boxes; some neighbours furnish with them. 27 more wallpapers and floors
-- [x] Bridges and slopes: Poppy sells a bridge kit (spans one to four tiles of river or pond
-  between banks of the same height) and an incline kit (a two-tile slope up a straight
-  cliff, used from the foot or the top). Used from the pockets where you stand, built on
-  the spot.
+- [x] Bridges: Poppy sells a bridge kit (spans one to four tiles of river or pond between
+  banks of the same height), used from the pockets where you stand and built on the spot.
 - [x] Landscaping: once the house is built, Poppy sells a permit that adds a Landscaping
   app to the phone. Pick a tool there (cliffs, water, slopes, or one of six paths: stone,
   brick, wood, terracotta, sand, dirt), swap with the D-pad, and put them away from the
   app. Cliffs only ever step one level at a time, water sits level with its banks, and
   nothing changes against the beach, slopes, bridges or the plaza. Slopes laid side by side
-  make a wider one; a stone, brick, wooden or terracotta path on a slope turns it into
+  make a wider one, and any slope (the island's own too) can be taken away; a stone, brick, wooden or terracotta path on a slope turns it into
   stairs, while sand and dirt stay slopes. Paths round off their outer corners.
 - [x] Home storage: put things away from the pockets while at home (or at a dresser,
   wardrobe or toy box there), sorted by kind, 400 stacks.

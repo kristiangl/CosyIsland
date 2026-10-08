@@ -1710,9 +1710,9 @@ func _test_ramps_and_sos() -> void:
 
 
 func _test_built_crossings() -> void:
-	check(ItemDB.get_item("bridge_kit").get("construct", "") == "bridge" and ItemDB.get_item("incline_kit").get("construct", "") == "incline",
-		"there are bridge and incline kits")
-	check(Models.get_mesh("drop:bridge_kit").get_faces().size() > 30 and Models.get_mesh("drop:incline_kit").get_faces().size() > 30, "and they have models")
+	check(ItemDB.get_item("bridge_kit").get("construct", "") == "bridge" and not ItemDB.has_item("incline_kit"),
+		"there are bridge kits (slopes are landscaping now)")
+	check(Models.get_mesh("drop:bridge_kit").get_faces().size() > 30, "and they have a model")
 	var d := IslandGenerator.generate(7)
 	var w := World.new()
 	add_child(w)
@@ -1912,11 +1912,22 @@ func _test_paths_and_stairs() -> void:
 	check(remove.has("remove"), "facing a slope you built, the slope tool takes it away")
 	w.remove_slope(remove)
 	check(not d.is_ramp(top.x + 1, top.y + 1) and w.built_ramps.size() == 1, "and it's gone")
+	# The island's own slopes can go too, and stay gone.
+	var own := Vector2i(-1, -1)
 	for i: int in d.ramps:
 		var t := Vector2i(i % d.width, i / d.width)
-		if w.built_ramps.all(func(r): return Vector2i(r[0], r[1]) + Vector2i(r[2], r[3]) != t and Vector2i(r[0], r[1]) + Vector2i(r[2], r[3]) * 2 != t):
-			check(w.slope_plan(t, Vector2i(1, 0)).has("why"), "the island's own slopes stay")
-			break
+		if own.x < 0 and w.built_ramps.all(func(r): return Vector2i(r[0], r[1]) + Vector2i(r[2], r[3]) != t and Vector2i(r[0], r[1]) + Vector2i(r[2], r[3]) * 2 != t):
+			own = t
+	var take := w.slope_plan(own - Vector2i(1, 0), Vector2i(1, 0))
+	check(take.has("remove"), "the island's own slopes can be taken away")
+	w.remove_slope(take)
+	check(not d.is_ramp(own.x, own.y) and w.removed_ramps.size() == 1, "and they go")
+	var kept: Dictionary = JSON.parse_string(JSON.stringify(w.to_save()))
+	var w3 := World.new()
+	add_child(w3)
+	w3.setup(IslandGenerator.generate(7), kept)
+	check(not w3.data.is_ramp(own.x, own.y) and w3.data.is_ramp(top.x, top.y + 1), "and stay gone after saving")
+	w3.free()
 	check(w.path_plan(d.plaza.get_center() - Vector2i(1, 0), Vector2i(1, 0), "stone").has("why"), "no paths over the plaza")
 	w.free()
 

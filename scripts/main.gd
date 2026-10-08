@@ -10,7 +10,8 @@ extends Node3D
 ##   --weather=KIND     force the weather (Weather.FORCES: clear, rain, storm, snow, mist, rainbow...)
 ##   --season=SEASON    force the season (spring, summer, autumn, winter)
 ##   --look             look up at the sky
-##   --screenshot=PATH  render a few frames, save a PNG and quit
+##   --screenshot=PATH  render a few frames, save a PNG and quit (a fresh island unless --load)
+##   --load             with --screenshot and --slot=N: load that file
 ##   --view=overview    frame the whole island (for screenshots)
 ##   --frames=N         frames to wait before the screenshot (default 45)
 ##   --grass=F          grass density multiplier (0 disables)
@@ -68,7 +69,7 @@ var ambient: AmbientEffects
 
 
 func _ready() -> void:
-	var fresh := Game.args.has("new") or Game.args.has("seed") or Game.args.has("screenshot")
+	var fresh := Game.args.has("new") or Game.args.has("seed") or (Game.args.has("screenshot") and not Game.args.has("load"))
 	if Game.args.has("slot"):
 		SaveGame.slot = clampi(int(Game.args["slot"]), 0, SaveGame.SLOTS)
 	var saved := {} if fresh else SaveGame.read()
@@ -170,7 +171,13 @@ func _ready() -> void:
 	var inside := int(saved.get("inside", -1))
 	if inside >= 0 and not world.get_object(inside).is_empty():
 		await _enter_home(inside, true, int(saved.get("inside_room", 0)))
-		player.position = Vector3(saved["player"]["x"], room.ground_height(saved["player"]["x"], saved["player"]["z"]), saved["player"]["z"])
+		if room:
+			player.position = Vector3(saved["player"]["x"], room.ground_height(saved["player"]["x"], saved["player"]["z"]), saved["player"]["z"])
+		else:
+			# Couldn't go back in (a neighbour's out for the day, say): start outside the door.
+			var door := world.outside_door(world.get_object(inside))
+			player.position = door["position"]
+			player.facing = door.get("facing", Vector3(0, 0, 1))
 		camera_rig.snap()
 
 	if Game.args.has("demo"):

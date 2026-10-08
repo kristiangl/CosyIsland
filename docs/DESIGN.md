@@ -255,8 +255,12 @@ Milestone 3b:
   or sand for palms and rocks, with room round trees). A grassy border goes round the screen
   while a landscaping tool is out. B while carrying puts it in your pockets instead, looking
   just as it did, to plant again anywhere outside.
-- [x] Outdoor decorations: 60 garden pieces from the KayKit packs (big boulders, standing
-  stones and crags, bare trees and shrubs, fences, walls and gates, arches to walk under,
+- [x] Fences that join up: picket fences, palisades, low stone walls and iron railings, plus
+  wooden and iron gates (standing open, to walk through). Each fills a tile, stacks to 99
+  and goes down one after another without going back to the pockets; side by side they
+  join into runs, corners, T-joins and crossings, with posts along the way.
+- [x] Outdoor decorations: 55 garden pieces from the KayKit packs (big boulders, standing
+  stones and crags, bare trees and shrubs, arches to walk under,
   lamp posts, benches, pennants, log and stone piles, a stage, a circus tent, spooky and
   festive bits). Lucy has two a day (four once her shop's built), and the rustic ones can
   be made at the workbench once the recipe turns up in a bottle.

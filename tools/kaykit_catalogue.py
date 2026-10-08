@@ -262,7 +262,8 @@ PLAIN = [
 
 # --- Outdoor decorations -------------------------------------------------------------
 # Placed like furniture but only outside ("outdoor"), and stocked by Lucy apart from the
-# indoor things. Extra keys: scale or fit (with the "nature" palette for rocks and
+# indoor things. (Fences and gates are in data/items.json by hand: they join up, built
+# by FenceModels.) Extra keys: scale or fit (with the "nature" palette for rocks and
 # plants), footprint, recipe (materials; learned from bottles), and anything for the
 # placeable (light, seat, effects, walk_through).
 
@@ -295,9 +296,6 @@ OUTDOOR = [
     ("open_crate", "Open Crate", "hexdeco", "props/crate_open", 250, "Something's rustling about in there.", {}),
     ("water_bucket", "Bucket of Water", "hexdeco", "props/bucket_water", 180, "Full to the brim.", {"small": True}),
     ("flour_sack", "Sack of Flour", "hexdeco", "props/sack", 150, "For bread, cakes and the odd mess.", {"scale": 3.0, "small": True}),
-    ("rail_fence", "Rail Fence", "hexagon", "neutral/fence_wood_straight", 400, "A post-and-rail fence, two tiles long.", {"look": {"turn": 90}, "scale": 1.75, "recipe": {"wood": 4}}),
-    ("wooden_gate", "Wooden Gate", "hexagon", "neutral/fence_wood_straight_gate", 500, "A fence with a gate in it.", {"look": {"turn": 90}, "scale": 1.75, "recipe": {"wood": 5}}),
-    ("stone_wall", "Low Stone Wall", "hexagon", "neutral/fence_stone_straight", 500, "A tumbledown wall of field stones.", {"look": {"turn": 90}, "scale": 1.75, "recipe": {"stone": 6}}),
     ("wooden_stage", "Wooden Stage", "hexagon", "neutral/building_stage_A", 3000, "For concerts, speeches and dancing.", {"recipe": {"wood": 15}}),
     ("plank_stack", "Plank Stack", "resource", "Wood_Planks_Stack_Large", 500, "Planks for the next big project.", {"recipe": {"wood": 6}}),
     ("brick_stack", "Brick Stack", "resource", "Stone_Bricks_Stack_Large", 500, "Bricks, stacked and strapped.", {"recipe": {"stone": 4, "clay": 4}}),
@@ -325,8 +323,6 @@ OUTDOOR = [
     ("heart_ornament", "Heart Ornament", "platformer", "red/heart_red", 500, "A big red heart.", {}),
     ("gem_ornament", "Gem Ornament", "platformer", "blue/diamond_blue", 500, "A big blue gem, polished to a shine.", {}),
     # Spooky and festive.
-    ("iron_fence", "Iron Railings", "halloween", "fence", 600, "Black iron railings, two tiles long.", {"recipe": {"iron_nugget": 3}}),
-    ("iron_gate", "Iron Gate", "halloween", "fence_gate", 800, "Creaks just the right amount.", {"recipe": {"iron_nugget": 4}}),
     ("fence_post", "Fence Post", "halloween", "fence_pillar", 250, "A stone post with a cap.", {}),
     ("lantern_post", "Lantern Post", "halloween", "post_lantern", 1400, "A crooked post with a lantern hanging off it.", {"light": True}),
     ("gravestone", "Gravestone", "halloween", "gravestone", 600, "Here lies... someone's old sock?", {}),

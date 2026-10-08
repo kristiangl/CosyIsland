@@ -173,7 +173,12 @@ static func sold_today(day: int, keeper: String = "lucy") -> Array:
 
 
 static func is_sold_out(id: String, day: int, keeper: String = "lucy") -> bool:
-	return not id in STAPLES and id in sold_today(day, keeper)
+	return not restocks(id) and id in sold_today(day, keeper)
+
+
+## Staples, and fences and gates (bought by the dozen), never sell out.
+static func restocks(id: String) -> bool:
+	return id in STAPLES or ItemDB.placeable(id).has("fence")
 
 
 ## Buys one of an item. Returns "" on success, or why not. Clothes bought in the fitting
@@ -194,7 +199,7 @@ static func buy(id: String, day: int, keeper: String = "lucy", wearing := false)
 	Inventory.add_currency(-cost)
 	Sfx.play("coins")
 	Journal.add("bought")
-	if not id in STAPLES:
+	if not restocks(id):
 		var ids := sold_today(day, keeper).duplicate()
 		ids.append(id)
 		Story.flags["shop_sold" if keeper == "lucy" else keeper + "_sold"] = {"day": day, "ids": ids}

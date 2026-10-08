@@ -782,21 +782,6 @@
 			"src": "KayKit_Medieval_Hexagon_Pack_1.0_FREE/Assets/gltf/decoration/props/sack.gltf",
 			"scale": 3.0
 		},
-		"hexagon_fence_wood_straight": {
-			"src": "KayKit_Medieval_Hexagon_Pack_1.0_FREE/Assets/gltf/buildings/neutral/fence_wood_straight.gltf",
-			"scale": 1.75,
-			"turn": 90
-		},
-		"hexagon_fence_wood_straight_gate": {
-			"src": "KayKit_Medieval_Hexagon_Pack_1.0_FREE/Assets/gltf/buildings/neutral/fence_wood_straight_gate.gltf",
-			"scale": 1.75,
-			"turn": 90
-		},
-		"hexagon_fence_stone_straight": {
-			"src": "KayKit_Medieval_Hexagon_Pack_1.0_FREE/Assets/gltf/buildings/neutral/fence_stone_straight.gltf",
-			"scale": 1.75,
-			"turn": 90
-		},
 		"hexagon_building_stage_a": {
 			"src": "KayKit_Medieval_Hexagon_Pack_1.0_FREE/Assets/gltf/buildings/neutral/building_stage_A.gltf",
 			"scale": 2.2
@@ -891,14 +876,6 @@
 		},
 		"platformer_diamond_blue": {
 			"src": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/diamond_blue.gltf",
-			"scale": 0.5
-		},
-		"halloween_fence": {
-			"src": "KayKit_HalloweenBits_1.0_FREE/Assets/gltf/fence.gltf",
-			"scale": 0.5
-		},
-		"halloween_fence_gate": {
-			"src": "KayKit_HalloweenBits_1.0_FREE/Assets/gltf/fence_gate.gltf",
 			"scale": 0.5
 		},
 		"halloween_fence_pillar": {

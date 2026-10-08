@@ -63,6 +63,8 @@ var _rugs: Dictionary = {}        # tile index -> uid of the rug on the floor th
 var _rng := RandomNumberGenerator.new()
 var _is_night := false
 var _light_check := 0.0
+## True while the objects of a save are going in (fences wait to see their neighbours).
+var _loading := false
 
 
 func setup(island: IslandData, saved: Dictionary = {}) -> void:
@@ -77,6 +79,7 @@ func setup(island: IslandData, saved: Dictionary = {}) -> void:
 				continue
 			data.objects.append(_ints(obj))
 		data.next_uid = int(saved.get("next_uid", data.next_uid))
+		_split_wide_fences()
 	day_key = int(saved.get("day_key", GameClock.day_key()))
 	money_rock_uid = int(saved.get("money_rock_uid", -1))
 
@@ -84,8 +87,7 @@ func setup(island: IslandData, saved: Dictionary = {}) -> void:
 		_is_night = true
 		room_look = saved.get("look", {}).duplicate()
 		add_child(RoomBuilder.build(data, room_style, room_look, room_doors))
-		for obj in data.objects:
-			_register(obj)
+		_register_all()
 		return
 	for e: Array in saved.get("land", []):
 		var i := data.idx(int(e[0]), int(e[1]))
@@ -112,8 +114,7 @@ func setup(island: IslandData, saved: Dictionary = {}) -> void:
 	if not land_edits.is_empty() or not built_ramps.is_empty() or not removed_ramps.is_empty() or built_bridge:
 		_reshape()
 	_build_terrain()
-	for obj in data.objects:
-		_register(obj)
+	_register_all()
 	_add_forest_glow()
 	critters = Critters.new()
 	add_child(critters)
@@ -621,6 +622,8 @@ func remove_object(uid: int) -> void:
 	if _nodes.has(uid):
 		_nodes[uid].queue_free()
 		_nodes.erase(uid)
+	if is_fence(obj):
+		_refresh_fences_round(Vector2i(obj["x"], obj["z"]))
 	if obj["kind"] == "placed":
 		Events.placed_changed.emit()
 
@@ -668,13 +671,32 @@ func _register(obj: Dictionary) -> void:
 			_occupant[data.idx(tile.x, tile.y)] = uid
 			if obj["kind"] == "placed" and grass:
 				grass.set_tile_visible(data, tile.x, tile.y, false)
+	if is_fence(obj):
+		# Fences join the fences beside them: built once they're all in when loading.
+		if _loading:
+			return
+		_spawn_node(obj)
+		_refresh_fences_round(Vector2i(obj["x"], obj["z"]))
+		return
 	_spawn_node(obj)
+
+
+## Registers every object of the island (or room), then builds the fences, which need
+## to see their neighbours.
+func _register_all() -> void:
+	_loading = true
+	for obj in data.objects:
+		_register(obj)
+	_loading = false
+	for obj in data.objects:
+		if is_fence(obj):
+			_spawn_node(obj)
 
 
 func _spawn_node(obj: Dictionary) -> void:
 	var node := Node3D.new()
 	var mesh := MeshInstance3D.new()
-	mesh.mesh = Models.get_mesh(Models.key_for(obj))
+	mesh.mesh = Models.get_mesh(fence_key(obj["item"], Vector2i(obj["x"], obj["z"]), obj.get("rot", 0)) if is_fence(obj) else Models.key_for(obj))
 	var base := Models.material()
 	if obj["kind"] == "flower":
 		base = Models.flower_material()
@@ -698,7 +720,8 @@ func _spawn_node(obj: Dictionary) -> void:
 			if obj["axis"] == "z":
 				node.rotation.y = PI * 0.5
 		"placed":
-			node.rotation.y = -PI * 0.5 * obj.get("rot", 0)
+			# Fences are built facing the way they join, so they're never turned.
+			node.rotation.y = -PI * 0.5 * obj.get("rot", 0) if not is_fence(obj) else 0.0
 			if obj.has("on"):
 				y += ItemDB.placeable(_objects.get(obj["on"], {}).get("item", "")).get("surface", 0.0)
 		"tree", "fruit_tree", "palm", "rock", "bush", "stump", "flower":
@@ -735,7 +758,10 @@ func _spawn_node(obj: Dictionary) -> void:
 
 func refresh_node(obj: Dictionary) -> void:
 	var node: Node3D = _nodes.get(obj["uid"])
-	if node and obj["kind"] == "placed":
+	if node and is_fence(obj):
+		# Joined up again with whatever's beside it now.
+		(node.get_child(0) as MeshInstance3D).mesh = Models.get_mesh(fence_key(obj["item"], Vector2i(obj["x"], obj["z"]), obj.get("rot", 0)))
+	elif node and obj["kind"] == "placed":
 		# Furniture and buildings are rebuilt whole (effects and lights may change too).
 		node.queue_free()
 		_nodes.erase(obj["uid"])
@@ -1081,6 +1107,75 @@ func plant_flower(item_id: String, tile: Vector2i) -> Dictionary:
 	_pop_in(obj)
 	Journal.add("flowers_planted")
 	return obj
+
+
+# --- Fences ----------------------------------------------------------------------------
+
+## Each side of a tile (FenceModels bits) and the step to the tile beside it.
+const FENCE_SIDES := [[FenceModels.N, Vector2i(0, -1)], [FenceModels.E, Vector2i(1, 0)],
+	[FenceModels.S, Vector2i(0, 1)], [FenceModels.W, Vector2i(-1, 0)]]
+
+
+## A fence or gate (placeable "fence": its style), which joins up with those beside it.
+static func is_fence(obj: Dictionary) -> bool:
+	return obj.get("kind", "") == "placed" and ItemDB.placeable(obj.get("item", "")).has("fence")
+
+
+## Which sides of tile `t` have a fence beside them.
+func fence_links(t: Vector2i) -> int:
+	var links := 0
+	for side: Array in FENCE_SIDES:
+		var q: Vector2i = t + side[1]
+		if is_fence(object_at(q.x, q.y)):
+			links |= int(side[0])
+	return links
+
+
+## The model ("fence:<style>:<arms>:<links>:<post>:<gate>", FenceModels.build) for a fence
+## of `item` on tile `t`, turned `rot`, joined up to the fences beside it. On its own it
+## lies across the tile the way it's turned; at the end of a run it reaches across to the
+## far side; gates are always straight.
+func fence_key(item: String, t: Vector2i, rot: int) -> String:
+	var def := ItemDB.placeable(item)
+	var links := fence_links(t)
+	var across := FenceModels.E | FenceModels.W
+	var down := FenceModels.N | FenceModels.S
+	var arms := links
+	var gate: bool = def.get("gate", false)
+	if gate:
+		arms = across if links & across else (down if links & down else (across if rot % 2 == 0 else down))
+	elif links == 0:
+		arms = across if rot % 2 == 0 else down
+	elif links in [FenceModels.N, FenceModels.E, FenceModels.S, FenceModels.W]:
+		arms = links | (((links << 2) | (links >> 2)) & 15)
+	var post := (arms == across or arms == down) and (t.x + t.y) % 2 == 0
+	return "fence:%s:%d:%d:%d:%d" % [def["fence"], arms, links & arms, int(post), int(gate)]
+
+
+func _refresh_fences_round(t: Vector2i) -> void:
+	for side: Array in FENCE_SIDES:
+		var q: Vector2i = t + side[1]
+		var obj := object_at(q.x, q.y)
+		if is_fence(obj):
+			refresh_node(obj)
+
+
+## Fences used to be two tiles long: each becomes a fence per tile, joined up.
+func _split_wide_fences() -> void:
+	for obj: Dictionary in data.objects.duplicate():
+		if not is_fence(obj) or (int(obj.get("w", 1)) == 1 and int(obj.get("d", 1)) == 1):
+			continue
+		data.objects.erase(obj)
+		for dz in int(obj["d"]):
+			for dx in int(obj["w"]):
+				var piece := obj.duplicate()
+				piece["x"] = int(obj["x"]) + dx
+				piece["z"] = int(obj["z"]) + dz
+				piece["w"] = 1
+				piece["d"] = 1
+				if dx > 0 or dz > 0:
+					piece["uid"] = data.new_uid()
+				data.objects.append(piece)
 
 
 # --- Landscaping: trees and rocks ----------------------------------------------------
@@ -1974,9 +2069,8 @@ func _pop_in(obj: Dictionary) -> void:
 		return
 	if obj["kind"] == "placed":
 		# Furniture lands with a little puff of dust.
-		get_tree().create_timer(0.3).timeout.connect(func():
-			if is_instance_valid(node):
-				Effects.burst("dust", node.global_position + Vector3(0, 0.05, 0)))
+		var at := node.global_position + Vector3(0, 0.05, 0)
+		get_tree().create_timer(0.3).timeout.connect(func(): Effects.burst("dust", at))
 	var mesh: Node3D = node.get_child(0)
 	mesh.scale = Vector3.ONE * 0.2
 	mesh.position.y = 0.6

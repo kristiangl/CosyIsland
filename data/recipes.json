@@ -387,18 +387,20 @@
 		},
 		"rail_fence": {
 			"materials": {
-				"wood": 4
-			}
+				"wood": 3
+			},
+			"count": 4
 		},
 		"wooden_gate": {
 			"materials": {
-				"wood": 5
+				"wood": 4
 			}
 		},
 		"stone_wall": {
 			"materials": {
-				"stone": 6
-			}
+				"stone": 4
+			},
+			"count": 4
 		},
 		"wooden_stage": {
 			"materials": {
@@ -418,12 +420,13 @@
 		},
 		"iron_fence": {
 			"materials": {
-				"iron_nugget": 3
-			}
+				"iron_nugget": 2
+			},
+			"count": 4
 		},
 		"iron_gate": {
 			"materials": {
-				"iron_nugget": 4
+				"iron_nugget": 3
 			}
 		}
 	}

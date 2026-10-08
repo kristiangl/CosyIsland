@@ -29,6 +29,11 @@ var _footprint_material: ShaderMaterial
 ## item: not on the island yet), or {} when placing an item.
 var _moving: Dictionary = {}
 var _planting := false
+## Placing fences: the ghost shows how it'll join up, and you keep going until you run
+## out or press B. The ghost's model, and where and how it was last worked out.
+var _fence := false
+var _fence_key := ""
+var _fence_at := Vector3i(-9999, -9999, 0)
 ## Why it can't go on the tile ahead ("" if it can), worked out when that tile changes.
 var _why := ""
 var _checked := Vector2i(-9999, -9999)
@@ -76,6 +81,8 @@ func begin(slot: int) -> void:
 	_rotatable = def.get("rotatable", true)
 	_small = def.get("small", false)
 	_rug = def.get("rug", false)
+	_fence = def.has("fence")
+	_fence_at = Vector3i(-9999, -9999, 0)
 	_rot = 0
 	# Building kits show the building itself, to see how it'll sit.
 	var ghost: String = def.get("model", "drop:" + item)
@@ -84,7 +91,10 @@ func begin(slot: int) -> void:
 	_ghost.mesh = Models.get_mesh(ghost)
 	visible = true
 	Game.mode = Game.Mode.PLACING
-	Events.toast.emit(Prompts.fill("Where should it go? {use} to place, {rotate} to turn, {cancel} to put it away."))
+	if _fence:
+		Events.toast.emit(Prompts.fill("Fences join up with the ones beside them. {use} to place, {rotate} to turn, {cancel} when you're done."))
+	else:
+		Events.toast.emit(Prompts.fill("Where should it go? {use} to place, {rotate} to turn, {cancel} to put it away."))
 
 
 ## A tree, bush, rock or stump from the pockets, to plant again on the tile ahead.
@@ -162,6 +172,13 @@ func _process(_delta: float) -> void:
 		y += world.surface_height(front.x, front.y)
 	_ghost.position = Vector3(centre.x, y + 0.02, centre.y)
 	_ghost.rotation.y = -PI * 0.5 * _rot
+	if _fence:
+		# Shown joined to the fences beside it, as it'll be once it's down.
+		var at := Vector3i(_rect.position.x, _rect.position.y, _rot)
+		if at != _fence_at:
+			_fence_at = at
+			_ghost.mesh = Models.get_mesh(world.fence_key(_item, _rect.position, _rot))
+		_ghost.rotation.y = 0.0
 	_footprint.position = Vector3(centre.x, y + 0.03, centre.y)
 	_footprint.scale = Vector3(_rect.size.x, 1, _rect.size.y)
 	_material.set_shader_parameter("colour", VALID if _valid else INVALID)
@@ -206,6 +223,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			Inventory.remove_from_slot(_slot)
 			Journal.add("placed")
 			Sfx.play("place")
+			if _fence and Inventory.slots[_slot].get("id", "") == _item:
+				# More to come: carry on along the line.
+				_fence_at = Vector3i(-9999, -9999, 0)
+				return
 			if builds != "":
 				Events.toast.emit("Staked out! It'll be built tonight.")
 			else:
@@ -277,5 +298,6 @@ func _end() -> void:
 	visible = false
 	_moving = {}
 	_planting = false
+	_fence = false
 	_ghost.scale = Vector3.ONE
 	Game.mode = Game.Mode.PLAY

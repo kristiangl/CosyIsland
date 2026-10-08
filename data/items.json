@@ -1107,19 +1107,20 @@
 			}
 		},
 		"wooden_fence": {
-			"name": "Wooden Fence",
+			"name": "Picket Fence",
 			"category": "furniture",
-			"stack": 1,
+			"stack": 99,
 			"price": 60,
-			"color": "#d4a77e",
-			"desc": "A picket fence section. Makes a lovely border.",
+			"color": "#eccaa2",
+			"desc": "A white-wood picket fence. Put a few side by side and they join up.",
 			"placeable": {
 				"footprint": [
 					1,
 					1
 				],
-				"model": "furniture:wooden_fence",
-				"rotatable": true
+				"model": "fence:picket",
+				"rotatable": true,
+				"fence": "picket"
 			}
 		},
 		"signpost": {
@@ -2957,53 +2958,58 @@
 			}
 		},
 		"rail_fence": {
-			"name": "Rail Fence",
+			"name": "Palisade Fence",
 			"category": "furniture",
-			"stack": 1,
-			"price": 400,
-			"color": "#884836",
-			"desc": "A post-and-rail fence, two tiles long.",
+			"stack": 99,
+			"price": 120,
+			"color": "#a8604a",
+			"desc": "Pointed wooden stakes. Put a few side by side and they join up.",
 			"placeable": {
 				"footprint": [
-					2,
+					1,
 					1
 				],
-				"model": "kaykit:hexagon_fence_wood_straight",
+				"model": "fence:palisade",
 				"rotatable": true,
+				"fence": "palisade",
 				"outdoor": true
 			}
 		},
 		"wooden_gate": {
 			"name": "Wooden Gate",
 			"category": "furniture",
-			"stack": 1,
-			"price": 500,
-			"color": "#884836",
-			"desc": "A fence with a gate in it.",
+			"stack": 99,
+			"price": 300,
+			"color": "#d4a77e",
+			"desc": "A garden gate, standing open. Fits into any fence.",
 			"placeable": {
 				"footprint": [
-					2,
+					1,
 					1
 				],
-				"model": "kaykit:hexagon_fence_wood_straight_gate",
+				"model": "fence:picket:10:0:0:1",
 				"rotatable": true,
-				"outdoor": true
+				"fence": "picket",
+				"outdoor": true,
+				"gate": true,
+				"walk_through": true
 			}
 		},
 		"stone_wall": {
 			"name": "Low Stone Wall",
 			"category": "furniture",
-			"stack": 1,
-			"price": 500,
-			"color": "#626a6e",
-			"desc": "A tumbledown wall of field stones.",
+			"stack": 99,
+			"price": 120,
+			"color": "#98a0a3",
+			"desc": "Rounded field stones under a capstone. Joins up with the walls beside it.",
 			"placeable": {
 				"footprint": [
-					2,
+					1,
 					1
 				],
-				"model": "kaykit:hexagon_fence_stone_straight",
+				"model": "fence:stone",
 				"rotatable": true,
+				"fence": "stone",
 				"outdoor": true
 			}
 		},
@@ -3424,35 +3430,39 @@
 		"iron_fence": {
 			"name": "Iron Railings",
 			"category": "furniture",
-			"stack": 1,
-			"price": 600,
-			"color": "#262626",
-			"desc": "Black iron railings, two tiles long.",
+			"stack": 99,
+			"price": 160,
+			"color": "#2e2e36",
+			"desc": "Black iron railings on a stone footing. Joins up with the railings beside it.",
 			"placeable": {
 				"footprint": [
-					2,
+					1,
 					1
 				],
-				"model": "kaykit:halloween_fence",
+				"model": "fence:iron",
 				"rotatable": true,
+				"fence": "iron",
 				"outdoor": true
 			}
 		},
 		"iron_gate": {
 			"name": "Iron Gate",
 			"category": "furniture",
-			"stack": 1,
-			"price": 800,
-			"color": "#262626",
-			"desc": "Creaks just the right amount.",
+			"stack": 99,
+			"price": 400,
+			"color": "#2e2e36",
+			"desc": "Iron gates between stone pillars, standing open. Fits into any fence.",
 			"placeable": {
 				"footprint": [
-					2,
+					1,
 					1
 				],
-				"model": "kaykit:halloween_fence_gate",
+				"model": "fence:iron:10:0:0:1",
 				"rotatable": true,
-				"outdoor": true
+				"fence": "iron",
+				"outdoor": true,
+				"gate": true,
+				"walk_through": true
 			}
 		},
 		"fence_post": {

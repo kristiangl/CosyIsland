@@ -156,6 +156,9 @@ static func get_mesh(key: String) -> ArrayMesh:
 						k.normals[i] = Vector3(-k.normals[i].x, k.normals[i].y, -k.normals[i].z)
 			else:
 				_tool(k, p[1])
+		"fence":
+			FenceModels.build(k, p[1], int(p[2]) if p.size() > 2 else FenceModels.E | FenceModels.W,
+				int(p[3]) if p.size() > 3 else 0, p.size() > 4 and p[4] == "1", p.size() > 5 and p[5] == "1")
 		"furniture":
 			FurnitureModels.build(k, p[1])
 			if p.size() > 2:

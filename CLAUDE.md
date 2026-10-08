@@ -34,7 +34,7 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   (`-- --shadows`, checks the cel lighting maths).
 - Game screenshot options are listed at the top of `scripts/main.gd` (`--weather=rain`,
   `--season=autumn`, `--look` for the sky, `--demo`,
-  `--demo=decor|sit|home|door|shop|site|tailors|museum|dock|tour|orchard|neighbours|visitor|flowers|fishing|bugs|felling|garden`
+  `--demo=decor|sit|home|door|shop|site|tailors|museum|dock|tour|orchard|neighbours|visitor|flowers|fishing|bugs|felling|garden|fences`
 (`--island=orchard|meadow|quarry|buggy|fishy` with `--demo=tour`) (`--house` builds the house first, `--series=id` furnishes
   the home from one series; `--built` turns the museum tent into the museum, `--visit`
   goes inside the museum or a neighbour's home),
@@ -174,6 +174,15 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   decorations (big rocks, fences, arches, lamps...): "outdoor" placeables that only go
   outside, which Lucy stocks apart from the furniture (`Shop.OUTDOOR_PER_DAY`), some with
   DIY recipes; "walk_through" ones (arches) are walked under. `--demo=garden` (`--back`).
+- Fences (placeable "fence": a `FenceModels` style, picket, palisade, stone or iron; "gate"
+  for gates) fill one tile each, stack to 99, never sell out, and keep placing until the
+  stack runs out (`Placement`, `_fence`). Each joins the fences beside it:
+  `World.fence_key` works out its arms and free ends from its neighbours (`fence_links`)
+  and `FenceModels.build` makes the tile (straights, corners, T-joins, crossings, posts
+  every other tile, open gates), never turned. Placing or taking one away refreshes the
+  four beside it (`_refresh_fences_round`); on load they're built after everything else is
+  in (`_register_all`), and old two-tile fences split into one per tile
+  (`_split_wide_fences`). `--demo=fences` (`--back`).
 - Generated animal heads (`assets/characters/heads/<name>.res`, converted from glTFs in
   `assets/characters/src/` by `tools/head_import.gd -- --name=<name> [--from-body]`;
   prompts in `docs/CHARACTER_PROMPTS.md`) replace the procedural head, ears and muzzle on

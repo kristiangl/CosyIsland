@@ -59,6 +59,7 @@ func _run() -> void:
 	_test_paths_and_stairs()
 	_test_trees_and_rocks()
 	_test_outdoor_decorations()
+	_test_fences()
 	_test_storage()
 	_test_weather()
 	_test_sounds()
@@ -2047,6 +2048,108 @@ func _test_outdoor_decorations() -> void:
 	placing.free()
 	room.free()
 	Inventory.reset()
+
+
+func _test_fences() -> void:
+	const N := FenceModels.N
+	const E := FenceModels.E
+	const S := FenceModels.S
+	const W := FenceModels.W
+	check(["wooden_fence", "rail_fence", "stone_wall", "iron_fence", "wooden_gate", "iron_gate"].all(func(id):
+		return ItemDB.max_stack(id) == 99 and ItemDB.placeable(id).has("fence") and int(ItemDB.placeable(id)["footprint"][0]) == 1 and int(ItemDB.placeable(id)["footprint"][1]) == 1),
+		"fences and gates fill a tile each and stack up to 99")
+	check(Shop.restocks("rail_fence") and not Shop.is_sold_out("rail_fence", 1), "fences never sell out")
+	var d := IslandGenerator.generate(7)
+	var w := World.new()
+	add_child(w)
+	w.setup(d)
+	var away := Vector3(-50, 0, -50)
+	var at := Vector2i(-1, -1)
+	for z in range(4, d.height - 8):
+		for x in range(4, d.width - 8):
+			if at.x < 0 and w.can_place(Rect2i(x, z, 5, 5), away) and not d.plaza.grow(1).has_point(Vector2i(x, z)):
+				at = Vector2i(x, z)
+	check(at.x >= 0, "room for a fence")
+	if at.x < 0:
+		w.free()
+		return
+	var parts := func(t: Vector2i) -> PackedStringArray:
+		var obj := w.object_at(t.x, t.y)
+		return w.fence_key(obj["item"], t, obj.get("rot", 0)).split(":")
+	var put := func(t: Vector2i, item := "wooden_fence", rot := 0) -> Dictionary:
+		return w.place_item(item, Rect2i(t, Vector2i.ONE), rot)
+	var lone: Dictionary = put.call(at + Vector2i(0, 4), "wooden_fence", 1)
+	check(int(parts.call(at + Vector2i(0, 4))[2]) == N | S, "a fence on its own lies the way it was turned")
+	for i in 3:
+		put.call(at + Vector2i(i, 0))
+	var middle: PackedStringArray = parts.call(at + Vector2i(1, 0))
+	check(int(middle[2]) == E | W and int(middle[3]) == E | W, "a fence between two joins both")
+	var end: PackedStringArray = parts.call(at + Vector2i(2, 0))
+	check(int(end[2]) == E | W and int(end[3]) == W, "the end of a run reaches across, with a free end")
+	put.call(at + Vector2i(2, 1))
+	check(int(parts.call(at + Vector2i(2, 0))[2]) == S | W, "one placed round the end makes a corner")
+	put.call(at + Vector2i(1, 1))
+	put.call(at + Vector2i(1, -1))
+	check(int(parts.call(at + Vector2i(1, 0))[2]) == N | E | S | W, "four ways makes a crossing")
+	var node := w.node_of(w.object_at(at.x + 1, at.y)["uid"])
+	check(node.rotation.y == 0.0 and (node.get_child(0) as MeshInstance3D).mesh == Models.get_mesh(w.fence_key("wooden_fence", at + Vector2i(1, 0), 0)),
+		"and its model shows it")
+	w.remove_object(w.object_at(at.x + 1, at.y - 1)["uid"])
+	check(int(parts.call(at + Vector2i(1, 0))[2]) == E | S | W and (node.get_child(0) as MeshInstance3D).mesh == Models.get_mesh(w.fence_key("wooden_fence", at + Vector2i(1, 0), 0)),
+		"taking one away makes it a T again")
+	var gate: Dictionary = put.call(at + Vector2i(3, 2), "wooden_gate", 1)
+	put.call(at + Vector2i(2, 2))
+	check(int(parts.call(at + Vector2i(3, 2))[2]) == E | W, "a gate lines up with the fence it's in")
+	check(w.is_walkable(at.x + 3.5, at.y + 2.5) and not w.is_walkable(at.x + 2.5, at.y + 2.5), "you walk through a gate, not a fence")
+	check(not lone.is_empty() and not gate.is_empty(), "all placed")
+	# Fences from before they joined up were two tiles long: they come back one per tile.
+	var saved: Dictionary = JSON.parse_string(JSON.stringify(w.to_save()))
+	var long := {"kind": "placed", "item": "rail_fence", "x": at.x, "z": at.y + 3, "w": 2, "d": 1, "rot": 0, "uid": 99999}
+	saved["objects"].append(long)
+	var w2 := World.new()
+	add_child(w2)
+	w2.setup(IslandGenerator.generate(7), saved)
+	var a := w2.object_at(at.x, at.y + 3)
+	var b := w2.object_at(at.x + 1, at.y + 3)
+	check(a.get("item", "") == "rail_fence" and b.get("item", "") == "rail_fence" and a["uid"] != b["uid"] and int(a["w"]) == 1,
+		"an old two-tile fence becomes two")
+	check(int(w2.fence_key("rail_fence", Vector2i(a["x"], a["z"]), 0).split(":")[3]) & E != 0, "joined up")
+	w2.free()
+	# Placing a row without going back to the pockets.
+	Inventory.reset()
+	Inventory.add_item("iron_fence", 3)
+	var slot := Inventory.slots.find_custom(func(sl): return sl.get("id", "") == "iron_fence")
+	var row := at + Vector2i(4, 0)
+	var walker := Player.new()
+	add_child(walker)
+	walker.setup(w, Vector3(row.x + 0.5, 0, row.y + 1.5), Appearance.DEFAULT)
+	walker.facing = Vector3(0, 0, -1)
+	var placing := Placement.new()
+	placing.player = walker
+	placing.world = w
+	add_child(placing)
+	var was_mode := Game.mode
+	Game.mode = Game.Mode.PLAY
+	var use := InputEventAction.new()
+	use.action = "use"
+	use.pressed = true
+	placing.begin(slot)
+	placing._process(0.0)
+	placing._unhandled_input(use)
+	walker.position = Vector3(row.x + 0.5, 0, row.y + 2.5)
+	placing._process(0.0)
+	placing._unhandled_input(use)
+	check(Game.mode == Game.Mode.PLACING and Inventory.count_of("iron_fence") == 1 and w.object_at(row.x, row.y + 1).get("item", "") == "iron_fence",
+		"fences go down one after another")
+	walker.position = Vector3(row.x + 0.5, 0, row.y + 3.5)
+	placing._process(0.0)
+	placing._unhandled_input(use)
+	check(Game.mode == Game.Mode.PLAY and Inventory.count_of("iron_fence") == 0, "until there are none left")
+	Game.mode = was_mode
+	walker.free()
+	placing.free()
+	Inventory.reset()
+	w.free()
 
 
 func _test_paths_and_stairs() -> void:

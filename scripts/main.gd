@@ -23,6 +23,7 @@ extends Node3D
 ##   --demo=door        pitch the tent and stand outside its door
 ##   --demo=office      inside Poppy's office
 ##   --demo=terraform   a raised lawn with stairs and a slope, paths and a pond (--landscape=TOOL in hand)
+##   --demo=fences      every kind of fence joined up: corners, T-joins, crossings, ends, gates (--back)
 ##   --demo=garden      the outdoor decorations laid out near the plaza (--only=id,id, --back)
 ##   --demo=felling     a tree just felled to a stump, and the Move tool carrying a rock (--carry=tree|bush|stump)
 ##   --demo=construct   a slope and a bridge built near the plaza (--bridge stands by the bridge)
@@ -1270,6 +1271,46 @@ func _run_demo() -> void:
 			player.position.y = world.ground_height(player.position.x, player.position.z)
 			player.facing = Vector3(0, 0, -1)
 			player.set_landscaping(Game.args.get("landscape", "path:stone"))
+			camera_rig.snap()
+		return
+	if Game.args["demo"] == "fences":
+		# Each kind of fence laid out with corners, T-joins, a crossing, an open end, one on
+		# its own and a gate (--back: stand among them).
+		var pattern: Array[String] = ["#####.#", "#.#.#..", "#g#####", "#.#.#..", "#####.."]
+		var kinds: Array = [["wooden_fence", "wooden_gate"], ["rail_fence", "wooden_gate"], ["stone_wall", "wooden_gate"], ["iron_fence", "iron_gate"]]
+		var area := Rect2i()
+		var near := INF
+		for z in range(4, world.data.height - 14):
+			for x in range(4, world.data.width - 18):
+				var dist := Vector2(x, z).distance_to(Vector2(spawn))
+				if dist >= near or dist < 8.0:
+					continue
+				var ok := true
+				for dz in 13:
+					for dx in 17:
+						var q := Vector2i(x + dx, z + dz)
+						ok = ok and world.data.tile(q.x, q.y) == IslandData.Tile.GRASS and world.data.is_flat(q.x, q.y) \
+							and world.data.tier(q.x, q.y) == world.data.tier(x, z) and not world.data.plaza.grow(1).has_point(q) \
+							and world.object_at(q.x, q.y).get("kind", "tree") in World.NATURAL_KINDS + ["rock"]
+				if ok:
+					near = dist
+					area = Rect2i(x, z, 17, 13)
+		if area.size.x > 0:
+			for dz in area.size.y:
+				for dx in area.size.x:
+					var obj := world.object_at(area.position.x + dx, area.position.y + dz)
+					if not obj.is_empty():
+						world.remove_object(obj["uid"])
+			for i in kinds.size():
+				var corner := area.position + Vector2i(1 + (i % 2) * 8, 1 + (i / 2) * 6)
+				for dz in pattern.size():
+					for dx in pattern[dz].length():
+						var c := pattern[dz][dx]
+						if c != ".":
+							world.place_item(kinds[i][0 if c == "#" else 1], Rect2i(corner + Vector2i(dx, dz), Vector2i.ONE), 0)
+			player.position = Vector3(area.get_center().x, 0, area.get_center().y + 1.0 if Game.args.has("back") else area.end.y + 1.5)
+			player.position.y = world.ground_height(player.position.x, player.position.z)
+			player.facing = Vector3(0, 0, -1)
 			camera_rig.snap()
 		return
 	if Game.args["demo"] == "garden":

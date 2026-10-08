@@ -28,7 +28,8 @@ extends Node3D
 ##                      --demo=tailors: Daisy and Morris's, --visit to go in;
 ##                      --built for the finished museum, --visit to go in)
 ##   --demo=dock        Marlow's ferry dock (--demo=tour: off on a tour, --camper with someone camping there,
-##                     --island=orchard|meadow|quarry|buggy|fishy for a rare island)
+##                     --island=orchard|meadow|quarry|buggy|fishy for a rare island;
+##                     --tour_hour=H, --tour_weather=KIND, --tour_season=S set the island's own)
 ##   --demo=orchard     a row of planted fruit trees, one at each stage of growing
 ##   --demo=site        Lucy's shop kit staked out, waiting to be built
 ##   --demo=neighbours  two neighbours have just moved in (--visit: go inside one's home, --who=id,id: who,
@@ -80,6 +81,9 @@ func _ready() -> void:
 	var island := IslandGenerator.generate(_seed, IslandGenerator.WIDTH, IslandGenerator.HEIGHT, _gen_version)
 
 	GameClock.offset_seconds = int(saved.get("clock_offset", 0))
+	# Not on a tour (yet), whatever happened in the last game.
+	GameClock.tour_shift = 0
+	Weather.tour = {}
 	if Game.args.has("hour"):
 		GameClock.set_hour(float(Game.args["hour"]))
 
@@ -875,6 +879,8 @@ func _start_tour() -> void:
 		return
 	_place_marlow(tour)
 	_add_camper(tour)
+	var found := scatter_furniture(tour, luck, tour.dock_spots(dock)["arrive"])
+	var feel := _tour_weather(luck)
 	Game.tour = tour
 	_switch_world(tour)
 	var spots := tour.dock_spots(dock)
@@ -886,6 +892,73 @@ func _start_tour() -> void:
 	Game.mode = Game.Mode.PLAY
 	await hud.fade_in()
 	Events.toast.emit(TourKinds.get_kind(kind).get("arrive", TourKinds.get_kind("plain")["arrive"]))
+	Events.toast.emit("Over here it's %s on %s day." % [GameClock.time_string(), feel])
+	if found > 0:
+		Events.toast.emit("Marlow: I spotted some furniture lying about. Finders keepers!")
+
+
+## A tour island has its own time of day, weather and season (Weather.tour), picked by
+## `luck`. Returns how the day feels, for the arrival note ("a rainy autumn").
+func _tour_weather(luck: RandomNumberGenerator) -> String:
+	var hour := luck.randf_range(6.0, 23.5)
+	if Game.args.has("tour_hour"):
+		hour = float(Game.args["tour_hour"])
+	GameClock.tour_shift = 0
+	GameClock.tour_shift = int((hour - GameClock.hour_float()) * 3600.0)
+	var kinds := {"clear": 34, "cloudy": 14, "showers": 12, "rain": 8, "storm": 5, "mist": 8, "rainbow": 8, "windy": 6, "meteors": 5}
+	var total := 0
+	for k: String in kinds:
+		total += kinds[k]
+	var roll := luck.randi_range(0, total - 1)
+	var kind := "clear"
+	for k: String in kinds:
+		roll -= kinds[k]
+		if roll < 0:
+			kind = k
+			break
+	var season: String = Weather.SEASONS[luck.randi() % Weather.SEASONS.size()]
+	Weather.tour = {"kind": Game.args.get("tour_weather", kind), "season": Game.args.get("tour_season", season)}
+	Weather.update(GameClock.hour_float())
+	var adjective: String = {"clear": "a sunny", "cloudy": "a cloudy", "showers": "a showery", "rain": "a rainy",
+		"storm": "a stormy", "mist": "a misty", "rainbow": "a bright", "windy": "a breezy", "meteors": "a starry"}.get(Weather.tour["kind"], "a")
+	if Weather.snow > 0.1:
+		adjective = "a snowy"
+	elif Weather.tour["kind"] == "clear" and DayNight.glow_at(GameClock.hour_float()) > 0.5:
+		adjective = "a clear"
+	return "%s %s" % [adjective, Weather.tour["season"]]
+
+
+## One or two pieces of furniture left lying about on a tour island, to pick up and take
+## home. Returns how many.
+static func scatter_furniture(t: World, luck: RandomNumberGenerator, dock: Vector3) -> int:
+	var pieces: Array[String] = []
+	for id: String in ItemDB.items:
+		var def := ItemDB.get_item(id)
+		var place: Dictionary = def.get("placeable", {})
+		if def.get("category", "") != "furniture" or place.is_empty() or place.get("structure", false) \
+				or place.get("rug", false) or place.get("workbench", false):
+			continue
+		var size: Array = place.get("footprint", [1, 1])
+		if int(size[0]) * int(size[1]) <= 2:
+			pieces.append(id)
+	pieces.sort()
+	var count := luck.randi_range(1, 2)
+	var placed := 0
+	for attempt in 300:
+		if placed >= count or pieces.is_empty():
+			break
+		var id: String = pieces[luck.randi() % pieces.size()]
+		var size: Array = ItemDB.placeable(id).get("footprint", [1, 1])
+		var rot := luck.randi_range(0, 3) if ItemDB.placeable(id).get("rotatable", false) else 0
+		var dims := Vector2i(size[0], size[1]) if rot % 2 == 0 else Vector2i(size[1], size[0])
+		var at := Vector2i(luck.randi_range(4, t.data.width - 6), luck.randi_range(4, t.data.height - 6))
+		var rect := Rect2i(at, dims)
+		if Vector2(at).distance_to(Vector2(dock.x, dock.z)) < 7.0 or t.data.tile(at.x, at.y) != IslandData.Tile.GRASS:
+			continue
+		if t.can_place(rect, Vector3(-10, 0, -10)) and t.can_place(rect.grow(1), Vector3(-10, 0, -10)):
+			t.place_item(id, rect, rot)
+			placed += 1
+	return placed
 
 
 ## Someone's camping on each tour island who'd like a new home: one of the neighbours
@@ -931,6 +1004,10 @@ func _end_tour() -> void:
 	Game.tour = null
 	tour.queue_free()
 	tour = null
+	# Back to home's own time and weather.
+	GameClock.tour_shift = 0
+	Weather.tour = {}
+	Weather.update(GameClock.hour_float())
 	_switch_world(world)
 	_check_house()
 	var spots := world.dock_spots(world.building("dock"))

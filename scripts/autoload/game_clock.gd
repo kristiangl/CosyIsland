@@ -11,6 +11,10 @@ const WEEKDAYS := ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 const MONTHS := ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
 var offset_seconds: int = 0
+## On a tour the island keeps its own time: this many seconds ahead of home (or behind).
+## It moves the hour (light, creatures, the clock on screen) but never the island day.
+## Not saved: tours aren't.
+var tour_shift: int = 0
 var time_scale: float = 1.0
 var _scaled_extra: float = 0.0
 var _last_day_key: int = -1
@@ -32,7 +36,7 @@ func _process(delta: float) -> void:
 ## Seconds since the Unix epoch, in local time, including time travel.
 func local_unix() -> int:
 	var bias_minutes: int = Time.get_time_zone_from_system().get("bias", 0)
-	return int(Time.get_unix_time_from_system()) + bias_minutes * 60 + offset_seconds + int(_scaled_extra)
+	return int(Time.get_unix_time_from_system()) + bias_minutes * 60 + offset_seconds + int(_scaled_extra) + tour_shift
 
 
 func datetime() -> Dictionary:
@@ -47,7 +51,7 @@ func hour_float() -> float:
 
 ## Island day number. Changes at DAY_START_HOUR rather than midnight.
 func day_key() -> int:
-	return floori((local_unix() - DAY_START_HOUR * 3600) / 86400.0)
+	return floori((local_unix() - tour_shift - DAY_START_HOUR * 3600) / 86400.0)
 
 
 func time_string() -> String:

@@ -2004,6 +2004,32 @@ func _test_weather() -> void:
 	check(ItemDB.tool_type("umbrella_red") == "umbrella" and Models.get_mesh("umbrella:e0656b").get_faces().size() > 60,
 		"there are umbrellas to hold up in the rain")
 	check(InputMap.has_action("look_up"), "you can look up at the sky")
+	# Tour islands keep their own time, weather and season, and home's come back after.
+	var day := GameClock.day_key()
+	GameClock.tour_shift = 8 * 3600
+	Weather.force = ""
+	Weather.tour = {"kind": "rain", "season": "autumn"}
+	Weather.update(GameClock.hour_float())
+	check(GameClock.day_key() == day and Weather.rain > 0.5 and Weather.season == "autumn" and Weather.autumn > 0.5,
+		"a tour island has its own hour, weather and season, but it's still the same day")
+	GameClock.tour_shift = 0
+	Weather.tour = {}
+	Weather.force = "clear"
+	Weather.update(12.0)
+	var t := World.new()
+	t.tour = true
+	add_child(t)
+	t.setup(IslandGenerator.generate_tour(4242, "apple", "tulip"))
+	var luck := RandomNumberGenerator.new()
+	luck.seed = 7
+	var found := load("res://scripts/main.gd").scatter_furniture(t, luck, Vector3(t.data.width / 2.0, 0, t.data.height - 4.0)) as int
+	var pieces := t.objects().filter(func(o): return o["kind"] == "placed")
+	check(found >= 1 and found <= 2 and pieces.size() == found, "a piece or two of furniture lies about on a tour island")
+	if not pieces.is_empty():
+		var before := Inventory.count_of(pieces[0]["item"])
+		check(t.pack_up(pieces[0]) and Inventory.count_of(pieces[0]["item"]) == before + 1, "and you can pick it up")
+	t.free()
+	Inventory.reset()
 	Story.reset()
 
 

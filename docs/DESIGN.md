@@ -257,6 +257,9 @@ Milestone 3b:
   spring, fireflies in summer, turning leaves in autumn, snow in deep winter. Hold the look-up
   button to see the sky: drifting clouds, a rainbow after the showers, stars and shooting
   stars.
+- [x] Tour islands keep their own time of day, weather and season (an evening in the snow,
+  a misty spring morning...), and a piece or two of furniture lies about to take home. Fish
+  shadows are pointed ovals that wiggle as they swim.
 
 Next milestones (suggested order):
 4. More to find on tours: other kinds of tree on rare islands, flower breeding for the

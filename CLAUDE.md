@@ -79,7 +79,8 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   `--look`.
 - `Journal` (autoload, `data/journal.json`) counts what the player does (`Journal.add(stat)`)
   and pays stamps for milestones and daily tasks; its exchange sells pocket upgrades etc.
-- `Critters` (a child of the island `World`, `data/creatures.json`): fish shadows and bugs
+- `Critters` (a child of the island `World`, `data/creatures.json`): fish shadows (pointed
+  ovals that wiggle: `CreatureModels.shadow`, `shaders/blob_shadow.gdshader`) and bugs
   spawned near the player by time of day; fishing (`cast`/`reel`) and `net`.
 - Animal kinds are `CharacterModel.SPECIES` (cat, dog, rabbit, ferret, mouse, bird): meshes in
   `AnimalParts`, face markings in `face.gdshader` by the same index.
@@ -100,7 +101,11 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   `IslandData.kind`): the generator, rock loot and `Critters` read the kind, and creatures
   with "islands" only live there. Tour islands are checked for land cut off by rivers or
   cliffs (`IslandGenerator.regions`) and get extra bridges or ramps; the dock always lands
-  on the biggest piece. The HUD draws a sandy border round the screen while on a tour
+  on the biggest piece. Each tour island has its own hour (`GameClock.tour_shift`: moves
+  the hour, never the island day), weather and season (`Weather.tour`), picked in
+  `main.gd` `_tour_weather` and cleared on the way home (`--tour_hour`, `--tour_weather`,
+  `--tour_season`), and a piece or two of furniture lying about to pick up
+  (`Main.scatter_furniture`). The HUD draws a sandy border round the screen while on a tour
   (`shaders/tour_border.gdshader`). Campers you've met (`Story.flags["met"]`) visit your
   plaza some days (`Story.visitor_today`, `Npc.visiting`, `main.gd` `_check_visitor`).
   Travelling visitors (`Story.DAILY_VISITORS`, `daily_visitor_today`, in

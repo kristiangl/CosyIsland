@@ -26,6 +26,11 @@ const FORCES := ["", "clear", "cloudy", "showers", "rain", "storm", "snow", "mis
 ## Forces the weather all day ("" for the real forecast), and the season.
 var force := ""
 var force_season := ""
+## On a tour, the island has its own weather and season: {"kind" (one of FORCES),
+## "season"}, or {} at home.
+var tour := {}
+## How far through its season a tour island is: blossom in spring, deep snow in winter.
+const TOUR_SEASON_TIME := {"spring": 0.2, "summer": 0.5, "autumn": 0.6, "winter": 0.5}
 
 # The state right now (see _update).
 ## Cloud cover: 0 clear blue sky, 1 overcast.
@@ -61,6 +66,11 @@ func _process(delta: float) -> void:
 		update(GameClock.hour_float())
 
 
+## The weather kind everything's forced to (the phone or a tour), or "".
+func forcing() -> String:
+	return force if force != "" else String(tour.get("kind", ""))
+
+
 func hemisphere() -> String:
 	return Story.flags.get("hemisphere", "south")
 
@@ -78,6 +88,8 @@ static func date_of(key: int) -> Dictionary:
 func season_on(date: Dictionary) -> Array:
 	if force_season != "":
 		return [force_season, 0.5]
+	if tour.has("season"):
+		return [tour["season"], TOUR_SEASON_TIME[tour["season"]]]
 	var month: int = date["month"]
 	if hemisphere() == "south":
 		month = (month + 5) % 12 + 1
@@ -89,7 +101,7 @@ func season_on(date: Dictionary) -> Array:
 
 ## True on days in the depths of winter, when snow lies and falls instead of rain.
 func snowy(key: int) -> bool:
-	if force == "snow":
+	if forcing() == "snow":
 		return true
 	var s := season_on(date_of(key))
 	return s[0] == "winter" and s[1] > 0.12 and s[1] < 0.9
@@ -98,7 +110,7 @@ func snowy(key: int) -> bool:
 ## The day's weather: {"kind", "from", "to" (hours of rain or snow, counting on past
 ## midnight to 29), "mist", "windy", "rainbow", "snow"}.
 func plan(key: int) -> Dictionary:
-	if force != "":
+	if forcing() != "":
 		return _forced(key)
 	if _plans.has(key):
 		return _plans[key]
@@ -139,12 +151,12 @@ func plan(key: int) -> Dictionary:
 
 func _forced(key: int) -> Dictionary:
 	var p := {"kind": "clear", "from": -1.0, "to": -1.0, "mist": false, "windy": false, "rainbow": false, "snow": snowy(key),
-		"meteors": force == "meteors"}
-	match force:
+		"meteors": forcing() == "meteors"}
+	match forcing():
 		"cloudy":
 			p["kind"] = "cloudy"
 		"rain", "snow", "storm":
-			p["kind"] = "storm" if force == "storm" else "rain"
+			p["kind"] = "storm" if forcing() == "storm" else "rain"
 			p["from"] = 0.0
 			p["to"] = 30.0
 		"showers":
@@ -171,7 +183,7 @@ func update(hour: float) -> void:
 	var t: float = s[1]
 	autumn = (smoothstep(0.0, 0.3, t) * (1.0 - smoothstep(0.9, 1.0, t) * 0.4)) if season == "autumn" else 0.0
 	blossom = (smoothstep(0.0, 0.06, t) * (1.0 - smoothstep(0.4, 0.55, t))) if season == "spring" else 0.0
-	snow_cover = 1.0 if p["snow"] and (season == "winter" or force == "snow") else 0.0
+	snow_cover = 1.0 if p["snow"] and (season == "winter" or forcing() == "snow") else 0.0
 	var falling := 0.0
 	var near := 0.0
 	if p["from"] >= 0.0:
@@ -193,13 +205,16 @@ func update(hour: float) -> void:
 		"storm":
 			clouds = lerpf(0.55, 1.0, near)
 	mist = (1.0 - smoothstep(8.0, 9.5, h)) if p["mist"] else 0.0
+	if forcing() == "mist":
+		# Forced mist hangs about all day.
+		mist = 0.8
 	rainbow = 0.0
 	if p["rainbow"]:
-		rainbow = 1.0 if force == "rainbow" else smoothstep(p["to"] + 0.1, p["to"] + 0.4, h) * (1.0 - smoothstep(p["to"] + 1.3, p["to"] + 1.8, h))
+		rainbow = 1.0 if forcing() == "rainbow" else smoothstep(p["to"] + 0.1, p["to"] + 0.4, h) * (1.0 - smoothstep(p["to"] + 1.3, p["to"] + 1.8, h))
 	wetness = 0.0
 	if not p["snow"] and p["from"] >= 0.0:
 		wetness = maxf(falling, (1.0 - clampf((h - p["to"]) / 2.0, 0.0, 1.0)) * float(h >= p["to"]))
-		if force == "rainbow":
+		if forcing() == "rainbow":
 			wetness = 0.5
 	wind = 1.0 + (1.2 if p["windy"] else 0.0) + storm * 0.8
 	meteors = 0.0

@@ -87,11 +87,34 @@ static func _eyes(k: MeshKit, at: Vector3, apart: float, r: float) -> void:
 
 ## The dark shape of a fish seen through the water, for each size. Lies flat, length
 ## along X.
+## A fish's shadow seen through the water: a pointed oval along +x (the way it swims),
+## fuller towards the nose and tapering to a point at the tail. Flat, for
+## shaders/blob_shadow.gdshader: vertex alpha is 1 along the middle and 0 at the edges
+## (a soft outline), UV.x runs from the tail (0) to the nose (1) and UV.y is the fish's
+## length (for its wiggle).
 static func shadow(k: MeshKit, size: String) -> void:
 	var half: float = SIZES.get(size, 0.2) * 1.3
-	var c := Color(1, 1, 1, 0)
-	k.sphere(Vector3.ZERO, Vector3(half, 0.004, half * 0.42), c, 2, 14)
-	k.sphere(Vector3(-half * 1.05, 0, 0), Vector3(half * 0.3, 0.004, half * 0.25), c, 2, 8)
+	var tail := -half * 1.15
+	var nose := half * 0.95
+	var width := half * 0.44
+	var steps := 14
+	var up := Vector3.UP
+	var prev: Array[int] = []
+	for i in steps + 1:
+		var s := float(i) / steps
+		var x := lerpf(tail, nose, s)
+		# Widest a little forward of the middle.
+		var w := width * pow(sin(PI * pow(1.0 - s, 0.8)), 0.75)
+		var uv := Vector2(s, half * 2.0)
+		var row: Array[int] = [
+			k.vertex(Vector3(x, 0, -w), up, Color(1, 1, 1, 0), uv),
+			k.vertex(Vector3(x, 0, 0), up, Color(1, 1, 1, 1), uv),
+			k.vertex(Vector3(x, 0, w), up, Color(1, 1, 1, 0), uv),
+		]
+		if not prev.is_empty():
+			k.quad(prev[0], prev[1], row[1], row[0], up)
+			k.quad(prev[1], prev[2], row[2], row[1], up)
+		prev = row
 
 
 # --- Bugs ----------------------------------------------------------------------------

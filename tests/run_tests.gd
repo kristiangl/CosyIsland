@@ -2145,6 +2145,39 @@ func _test_fences() -> void:
 	placing._process(0.0)
 	placing._unhandled_input(use)
 	check(Game.mode == Game.Mode.PLAY and Inventory.count_of("iron_fence") == 0, "until there are none left")
+	# Putting one down while standing right at the edge of the tile doesn't trap you.
+	var open := Vector2i(-1, -1)
+	for z in range(4, d.height - 6):
+		for x in range(4, d.width - 6):
+			if open.x < 0 and w.can_place(Rect2i(x, z, 3, 4), away) and not d.plaza.grow(1).has_point(Vector2i(x, z)):
+				open = Vector2i(x, z)
+	if open.x >= 0:
+		var spot := open + Vector2i(1, 2)
+		Inventory.add_item("wooden_fence", 2)
+		walker.position = Vector3(spot.x + 0.5, w.ground_height(spot.x + 0.5, spot.y + 0.05), spot.y + 0.05)
+		walker.facing = Vector3(0, 0, -1)
+		placing.begin(Inventory.slots.find_custom(func(sl): return sl.get("id", "") == "wooden_fence"))
+		placing._process(0.0)
+		placing._unhandled_input(use)
+		var back := InputEventAction.new()
+		back.action = "cancel"
+		back.pressed = true
+		placing._unhandled_input(back)
+		check(w.object_at(spot.x, spot.y - 1).get("item", "") == "wooden_fence" and walker.position.z >= spot.y + Player.RADIUS,
+			"placing a fence at the edge of your tile steps you back off it")
+		var x0 := walker.position.x
+		walker._move(Vector3(0.1, 0, 0))
+		check(walker.position.x > x0, "and you can walk along it")
+		# Wedged against one anyway (put down some other way): you can still get out.
+		walker.position = Vector3(spot.x + 0.5, walker.position.y, spot.y + 0.05)
+		var z0 := walker.position.z
+		walker._move(Vector3(0, 0, -0.1))
+		check(walker.position.z == z0, "you can't walk further into it")
+		walker._move(Vector3(0, 0, 0.1))
+		check(walker.position.z > z0, "but you can step away")
+		x0 = walker.position.x
+		walker._move(Vector3(-0.1, 0, 0))
+		check(walker.position.x < x0, "or along it")
 	Game.mode = was_mode
 	walker.free()
 	placing.free()

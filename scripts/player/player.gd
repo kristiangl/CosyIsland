@@ -162,12 +162,46 @@ func _check_doors(dir: Vector3) -> void:
 
 
 func _clear(px: float, pz: float) -> bool:
-	if not world.can_move(position, px, pz, RADIUS):
+	if not world.can_move(position, px, pz, RADIUS) and not _unwedge(px, pz):
 		return false
 	for npc in Game.npcs:
 		if npc.world == world and npc.blocks(px, pz) and not npc.blocks(position.x, position.z):
 			return false
 	return true
+
+
+## Wedged against something that's just appeared right beside us (a fence put down
+## while standing at the edge of the tile, say): any step that doesn't go further into it
+## is allowed, so there's always a way out.
+func _unwedge(px: float, pz: float) -> bool:
+	var step := Vector2(px - position.x, pz - position.z)
+	var wedged := false
+	for off: Vector2 in [Vector2(RADIUS, 0), Vector2(-RADIUS, 0), Vector2(0, RADIUS), Vector2(0, -RADIUS)]:
+		if not world.is_walkable(position.x + off.x, position.z + off.y):
+			wedged = true
+			if step.dot(off) > 0.0:
+				return false
+		elif not world.is_walkable(px + off.x, pz + off.y):
+			return false
+	return wedged and world.can_step(position, px, pz)
+
+
+## Steps back out of `rect` if any of us is in it (something just put down on the tile
+## ahead while we stood at its edge).
+func step_back_from(rect: Rect2i) -> void:
+	var gap := RADIUS + 0.02
+	if not Rect2(rect).grow(gap).has_point(Vector2(position.x, position.z)):
+		return
+	var dir := cardinal()
+	if dir.x > 0:
+		position.x = minf(position.x, rect.position.x - gap)
+	elif dir.x < 0:
+		position.x = maxf(position.x, rect.end.x + gap)
+	elif dir.y > 0:
+		position.z = minf(position.z, rect.position.y - gap)
+	else:
+		position.z = maxf(position.z, rect.end.y + gap)
+	position.y = world.ground_height(position.x, position.z)
 
 
 ## The character the player is facing and close enough to talk to, if any.

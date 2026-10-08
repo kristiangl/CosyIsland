@@ -36,6 +36,7 @@ var _fence_key := ""
 var _fence_at := Vector3i(-9999, -9999, 0)
 ## Why it can't go on the tile ahead ("" if it can), worked out when that tile changes.
 var _why := ""
+var _spot_why := ""
 var _checked := Vector2i(-9999, -9999)
 
 
@@ -165,7 +166,7 @@ func _process(_delta: float) -> void:
 		if _rug:
 			_valid = world.can_place_rug(_rect)
 		else:
-			_valid = world.can_place(_rect, player.position) and world.door_clear(_item, _rect, _rot)
+			_valid = world.can_place(_rect, player.position) and world.door_clear(_item, _rect, _rot) and not _someone_in(_rect)
 	var centre := Vector2(_rect.position) + Vector2(_rect.size) * 0.5
 	var y := world.ground_height(centre.x, centre.y)
 	if _on_table:
@@ -188,11 +189,21 @@ func _process(_delta: float) -> void:
 	_ghost.position.y += 0.06 + 0.04 * sin(Time.get_ticks_msec() / 160.0)
 
 
+## Whether an islander is standing in (or brushing against) `rect`.
+func _someone_in(rect: Rect2i) -> bool:
+	for npc in Game.npcs:
+		if npc.world == world and npc.visible and Rect2(rect).grow(Npc.RADIUS).has_point(Vector2(npc.position.x, npc.position.z)):
+			return true
+	return false
+
+
 func _show_move() -> void:
 	var t := player.tile() + player.cardinal()
 	if t != _checked:
 		_checked = t
-		_why = world.move_spot(_moving, t, player.position)
+		_spot_why = world.move_spot(_moving, t, player.position)
+	# Islanders wander about, so they're checked every frame.
+	_why = _spot_why if _spot_why != "" or not _someone_in(Rect2i(t, Vector2i.ONE)) else "Someone's standing there!"
 	_valid = _why == ""
 	_rect = Rect2i(t, Vector2i.ONE)
 	var y := world.ground_height(t.x + 0.5, t.y + 0.5)
@@ -220,6 +231,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				world.place_on_surface(_item, _rect.position, _rot)
 			else:
 				world.place_item(_item, _rect, _rot)
+				if not _rug and not ItemDB.placeable(_item).get("walk_through", false):
+					player.step_back_from(_rect)
 			Inventory.remove_from_slot(_slot)
 			Journal.add("placed")
 			Sfx.play("place")
@@ -264,6 +277,7 @@ func _move_input(event: InputEvent) -> void:
 			Inventory.remove_from_slot(_slot)
 		else:
 			world.move_object(_moving, _rect.position)
+		player.step_back_from(_rect)
 		player.model.play("dig")
 		Sfx.play("dig")
 		Effects.burst("dust", _ghost.position)

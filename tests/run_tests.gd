@@ -58,6 +58,7 @@ func _run() -> void:
 	_test_landscaping()
 	_test_paths_and_stairs()
 	_test_trees_and_rocks()
+	_test_outdoor_decorations()
 	_test_storage()
 	_test_weather()
 	_test_sounds()
@@ -648,7 +649,9 @@ func _test_shop_and_house() -> void:
 	var today := Shop.stock(42, 100)
 	check(today == Shop.stock(42, 100), "the shop's stock is the same all day")
 	check(today != Shop.stock(42, 101), "and changes the next day")
-	check(today.size() == Shop.STAPLES.size() + 1 + Shop.FURNITURE_PER_DAY + Shop.INTERIORS_PER_DAY + Shop.CLOTHES_PER_DAY, "the shop has a full stock (and an umbrella)")
+	check(today.size() == Shop.STAPLES.size() + 1 + Shop.FURNITURE_PER_DAY + Shop.OUTDOOR_PER_DAY + Shop.INTERIORS_PER_DAY + Shop.CLOTHES_PER_DAY,
+		"the shop has a full stock (and an umbrella)")
+	check(today.filter(func(id): return ItemDB.placeable(id).get("outdoor", false)).size() == Shop.OUTDOOR_PER_DAY, "including something for outdoors")
 	check(today.any(func(id): return ItemDB.is_clothing(id)), "the shop sells clothes")
 	var thing: String = today[Shop.STAPLES.size()]
 	check(Shop.buy(thing, 100) != "", "can't buy without acorns")
@@ -1934,11 +1937,42 @@ func _test_trees_and_rocks() -> void:
 	use.action = "use"
 	use.pressed = true
 	placing._unhandled_input(use)
+	check(w.object_at(to.x, to.y) == rock and w.object_at(from.x, from.y).is_empty() and w.get_object(rock["uid"]) == rock
+		and w.node_of(rock["uid"]) != null, "the rock moves, uid and all")
+	# B with a tree in hand pockets it, looking just as it did, and it plants again from there.
+	var pine: Dictionary = w.objects().filter(func(o): return o["kind"] == "tree")[0]
+	var look := Models.key_for(pine)
+	var pine_uid: int = pine["uid"]
+	var pine_item := World.item_for(pine)
+	Game.mode = Game.Mode.PLAY
+	placing.begin_move(pine)
+	var back := InputEventAction.new()
+	back.action = "cancel"
+	back.pressed = true
+	placing._unhandled_input(back)
+	var slot := Inventory.slots.find_custom(func(sl): return sl.get("id", "") == pine_item)
+	check(Game.mode == Game.Mode.PLAY and w.get_object(pine_uid).is_empty() and slot >= 0
+		and ItemDB.get_item(pine_item).get("category", "") == "nature", "B puts a carried tree in the pockets")
+	var sample := World.nature_object(pine_item)
+	sample["uid"] = -1
+	var spot2 := Vector2i(-1, -1)
+	for z in range(2, d.height - 2):
+		for x in range(3, d.width - 2):
+			var q := Vector2i(x, z)
+			if spot2.x < 0 and q != to and w.move_spot(sample, q, away) == "" and w.object_at(x - 1, z).is_empty():
+				spot2 = q
+	check(spot2.x >= 0, "somewhere to plant it")
+	if spot2.x >= 0 and slot >= 0:
+		mover.position = Vector3(spot2.x - 0.5, 0, spot2.y + 0.5)
+		placing.begin(slot)
+		placing._process(0.0)
+		placing._unhandled_input(use)
+		var planted := w.object_at(spot2.x, spot2.y)
+		check(planted.get("kind", "") == "tree" and Models.key_for(planted) == look and Inventory.count_of(pine_item) == 0,
+			"and plants again from there, looking the same")
 	Game.mode = was_mode
 	mover.free()
 	placing.free()
-	check(w.object_at(to.x, to.y) == rock and w.object_at(from.x, from.y).is_empty() and w.get_object(rock["uid"]) == rock
-		and w.node_of(rock["uid"]) != null, "the rock moves, uid and all")
 	# Trees want room round them.
 	var other: Dictionary = w.objects().filter(func(o): return o["kind"] in ["tree", "fruit_tree"] and o["uid"] != uid)[0]
 	var crowded := Vector2i(-1, -1)
@@ -1965,6 +1999,54 @@ func _test_trees_and_rocks() -> void:
 	check(w.dig_out(sapling) and Inventory.count_of(fruit) == fruits + 1 and w.object_at(spot.x, spot.y).is_empty(), "a young tree comes up whole, fruit back in the pockets")
 	Inventory.remove_item(fruit, 1)
 	w.free()
+
+
+func _test_outdoor_decorations() -> void:
+	var outdoor: Array[String] = []
+	for id: String in ItemDB.items:
+		if ItemDB.placeable(id).get("outdoor", false):
+			outdoor.append(id)
+	check(outdoor.size() >= 50, "lots of outdoor decorations (%d)" % outdoor.size())
+	check(outdoor.all(func(id): return Models.get_mesh(ItemDB.placeable(id)["model"]) != null and ItemDB.get_item(id).get("price", 0) > 0),
+		"each has a model and a price")
+	check(["big_boulder", "great_crag", "standing_stone"].all(func(id): return outdoor.has(id)), "including big rocks")
+	check(Recipes.recipes.has("log_pile") and Recipes.recipes.has("big_boulder"), "some can be made at the workbench")
+	var d := IslandGenerator.generate(7)
+	var w := World.new()
+	add_child(w)
+	w.setup(d)
+	# Open, flat grass for an arch and a boulder.
+	var at := Vector2i(-1, -1)
+	var away := Vector3(-50, 0, -50)
+	for z in range(4, d.height - 4):
+		for x in range(4, d.width - 6):
+			if at.x < 0 and w.can_place(Rect2i(x, z, 4, 1), away) and not d.plaza.grow(1).has_point(Vector2i(x, z)):
+				at = Vector2i(x, z)
+	check(at.x >= 0, "somewhere to put them")
+	if at.x >= 0:
+		var arch := w.place_item("garden_arch_blue", Rect2i(at, Vector2i(ItemDB.placeable("garden_arch_blue")["footprint"][0], 1)), 0)
+		var rock := w.place_item("boulder", Rect2i(at + Vector2i(3, 0), Vector2i.ONE), 0)
+		check(w.is_walkable(at.x + 0.5, at.y + 0.5) and not w.is_walkable(at.x + 3.5, at.y + 0.5), "you walk under an arch, not through a boulder")
+		check(not w.can_place(Rect2i(at, Vector2i.ONE), away) and not arch.is_empty() and not rock.is_empty(), "but nothing else goes under it")
+	w.free()
+	# Not indoors.
+	var room := World.new()
+	room.interior = true
+	add_child(room)
+	room.setup(IslandData.room(6, 6))
+	var placing := Placement.new()
+	placing.world = room
+	add_child(placing)
+	Inventory.reset()
+	Inventory.add_item("big_boulder")
+	var was_mode := Game.mode
+	Game.mode = Game.Mode.PLAY
+	placing.begin(Inventory.slots.find_custom(func(sl): return sl.get("id", "") == "big_boulder"))
+	check(Game.mode == Game.Mode.PLAY, "outdoor things can't go inside")
+	Game.mode = was_mode
+	placing.free()
+	room.free()
+	Inventory.reset()
 
 
 func _test_paths_and_stairs() -> void:

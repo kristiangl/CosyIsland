@@ -802,7 +802,11 @@ func is_walkable(px: float, pz: float) -> bool:
 	if surface == T.SAND and data.height_at(px, pz) < IslandData.SEA_LEVEL - 0.06:
 		return false
 	var uid: int = _occupant.get(i, -1)
-	return uid < 0 or not _objects[uid]["kind"] in BLOCKING_KINDS
+	if uid < 0:
+		return true
+	var obj: Dictionary = _objects[uid]
+	# Arches and archways are walked under.
+	return not obj["kind"] in BLOCKING_KINDS or (obj["kind"] == "placed" and ItemDB.placeable(obj["item"]).get("walk_through", false))
 
 
 ## True if the player can step from `from` to the point (px, pz).
@@ -1203,6 +1207,78 @@ func move_spot(obj: Dictionary, t: Vector2i, player_pos: Vector3) -> String:
 func disturb(obj: Dictionary) -> void:
 	if critters:
 		critters.disturb(Vector3(obj["x"] + 0.5, 0.0, obj["z"] + 0.5))
+
+
+## What a tree, bush, rock or stump becomes in the pockets (the Move tool, B), keeping
+## its look (ItemDB "nature." items); a young tree comes back as its fruit.
+static func item_for(obj: Dictionary) -> String:
+	match obj.get("kind", ""):
+		"tree":
+			return "nature.tree.%d" % Models.pick(obj, Models.TREES.size())
+		"fruit_tree":
+			if obj.has("planted"):
+				return obj["fruit"]
+			return "nature.fruit_tree.%s.%d" % [obj["fruit"], Models.pick(obj, Models.FRUIT_TREES.size())]
+		"palm":
+			return "nature.palm.%d" % int(obj.get("variant", 0))
+		"bush":
+			return "nature.bush.%d" % Models.pick(obj, Models.BUSHES.size())
+		"rock":
+			return "nature.rock.%d" % Models.pick(obj, Models.ROCKS.size())
+		"stump":
+			return "nature.stump.%s.%d" % ["palm" if obj.get("tree", "") == "palm" else "tree", Models.pick(obj, 3)]
+	return ""
+
+
+## The island object a "nature." item plants as (no tile or uid yet), or {}. Trees come
+## back without wood or fruit until they've settled in overnight.
+static func nature_object(item_id: String) -> Dictionary:
+	var p := item_id.split(".")
+	if p.size() < 3 or p[0] != "nature":
+		return {}
+	match p[1]:
+		"tree":
+			return {"kind": "tree", "model": int(p[2]), "wood_left": 0}
+		"bush":
+			return {"kind": "bush", "model": int(p[2])}
+		"fruit_tree":
+			return {"kind": "fruit_tree", "fruit": p[2], "model": int(p[3]) if p.size() > 3 else 0, "fruit_count": 0, "wood_left": 0}
+		"palm":
+			return {"kind": "palm", "variant": int(p[2]), "wood_left": 0}
+		"rock":
+			return {"kind": "rock", "model": int(p[2]), "hits_left": 0}
+		"stump":
+			return {"kind": "stump", "tree": p[2], "model": int(p[3]) if p.size() > 3 else 0}
+	return {}
+
+
+## Plants a "nature." item from the pockets on tile `t` (check `move_spot` first).
+func plant_item(item_id: String, t: Vector2i) -> Dictionary:
+	var obj := nature_object(item_id)
+	if obj.is_empty():
+		return {}
+	obj["x"] = t.x
+	obj["z"] = t.y
+	if obj["kind"] == "fruit_tree":
+		obj["picked_day"] = day_key
+	add_object(obj)
+	_pop_in(obj)
+	return obj
+
+
+## Puts a tree, bush, rock or stump in the pockets (the Move tool, B). False if there's
+## no room.
+func pocket(obj: Dictionary) -> bool:
+	var id := item_for(obj)
+	if id == "" or Inventory.add_item(id) > 0:
+		Events.toast.emit("Your pockets are full!")
+		return false
+	disturb(obj)
+	if obj["uid"] == money_rock_uid:
+		money_rock_uid = -1
+	_chops.erase(obj["uid"])
+	remove_object(obj["uid"])
+	return true
 
 
 ## Sets `obj` down on tile `t` (the Move tool), just as it was.

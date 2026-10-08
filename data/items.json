@@ -2580,6 +2580,1037 @@
 				"small": true
 			}
 		},
+		"big_boulder": {
+			"name": "Big Boulder",
+			"category": "furniture",
+			"stack": 1,
+			"price": 1800,
+			"color": "#6d767a",
+			"desc": "A great round boulder. Nobody knows how it got here.",
+			"placeable": {
+				"footprint": [
+					2,
+					2
+				],
+				"model": "kaykit:forest_rock_1_k_color1",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"boulder": {
+			"name": "Boulder",
+			"category": "furniture",
+			"stack": 1,
+			"price": 600,
+			"color": "#7b858a",
+			"desc": "A nice round rock to lean on.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:forest_rock_1_g_color1",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"standing_stone": {
+			"name": "Standing Stone",
+			"category": "furniture",
+			"stack": 1,
+			"price": 1400,
+			"color": "#869196",
+			"desc": "Tall, old and a little mysterious.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:forest_rock_1_n_color1",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"rocky_outcrop": {
+			"name": "Rocky Outcrop",
+			"category": "furniture",
+			"stack": 1,
+			"price": 2200,
+			"color": "#61696d",
+			"desc": "Layers of rock stacked like a cake.",
+			"placeable": {
+				"footprint": [
+					2,
+					2
+				],
+				"model": "kaykit:forest_rock_3_m_color1",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"great_crag": {
+			"name": "Great Crag",
+			"category": "furniture",
+			"stack": 1,
+			"price": 3600,
+			"color": "#717a7f",
+			"desc": "A whole cliff's worth of rock, in one lump.",
+			"placeable": {
+				"footprint": [
+					3,
+					3
+				],
+				"model": "kaykit:forest_rock_3_q_color1",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"rock_cluster": {
+			"name": "Rock Cluster",
+			"category": "furniture",
+			"stack": 1,
+			"price": 1200,
+			"color": "#717a7f",
+			"desc": "A huddle of rocks.",
+			"placeable": {
+				"footprint": [
+					2,
+					2
+				],
+				"model": "kaykit:forest_rock_3_k_color1",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"boulder_pile": {
+			"name": "Boulder Pile",
+			"category": "furniture",
+			"stack": 1,
+			"price": 1600,
+			"color": "#5a6165",
+			"desc": "Round rocks piled up high.",
+			"placeable": {
+				"footprint": [
+					2,
+					2
+				],
+				"model": "kaykit:forest_rock_2_e_color1",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"tumbled_rocks": {
+			"name": "Tumbled Rocks",
+			"category": "furniture",
+			"stack": 1,
+			"price": 1600,
+			"color": "#5a6165",
+			"desc": "Rocks that rolled down a hill and stopped here.",
+			"placeable": {
+				"footprint": [
+					2,
+					2
+				],
+				"model": "kaykit:forest_rock_2_h_color1",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"pebbles": {
+			"name": "Pebbles",
+			"category": "furniture",
+			"stack": 1,
+			"price": 120,
+			"color": "#6b7378",
+			"desc": "A few smooth pebbles.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:forest_rock_1_c_color1",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"bare_tree": {
+			"name": "Bare Tree",
+			"category": "furniture",
+			"stack": 1,
+			"price": 900,
+			"color": "#d86f34",
+			"desc": "No leaves, all character.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:forest_tree_bare_1_a_color1",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"twisted_tree": {
+			"name": "Twisted Tree",
+			"category": "furniture",
+			"stack": 1,
+			"price": 900,
+			"color": "#b75c2f",
+			"desc": "It grew this way on purpose.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:forest_tree_bare_2_a_color1",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"round_shrub": {
+			"name": "Round Shrub",
+			"category": "furniture",
+			"stack": 1,
+			"price": 300,
+			"color": "#5da73c",
+			"desc": "A neat, round little shrub.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:forest_bush_1_e_color1",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"spreading_shrub": {
+			"name": "Spreading Shrub",
+			"category": "furniture",
+			"stack": 1,
+			"price": 400,
+			"color": "#57a33c",
+			"desc": "Low and leafy.",
+			"placeable": {
+				"footprint": [
+					2,
+					2
+				],
+				"model": "kaykit:forest_bush_3_c_color1",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"rain_barrel": {
+			"name": "Rain Barrel",
+			"category": "furniture",
+			"stack": 1,
+			"price": 300,
+			"color": "#818c91",
+			"desc": "Good for keeping rain water. Or apples.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:hexdeco_barrel",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"canvas_canopy": {
+			"name": "Canvas Canopy",
+			"category": "furniture",
+			"stack": 1,
+			"price": 1500,
+			"color": "#945440",
+			"desc": "A canvas roof on four poles, for shade or a market day.",
+			"placeable": {
+				"footprint": [
+					2,
+					2
+				],
+				"model": "kaykit:hexdeco_tent",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"log_pile": {
+			"name": "Log Pile",
+			"category": "furniture",
+			"stack": 1,
+			"price": 500,
+			"color": "#a8664c",
+			"desc": "Neatly stacked, ready for winter.",
+			"placeable": {
+				"footprint": [
+					2,
+					1
+				],
+				"model": "kaykit:hexdeco_resource_lumber",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"stone_pile": {
+			"name": "Stone Pile",
+			"category": "furniture",
+			"stack": 1,
+			"price": 400,
+			"color": "#828d92",
+			"desc": "Rocks, sorted.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:hexdeco_resource_stone",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"archery_target": {
+			"name": "Archery Target",
+			"category": "furniture",
+			"stack": 1,
+			"price": 600,
+			"color": "#945440",
+			"desc": "Bullseye!",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:hexdeco_target",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"wooden_crate": {
+			"name": "Wooden Crate",
+			"category": "furniture",
+			"stack": 1,
+			"price": 250,
+			"color": "#8a4a37",
+			"desc": "A crate for whatever needs crating.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:hexdeco_crate_a_big",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"open_crate": {
+			"name": "Open Crate",
+			"category": "furniture",
+			"stack": 1,
+			"price": 250,
+			"color": "#a8664c",
+			"desc": "Something's rustling about in there.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:hexdeco_crate_open",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"water_bucket": {
+			"name": "Bucket of Water",
+			"category": "furniture",
+			"stack": 1,
+			"price": 180,
+			"color": "#a05f48",
+			"desc": "Full to the brim.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:hexdeco_bucket_water",
+				"rotatable": true,
+				"outdoor": true,
+				"small": true
+			}
+		},
+		"flour_sack": {
+			"name": "Sack of Flour",
+			"category": "furniture",
+			"stack": 1,
+			"price": 150,
+			"color": "#d6a775",
+			"desc": "For bread, cakes and the odd mess.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:hexdeco_sack",
+				"rotatable": true,
+				"outdoor": true,
+				"small": true
+			}
+		},
+		"rail_fence": {
+			"name": "Rail Fence",
+			"category": "furniture",
+			"stack": 1,
+			"price": 400,
+			"color": "#884836",
+			"desc": "A post-and-rail fence, two tiles long.",
+			"placeable": {
+				"footprint": [
+					2,
+					1
+				],
+				"model": "kaykit:hexagon_fence_wood_straight",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"wooden_gate": {
+			"name": "Wooden Gate",
+			"category": "furniture",
+			"stack": 1,
+			"price": 500,
+			"color": "#884836",
+			"desc": "A fence with a gate in it.",
+			"placeable": {
+				"footprint": [
+					2,
+					1
+				],
+				"model": "kaykit:hexagon_fence_wood_straight_gate",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"stone_wall": {
+			"name": "Low Stone Wall",
+			"category": "furniture",
+			"stack": 1,
+			"price": 500,
+			"color": "#626a6e",
+			"desc": "A tumbledown wall of field stones.",
+			"placeable": {
+				"footprint": [
+					2,
+					1
+				],
+				"model": "kaykit:hexagon_fence_stone_straight",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"wooden_stage": {
+			"name": "Wooden Stage",
+			"category": "furniture",
+			"stack": 1,
+			"price": 3000,
+			"color": "#a8664c",
+			"desc": "For concerts, speeches and dancing.",
+			"placeable": {
+				"footprint": [
+					3,
+					2
+				],
+				"model": "kaykit:hexagon_building_stage_a",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"plank_stack": {
+			"name": "Plank Stack",
+			"category": "furniture",
+			"stack": 1,
+			"price": 500,
+			"color": "#dcb281",
+			"desc": "Planks for the next big project.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:resource_wood_planks_stack_large",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"brick_stack": {
+			"name": "Brick Stack",
+			"category": "furniture",
+			"stack": 1,
+			"price": 500,
+			"color": "#61696d",
+			"desc": "Bricks, stacked and strapped.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:resource_stone_bricks_stack_large",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"rubble": {
+			"name": "Rubble",
+			"category": "furniture",
+			"stack": 1,
+			"price": 300,
+			"color": "#9facb2",
+			"desc": "Broken stone, piled up.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:resource_stone_chunks_large",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"fabric_bolts": {
+			"name": "Bolts of Fabric",
+			"category": "furniture",
+			"stack": 1,
+			"price": 600,
+			"color": "#28a4dc",
+			"desc": "Rolls of colourful cloth.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:resource_textiles_stack_large_colored",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"park_bench": {
+			"name": "Park Bench",
+			"category": "furniture",
+			"stack": 1,
+			"price": 700,
+			"color": "#ae6c50",
+			"desc": "A bench for watching the world go by.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:city_bench",
+				"rotatable": true,
+				"outdoor": true,
+				"seat": 0.3
+			}
+		},
+		"street_lamp": {
+			"name": "Street Lamp",
+			"category": "furniture",
+			"stack": 1,
+			"price": 1200,
+			"color": "#767f84",
+			"desc": "Lights the way home.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:city_streetlight",
+				"rotatable": true,
+				"outdoor": true,
+				"light": true
+			}
+		},
+		"fire_hydrant": {
+			"name": "Fire Hydrant",
+			"category": "furniture",
+			"stack": 1,
+			"price": 400,
+			"color": "#b51e31",
+			"desc": "Bright red, just in case.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:city_firehydrant",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"cardboard_box": {
+			"name": "Cardboard Box",
+			"category": "furniture",
+			"stack": 1,
+			"price": 120,
+			"color": "#d6a876",
+			"desc": "Empty. Or is it?",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:city_box_a",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"planter_shrub": {
+			"name": "Planter Shrub",
+			"category": "furniture",
+			"stack": 1,
+			"price": 350,
+			"color": "#c86832",
+			"desc": "A neat shrub in a box.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:city_bush",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"water_tower": {
+			"name": "Water Tower",
+			"category": "furniture",
+			"stack": 1,
+			"price": 2500,
+			"color": "#788286",
+			"desc": "Holds enough water for everyone.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:city_watertower",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"garden_arch_blue": {
+			"name": "Garden Arch (Blue)",
+			"category": "furniture",
+			"stack": 1,
+			"price": 900,
+			"color": "#9ca9ae",
+			"desc": "An arch to walk under.",
+			"placeable": {
+				"footprint": [
+					2,
+					1
+				],
+				"model": "kaykit:platformer_arch_blue",
+				"rotatable": true,
+				"outdoor": true,
+				"walk_through": true
+			}
+		},
+		"garden_arch_red": {
+			"name": "Garden Arch (Red)",
+			"category": "furniture",
+			"stack": 1,
+			"price": 900,
+			"color": "#9ca9ae",
+			"desc": "An arch to walk under.",
+			"placeable": {
+				"footprint": [
+					2,
+					1
+				],
+				"model": "kaykit:platformer_arch_red",
+				"rotatable": true,
+				"outdoor": true,
+				"walk_through": true
+			}
+		},
+		"garden_arch_green": {
+			"name": "Garden Arch (Green)",
+			"category": "furniture",
+			"stack": 1,
+			"price": 900,
+			"color": "#9ca9ae",
+			"desc": "An arch to walk under.",
+			"placeable": {
+				"footprint": [
+					2,
+					1
+				],
+				"model": "kaykit:platformer_arch_green",
+				"rotatable": true,
+				"outdoor": true,
+				"walk_through": true
+			}
+		},
+		"garden_arch_yellow": {
+			"name": "Garden Arch (Yellow)",
+			"category": "furniture",
+			"stack": 1,
+			"price": 900,
+			"color": "#9ca9ae",
+			"desc": "An arch to walk under.",
+			"placeable": {
+				"footprint": [
+					2,
+					1
+				],
+				"model": "kaykit:platformer_arch_yellow",
+				"rotatable": true,
+				"outdoor": true,
+				"walk_through": true
+			}
+		},
+		"pennant_red": {
+			"name": "Pennant (Red)",
+			"category": "furniture",
+			"stack": 1,
+			"price": 300,
+			"color": "#8d4c39",
+			"desc": "Flutters in the breeze.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:hexdeco_flag_red",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"pennant_blue": {
+			"name": "Pennant (Blue)",
+			"category": "furniture",
+			"stack": 1,
+			"price": 300,
+			"color": "#8d4c39",
+			"desc": "Flutters in the breeze.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:hexdeco_flag_blue",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"pennant_green": {
+			"name": "Pennant (Green)",
+			"category": "furniture",
+			"stack": 1,
+			"price": 300,
+			"color": "#8d4c39",
+			"desc": "Flutters in the breeze.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:hexdeco_flag_green",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"pennant_yellow": {
+			"name": "Pennant (Yellow)",
+			"category": "furniture",
+			"stack": 1,
+			"price": 300,
+			"color": "#8d4c39",
+			"desc": "Flutters in the breeze.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:hexdeco_flag_yellow",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"arrow_sign": {
+			"name": "Arrow Sign",
+			"category": "furniture",
+			"stack": 1,
+			"price": 350,
+			"color": "#f5883c",
+			"desc": "This way!",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:platformer_signage_arrow_stand_yellow",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"beach_ball": {
+			"name": "Beach Ball",
+			"category": "furniture",
+			"stack": 1,
+			"price": 300,
+			"color": "#ebeff0",
+			"desc": "Red and white and bouncy.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:platformer_ball_red",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"star_ornament": {
+			"name": "Star Ornament",
+			"category": "furniture",
+			"stack": 1,
+			"price": 500,
+			"color": "#faaf51",
+			"desc": "A big golden star for the garden.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:platformer_star_yellow",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"heart_ornament": {
+			"name": "Heart Ornament",
+			"category": "furniture",
+			"stack": 1,
+			"price": 500,
+			"color": "#e04347",
+			"desc": "A big red heart.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:platformer_heart_red",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"gem_ornament": {
+			"name": "Gem Ornament",
+			"category": "furniture",
+			"stack": 1,
+			"price": 500,
+			"color": "#29a8df",
+			"desc": "A big blue gem, polished to a shine.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:platformer_diamond_blue",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"iron_fence": {
+			"name": "Iron Railings",
+			"category": "furniture",
+			"stack": 1,
+			"price": 600,
+			"color": "#262626",
+			"desc": "Black iron railings, two tiles long.",
+			"placeable": {
+				"footprint": [
+					2,
+					1
+				],
+				"model": "kaykit:halloween_fence",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"iron_gate": {
+			"name": "Iron Gate",
+			"category": "furniture",
+			"stack": 1,
+			"price": 800,
+			"color": "#262626",
+			"desc": "Creaks just the right amount.",
+			"placeable": {
+				"footprint": [
+					2,
+					1
+				],
+				"model": "kaykit:halloween_fence_gate",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"fence_post": {
+			"name": "Fence Post",
+			"category": "furniture",
+			"stack": 1,
+			"price": 250,
+			"color": "#7c868b",
+			"desc": "A stone post with a cap.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:halloween_fence_pillar",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"lantern_post": {
+			"name": "Lantern Post",
+			"category": "furniture",
+			"stack": 1,
+			"price": 1400,
+			"color": "#848f94",
+			"desc": "A crooked post with a lantern hanging off it.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:halloween_post_lantern",
+				"rotatable": true,
+				"outdoor": true,
+				"light": true
+			}
+		},
+		"gravestone": {
+			"name": "Gravestone",
+			"category": "furniture",
+			"stack": 1,
+			"price": 600,
+			"color": "#8b979c",
+			"desc": "Here lies... someone's old sock?",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:halloween_gravestone",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"spooky_tree": {
+			"name": "Spooky Tree",
+			"category": "furniture",
+			"stack": 1,
+			"price": 1200,
+			"color": "#78685d",
+			"desc": "Its branches look like fingers.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:halloween_tree_dead_large",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"little_shrine": {
+			"name": "Little Shrine",
+			"category": "furniture",
+			"stack": 1,
+			"price": 1600,
+			"color": "#61534b",
+			"desc": "A quiet little shrine with candles.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:halloween_shrine_candles",
+				"rotatable": true,
+				"outdoor": true,
+				"light": true
+			}
+		},
+		"iron_archway": {
+			"name": "Iron Archway",
+			"category": "furniture",
+			"stack": 1,
+			"price": 1800,
+			"color": "#262626",
+			"desc": "A grand gateway to walk through.",
+			"placeable": {
+				"footprint": [
+					2,
+					1
+				],
+				"model": "kaykit:halloween_arch_gate",
+				"rotatable": true,
+				"outdoor": true,
+				"walk_through": true
+			}
+		},
+		"gingerbread_house": {
+			"name": "Gingerbread House",
+			"category": "furniture",
+			"stack": 1,
+			"price": 1200,
+			"color": "#4dd37a",
+			"desc": "Don't eat the roof.",
+			"placeable": {
+				"footprint": [
+					2,
+					2
+				],
+				"model": "kaykit:holiday_gingerbread_house_decorated",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"candy_cane": {
+			"name": "Candy Cane",
+			"category": "furniture",
+			"stack": 1,
+			"price": 250,
+			"color": "#ffffff",
+			"desc": "A giant stripy candy cane.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "kaykit:holiday_candycane_small",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
+		"circus_tent": {
+			"name": "Circus Tent",
+			"category": "furniture",
+			"stack": 1,
+			"price": 6000,
+			"color": "#d72d32",
+			"desc": "Roll up, roll up!",
+			"placeable": {
+				"footprint": [
+					3,
+					3
+				],
+				"model": "kaykit:mixed_circus_tent",
+				"rotatable": true,
+				"outdoor": true
+			}
+		},
 		"festive_tree": {
 			"name": "Festive Tree",
 			"category": "furniture",

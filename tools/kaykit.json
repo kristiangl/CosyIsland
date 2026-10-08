@@ -626,6 +626,316 @@
 				2.85,
 				3.0
 			]
+		},
+		"forest_rock_1_k_color1": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_1_K_Color1.gltf",
+			"palette": "nature",
+			"sway": "none",
+			"fit": [
+				1.9,
+				1.9
+			]
+		},
+		"forest_rock_1_g_color1": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_1_G_Color1.gltf",
+			"palette": "nature",
+			"sway": "none",
+			"fit": [
+				0.95,
+				1.0
+			]
+		},
+		"forest_rock_1_n_color1": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_1_N_Color1.gltf",
+			"palette": "nature",
+			"sway": "none",
+			"fit": [
+				1.0,
+				2.1
+			]
+		},
+		"forest_rock_3_m_color1": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_3_M_Color1.gltf",
+			"palette": "nature",
+			"sway": "none",
+			"fit": [
+				1.9,
+				2.0
+			]
+		},
+		"forest_rock_3_q_color1": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_3_Q_Color1.gltf",
+			"palette": "nature",
+			"sway": "none",
+			"fit": [
+				2.9,
+				2.4
+			]
+		},
+		"forest_rock_3_k_color1": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_3_K_Color1.gltf",
+			"palette": "nature",
+			"sway": "none",
+			"fit": [
+				1.8,
+				1.4
+			]
+		},
+		"forest_rock_2_e_color1": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_2_E_Color1.gltf",
+			"palette": "nature",
+			"sway": "none",
+			"fit": [
+				1.9,
+				1.7
+			]
+		},
+		"forest_rock_2_h_color1": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_2_H_Color1.gltf",
+			"palette": "nature",
+			"sway": "none",
+			"fit": [
+				1.9,
+				1.4
+			]
+		},
+		"forest_rock_1_c_color1": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Rock_1_C_Color1.gltf",
+			"palette": "nature",
+			"sway": "none",
+			"fit": [
+				0.55,
+				0.45
+			]
+		},
+		"forest_tree_bare_1_a_color1": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Tree_Bare_1_A_Color1.gltf",
+			"palette": "nature",
+			"sway": "none",
+			"fit": [
+				1.0,
+				2.6
+			]
+		},
+		"forest_tree_bare_2_a_color1": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Tree_Bare_2_A_Color1.gltf",
+			"palette": "nature",
+			"sway": "none",
+			"fit": [
+				1.0,
+				2.8
+			]
+		},
+		"forest_bush_1_e_color1": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Bush_1_E_Color1.gltf",
+			"palette": "nature",
+			"sway": "foliage",
+			"smooth": true,
+			"fit": [
+				0.95,
+				0.6
+			]
+		},
+		"forest_bush_3_c_color1": {
+			"src": "KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/Bush_3_C_Color1.gltf",
+			"palette": "nature",
+			"sway": "foliage",
+			"smooth": true,
+			"fit": [
+				1.4,
+				0.65
+			]
+		},
+		"hexdeco_barrel": {
+			"src": "KayKit_Medieval_Hexagon_Pack_1.0_FREE/Assets/gltf/decoration/props/barrel.gltf",
+			"scale": 2.2
+		},
+		"hexdeco_tent": {
+			"src": "KayKit_Medieval_Hexagon_Pack_1.0_FREE/Assets/gltf/decoration/props/tent.gltf",
+			"scale": 3.0
+		},
+		"hexdeco_resource_lumber": {
+			"src": "KayKit_Medieval_Hexagon_Pack_1.0_FREE/Assets/gltf/decoration/props/resource_lumber.gltf",
+			"scale": 2.2
+		},
+		"hexdeco_resource_stone": {
+			"src": "KayKit_Medieval_Hexagon_Pack_1.0_FREE/Assets/gltf/decoration/props/resource_stone.gltf",
+			"scale": 2.2
+		},
+		"hexdeco_target": {
+			"src": "KayKit_Medieval_Hexagon_Pack_1.0_FREE/Assets/gltf/decoration/props/target.gltf",
+			"scale": 3.0
+		},
+		"hexdeco_crate_a_big": {
+			"src": "KayKit_Medieval_Hexagon_Pack_1.0_FREE/Assets/gltf/decoration/props/crate_A_big.gltf",
+			"scale": 2.2
+		},
+		"hexdeco_crate_open": {
+			"src": "KayKit_Medieval_Hexagon_Pack_1.0_FREE/Assets/gltf/decoration/props/crate_open.gltf",
+			"scale": 2.2
+		},
+		"hexdeco_bucket_water": {
+			"src": "KayKit_Medieval_Hexagon_Pack_1.0_FREE/Assets/gltf/decoration/props/bucket_water.gltf",
+			"scale": 2.2
+		},
+		"hexdeco_sack": {
+			"src": "KayKit_Medieval_Hexagon_Pack_1.0_FREE/Assets/gltf/decoration/props/sack.gltf",
+			"scale": 3.0
+		},
+		"hexagon_fence_wood_straight": {
+			"src": "KayKit_Medieval_Hexagon_Pack_1.0_FREE/Assets/gltf/buildings/neutral/fence_wood_straight.gltf",
+			"scale": 1.75,
+			"turn": 90
+		},
+		"hexagon_fence_wood_straight_gate": {
+			"src": "KayKit_Medieval_Hexagon_Pack_1.0_FREE/Assets/gltf/buildings/neutral/fence_wood_straight_gate.gltf",
+			"scale": 1.75,
+			"turn": 90
+		},
+		"hexagon_fence_stone_straight": {
+			"src": "KayKit_Medieval_Hexagon_Pack_1.0_FREE/Assets/gltf/buildings/neutral/fence_stone_straight.gltf",
+			"scale": 1.75,
+			"turn": 90
+		},
+		"hexagon_building_stage_a": {
+			"src": "KayKit_Medieval_Hexagon_Pack_1.0_FREE/Assets/gltf/buildings/neutral/building_stage_A.gltf",
+			"scale": 2.2
+		},
+		"resource_wood_planks_stack_large": {
+			"src": "KayKit_ResourceBits_1.0_FREE/Assets/gltf/Wood_Planks_Stack_Large.gltf",
+			"scale": 0.5
+		},
+		"resource_stone_bricks_stack_large": {
+			"src": "KayKit_ResourceBits_1.0_FREE/Assets/gltf/Stone_Bricks_Stack_Large.gltf",
+			"scale": 0.5
+		},
+		"resource_stone_chunks_large": {
+			"src": "KayKit_ResourceBits_1.0_FREE/Assets/gltf/Stone_Chunks_Large.gltf",
+			"scale": 0.5
+		},
+		"resource_textiles_stack_large_colored": {
+			"src": "KayKit_ResourceBits_1.0_FREE/Assets/gltf/Textiles_Stack_Large_Colored.gltf",
+			"scale": 0.5
+		},
+		"city_bench": {
+			"src": "KayKit_City_Builder_Bits_1.0_FREE/Assets/gltf/bench.gltf",
+			"scale": 2.6
+		},
+		"city_streetlight": {
+			"src": "KayKit_City_Builder_Bits_1.0_FREE/Assets/gltf/streetlight.gltf",
+			"scale": 2.6
+		},
+		"city_firehydrant": {
+			"src": "KayKit_City_Builder_Bits_1.0_FREE/Assets/gltf/firehydrant.gltf",
+			"scale": 2.6
+		},
+		"city_box_a": {
+			"src": "KayKit_City_Builder_Bits_1.0_FREE/Assets/gltf/box_A.gltf",
+			"scale": 2.6
+		},
+		"city_bush": {
+			"src": "KayKit_City_Builder_Bits_1.0_FREE/Assets/gltf/bush.gltf",
+			"scale": 2.6
+		},
+		"city_watertower": {
+			"src": "KayKit_City_Builder_Bits_1.0_FREE/Assets/gltf/watertower.gltf",
+			"scale": 2.6
+		},
+		"platformer_arch_blue": {
+			"src": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/arch_blue.gltf",
+			"scale": 0.5
+		},
+		"platformer_arch_red": {
+			"src": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/red/arch_red.gltf",
+			"scale": 0.5
+		},
+		"platformer_arch_green": {
+			"src": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/green/arch_green.gltf",
+			"scale": 0.5
+		},
+		"platformer_arch_yellow": {
+			"src": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/yellow/arch_yellow.gltf",
+			"scale": 0.5
+		},
+		"hexdeco_flag_red": {
+			"src": "KayKit_Medieval_Hexagon_Pack_1.0_FREE/Assets/gltf/decoration/props/flag_red.gltf",
+			"scale": 4.0
+		},
+		"hexdeco_flag_blue": {
+			"src": "KayKit_Medieval_Hexagon_Pack_1.0_FREE/Assets/gltf/decoration/props/flag_blue.gltf",
+			"scale": 4.0
+		},
+		"hexdeco_flag_green": {
+			"src": "KayKit_Medieval_Hexagon_Pack_1.0_FREE/Assets/gltf/decoration/props/flag_green.gltf",
+			"scale": 4.0
+		},
+		"hexdeco_flag_yellow": {
+			"src": "KayKit_Medieval_Hexagon_Pack_1.0_FREE/Assets/gltf/decoration/props/flag_yellow.gltf",
+			"scale": 4.0
+		},
+		"platformer_signage_arrow_stand_yellow": {
+			"src": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/yellow/signage_arrow_stand_yellow.gltf",
+			"scale": 0.5
+		},
+		"platformer_ball_red": {
+			"src": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/red/ball_red.gltf",
+			"scale": 0.3
+		},
+		"platformer_star_yellow": {
+			"src": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/yellow/star_yellow.gltf",
+			"scale": 0.5
+		},
+		"platformer_heart_red": {
+			"src": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/red/heart_red.gltf",
+			"scale": 0.5
+		},
+		"platformer_diamond_blue": {
+			"src": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/diamond_blue.gltf",
+			"scale": 0.5
+		},
+		"halloween_fence": {
+			"src": "KayKit_HalloweenBits_1.0_FREE/Assets/gltf/fence.gltf",
+			"scale": 0.5
+		},
+		"halloween_fence_gate": {
+			"src": "KayKit_HalloweenBits_1.0_FREE/Assets/gltf/fence_gate.gltf",
+			"scale": 0.5
+		},
+		"halloween_fence_pillar": {
+			"src": "KayKit_HalloweenBits_1.0_FREE/Assets/gltf/fence_pillar.gltf",
+			"scale": 0.5
+		},
+		"halloween_post_lantern": {
+			"src": "KayKit_HalloweenBits_1.0_FREE/Assets/gltf/post_lantern.gltf",
+			"scale": 0.5
+		},
+		"halloween_gravestone": {
+			"src": "KayKit_HalloweenBits_1.0_FREE/Assets/gltf/gravestone.gltf",
+			"scale": 0.5
+		},
+		"halloween_tree_dead_large": {
+			"src": "KayKit_HalloweenBits_1.0_FREE/Assets/gltf/tree_dead_large.gltf",
+			"scale": 0.5
+		},
+		"halloween_shrine_candles": {
+			"src": "KayKit_HalloweenBits_1.0_FREE/Assets/gltf/shrine_candles.gltf",
+			"scale": 0.5
+		},
+		"halloween_arch_gate": {
+			"src": "KayKit_HalloweenBits_1.0_FREE/Assets/gltf/arch_gate.gltf",
+			"scale": 0.5
+		},
+		"holiday_gingerbread_house_decorated": {
+			"src": "KayKit_Holiday_Bits_1.0_FREE/Assets/gltf/gingerbread_house_decorated.gltf",
+			"scale": 1.1
+		},
+		"holiday_candycane_small": {
+			"src": "KayKit_Holiday_Bits_1.0_FREE/Assets/gltf/candycane_small.gltf",
+			"scale": 1.5
+		},
+		"mixed_circus_tent": {
+			"src": "KayKit_Mixed_Bag_1_FREE/Assets/gltf/circus_tent.gltf",
+			"scale": 0.9
 		}
 	},
 	"animations": {

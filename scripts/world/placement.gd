@@ -2,7 +2,8 @@ class_name Placement
 extends Node3D
 ## Grid placement mode: shows a ghost of the item in front of the player, snapped to
 ## the grid. A places it, B cancels, R / right bumper rotates. The landscaping Move tool
-## uses it too, to carry a tree, bush, rock or stump to a new spot (begin_move).
+## uses it too, to carry a tree, bush, rock or stump to a new spot (begin_move; B puts it
+## in the pockets), and so do those things when planted again from the pockets.
 
 const VALID := Color(0.55, 1.0, 0.6, 0.55)
 const INVALID := Color(1.0, 0.45, 0.4, 0.55)
@@ -24,8 +25,10 @@ var _ghost: MeshInstance3D
 var _footprint: MeshInstance3D
 var _material: ShaderMaterial
 var _footprint_material: ShaderMaterial
-## The island object being moved (begin_move), or {} when placing an item.
+## The island object being moved (begin_move) or planted from the pockets (a "nature"
+## item: not on the island yet), or {} when placing an item.
 var _moving: Dictionary = {}
+var _planting := false
 ## Why it can't go on the tile ahead ("" if it can), worked out when that tile changes.
 var _why := ""
 var _checked := Vector2i(-9999, -9999)
@@ -61,8 +64,11 @@ func begin(slot: int) -> void:
 	if world.tour:
 		Events.toast.emit("Better save that for home.")
 		return
-	if world.interior and def.get("structure", false):
+	if world.interior and (def.get("structure", false) or def.get("nature", false) or def.get("outdoor", false)):
 		Events.toast.emit("That needs to go outside.")
+		return
+	if def.get("nature", false):
+		_begin_planting(slot, item)
 		return
 	_slot = slot
 	_item = item
@@ -79,6 +85,27 @@ func begin(slot: int) -> void:
 	visible = true
 	Game.mode = Game.Mode.PLACING
 	Events.toast.emit(Prompts.fill("Where should it go? {use} to place, {rotate} to turn, {cancel} to put it away."))
+
+
+## A tree, bush, rock or stump from the pockets, to plant again on the tile ahead.
+func _begin_planting(slot: int, item: String) -> void:
+	_moving = World.nature_object(item)
+	if _moving.is_empty():
+		return
+	_moving["uid"] = -1
+	_planting = true
+	_slot = slot
+	_item = item
+	_size = Vector2i.ONE
+	_rot = 0
+	_rotatable = false
+	_checked = Vector2i(-9999, -9999)
+	_ghost.mesh = Models.get_mesh(Models.key_for(_moving))
+	_ghost.scale = Vector3.ONE
+	_ghost.rotation.y = 0.0
+	visible = true
+	Game.mode = Game.Mode.PLACING
+	Events.toast.emit(Prompts.fill("Where should it go? {use} to plant it, {cancel} to keep it."))
 
 
 ## Carries `obj` (a tree, bush, rock or stump) to set down on another tile; it stays
@@ -106,7 +133,7 @@ func begin_move(obj: Dictionary) -> void:
 	world.disturb(obj)
 	visible = true
 	Game.mode = Game.Mode.PLACING
-	Events.toast.emit(Prompts.fill("Where should it go? {use} to set it down, {cancel} to put it back."))
+	Events.toast.emit(Prompts.fill("Where should it go? {use} to set it down, {cancel} to pocket it."))
 
 
 func _process(_delta: float) -> void:
@@ -211,7 +238,11 @@ func _move_input(event: InputEvent) -> void:
 			Events.toast.emit(_why)
 			Sfx.play("ui_error", -4.0)
 			return
-		world.move_object(_moving, _rect.position)
+		if _planting:
+			world.plant_item(_item, _rect.position)
+			Inventory.remove_from_slot(_slot)
+		else:
+			world.move_object(_moving, _rect.position)
 		player.model.play("dig")
 		Sfx.play("dig")
 		Effects.burst("dust", _ghost.position)
@@ -219,12 +250,22 @@ func _move_input(event: InputEvent) -> void:
 		_end()
 	elif event.is_action_pressed("cancel"):
 		get_viewport().set_input_as_handled()
-		put_back()
+		if _planting:
+			_end()
+		elif world.pocket(_moving):
+			# Into the pockets instead of back where it was.
+			player.model.play("pickup")
+			Sfx.play("pop")
+			Events.toast.emit("You put the %s in your pockets." % ItemDB.display_name(World.item_for(_moving)).to_lower())
+			_end()
 
 
 ## Calls off a move: the thing's back where it was.
 func put_back() -> void:
 	if _moving.is_empty():
+		return
+	if _planting:
+		_end()
 		return
 	var node := world.node_of(_moving["uid"])
 	if node:
@@ -235,5 +276,6 @@ func put_back() -> void:
 func _end() -> void:
 	visible = false
 	_moving = {}
+	_planting = false
 	_ghost.scale = Vector3.ONE
 	Game.mode = Game.Mode.PLAY

@@ -247,6 +247,47 @@ func _def(id: String) -> Dictionary:
 	var def: Dictionary = items.get(id, {})
 	if def.is_empty() and id.begins_with("basic."):
 		def = _make_basic(id)
+	elif def.is_empty() and id.begins_with("nature."):
+		def = _make_nature(id)
+	return def
+
+
+## Trees, bushes, rocks and stumps dug up into the pockets with the landscaping Move tool
+## (World.item_for), each keeping its look: "nature.tree.<model>",
+## "nature.fruit_tree.<fruit>.<model>", "nature.palm.<variant>", "nature.bush.<model>",
+## "nature.rock.<model>", "nature.stump.<tree|palm>.<model>". Placed from the pockets,
+## they're planted again (World.nature_object). {} if `id` isn't one.
+func _make_nature(id: String) -> Dictionary:
+	var p := id.split(".")
+	if p.size() < 3:
+		return {}
+	var kind := p[1]
+	var def := {"category": "nature", "stack": 1, "desc": "Dug up roots and all. Plant it again somewhere outside."}
+	match kind:
+		"tree":
+			def.merge({"name": "Tree", "color": "#6faa5c"})
+		"fruit_tree":
+			if p.size() < 4 or not fruits.has(p[2]):
+				return {}
+			def.merge({"name": "%s tree" % String(fruits[p[2]]["name"]), "color": fruits[p[2]]["color"]})
+		"palm":
+			def.merge({"name": "Palm tree", "color": "#78bd7a"})
+		"bush":
+			def.merge({"name": "Bush", "color": "#80c17e"})
+		"rock":
+			def.merge({"name": "Rock", "color": "#bdb8cc", "desc": "A good solid rock. Set it down somewhere outside."})
+		"stump":
+			if p.size() < 4 or not p[2] in ["tree", "palm"]:
+				return {}
+			def.merge({"name": "Palm stump" if p[2] == "palm" else "Tree stump", "color": "#a87d62",
+				"desc": "A stump, roots and all. Somewhere to sit outside."})
+		_:
+			return {}
+	var obj := World.nature_object(id)
+	if obj.is_empty():
+		return {}
+	def["placeable"] = {"footprint": [1, 1], "model": Models.key_for(obj), "nature": true, "rotatable": false}
+	items[id] = def
 	return def
 
 

@@ -23,6 +23,7 @@ extends Node3D
 ##   --demo=door        pitch the tent and stand outside its door
 ##   --demo=office      inside Poppy's office
 ##   --demo=terraform   a raised lawn with stairs and a slope, paths and a pond (--landscape=TOOL in hand)
+##   --demo=garden      the outdoor decorations laid out near the plaza (--only=id,id, --back)
 ##   --demo=felling     a tree just felled to a stump, and the Move tool carrying a rock (--carry=tree|bush|stump)
 ##   --demo=construct   a slope and a bridge built near the plaza (--bridge stands by the bridge)
 ##   --demo=shop        Lucy's shop has been built; stand in front of it (--demo=museum: Bramble's,
@@ -42,6 +43,7 @@ extends Node3D
 ##   --house            with --demo: the tent has already become a house (--big: the big house,
 ##                      --in=N: go into its room N with --demo=home, --paint=wall,roof,door hex colours)
 ##   --series=ID        with --demo or --demo=home: furniture from one series (--variant=ID)
+##   --give=ID,ID       put things in the pockets (repeat an id for more of it)
 ##   --ui=pockets|storage|landscape|pause|map|creator|crafting|recipes|customise|journal|exchange|critters|friends|neighbour|placing (--place=ID)|intro|ask|lucy|sleep|asleep|shop|sell (--sold: just sold one)|paint (--big)|fitting (--tab=N)  (--tab=N picks a creator tab, --try=key:id,... dresses up, --closet=TEXT opens the wardrobe with clothes whose ids contain TEXT)  open a menu or mode (for screenshots)
 
 const AUTOSAVE_SECONDS := 60.0
@@ -188,6 +190,9 @@ func _ready() -> void:
 
 	if Game.args.has("demo"):
 		await _run_demo()
+	# --give=id,id,...: things in the pockets first (for screenshots).
+	for id: String in String(Game.args.get("give", "")).split(",", false):
+		Inventory.add_item(id)
 	match Game.args.get("ui", ""):
 		"pockets":
 			for id in ["wood", "stone", "clay", "iron_nugget", "tree_branch", "wooden_chair", "campfire", "apple", "tulip_red", "tour_ticket", "shop_kit"]:
@@ -1265,6 +1270,55 @@ func _run_demo() -> void:
 			player.position.y = world.ground_height(player.position.x, player.position.z)
 			player.facing = Vector3(0, 0, -1)
 			player.set_landscaping(Game.args.get("landscape", "path:stone"))
+			camera_rig.snap()
+		return
+	if Game.args["demo"] == "garden":
+		# Outdoor decorations laid out on open ground near the plaza (--only=id,id for some).
+		var ids: Array[String] = []
+		for id: String in ItemDB.items:
+			if ItemDB.placeable(id).get("outdoor", false):
+				ids.append(id)
+		ids.sort()
+		if Game.args.has("only"):
+			ids.assign(String(Game.args["only"]).split(","))
+		var area := Rect2i()
+		var near := INF
+		for z in range(4, world.data.height - 14):
+			for x in range(4, world.data.width - 20):
+				var dist := Vector2(x, z).distance_to(Vector2(spawn))
+				if dist >= near or dist < 8.0:
+					continue
+				var ok := true
+				for dz in 12:
+					for dx in 18:
+						var q := Vector2i(x + dx, z + dz)
+						ok = ok and world.data.tile(q.x, q.y) == IslandData.Tile.GRASS and world.data.is_flat(q.x, q.y) \
+							and world.data.tier(q.x, q.y) == world.data.tier(x, z) and not world.data.plaza.grow(1).has_point(q) \
+							and world.object_at(q.x, q.y).get("kind", "tree") in World.NATURAL_KINDS + ["rock"]
+				if ok:
+					near = dist
+					area = Rect2i(x, z, 18, 12)
+		if area.size.x > 0:
+			for dz in area.size.y:
+				for dx in area.size.x:
+					var obj := world.object_at(area.position.x + dx, area.position.y + dz)
+					if not obj.is_empty():
+						world.remove_object(obj["uid"])
+			# Each piece in the first spot with a tile's gap round it, row by row.
+			var away := Vector3(-50, 0, -50)
+			for id in ids:
+				var size: Array = ItemDB.placeable(id)["footprint"]
+				var done := false
+				for z in range(area.position.y, area.end.y - int(size[1]) + 1):
+					for x in range(area.position.x, area.end.x - int(size[0]) + 1):
+						var rect := Rect2i(x, z, size[0], size[1])
+						if not done and world.can_place(rect.grow(1).intersection(area), away):
+							world.place_item(id, rect, 0)
+							done = true
+			# --back: stand in the middle to see the back rows.
+			player.position = Vector3(area.get_center().x, 0, area.get_center().y if Game.args.has("back") else area.end.y + 1.5)
+			player.position.y = world.ground_height(player.position.x, player.position.z)
+			player.facing = Vector3(0, 0, -1)
 			camera_rig.snap()
 		return
 	if Game.args["demo"] == "felling":

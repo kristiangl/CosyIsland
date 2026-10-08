@@ -289,17 +289,17 @@ static func fabric_material(spec: Array, icon: bool = false) -> ShaderMaterial:
 static func key_for(obj: Dictionary) -> String:
 	match obj["kind"]:
 		"tree":
-			return "tree:%d" % _pick(obj, TREES.size())
+			return "tree:%d" % pick(obj, TREES.size())
 		"fruit_tree":
-			return "fruit_tree:%d:%s:%d" % [_pick(obj, FRUIT_TREES.size()), obj["fruit"], obj.get("fruit_count", 0)]
+			return "fruit_tree:%d:%s:%d" % [pick(obj, FRUIT_TREES.size()), obj["fruit"], obj.get("fruit_count", 0)]
 		"palm":
 			return "palm:%d" % obj.get("variant", 0)
 		"rock":
-			return "rock:%d" % _pick(obj, ROCKS.size())
+			return "rock:%d" % pick(obj, ROCKS.size())
 		"bush":
-			return "bush:%d" % _pick(obj, BUSHES.size())
+			return "bush:%d" % pick(obj, BUSHES.size())
 		"stump":
-			return "stump:%s:%d" % ["palm" if obj.get("tree", "") == "palm" else "tree", _pick(obj, 3)]
+			return "stump:%s:%d" % ["palm" if obj.get("tree", "") == "palm" else "tree", pick(obj, 3)]
 		"flower":
 			return "flower:%s:%s%s" % [obj["species"], obj["color"], ":picked" if obj.get("picked", false) else ""]
 		"bridge":
@@ -325,8 +325,10 @@ static func _ramp(c: Color) -> Array:
 
 
 ## Which of `count` models a tree or rock uses: its saved variant mixed with its uid, so
-## neighbours differ.
-static func _pick(obj: Dictionary, count: int) -> int:
+## neighbours differ, or the "model" it keeps after a trip in the pockets.
+static func pick(obj: Dictionary, count: int) -> int:
+	if obj.has("model"):
+		return int(obj["model"]) % count
 	return (int(obj.get("uid", 0)) * 7 + int(obj.get("variant", 0))) % count
 
 

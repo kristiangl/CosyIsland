@@ -1,7 +1,8 @@
 class_name Shop
 extends RefCounted
-## The island's shops. Lucy's ("lucy"): a few things for sale each day (furniture,
-## wallpaper and flooring, and everyday clothes, chosen by the island and the day), and
+## The island's shops. Lucy's ("lucy"): a few things for sale each day (furniture, garden
+## and outdoor decorations, wallpaper and flooring, and everyday clothes, chosen by the
+## island and the day), and
 ## buying back anything with a price. Daisy and Morris's ("tailors"): designed clothes
 ## only, more of them, and they don't buy.
 ## Things sell to Lucy for their listed price and cost four times that to buy. Once her
@@ -14,6 +15,8 @@ const BUY_MARKUP := 4
 ## Always in stock, however many you buy.
 const STAPLES := ["flimsy_axe", "flimsy_pickaxe", "flimsy_shovel", "customisation_kit"]
 const FURNITURE_PER_DAY := 4
+## Garden and outdoor decorations ("outdoor" placeables), apart from the furniture.
+const OUTDOOR_PER_DAY := 2
 const INTERIORS_PER_DAY := 2
 const CLOTHES_PER_DAY := 3
 const PLANTS_PER_DAY := 2
@@ -69,6 +72,7 @@ static func stock(island_seed: int, day: int, native_flower: String = "", keeper
 	var rng := RandomNumberGenerator.new()
 	rng.seed = island_seed * 7919 + day + ({"lucy": 0, "tailors": 104729}.get(keeper, absi(hash(keeper)) % 1000003) as int)
 	var furniture: Array[String] = []
+	var outdoor: Array[String] = []
 	var interiors: Array[String] = []
 	var clothes: Array[String] = []
 	var plants: Array[String] = []
@@ -77,7 +81,9 @@ static func stock(island_seed: int, day: int, native_flower: String = "", keeper
 		var def := ItemDB.get_item(id)
 		match def.get("category", ""):
 			"furniture":
-				if id != "workbench" and not def.get("placeable", {}).get("structure", false):
+				if def.get("placeable", {}).get("outdoor", false):
+					outdoor.append(id)
+				elif id != "workbench" and not def.get("placeable", {}).get("structure", false):
 					furniture.append(id)
 			"interior":
 				interiors.append(id)
@@ -92,6 +98,7 @@ static func stock(island_seed: int, day: int, native_flower: String = "", keeper
 				if def.get("species", "") != native_flower and not ItemDB.is_rare_flower(def["species"], def["flower_color"]):
 					plants.append(id)
 	furniture.sort()
+	outdoor.sort()
 	interiors.sort()
 	clothes.sort()
 	plants.sort()
@@ -112,6 +119,7 @@ static func stock(island_seed: int, day: int, native_flower: String = "", keeper
 	umbrellas.sort()
 	out.append_array(_pick(rng, umbrellas, 1))
 	out.append_array(_pick(rng, furniture, FURNITURE_PER_DAY * more))
+	out.append_array(_pick(rng, outdoor, OUTDOOR_PER_DAY * more))
 	out.append_array(_pick(rng, interiors, INTERIORS_PER_DAY * more))
 	var everyday: Array[String] = []
 	for i in CLOTHES_PER_DAY * more * 4:

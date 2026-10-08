@@ -34,13 +34,13 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   (`-- --shadows`, checks the cel lighting maths).
 - Game screenshot options are listed at the top of `scripts/main.gd` (`--weather=rain`,
   `--season=autumn`, `--look` for the sky, `--demo`,
-  `--demo=decor|sit|home|door|shop|site|tailors|museum|dock|tour|orchard|neighbours|visitor|flowers|fishing|bugs|felling`
+  `--demo=decor|sit|home|door|shop|site|tailors|museum|dock|tour|orchard|neighbours|visitor|flowers|fishing|bugs|felling|garden`
 (`--island=orchard|meadow|quarry|buggy|fishy` with `--demo=tour`) (`--house` builds the house first, `--series=id` furnishes
   the home from one series; `--built` turns the museum tent into the museum, `--visit`
   goes inside the museum or a neighbour's home),
   `--ui=pockets|pause|map|creator|crafting|customise|placing|intro|ask|lucy|sleep|asleep|shop|sell|tailors` (`--place=id` picks what to place),
   `--tab=N` and `--try=key:id` for the creator, `--room=wallpaper,flooring`, `--gen=N`,
-  `--at=X,Z`, `--hour`).
+  `--at=X,Z`, `--hour`, `--give=id,id` to fill the pockets).
 
 ## Layout
 
@@ -139,7 +139,10 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   Trees: `World.chop_down` (`FELL_CHOPS` chops topple a tree into a "stump" object, which can
   be sat on) and `dig_out` (stumps, bushes, young trees). Move: `Events.lift_requested` ->
   `Placement.begin_move` carries a `World.MOVABLE_KINDS` object (it stays saved where it was
-  until set down: `move_spot` says why not, `move_object` moves it, `put_back` calls it off).
+  until set down: `move_spot` says why not, `move_object` moves it, `put_back` calls it off);
+  B pockets it instead (`World.pocket`): a "nature.<kind>..." item (`World.item_for`, made by
+  `ItemDB._make_nature`) that keeps its look through the object's "model" (`Models.pick`),
+  and is planted again from the pockets (`Placement._begin_planting`, `World.plant_item`).
   Cliffs and water: `World.terraform_plan` / `terraform` (rules in `_land_fits`), kept in
   `World.land_edits`, saved as "land" and laid on the generated island when it loads.
   Slopes: `slope_plan` (builds via `incline_plan`, which allows a slope beside a parallel
@@ -166,7 +169,11 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   `Models.get_mesh("kaykit:<name>")`; island trees, fruit trees, bushes and rocks use them.
   Series pieces with "kaykit" (comfy, kitchen, festive) are KayKit models repainted per
   variant by colour family (`Palette`, the variant's "paint"); they and the KayKit
-  decorations in `data/items.json` come from `tools/kaykit_catalogue.py`.
+  decorations in `data/items.json` come from `tools/kaykit_catalogue.py` (run it with the
+  unpacked KayKit folder, then import the new models). Its OUTDOOR list makes the garden
+  decorations (big rocks, fences, arches, lamps...): "outdoor" placeables that only go
+  outside, which Lucy stocks apart from the furniture (`Shop.OUTDOOR_PER_DAY`), some with
+  DIY recipes; "walk_through" ones (arches) are walked under. `--demo=garden` (`--back`).
 - Generated animal heads (`assets/characters/heads/<name>.res`, converted from glTFs in
   `assets/characters/src/` by `tools/head_import.gd -- --name=<name> [--from-body]`;
   prompts in `docs/CHARACTER_PROMPTS.md`) replace the procedural head, ears and muzzle on

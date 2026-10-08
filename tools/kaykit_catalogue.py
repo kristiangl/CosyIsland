@@ -19,26 +19,85 @@ PACKS = {
     "mixed": ("KayKit_Mixed_Bag_1_FREE/Assets/gltf/", 0.5),
     "halloween": ("KayKit_HalloweenBits_1.0_FREE/Assets/gltf/", 0.5),
     "hexagon": ("KayKit_Medieval_Hexagon_Pack_1.0_FREE/Assets/gltf/buildings/", 2.2),
+    "hexdeco": ("KayKit_Medieval_Hexagon_Pack_1.0_FREE/Assets/gltf/decoration/", 2.2),
+    "forest": ("KayKit_Forest_Nature_Pack_1.0_FREE/Assets/gltf/", 0.55),
+    "city": ("KayKit_City_Builder_Bits_1.0_FREE/Assets/gltf/", 2.6),
+    "platformer": ("KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/", 0.5),
+    "resource": ("KayKit_ResourceBits_1.0_FREE/Assets/gltf/", 0.5),
 }
 
+def _matrix(node):
+    """A glTF node's local transform as a 3x4 matrix (rows)."""
+    if "matrix" in node:
+        m = node["matrix"]
+        return [[m[0], m[4], m[8], m[12]], [m[1], m[5], m[9], m[13]], [m[2], m[6], m[10], m[14]]]
+    x, y, z, w = node.get("rotation", [0, 0, 0, 1])
+    sx, sy, sz = node.get("scale", [1, 1, 1])
+    tx, ty, tz = node.get("translation", [0, 0, 0])
+    r = [[1 - 2 * (y * y + z * z), 2 * (x * y - z * w), 2 * (x * z + y * w)],
+         [2 * (x * y + z * w), 1 - 2 * (x * x + z * z), 2 * (y * z - x * w)],
+         [2 * (x * z - y * w), 2 * (y * z + x * w), 1 - 2 * (x * x + y * y)]]
+    return [[r[i][0] * sx, r[i][1] * sy, r[i][2] * sz, t] for i, t in enumerate((tx, ty, tz))]
+
+
+def _mul(a, b):
+    return [[sum(a[i][k] * b[k][j] for k in range(3)) + (a[i][3] if j == 3 else 0) for j in range(4)] for i in range(3)]
+
+
 def bounds(pack, model):
+    """The model's size in game units at the pack's scale, with its node transforms."""
     path = SRC + PACKS[pack][0] + model + ".gltf"
     g = json.load(open(path))
+    parent = {}
+    for i, n in enumerate(g.get("nodes", [])):
+        for c in n.get("children", []):
+            parent[c] = i
     mn = [1e9] * 3; mx = [-1e9] * 3
-    for m in g["meshes"]:
-        for p in m["primitives"]:
+    for i, n in enumerate(g.get("nodes", [])):
+        if "mesh" not in n:
+            continue
+        m = _matrix(n)
+        at = parent.get(i)
+        while at is not None:
+            m = _mul(_matrix(g["nodes"][at]), m)
+            at = parent.get(at)
+        for p in g["meshes"][n["mesh"]]["primitives"]:
             a = g["accessors"][p["attributes"]["POSITION"]]
-            mn = [min(x, y) for x, y in zip(mn, a["min"])]
-            mx = [max(x, y) for x, y in zip(mx, a["max"])]
+            for cx in (a["min"][0], a["max"][0]):
+                for cy in (a["min"][1], a["max"][1]):
+                    for cz in (a["min"][2], a["max"][2]):
+                        v = [m[r][0] * cx + m[r][1] * cy + m[r][2] * cz + m[r][3] for r in range(3)]
+                        mn = [min(q, w) for q, w in zip(mn, v)]
+                        mx = [max(q, w) for q, w in zip(mx, v)]
     s = PACKS[pack][1]
     return [(mx[i] - mn[i]) * s for i in range(3)]
 
 models = {}
 
-def model(pack, name, scale=None):
+def model(pack, name, scale=None, look=None):
     key = "%s_%s" % (pack, os.path.basename(name).lower())
     models[key] = {"src": PACKS[pack][0] + name + ".gltf", "scale": scale or PACKS[pack][1]}
+    if look and "fit" in look:
+        # Nature pieces fit a size instead, and take the island's own greens and greys.
+        del models[key]["scale"]
+    models[key].update(look or {})
     return key
+
+
+def raw_size(pack, name):
+    return [x / PACKS[pack][1] for x in bounds(pack, name)]
+
+
+def fitted(pack, name, scale=None, fit=None, turn=0):
+    """The size a model ends up in game units (scaled, or fitted inside [width, height])."""
+    raw = raw_size(pack, name)
+    if fit:
+        k = min(fit[0] / max(raw[0], raw[2]), fit[1] / raw[1])
+    else:
+        k = scale or PACKS[pack][1]
+    if abs(int(turn)) % 180 == 90:
+        raw = [raw[2], raw[1], raw[0]]
+    return [x * k for x in raw]
 
 def footprint(size):
     return [max(1, math.ceil(size[0] - 0.3)), max(1, math.ceil(size[2] - 0.3))]
@@ -201,6 +260,86 @@ PLAIN = [
     ("photo_frame", "Photo Frame", "furniture", "pictureframe_standing_A", 260, "A favourite memory.", {"small": True}),
 ]
 
+# --- Outdoor decorations -------------------------------------------------------------
+# Placed like furniture but only outside ("outdoor"), and stocked by Lucy apart from the
+# indoor things. Extra keys: scale or fit (with the "nature" palette for rocks and
+# plants), footprint, recipe (materials; learned from bottles), and anything for the
+# placeable (light, seat, effects, walk_through).
+
+NATURE = {"palette": "nature", "sway": "none"}
+LEAFY = {"palette": "nature", "sway": "foliage", "smooth": True}
+
+OUTDOOR = [
+    # Big rocks.
+    ("big_boulder", "Big Boulder", "forest", "Rock_1_K_Color1", 1800, "A great round boulder. Nobody knows how it got here.", {"fit": [1.9, 1.9], "look": NATURE, "recipe": {"stone": 20}}),
+    ("boulder", "Boulder", "forest", "Rock_1_G_Color1", 600, "A nice round rock to lean on.", {"fit": [0.95, 1.0], "look": NATURE, "recipe": {"stone": 8}}),
+    ("standing_stone", "Standing Stone", "forest", "Rock_1_N_Color1", 1400, "Tall, old and a little mysterious.", {"fit": [1.0, 2.1], "look": NATURE, "recipe": {"stone": 12}}),
+    ("rocky_outcrop", "Rocky Outcrop", "forest", "Rock_3_M_Color1", 2200, "Layers of rock stacked like a cake.", {"fit": [1.9, 2.0], "look": NATURE, "recipe": {"stone": 18}}),
+    ("great_crag", "Great Crag", "forest", "Rock_3_Q_Color1", 3600, "A whole cliff's worth of rock, in one lump.", {"fit": [2.9, 2.4], "look": NATURE, "recipe": {"stone": 30}}),
+    ("rock_cluster", "Rock Cluster", "forest", "Rock_3_K_Color1", 1200, "A huddle of rocks.", {"fit": [1.8, 1.4], "look": NATURE, "recipe": {"stone": 10}}),
+    ("boulder_pile", "Boulder Pile", "forest", "Rock_2_E_Color1", 1600, "Round rocks piled up high.", {"fit": [1.9, 1.7], "look": NATURE, "recipe": {"stone": 14}}),
+    ("tumbled_rocks", "Tumbled Rocks", "forest", "Rock_2_H_Color1", 1600, "Rocks that rolled down a hill and stopped here.", {"fit": [1.9, 1.4], "look": NATURE}),
+    ("pebbles", "Pebbles", "forest", "Rock_1_C_Color1", 120, "A few smooth pebbles.", {"fit": [0.55, 0.45], "look": NATURE, "recipe": {"stone": 2}}),
+    # Plants.
+    ("bare_tree", "Bare Tree", "forest", "Tree_Bare_1_A_Color1", 900, "No leaves, all character.", {"fit": [1.0, 2.6], "look": NATURE}),
+    ("twisted_tree", "Twisted Tree", "forest", "Tree_Bare_2_A_Color1", 900, "It grew this way on purpose.", {"fit": [1.0, 2.8], "look": NATURE}),
+    ("round_shrub", "Round Shrub", "forest", "Bush_1_E_Color1", 300, "A neat, round little shrub.", {"fit": [0.95, 0.6], "look": LEAFY}),
+    ("spreading_shrub", "Spreading Shrub", "forest", "Bush_3_C_Color1", 400, "Low and leafy.", {"fit": [1.4, 0.65], "look": LEAFY}),
+    # Rustic odds and ends.
+    ("rain_barrel", "Rain Barrel", "hexdeco", "props/barrel", 300, "Good for keeping rain water. Or apples.", {"recipe": {"wood": 4}}),
+    ("canvas_canopy", "Canvas Canopy", "hexdeco", "props/tent", 1500, "A canvas roof on four poles, for shade or a market day.", {"scale": 3.0}),
+    ("log_pile", "Log Pile", "hexdeco", "props/resource_lumber", 500, "Neatly stacked, ready for winter.", {"recipe": {"wood": 6}}),
+    ("stone_pile", "Stone Pile", "hexdeco", "props/resource_stone", 400, "Rocks, sorted.", {"recipe": {"stone": 6}}),
+    ("archery_target", "Archery Target", "hexdeco", "props/target", 600, "Bullseye!", {"scale": 3.0, "recipe": {"wood": 4, "clay": 2}}),
+    ("wooden_crate", "Wooden Crate", "hexdeco", "props/crate_A_big", 250, "A crate for whatever needs crating.", {"recipe": {"wood": 3}}),
+    ("open_crate", "Open Crate", "hexdeco", "props/crate_open", 250, "Something's rustling about in there.", {}),
+    ("water_bucket", "Bucket of Water", "hexdeco", "props/bucket_water", 180, "Full to the brim.", {"small": True}),
+    ("flour_sack", "Sack of Flour", "hexdeco", "props/sack", 150, "For bread, cakes and the odd mess.", {"scale": 3.0, "small": True}),
+    ("rail_fence", "Rail Fence", "hexagon", "neutral/fence_wood_straight", 400, "A post-and-rail fence, two tiles long.", {"look": {"turn": 90}, "scale": 1.75, "recipe": {"wood": 4}}),
+    ("wooden_gate", "Wooden Gate", "hexagon", "neutral/fence_wood_straight_gate", 500, "A fence with a gate in it.", {"look": {"turn": 90}, "scale": 1.75, "recipe": {"wood": 5}}),
+    ("stone_wall", "Low Stone Wall", "hexagon", "neutral/fence_stone_straight", 500, "A tumbledown wall of field stones.", {"look": {"turn": 90}, "scale": 1.75, "recipe": {"stone": 6}}),
+    ("wooden_stage", "Wooden Stage", "hexagon", "neutral/building_stage_A", 3000, "For concerts, speeches and dancing.", {"recipe": {"wood": 15}}),
+    ("plank_stack", "Plank Stack", "resource", "Wood_Planks_Stack_Large", 500, "Planks for the next big project.", {"recipe": {"wood": 6}}),
+    ("brick_stack", "Brick Stack", "resource", "Stone_Bricks_Stack_Large", 500, "Bricks, stacked and strapped.", {"recipe": {"stone": 4, "clay": 4}}),
+    ("rubble", "Rubble", "resource", "Stone_Chunks_Large", 300, "Broken stone, piled up.", {}),
+    ("fabric_bolts", "Bolts of Fabric", "resource", "Textiles_Stack_Large_Colored", 600, "Rolls of colourful cloth.", {}),
+    # Town things.
+    ("park_bench", "Park Bench", "city", "bench", 700, "A bench for watching the world go by.", {"seat": 0.3}),
+    ("street_lamp", "Street Lamp", "city", "streetlight", 1200, "Lights the way home.", {"light": True}),
+    ("fire_hydrant", "Fire Hydrant", "city", "firehydrant", 400, "Bright red, just in case.", {}),
+    ("cardboard_box", "Cardboard Box", "city", "box_A", 120, "Empty. Or is it?", {}),
+    ("planter_shrub", "Planter Shrub", "city", "bush", 350, "A neat shrub in a box.", {}),
+    ("water_tower", "Water Tower", "city", "watertower", 2500, "Holds enough water for everyone.", {}),
+    # Bright and playful.
+    ("garden_arch_blue", "Garden Arch (Blue)", "platformer", "blue/arch_blue", 900, "An arch to walk under.", {"walk_through": True}),
+    ("garden_arch_red", "Garden Arch (Red)", "platformer", "red/arch_red", 900, "An arch to walk under.", {"walk_through": True}),
+    ("garden_arch_green", "Garden Arch (Green)", "platformer", "green/arch_green", 900, "An arch to walk under.", {"walk_through": True}),
+    ("garden_arch_yellow", "Garden Arch (Yellow)", "platformer", "yellow/arch_yellow", 900, "An arch to walk under.", {"walk_through": True}),
+    ("pennant_red", "Pennant (Red)", "hexdeco", "props/flag_red", 300, "Flutters in the breeze.", {"scale": 4.0}),
+    ("pennant_blue", "Pennant (Blue)", "hexdeco", "props/flag_blue", 300, "Flutters in the breeze.", {"scale": 4.0}),
+    ("pennant_green", "Pennant (Green)", "hexdeco", "props/flag_green", 300, "Flutters in the breeze.", {"scale": 4.0}),
+    ("pennant_yellow", "Pennant (Yellow)", "hexdeco", "props/flag_yellow", 300, "Flutters in the breeze.", {"scale": 4.0}),
+    ("arrow_sign", "Arrow Sign", "platformer", "yellow/signage_arrow_stand_yellow", 350, "This way!", {}),
+    ("beach_ball", "Beach Ball", "platformer", "red/ball_red", 300, "Red and white and bouncy.", {"scale": 0.3}),
+    ("star_ornament", "Star Ornament", "platformer", "yellow/star_yellow", 500, "A big golden star for the garden.", {}),
+    ("heart_ornament", "Heart Ornament", "platformer", "red/heart_red", 500, "A big red heart.", {}),
+    ("gem_ornament", "Gem Ornament", "platformer", "blue/diamond_blue", 500, "A big blue gem, polished to a shine.", {}),
+    # Spooky and festive.
+    ("iron_fence", "Iron Railings", "halloween", "fence", 600, "Black iron railings, two tiles long.", {"recipe": {"iron_nugget": 3}}),
+    ("iron_gate", "Iron Gate", "halloween", "fence_gate", 800, "Creaks just the right amount.", {"recipe": {"iron_nugget": 4}}),
+    ("fence_post", "Fence Post", "halloween", "fence_pillar", 250, "A stone post with a cap.", {}),
+    ("lantern_post", "Lantern Post", "halloween", "post_lantern", 1400, "A crooked post with a lantern hanging off it.", {"light": True}),
+    ("gravestone", "Gravestone", "halloween", "gravestone", 600, "Here lies... someone's old sock?", {}),
+    ("spooky_tree", "Spooky Tree", "halloween", "tree_dead_large", 1200, "Its branches look like fingers.", {}),
+    ("little_shrine", "Little Shrine", "halloween", "shrine_candles", 1600, "A quiet little shrine with candles.", {"light": True}),
+    ("iron_archway", "Iron Archway", "halloween", "arch_gate", 1800, "A grand gateway to walk through.", {"walk_through": True}),
+    ("gingerbread_house", "Gingerbread House", "holiday", "gingerbread_house_decorated", 1200, "Don't eat the roof.", {"scale": 1.1}),
+    ("candy_cane", "Candy Cane", "holiday", "candycane_small", 250, "A giant stripy candy cane.", {"scale": 1.5}),
+    # Seaside.
+    ("circus_tent", "Circus Tent", "mixed", "circus_tent", 6000, "Roll up, roll up!", {"scale": 0.9}),
+]
+
+
 def colour_of(pack, name):
     # A representative colour for icons and menus: the model's commonest texture colour.
     import struct
@@ -252,6 +391,30 @@ def main():
         placeable.update(extra)
         data["items"][id] = {"name": name, "category": "furniture", "stack": 1, "price": price,
                              "color": colour_of(pack, src), "desc": desc, "placeable": placeable}
+    recipes_path = REPO + "data/recipes.json"
+    recipes = json.load(open(recipes_path))
+    for id, name, pack, src, price, desc, extra in OUTDOOR:
+        if data["items"].get(id, {}).get("placeable", {}).get("outdoor", False):
+            del data["items"][id]
+        recipes["recipes"].pop(id, None)
+    for id, name, pack, src, price, desc, extra in OUTDOOR:
+        if id in data["items"]:
+            sys.exit("%s is already an item" % id)
+        extra = dict(extra)
+        scale, fit, look = extra.pop("scale", None), extra.pop("fit", None), dict(extra.pop("look", {}))
+        recipe = extra.pop("recipe", None)
+        if fit:
+            look["fit"] = fit
+        key = model(pack, src, scale, look)
+        size = fitted(pack, src, scale, fit, look.get("turn", 0))
+        placeable = {"footprint": extra.pop("footprint", footprint(size)), "model": "kaykit:" + key, "rotatable": True, "outdoor": True}
+        placeable.update(extra)
+        data["items"][id] = {"name": name, "category": "furniture", "stack": 1, "price": price,
+                             "color": colour_of(pack, src), "desc": desc, "placeable": placeable}
+        if recipe:
+            recipes["recipes"][id] = {"materials": recipe}
+    with open(recipes_path, "w") as f:
+        f.write(json.dumps(recipes, indent="\t", ensure_ascii=False) + "\n")
     data["items"]["festive_tree"] = {"name": "Festive Tree", "category": "furniture", "stack": 1, "price": 2400,
         "color": "#57a874", "desc": "Baubles, a star, and a twinkle at night.",
         "placeable": {"footprint": [1, 1], "model": "festive_tree", "rotatable": True, "light": True}}
@@ -261,6 +424,6 @@ def main():
     kk["models"].update(models)
     with open(REPO + "tools/kaykit.json", "w") as f:
         json.dump(kk, f, indent="\t")
-    print(len(models), "models;", sum(len(s["pieces"]) for s in (COMFY, KITCHEN, FESTIVE)), "series pieces;", len(PLAIN), "decorations")
+    print(len(models), "models;", sum(len(s["pieces"]) for s in (COMFY, KITCHEN, FESTIVE)), "series pieces;", len(PLAIN), "decorations;", len(OUTDOOR), "outdoor")
 
 main()

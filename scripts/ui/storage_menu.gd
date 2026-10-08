@@ -173,7 +173,7 @@ static func group_of(id: String) -> String:
 			return "furniture"
 		"clothing":
 			return "clothing"
-		"fruit", "flower", "flower_plant", "fish", "bug", "material":
+		"fruit", "flower", "flower_plant", "fish", "bug", "material", "nature":
 			return "nature"
 		"tool":
 			return "tool"

@@ -318,6 +318,113 @@
 				"sturdy_net": 1,
 				"gold_nugget": 1
 			}
+		},
+		"big_boulder": {
+			"materials": {
+				"stone": 20
+			}
+		},
+		"boulder": {
+			"materials": {
+				"stone": 8
+			}
+		},
+		"standing_stone": {
+			"materials": {
+				"stone": 12
+			}
+		},
+		"rocky_outcrop": {
+			"materials": {
+				"stone": 18
+			}
+		},
+		"great_crag": {
+			"materials": {
+				"stone": 30
+			}
+		},
+		"rock_cluster": {
+			"materials": {
+				"stone": 10
+			}
+		},
+		"boulder_pile": {
+			"materials": {
+				"stone": 14
+			}
+		},
+		"pebbles": {
+			"materials": {
+				"stone": 2
+			}
+		},
+		"rain_barrel": {
+			"materials": {
+				"wood": 4
+			}
+		},
+		"log_pile": {
+			"materials": {
+				"wood": 6
+			}
+		},
+		"stone_pile": {
+			"materials": {
+				"stone": 6
+			}
+		},
+		"archery_target": {
+			"materials": {
+				"wood": 4,
+				"clay": 2
+			}
+		},
+		"wooden_crate": {
+			"materials": {
+				"wood": 3
+			}
+		},
+		"rail_fence": {
+			"materials": {
+				"wood": 4
+			}
+		},
+		"wooden_gate": {
+			"materials": {
+				"wood": 5
+			}
+		},
+		"stone_wall": {
+			"materials": {
+				"stone": 6
+			}
+		},
+		"wooden_stage": {
+			"materials": {
+				"wood": 15
+			}
+		},
+		"plank_stack": {
+			"materials": {
+				"wood": 6
+			}
+		},
+		"brick_stack": {
+			"materials": {
+				"stone": 4,
+				"clay": 4
+			}
+		},
+		"iron_fence": {
+			"materials": {
+				"iron_nugget": 3
+			}
+		},
+		"iron_gate": {
+			"materials": {
+				"iron_nugget": 4
+			}
 		}
 	}
 }

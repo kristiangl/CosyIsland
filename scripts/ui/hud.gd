@@ -331,7 +331,7 @@ func _fill_landscape_hints() -> void:
 	var what: String = Game.player.landscaping if Game.player else ""
 	if Game.mode == Game.Mode.PLACING:
 		# Carrying something with the Move tool.
-		_landscape_hints.text = Prompts.fill("{use} set it down here   {cancel} put it back")
+		_landscape_hints.text = Prompts.fill("{use} set it down here   {cancel} put it in your pockets")
 		return
 	var use: String = LANDSCAPE_USES.get(what.get_slice(":", 0), "landscape")
 	_landscape_hints.text = Prompts.fill("{use} %s   {tools} change tool   {pause} phone (to put away)" % use)

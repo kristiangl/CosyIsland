@@ -253,7 +253,13 @@ Milestone 3b:
   or furniture it held) and digs up stumps, bushes and young trees (their fruit comes back);
   the Move tool digs up a tree, bush, rock or stump and carries it to a new spot (open grass,
   or sand for palms and rocks, with room round trees). A grassy border goes round the screen
-  while a landscaping tool is out.
+  while a landscaping tool is out. B while carrying puts it in your pockets instead, looking
+  just as it did, to plant again anywhere outside.
+- [x] Outdoor decorations: 60 garden pieces from the KayKit packs (big boulders, standing
+  stones and crags, bare trees and shrubs, fences, walls and gates, arches to walk under,
+  lamp posts, benches, pennants, log and stone piles, a stage, a circus tent, spooky and
+  festive bits). Lucy has two a day (four once her shop's built), and the rustic ones can
+  be made at the workbench once the recipe turns up in a bottle.
 - [x] Home storage: put things away from the pockets while at home (or at a dresser,
   wardrobe or toy box there), sorted by kind, 400 stacks.
 - [x] Weather and seasons: a forecast for every day (sunny, cloudy, showers, rain, storms with

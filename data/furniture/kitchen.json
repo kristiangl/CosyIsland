@@ -12,7 +12,7 @@
 	"pieces": [
 		{"id": "kitchen_fridge", "name": "Kitchen Fridge", "kind": "fridge", "kaykit": "restaurant_fridge_a", "footprint": [1, 1], "price": 1600, "desc": "A big round-shouldered fridge."},
 		{"id": "kitchen_stove", "name": "Kitchen Stove", "kind": "stove", "kaykit": "restaurant_stove_single", "footprint": [1, 1], "price": 1400, "desc": "Four rings and an oven underneath.", "surface": 0.6},
-		{"id": "kitchen_oven", "name": "Kitchen Oven", "kind": "oven", "kaykit": "restaurant_oven", "footprint": [1, 1], "price": 1200, "desc": "For bread, pies and the odd cake.", "surface": 1.02},
+		{"id": "kitchen_oven", "name": "Kitchen Oven", "kind": "oven", "kaykit": "restaurant_oven", "footprint": [1, 1], "price": 1200, "desc": "For bread, pies and the odd cake.", "surface": 1.01},
 		{"id": "kitchen_counter", "name": "Kitchen Counter", "kind": "counter", "kaykit": "restaurant_kitchencounter_straight_a", "footprint": [1, 1], "price": 700, "desc": "A tiled worktop with cupboards below.", "surface": 0.5},
 		{"id": "kitchen_sink", "name": "Kitchen Sink", "kind": "sink", "kaykit": "restaurant_kitchencounter_sink", "footprint": [1, 1], "price": 900, "desc": "A deep sink and a shiny tap."},
 		{"id": "kitchen_cupboard", "name": "Kitchen Cupboard", "kind": "cupboard", "kaykit": "restaurant_kitchencabinet_half", "footprint": [1, 1], "price": 640, "desc": "Plates in here, biscuits up top.", "surface": 0.5},

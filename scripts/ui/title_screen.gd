@@ -1,20 +1,24 @@
 class_name TitleScreen
 extends Control
 ## The title screen: a short splash, then the main menu. Continue goes back into the
-## file played last; each of the three files can be played, started over or deleted
-## (asking first); an empty file starts a new island. Runs started from the command line
+## file played last; each of the three files can be played, or (under its File options)
+## started over or deleted, asking twice first; an empty file starts a new island. Runs
+## started from the command line
 ## with game options (--new, --slot, --seed, --demo, --screenshot...) skip straight into
 ## the game, so the tools keep working.
 ##
 ##   --title            show the title screen anyway (with --screenshot: the menu)
 ##   --title=splash     the splash, for a screenshot (--title=island: the live 3D island
 ##                      the backdrop picture is rendered from)
-##   --title=file       the actions for file 1 (--title=confirm: asking before deleting)
+##   --title=file       the actions for file 1 (--title=options: its file options,
+##                      --title=confirm and --title=sure: asking before deleting)
 
 const GAME_SCENE := "res://scenes/main.tscn"
 ## Options that mean "go straight into the game".
 const DIRECT := ["new", "slot", "seed", "demo", "screenshot", "ui", "at", "view"]
 const SPLASH_TIME := 2.2
+## Buttons for things that can't be undone.
+const DANGER := Color("c4554a")
 ## Rendered from TitleBackdrop: --title=island --screenshot=... at 1920x1080 (see CLAUDE.md).
 const BACKDROP := "res://assets/title/backdrop.jpg"
 
@@ -76,10 +80,16 @@ func _ready() -> void:
 		backdrop.build({})
 	else:
 		_show_menu()
-		if title_arg in ["file", "confirm"] and SaveGame.has_save(1):
-			_file_actions(1)
-			if title_arg == "confirm":
-				_confirm_delete(1, false)
+		if title_arg in ["file", "options", "confirm", "sure"] and SaveGame.has_save(1):
+			match title_arg:
+				"file":
+					_file_actions(1)
+				"options":
+					_file_options(1)
+				"confirm":
+					_confirm_delete(1, false)
+				"sure":
+					_really_delete(1, false)
 	if Game.args.has("screenshot"):
 		Game.screenshot(Game.args["screenshot"], int(Game.args.get("frames", "30")))
 
@@ -279,6 +289,10 @@ func _open_popup(heading: String, note: String, options: Array) -> void:
 		b.text = opt[0]
 		b.custom_minimum_size = Vector2(0, 46)
 		b.pressed.connect(opt[1])
+		if opt.size() > 2 and opt[2] == "danger":
+			# Things that can't be undone are in red.
+			for state in ["font_color", "font_hover_color", "font_focus_color", "font_pressed_color"]:
+				b.add_theme_color_override(state, DANGER)
 		_popup_box.add_child(b)
 		if first == null:
 			first = b
@@ -308,24 +322,42 @@ func _file_actions(n: int) -> void:
 	var s := SaveGame.summary(n)
 	_open_popup("File %d: %s Island" % [n, _island_of(s)], FileCard.details(s), [
 		["Play", func(): _start_game(n, false)],
-		["Start over", func(): _confirm_delete(n, true)],
-		["Delete", func(): _confirm_delete(n, false)],
+		["File options", func(): _file_options(n)],
 		["Back", _close_popup],
 	])
 
 
+## Starting over and deleting, tucked away from Play so they're not pressed by accident.
+func _file_options(n: int) -> void:
+	var s := SaveGame.summary(n)
+	_open_popup("File %d options" % n, "%s Island" % _island_of(s), [
+		["Back", func(): _file_actions(n)],
+		["Start over", func(): _confirm_delete(n, true), "danger"],
+		["Delete this file", func(): _confirm_delete(n, false), "danger"],
+	])
+
+
+## Asks once...
 func _confirm_delete(n: int, then_new: bool) -> void:
 	var s := SaveGame.summary(n)
 	var who: String = s.get("player_name", "")
 	_open_popup("Start over?" if then_new else "Delete this file?",
 		"%s Island%s will be gone for good." % [_island_of(s), (" and everything %s has made" % who) if who != "" else ""], [
-		["Keep it", func(): _file_actions(n)],
-		["Start a new island" if then_new else "Delete it", func():
+		["Keep it", func(): _file_options(n)],
+		["Start a new island" if then_new else "Delete it", func(): _really_delete(n, then_new), "danger"],
+	])
+
+
+## ...and once more, just to be sure.
+func _really_delete(n: int, then_new: bool) -> void:
+	_open_popup("Are you really sure?", "There's no getting it back afterwards.", [
+		["No, keep it", func(): _file_options(n)],
+		["Yes, start over" if then_new else "Yes, delete it", func():
 			SaveGame.delete(n)
 			if then_new:
 				_start_game(n, true)
 			else:
-				_close_popup()],
+				_close_popup(), "danger"],
 	])
 
 

@@ -23,6 +23,7 @@ extends Node3D
 ##   --demo=door        pitch the tent and stand outside its door
 ##   --demo=office      inside Poppy's office
 ##   --demo=terraform   a raised lawn with stairs and a slope, paths and a pond (--landscape=TOOL in hand)
+##   --demo=felling     a tree just felled to a stump, and the Move tool carrying a rock (--carry=tree|bush|stump)
 ##   --demo=construct   a slope and a bridge built near the plaza (--bridge stands by the bridge)
 ##   --demo=shop        Lucy's shop has been built; stand in front of it (--demo=museum: Bramble's,
 ##                      --demo=tailors: Daisy and Morris's, --visit to go in;
@@ -152,6 +153,7 @@ func _ready() -> void:
 
 	hud = Hud.new()
 	hud.place_requested.connect(placement.begin)
+	Events.lift_requested.connect(placement.begin_move)
 	hud.save_requested.connect(save_game)
 	hud.quit_requested.connect(func():
 		save_game()
@@ -1031,6 +1033,7 @@ func _switch_world(to: World) -> void:
 	world.visible = to == world
 	world.process_mode = Node.PROCESS_MODE_INHERIT if to == world else Node.PROCESS_MODE_DISABLED
 	Game.world = to
+	placement.put_back()
 	if to != world and player.landscaping != "":
 		player.set_landscaping("")
 	player.world = to
@@ -1263,6 +1266,34 @@ func _run_demo() -> void:
 			player.facing = Vector3(0, 0, -1)
 			player.set_landscaping(Game.args.get("landscape", "path:stone"))
 			camera_rig.snap()
+		return
+	if Game.args["demo"] == "felling":
+		# The landscaping Trees tool has just felled the tree nearest the plaza (a stump and
+		# its wood are left), and the Move tool is carrying a rock (--carry=tree|bush|stump:
+		# something else) somewhere new.
+		Story.flags["landscaping"] = true
+		var trees := world.objects().filter(func(o): return o["kind"] == "tree")
+		var from_spawn := func(o: Dictionary) -> float: return Vector2(o["x"], o["z"]).distance_to(Vector2(spawn))
+		trees.sort_custom(func(a, b): return from_spawn.call(a) < from_spawn.call(b))
+		for tree: Dictionary in trees:
+			var stand := Vector2i(tree["x"], tree["z"] + 2)
+			if not world.is_walkable(stand.x + 0.5, stand.y + 0.5) or not world.object_at(stand.x, stand.y).is_empty() \
+					or world.data.plaza.grow(1).has_point(stand):
+				continue
+			player.position = Vector3(stand.x + 0.5, world.ground_height(stand.x + 0.5, stand.y + 0.5), stand.y + 0.5)
+			player.facing = Vector3(0, 0, -1)
+			for i in World.FELL_CHOPS:
+				world.chop_down(tree, player.position)
+			break
+		player.set_landscaping("move")
+		var carry: String = Game.args.get("carry", "rock")
+		var things := world.objects().filter(func(o): return o["kind"] == carry)
+		var near_player := func(o: Dictionary) -> float: return Vector2(o["x"] + 0.5, o["z"] + 0.5).distance_to(Vector2(player.position.x, player.position.z))
+		things.sort_custom(func(a, b): return near_player.call(a) < near_player.call(b))
+		if not things.is_empty():
+			player.facing = Vector3(1, 0, 0)
+			placement.begin_move(things[0])
+		camera_rig.snap()
 		return
 	if Game.args["demo"] == "orchard":
 		# Fruit planted over the last few days, one tree at each stage of growing.

@@ -200,8 +200,9 @@ Milestone 3b:
   screen while you're on one
 - [x] SOS on the phone: fetches you back to open ground by the plaza (by Marlow's boat on
   a tour, the doormat indoors) if you ever get stuck
-- [x] Title screen: a splash, then Continue and three save files (play, start over or
-  delete, asking first); the phone's Title screen app saves and goes back to it
+- [x] Title screen: a splash, then Continue and three save files (play, or start over and
+  delete under File options, asking twice); the phone's Title screen app saves and goes
+  back to it
 - [x] Visitors from tours: someone you met camping on a tour sometimes spends a day by
   your plaza, brings a souvenir (fruit or a flower you don't grow) and can be asked to
   stay if a plot is free
@@ -247,6 +248,12 @@ Milestone 3b:
   nothing changes against the beach, slopes, bridges or the plaza. Slopes laid side by side
   make a wider one, and any slope (the island's own too) can be taken away; a stone, brick, wooden or terracotta path on a slope turns it into
   stairs, while sand and dirt stay slopes. Paths round off their outer corners.
+- [x] Trees and rocks in the Landscaping app: the Trees tool chops a tree down in three
+  chops (it topples away from you, leaving a stump you can sit on, its wood, and any fruit
+  or furniture it held) and digs up stumps, bushes and young trees (their fruit comes back);
+  the Move tool digs up a tree, bush, rock or stump and carries it to a new spot (open grass,
+  or sand for palms and rocks, with room round trees). A grassy border goes round the screen
+  while a landscaping tool is out.
 - [x] Home storage: put things away from the pockets while at home (or at a dresser,
   wardrobe or toy box there), sorted by kind, 400 stacks.
 - [x] Weather and seasons: a forecast for every day (sunny, cloudy, showers, rain, storms with

@@ -495,6 +495,16 @@ func scare(b: Dictionary, away: Vector2) -> void:
 	b["away"] = dir * 3.0 + Vector3(0, 1.6, 0)
 
 
+## Something shook the spot where bugs sit (a tree felled or dug up, a rock lifted): any
+## close by fly off.
+func disturb(at: Vector3, radius: float = 1.0) -> void:
+	for b in bugs:
+		var home: Vector3 = b["home"]
+		var away := Vector2(home.x - at.x, home.z - at.z)
+		if b["state"] != "flee" and away.length() < radius:
+			scare(b, away if away.length() > 0.01 else Vector2(0, 1))
+
+
 func _remove_bug(b: Dictionary) -> void:
 	b["node"].queue_free()
 	bugs.erase(b)

@@ -13,6 +13,8 @@ signal mode_changed(mode: int)
 signal storage_opened
 ## A landscaping tool was taken out of the phone's app, swapped, or put away ("").
 signal landscaping_changed(tool: String)
+## The landscaping Move tool has lifted something (an island object) to carry elsewhere.
+signal lift_requested(obj: Dictionary)
 signal workbench_opened
 ## Furniture or a building was placed or packed away.
 signal placed_changed

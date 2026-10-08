@@ -42,6 +42,7 @@ var _first_option: Button
 var _landscape_app: Button
 var _landscape_buttons: Array[Button] = []
 var _put_away: Button
+var _tool_info: Label
 
 
 func _ready() -> void:
@@ -229,29 +230,65 @@ func _build_controls() -> Control:
 	return box
 
 
-## The landscaping tools: pick one to take it out, or put them away.
+## The landscaping tools: pick one to take it out, or put them away. The tools for
+## shaping the land and its trees sit in a row of tiles, the paths in a row of swatches
+## under them, and a line at the bottom says what the one picked out does.
 func _build_landscape() -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 6)
 	box.add_child(_page_title("Landscaping"))
-	var grid := GridContainer.new()
-	grid.columns = 2
-	grid.add_theme_constant_override("h_separation", 6)
-	grid.add_theme_constant_override("v_separation", 6)
-	box.add_child(grid)
+	box.add_child(_small_heading("The land and its trees"))
+	var tools := HBoxContainer.new()
+	tools.add_theme_constant_override("separation", 4)
+	box.add_child(tools)
+	box.add_child(_small_heading("Paths"))
+	var swatches := HBoxContainer.new()
+	swatches.add_theme_constant_override("separation", 6)
+	box.add_child(swatches)
 	for what: String in Player.LANDSCAPE_TOOLS:
-		var b := Button.new()
-		b.text = Player.landscape_name(what)
-		b.add_theme_font_size_override("font_size", 15)
-		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var b := ToolTile.new(what)
 		b.pressed.connect(_open_app.bind("landscape:" + what))
-		grid.add_child(b)
+		b.focus_entered.connect(_describe_tool.bind(what))
+		(swatches if what.begins_with("path:") else tools).add_child(b)
 		_landscape_buttons.append(b)
+	_tool_info = Label.new()
+	_tool_info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_tool_info.custom_minimum_size = Vector2(0, 66)
+	_tool_info.add_theme_font_size_override("font_size", 15)
+	_tool_info.add_theme_color_override("font_color", UIStyle.BROWN_LIGHT)
+	box.add_child(_tool_info)
 	_put_away = Button.new()
 	_put_away.text = "Put the tools away"
 	_put_away.pressed.connect(_open_app.bind("landscape:"))
 	box.add_child(_put_away)
 	return box
+
+
+## What each landscaping tool does, for the line under the tools.
+const TOOL_INFO := {
+	"cliff": "Build the ground up a level, or dig a cliff back down.",
+	"water": "Dig out a river or a pond, or fill water back in.",
+	"slope": "Lay a slope up a cliff, or take one away.",
+	"trees": "Chop trees down (three chops leave a stump), and dig up stumps, bushes and young trees.",
+	"move": "Dig up a tree, bush, rock or stump and set it down somewhere else.",
+}
+
+
+func _describe_tool(what: String) -> void:
+	var name := Player.landscape_name(what)
+	var info: String = TOOL_INFO.get(what, "")
+	if what.begins_with("path:"):
+		info = "Lay it on grassy ground, or again to lift it." \
+			+ (" On a slope it makes stairs." if what.get_slice(":", 1) in World.STAIR_KINDS else "")
+	_tool_info.text = "%s: %s" % [name, info]
+
+
+func _small_heading(text: String) -> Label:
+	var l := Label.new()
+	l.text = text
+	l.add_theme_font_size_override("font_size", 15)
+	l.add_theme_color_override("font_color", UIStyle.BROWN_LIGHT)
+	return l
 
 
 func _page_title(text: String) -> Label:
@@ -314,8 +351,12 @@ func _show_page(page: String) -> void:
 		"landscape":
 			var holding: String = Game.player.landscaping if Game.player else ""
 			_put_away.visible = holding != ""
+			for b in _landscape_buttons:
+				(b as ToolTile).held = (b as ToolTile).what == holding
+				b.queue_redraw()
 			var at := maxi(0, Player.LANDSCAPE_TOOLS.find(holding))
 			_landscape_buttons[at].grab_focus.call_deferred()
+			_describe_tool(Player.LANDSCAPE_TOOLS[at])
 
 
 func _open_app(app: String) -> void:
@@ -387,3 +428,97 @@ class AppButton:
 		UIIcons.draw(self, icon_id, tile.get_center(), 44, UIStyle.BROWN)
 		var font := get_theme_default_font()
 		draw_string(font, Vector2(0, size.y - 6), label_text, HORIZONTAL_ALIGNMENT_CENTER, size.x, 15, UIStyle.BROWN)
+
+
+## A landscaping tool on the phone: a tile with a little picture of what it does and its
+## name (a path is a round swatch of its paving, named in the line below). The tool in
+## hand has a green dot.
+class ToolTile:
+	extends Button
+	const TINTS := {"cliff": "ecd9bb", "water": "cde6f2", "slope": "dcecc9", "trees": "cfe6c0", "move": "e6dfd6"}
+	var what: String
+	var held := false
+
+	func _init(tool: String) -> void:
+		what = tool
+		var path := what.begins_with("path:")
+		custom_minimum_size = Vector2(40, 40) if path else Vector2(56, 70)
+		focus_mode = Control.FOCUS_ALL
+		for state in ["normal", "hover", "pressed", "focus"]:
+			add_theme_stylebox_override(state, StyleBoxEmpty.new())
+		focus_entered.connect(queue_redraw)
+		focus_exited.connect(queue_redraw)
+		mouse_entered.connect(grab_focus)
+
+	func _draw() -> void:
+		var path := what.begins_with("path:")
+		var tile := Rect2(Vector2.ZERO, Vector2(size.x, size.x)) if not path else Rect2(Vector2.ZERO, size)
+		var sb := StyleBoxFlat.new()
+		sb.set_corner_radius_all(int(tile.size.x * 0.5) if path else 16)
+		sb.bg_color = IslandMap.PATH_COLOURS.get(what.get_slice(":", 1), Color.WHITE) if path else Color(TINTS.get(what, "eeeeee"))
+		if has_focus():
+			sb.border_color = UIStyle.ACCENT
+			sb.set_border_width_all(3)
+			for side in [SIDE_LEFT, SIDE_TOP, SIDE_RIGHT, SIDE_BOTTOM]:
+				sb.set_expand_margin(side, 2)
+		draw_style_box(sb, tile)
+		var c := tile.get_center()
+		if path:
+			_paving(c, tile.size.x * 0.5)
+		else:
+			_picture(c)
+			draw_string(get_theme_default_font(), Vector2(0, size.y - 3), Player.landscape_name(what), HORIZONTAL_ALIGNMENT_CENTER, size.x, 13, UIStyle.BROWN)
+		if held:
+			var dot := tile.position + Vector2(tile.size.x - 6, 6)
+			draw_circle(dot, 6.0, UIStyle.CREAM)
+			draw_circle(dot, 4.0, Color("5fae5a"))
+
+	## A few paving stones in a lighter shade of the path.
+	func _paving(c: Vector2, r: float) -> void:
+		var base: Color = IslandMap.PATH_COLOURS.get(what.get_slice(":", 1), Color.WHITE)
+		var light := base.lightened(0.25)
+		var dark := base.darkened(0.18)
+		for spot: Vector2 in [Vector2(-0.3, -0.28), Vector2(0.28, -0.22), Vector2(-0.22, 0.3), Vector2(0.32, 0.32)]:
+			var p := c + spot * r
+			draw_rect(Rect2(p - Vector2(5, 4), Vector2(10, 8)), dark)
+			draw_rect(Rect2(p - Vector2(5, 5), Vector2(10, 8)), light)
+
+	## A little picture of the tool's job.
+	func _picture(c: Vector2) -> void:
+		var grass := Color("8cc76a")
+		var earth := Color("b98a63")
+		var earth_dark := Color("9a6f4c")
+		match what:
+			"cliff":
+				# Two levels of ground, one stepped up on the other.
+				draw_colored_polygon(PackedVector2Array([c + Vector2(-17, 13), c + Vector2(17, 13), c + Vector2(17, 1),
+					c + Vector2(3, 1), c + Vector2(3, -10), c + Vector2(-17, -10)]), earth)
+				draw_rect(Rect2(c + Vector2(-17, -13), Vector2(20, 5)), grass)
+				draw_rect(Rect2(c + Vector2(3, -2), Vector2(14, 5)), grass)
+				draw_line(c + Vector2(-17, 4), c + Vector2(3, 4), earth_dark, 1.5)
+			"water":
+				draw_circle(c, 15.0, Color("6fb6d8"))
+				for y: float in [-4.0, 4.0]:
+					var pts := PackedVector2Array()
+					for i in 9:
+						var x := -9.0 + i * 2.25
+						pts.append(c + Vector2(x, y + sin(i * 1.4) * 1.6))
+					draw_polyline(pts, Color("eef8fc"), 2.0, true)
+			"slope":
+				draw_colored_polygon(PackedVector2Array([c + Vector2(-17, 13), c + Vector2(17, 13), c + Vector2(17, -11)]), earth)
+				draw_line(c + Vector2(-17, 11), c + Vector2(17, -13), grass, 5.0)
+			"trees":
+				draw_rect(Rect2(c + Vector2(-3, 1), Vector2(6, 13)), Color("a87d62"))
+				draw_circle(c + Vector2(0, -5), 11.0, Color("6faa5c"))
+				draw_circle(c + Vector2(-3, -8), 5.0, Color("8cc76a"))
+			"move":
+				# A rock with an arrow hopping over it.
+				var rock := PackedVector2Array()
+				for i in 12:
+					var a := TAU * i / 12.0
+					rock.append(c + Vector2(cos(a) * 11.0, 7 + sin(a) * 7.0))
+				draw_colored_polygon(rock, Color("a9a59e"))
+				draw_circle(c + Vector2(-3, 4), 3.0, Color("c4c0b9"))
+				draw_arc(c + Vector2(0, -3), 12.0, PI * 1.1, PI * 1.9, 10, UIStyle.BROWN, 2.5, true)
+				var tip := c + Vector2(cos(PI * 1.9), sin(PI * 1.9)) * 12.0 + Vector2(0, -3)
+				draw_colored_polygon(PackedVector2Array([tip + Vector2(-1, -5), tip + Vector2(5, 2), tip + Vector2(-4, 3)]), UIStyle.BROWN)

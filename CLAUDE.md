@@ -16,7 +16,8 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
 - Run the game with a window: `/opt/godot/godot --path .` opens the title screen (splash,
   then Continue and three files). `-- --new` starts a new island straight away in the
   scratch file (never shown on the title screen), `-- --slot=N` opens file N
-  (`--slot=N --new` starts it over). Title screenshots: `--title` (`=splash|file|confirm|island`)
+  (`--slot=N --new` starts it over; on the title screen that's under a file's File options,
+  asking twice). Title screenshots: `--title` (`=splash|file|options|confirm|sure|island`)
   with `--screenshot=PATH`. Behind the menu is a picture (`assets/title/backdrop.jpg`) of
   an island seen from far out at sea, with butterflies (`TitleButterflies`) in front.
   Re-render it from the live 3D view (`TitleBackdrop`, no world curve, sea run out to
@@ -33,7 +34,7 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   (`-- --shadows`, checks the cel lighting maths).
 - Game screenshot options are listed at the top of `scripts/main.gd` (`--weather=rain`,
   `--season=autumn`, `--look` for the sky, `--demo`,
-  `--demo=decor|sit|home|door|shop|site|tailors|museum|dock|tour|orchard|neighbours|visitor|flowers|fishing|bugs`
+  `--demo=decor|sit|home|door|shop|site|tailors|museum|dock|tour|orchard|neighbours|visitor|flowers|fishing|bugs|felling`
 (`--island=orchard|meadow|quarry|buggy|fishy` with `--demo=tour`) (`--house` builds the house first, `--series=id` furnishes
   the home from one series; `--built` turns the museum tent into the museum, `--visit`
   goes inside the museum or a neighbour's home),
@@ -131,8 +132,14 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   that get taken away are kept in `World.removed_ramps` ("unramps"). `--demo=construct` (`--bridge`).
 - Landscaping (Poppy's permit, `Story._landscaping_talk`, `flags["landscaping"]`): the phone's
   Landscaping app hands the player a tool (`Player.landscaping`, one of `LANDSCAPE_TOOLS`:
-  "cliff", "water", "slope", "path:<kind>"; the D-pad swaps, the app puts them away, and
-  leaving the island does too; held models are `Models` keys "landscape:<tool>").
+  "cliff", "water", "slope", "trees", "move", "path:<kind>"; the D-pad swaps, the app puts them
+  away, and leaving the island does too; held models are `Models` keys "landscape:<tool>").
+  While one is out the HUD draws a grassy border (`shaders/landscape_border.gdshader`) and
+  says what A does with it (`Hud.LANDSCAPE_USES`); the phone's page is `IslandPhone.ToolTile`s.
+  Trees: `World.chop_down` (`FELL_CHOPS` chops topple a tree into a "stump" object, which can
+  be sat on) and `dig_out` (stumps, bushes, young trees). Move: `Events.lift_requested` ->
+  `Placement.begin_move` carries a `World.MOVABLE_KINDS` object (it stays saved where it was
+  until set down: `move_spot` says why not, `move_object` moves it, `put_back` calls it off).
   Cliffs and water: `World.terraform_plan` / `terraform` (rules in `_land_fits`), kept in
   `World.land_edits`, saved as "land" and laid on the generated island when it loads.
   Slopes: `slope_plan` (builds via `incline_plan`, which allows a slope beside a parallel
@@ -145,7 +152,8 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   `RESHAPE_REACH` of the change), and `World.rebuild_terrain(area)` remakes the ground chunks
   it touches (`GROUND_CHUNK`), the fresh water, foam and paths, and settles the grass. The map
   paints a copy of the ground (`IslandData.ground_copy`), so the island can change while it
-  paints. `--demo=terraform` (`--landscape=TOOL`, `--close`), `--ui=landscape`.
+  paints. `--demo=terraform` (`--landscape=TOOL`, `--close`), `--demo=felling` (`--carry=KIND`),
+  `--ui=landscape`.
 - Home storage: `Inventory.storage` (stacks, `STORAGE_SIZE`; `store` / `retrieve`), shown by
   `StorageMenu`, opened (`Events.storage_opened`) from the pockets' Storage button at home or
   a cupboard there (placeable "storage": series pieces of `ItemDB.STORAGE_KINDS`). `--ui=storage`.

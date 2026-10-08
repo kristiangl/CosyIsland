@@ -10,7 +10,7 @@ const ROCK_COUNT := 6
 const FRUIT_REGROW_DAYS := 3
 const BRANCHES_PER_TREE := 2
 const GIFT_TREES := 2
-const BLOCKING_KINDS := ["tree", "fruit_tree", "palm", "rock", "bush", "placed"]
+const BLOCKING_KINDS := ["tree", "fruit_tree", "palm", "rock", "bush", "stump", "placed"]
 const ROCK_TABLE := [["stone", 60], ["clay", 25], ["iron_nugget", 14], ["gold_nugget", 1]]
 
 var data: IslandData
@@ -72,7 +72,7 @@ func setup(island: IslandData, saved: Dictionary = {}) -> void:
 		data.objects.clear()
 		for obj in saved["objects"]:
 			# Natural things left in the water by a change to the island's shape are gone.
-			if obj["kind"] in ["tree", "palm", "rock", "bush", "flower", "drop"] and not interior \
+			if obj["kind"] in ["tree", "palm", "rock", "bush", "stump", "flower", "drop"] and not interior \
 					and not island.is_land(int(obj["x"]), int(obj["z"])):
 				continue
 			data.objects.append(_ints(obj))
@@ -701,7 +701,7 @@ func _spawn_node(obj: Dictionary) -> void:
 			node.rotation.y = -PI * 0.5 * obj.get("rot", 0)
 			if obj.has("on"):
 				y += ItemDB.placeable(_objects.get(obj["on"], {}).get("item", "")).get("surface", 0.0)
-		"tree", "fruit_tree", "palm", "rock", "bush", "flower":
+		"tree", "fruit_tree", "palm", "rock", "bush", "stump", "flower":
 			node.rotation.y = fposmod(obj["uid"] * 2.399, TAU)
 			if obj["kind"] == "flower":
 				node.scale = Vector3.ONE * 1.4
@@ -1079,6 +1079,147 @@ func plant_flower(item_id: String, tile: Vector2i) -> Dictionary:
 	return obj
 
 
+# --- Landscaping: trees and rocks ----------------------------------------------------
+
+## What the landscaping app's Move tool can carry somewhere else.
+const MOVABLE_KINDS := ["tree", "fruit_tree", "palm", "bush", "rock", "stump"]
+## Chops with the landscaping Trees tool it takes to bring a grown tree down.
+const FELL_CHOPS := 3
+## How high a stump is to sit on.
+const STUMP_SEAT := 0.32
+var _chops: Dictionary = {}  # uid -> chops so far with the Trees tool (not saved)
+
+
+## One chop with the Trees tool. The third brings a grown tree down, away from the
+## player: it leaves a stump, its wood, and any fruit or furniture it was holding.
+## Returns true once it's down.
+func chop_down(obj: Dictionary, player_pos: Vector3) -> bool:
+	var uid: int = obj["uid"]
+	_chops[uid] = _chops.get(uid, 0) + 1
+	_burst_towards(obj, player_pos, "chips", 0.55)
+	if _chops[uid] < FELL_CHOPS:
+		_wiggle(obj, 7.0)
+		return false
+	_chops.erase(uid)
+	disturb(obj)
+	var node := node_of(uid)
+	if node:
+		_nodes.erase(uid)
+		_topple(node, Vector3(obj["x"] + 0.5 - player_pos.x, 0.0, obj["z"] + 0.5 - player_pos.z))
+	var drops: Array[Dictionary] = []
+	for i in (2 if obj["kind"] == "palm" else 3):
+		drops.append({"item": "wood", "count": 1})
+	if obj["kind"] == "fruit_tree":
+		for i in obj.get("fruit_count", 0):
+			drops.append({"item": obj["fruit"], "count": 1})
+	if obj.has("gift"):
+		drops.append({"item": obj["gift"], "count": 1})
+	var was: String = obj["kind"]
+	for key: String in ["fruit", "fruit_count", "wood_left", "picked_day", "shaken_day", "branches", "gift", "planted"]:
+		obj.erase(key)
+	obj["kind"] = "stump"
+	obj["tree"] = was
+	_spawn_node(obj)
+	for drop in drops:
+		_drop_near(obj, player_pos, drop)
+	Journal.add("trees_felled")
+	return true
+
+
+## A felled tree tips over away from the player, lands with a thump and sinks away.
+func _topple(node: Node3D, away: Vector3) -> void:
+	var dir := away.normalized() if away.length() > 0.01 else Vector3.FORWARD
+	var axis := Vector3.UP.cross(dir).normalized()
+	var start := node.basis
+	var tw := create_tween()
+	tw.tween_method(func(a: float): node.basis = Basis(axis, a) * start, 0.0, deg_to_rad(84.0), 0.75) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw.tween_callback(func():
+		Sfx.play_at("thud", node.global_position, 2.0, 0.8)
+		Effects.burst("leaves", node.global_position + dir * 1.8 + Vector3(0, 0.4, 0))
+		Effects.burst("dust", node.global_position + dir * 1.2 + Vector3(0, 0.1, 0)))
+	tw.tween_property(node, "scale", Vector3.ZERO, 0.4).set_delay(0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	tw.tween_callback(node.queue_free)
+
+
+## The Trees tool on a bush, a stump or a young tree: up it comes in one go (a young
+## tree's fruit goes back in the pockets). Returns false if there's no room for it.
+func dig_out(obj: Dictionary) -> bool:
+	if obj["kind"] == "fruit_tree" and obj.has("planted") and Inventory.add_item(obj["fruit"]) > 0:
+		Events.toast.emit("Your pockets are full!")
+		return false
+	var uid: int = obj["uid"]
+	var at := Vector3(obj["x"] + 0.5, data.height_at(obj["x"] + 0.5, obj["z"] + 0.5), obj["z"] + 0.5)
+	disturb(obj)
+	var node := node_of(uid)
+	if node:
+		# Pops up out of the ground and shrinks away.
+		_nodes.erase(uid)
+		var tw := create_tween()
+		tw.tween_property(node, "position:y", node.position.y + 0.45, 0.16).set_ease(Tween.EASE_OUT)
+		tw.parallel().tween_property(node, "scale", Vector3.ZERO, 0.32).set_delay(0.08).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+		tw.tween_callback(node.queue_free)
+	Effects.burst("dust", at + Vector3(0, 0.1, 0))
+	Effects.burst("pebbles", at + Vector3(0, 0.15, 0))
+	if obj["kind"] in ["bush", "fruit_tree"]:
+		Effects.burst("leaves", at + Vector3(0, 0.5, 0))
+	remove_object(uid)
+	return true
+
+
+## Why `obj` can't be set down on tile `t` with the Move tool, or "" if it can: flat,
+## clear, dry ground off the paths and the plaza; grass for trees, bushes and stumps
+## (palms and rocks sit on sand too); and a tile's room all round between trees.
+func move_spot(obj: Dictionary, t: Vector2i, player_pos: Vector3) -> String:
+	if interior or tour or visitor:
+		return "Landscaping is for outdoors on your own island."
+	if not data.in_bounds(t.x, t.y) or not data.is_land(t.x, t.y) or data.height_at(t.x + 0.5, t.y + 0.5) <= IslandData.SEA_LEVEL:
+		return "That needs dry land."
+	if t == Vector2i(floori(player_pos.x), floori(player_pos.z)):
+		return "You're standing there!"
+	var i := data.idx(t.x, t.y)
+	var kind: String = obj["kind"]
+	if not data.is_flat(t.x, t.y):
+		return "It needs flat ground."
+	if data.tile(t.x, t.y) == T.SAND and not kind in ["palm", "rock"]:
+		return "That won't grow in the sand."
+	if data.plaza.has_point(t):
+		return "Better keep the plaza clear."
+	if paths.has(i):
+		return "Better keep the paths clear."
+	var occupant: int = _occupant.get(i, obj["uid"])
+	if occupant != obj["uid"] or _deck.has(i) or _door_fronts.has(i) or _rugs.has(i) or _keep_clear(t.x, t.y) or _bridge_ends().has(i):
+		return "Something's in the way there."
+	if kind in ["tree", "fruit_tree", "palm"]:
+		for dz in range(-1, 2):
+			for dx in range(-1, 2):
+				var near := object_at(t.x + dx, t.y + dz)
+				if near.get("uid", -1) != obj["uid"] and near.get("kind", "") in ["tree", "fruit_tree", "palm", "placed"]:
+					return "Trees need a little room round them."
+	return ""
+
+
+## Bugs sitting on or by an island object fly off (it's being chopped, dug or moved).
+func disturb(obj: Dictionary) -> void:
+	if critters:
+		critters.disturb(Vector3(obj["x"] + 0.5, 0.0, obj["z"] + 0.5))
+
+
+## Sets `obj` down on tile `t` (the Move tool), just as it was.
+func move_object(obj: Dictionary, t: Vector2i) -> void:
+	var uid: int = obj["uid"]
+	var i := data.idx(obj["x"], obj["z"])
+	if _occupant.get(i, -1) == uid:
+		_occupant.erase(i)
+	if _nodes.has(uid):
+		_nodes[uid].queue_free()
+		_nodes.erase(uid)
+	obj["x"] = t.x
+	obj["z"] = t.y
+	_register(obj)
+	_pop_in(obj)
+
+
 func _roll_rock_item() -> String:
 	# Some tour islands have richer rocks.
 	var table: Array = TourKinds.get_kind(data.kind).get("rock_table", ROCK_TABLE) if data.kind != "" else ROCK_TABLE
@@ -1337,6 +1478,13 @@ func place_on_surface(item_id: String, tile: Vector2i, rot: int) -> Dictionary:
 ## {"position": Vector3, "facing": Vector3, "height": float}. Empty if it's not a seat.
 func seats(obj: Dictionary) -> Array[Dictionary]:
 	var spots: Array[Dictionary] = []
+	if obj.get("kind", "") == "stump":
+		# Sit facing whichever way you came from: a spot a hair's breadth off the middle
+		# on each side, so the nearest one faces you.
+		var centre := Vector3(obj["x"] + 0.5, data.height_at(obj["x"] + 0.5, obj["z"] + 0.5), obj["z"] + 0.5)
+		for dir: Vector3 in [Vector3.FORWARD, Vector3.BACK, Vector3.LEFT, Vector3.RIGHT]:
+			spots.append({"position": centre + dir * 0.05, "facing": dir, "height": STUMP_SEAT})
+		return spots
 	var height: float = ItemDB.placeable(obj.get("item", "")).get("seat", -1.0)
 	var node := node_of(obj.get("uid", -1))
 	if height <= 0.0 or node == null:
@@ -1363,6 +1511,7 @@ func place_item(item_id: String, rect: Rect2i, rot: int) -> Dictionary:
 
 func _on_day_changed(key: int) -> void:
 	day_key = key
+	_chops.clear()
 	var rocks := 0
 	for obj in data.objects:
 		match obj["kind"]:
@@ -1618,7 +1767,7 @@ func dock_spots(dock: Dictionary) -> Dictionary:
 const GROW_DAYS := 4
 
 ## Things that can be cleared away to make room for a building.
-const NATURAL_KINDS := ["tree", "fruit_tree", "palm", "bush", "flower", "drop"]
+const NATURAL_KINDS := ["tree", "fruit_tree", "palm", "bush", "stump", "flower", "drop"]
 
 
 ## Whether a rect would be free to build on once trees, flowers and drops are cleared.

@@ -18,6 +18,10 @@ var _tool_panel: PanelContainer
 var _hint_panel: PanelContainer
 var _toast_panel: PanelContainer
 var _tour_border: ColorRect
+var _landscape_border: ColorRect
+## What A does with each landscaping tool, for the hints.
+const LANDSCAPE_USES := {"cliff": "raise or lower", "water": "dig or fill in water", "slope": "lay or take away a slope",
+	"trees": "chop down or dig up", "move": "dig up and move", "path": "lay or lift the path"}
 var _toast_label: Label
 var _toast_queue: Array[String] = []
 var _toast_timer := 0.0
@@ -57,6 +61,16 @@ func _ready() -> void:
 	_tour_border.visible = false
 	root.add_child(_tour_border)
 	_tour_border.resized.connect(func(): border_mat.set_shader_parameter("screen", _tour_border.size))
+	# And a grassy one while a landscaping tool is out.
+	_landscape_border = ColorRect.new()
+	_landscape_border.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_landscape_border.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var grass_mat := ShaderMaterial.new()
+	grass_mat.shader = load("res://shaders/landscape_border.gdshader")
+	_landscape_border.material = grass_mat
+	_landscape_border.visible = false
+	root.add_child(_landscape_border)
+	_landscape_border.resized.connect(func(): grass_mat.set_shader_parameter("screen", _landscape_border.size))
 
 	# Clock, top left.
 	var clock := PanelContainer.new()
@@ -102,7 +116,8 @@ func _ready() -> void:
 	hint_panel.add_child(hints)
 	_play_hints = hints
 	_landscape_hints = Label.new()
-	Prompts.bind_label(_landscape_hints, "{use} landscape   {tools} change tool   {pause} phone (to put away)")
+	Prompts.method_changed.connect(_fill_landscape_hints)
+	Events.mode_changed.connect(func(_m): if Game.player and Game.player.landscaping != "": _fill_landscape_hints())
 	_landscape_hints.add_theme_color_override("font_color", UIStyle.BROWN_LIGHT)
 	_landscape_hints.add_theme_font_size_override("font_size", 16)
 	_landscape_hints.visible = false
@@ -304,10 +319,22 @@ func _update_toast(delta: float) -> void:
 func _on_landscaping(what: String) -> void:
 	_play_hints.visible = what == ""
 	_landscape_hints.visible = what != ""
+	_landscape_border.visible = what != ""
 	if what == "":
 		_on_equipped(Inventory.equipped_id())
 	else:
 		_tool_label.text = "Landscaping: " + Player.landscape_name(what)
+		_fill_landscape_hints()
+
+
+func _fill_landscape_hints() -> void:
+	var what: String = Game.player.landscaping if Game.player else ""
+	if Game.mode == Game.Mode.PLACING:
+		# Carrying something with the Move tool.
+		_landscape_hints.text = Prompts.fill("{use} set it down here   {cancel} put it back")
+		return
+	var use: String = LANDSCAPE_USES.get(what.get_slice(":", 0), "landscape")
+	_landscape_hints.text = Prompts.fill("{use} %s   {tools} change tool   {pause} phone (to put away)" % use)
 
 
 func _on_equipped(item_id: String) -> void:

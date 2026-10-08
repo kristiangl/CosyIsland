@@ -75,6 +75,8 @@ static func get_mesh(key: String) -> ArrayMesh:
 			k = _kit_from(BUSHES[int(p[1]) % BUSHES.size()])
 		"rock":
 			k = _kit_from(ROCKS[int(p[1]) % ROCKS.size()])
+		"stump":
+			_stump(k, p[1] == "palm", int(p[2]))
 		"flower":
 			_flower_clump(k, p[1], p[2], p.size() > 3 and p[3] == "picked")
 		"creature":
@@ -296,6 +298,8 @@ static func key_for(obj: Dictionary) -> String:
 			return "rock:%d" % _pick(obj, ROCKS.size())
 		"bush":
 			return "bush:%d" % _pick(obj, BUSHES.size())
+		"stump":
+			return "stump:%s:%d" % ["palm" if obj.get("tree", "") == "palm" else "tree", _pick(obj, 3)]
 		"flower":
 			return "flower:%s:%s%s" % [obj["species"], obj["color"], ":picked" if obj.get("picked", false) else ""]
 		"bridge":
@@ -450,6 +454,37 @@ static func _palm(k: MeshKit, variant: int) -> void:
 	for i in 3:
 		var a := TAU * i / 3.0
 		k.sphere(top + Vector3(cos(a) * 0.14, -0.14, sin(a) * 0.14), Vector3.ONE * 0.12, MeshKit.lin(Color("a07858"), 0.6), 4, 7)
+
+
+## What's left of a felled tree: a short trunk with a pale cut top showing its rings,
+## and roots spreading into the grass. A palm's is slimmer, banded and rootless.
+static func _stump(k: MeshKit, palm: bool, variant: int) -> void:
+	var r := 0.13 if palm else 0.17
+	var h := 0.26 + variant * 0.04
+	var bark := MeshKit.lin(BARK)
+	var bark_light := MeshKit.lin(BARK_LIGHT)
+	var cut := MeshKit.lin(Color("efd8a8"))
+	var ring := MeshKit.lin(Color("d2ad78"))
+	if palm:
+		for i in 3:
+			var y0 := -0.05 + (h + 0.05) * i / 3.0
+			var y1 := -0.05 + (h + 0.05) * (i + 1) / 3.0
+			k.cylinder(Vector3(0, y0, 0), Vector3(0, y1, 0), r * (1.08 - i * 0.04), r * (1.04 - i * 0.04), bark_light if i % 2 == 0 else bark, 8, false)
+	else:
+		k.cylinder(Vector3(0, -0.05, 0), Vector3(0, h, 0), r * 1.18, r, bark, 9, false)
+		# Roots reaching out into the grass.
+		for i in 4:
+			var a := TAU * (i + 0.15 * variant) / 4.0 + 0.4
+			var out := Vector3(cos(a), 0, sin(a))
+			k.cylinder(out * r * 0.5 + Vector3(0, 0.07, 0), out * r * 1.9 + Vector3(0, -0.04, 0), 0.065, 0.02, bark, 6, true)
+	var top := r * (0.92 if palm else 1.0)
+	# The cut top, with its rings.
+	k.cylinder(Vector3(0, h - 0.01, 0), Vector3(0, h + 0.005, 0), top, top, cut, 10, true)
+	k.cylinder(Vector3(0, h + 0.005, 0), Vector3(0, h + 0.008, 0), top * 0.68, top * 0.68, ring, 10, true)
+	k.cylinder(Vector3(0, h + 0.008, 0), Vector3(0, h + 0.011, 0), top * 0.55, top * 0.55, cut, 10, true)
+	k.cylinder(Vector3(0, h + 0.011, 0), Vector3(0, h + 0.014, 0), top * 0.2, top * 0.2, ring, 8, true)
+	# A thin ring of bark round the edge of the cut.
+	k.cylinder(Vector3(0, h - 0.01, 0), Vector3(0, h + 0.012, 0), top * 1.04, top * 1.04, bark_light, 10, false)
 
 
 ## A clump of flowers: a rosette of leaves and four or five stems of different heights,
@@ -1369,6 +1404,21 @@ static func _landscape_tool(k: MeshKit, what: String) -> void:
 			k.cylinder(Vector3(0, -0.1, 0), Vector3(0, 0.6, 0), 0.028, 0.028, handle, 5)
 			k.box(Vector3(0, 0.74, 0), Vector3(0.2, 0.24, 0.035), MeshKit.lin(Color("8cc47a")))
 			k.box(Vector3(0, 0.6, 0), Vector3(0.06, 0.05, 0.05), metal)
+		"trees":
+			# A felling axe: a long handle with a red band and a broad, bright head.
+			k.cylinder(Vector3(0, -0.12, 0), Vector3(0, 0.64, 0), 0.03, 0.028, handle, 5)
+			k.cylinder(Vector3(0, 0.05, 0), Vector3(0, 0.12, 0), 0.034, 0.034, MeshKit.lin(Color("e0685a")), 6)
+			k.rounded_box(Vector3(0.1, 0.56, 0), Vector3(0.2, 0.17, 0.045), MeshKit.lin(Color("c9d2dc")), 0.3)
+			k.box(Vector3(0.205, 0.56, 0), Vector3(0.03, 0.2, 0.03), MeshKit.lin(Color("eef2f6")))
+			k.box(Vector3(-0.03, 0.56, 0), Vector3(0.07, 0.09, 0.07), metal)
+		"move":
+			# A digging fork: a D grip, a long handle and four tines.
+			k.cylinder(Vector3(0, -0.08, 0), Vector3(0, 0.6, 0), 0.028, 0.028, handle, 5)
+			k.box(Vector3(0, -0.12, 0), Vector3(0.14, 0.03, 0.03), handle)
+			k.box(Vector3(0, 0.62, 0), Vector3(0.2, 0.05, 0.04), MeshKit.lin(Color("e3b45a")))
+			for i in 4:
+				var x := -0.075 + i * 0.05
+				k.cylinder(Vector3(x, 0.63, 0), Vector3(x, 0.86, 0), 0.013, 0.008, metal, 4, false)
 		_:
 			# A paving tamper: a long handle on a flat square foot.
 			k.cylinder(Vector3(0, -0.1, 0), Vector3(0, 0.62, 0), 0.028, 0.028, handle, 5)

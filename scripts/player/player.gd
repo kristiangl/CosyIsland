@@ -230,6 +230,9 @@ func _use() -> void:
 	if kind == "placed":
 		_interact(obj)
 		return
+	if kind == "stump":
+		_sit_on(obj)
+		return
 	match tool_kind:
 		"rod":
 			_cast()
@@ -282,7 +285,7 @@ func _use() -> void:
 # --- Landscaping ----------------------------------------------------------------------
 
 ## The landscaping tools, in the order the D-pad goes through them.
-const LANDSCAPE_TOOLS := ["cliff", "water", "slope", "path:stone", "path:brick", "path:wood",
+const LANDSCAPE_TOOLS := ["cliff", "water", "slope", "trees", "move", "path:stone", "path:brick", "path:wood",
 	"path:terracotta", "path:sand", "path:dirt"]
 
 ## Takes out a landscaping tool from the phone's app ("" puts them away).
@@ -301,6 +304,10 @@ static func landscape_name(what: String) -> String:
 			return "Water"
 		"slope":
 			return "Slopes"
+		"trees":
+			return "Trees"
+		"move":
+			return "Move"
 	return World.PATH_NAMES.get(what.get_slice(":", 1), "Path")
 
 
@@ -308,6 +315,12 @@ static func landscape_name(what: String) -> String:
 func _landscape() -> void:
 	var what := landscaping
 	var kind := what.get_slice(":", 0)
+	if kind == "trees":
+		_landscape_trees()
+		return
+	if kind == "move":
+		_lift()
+		return
 	var plan: Dictionary
 	match kind:
 		"cliff", "water":
@@ -347,6 +360,46 @@ func _landscape() -> void:
 	if kind == "cliff":
 		Effects.burst("pebbles", at + Vector3(0, 0.3, 0))
 	Journal.add("landscaped")
+
+
+## The Trees tool: chops at a grown tree (World.FELL_CHOPS bring it down, leaving a
+## stump) or digs up a bush, a stump or a young tree.
+func _landscape_trees() -> void:
+	var obj := _facing_object()
+	var kind: String = obj.get("kind", "")
+	if not kind in ["tree", "fruit_tree", "palm", "bush", "stump"]:
+		Events.toast.emit("Rocks can be shifted with the Move tool." if kind == "rock" else "Face a tree, a bush or a stump.")
+		Sfx.play("ui_error", -4.0)
+		return
+	_turn_towards(obj)
+	var felling := kind in ["tree", "fruit_tree", "palm"] and not obj.has("planted")
+	_busy = SWING_TIME
+	model.play("chop" if felling else "dig")
+	await get_tree().create_timer(IMPACT_TIME).timeout
+	if felling:
+		Sfx.play("chop")
+		if world.chop_down(obj, position):
+			Sfx.play("creak", -2.0, 0.7)
+			Journal.add("landscaped")
+	elif world.dig_out(obj):
+		Sfx.play("dig")
+		Journal.add("landscaped")
+
+
+## The Move tool: digs up the tree, bush, rock or stump ahead to carry somewhere else
+## (Placement shows where it'll go).
+func _lift() -> void:
+	var obj := _facing_object()
+	if not obj.get("kind", "") in World.MOVABLE_KINDS:
+		Events.toast.emit("Face a tree, a bush, a rock or a stump to move it.")
+		Sfx.play("ui_error", -4.0)
+		return
+	_turn_towards(obj)
+	_busy = SWING_TIME
+	model.play("dig")
+	await get_tree().create_timer(IMPACT_TIME).timeout
+	Sfx.play("dig")
+	Events.lift_requested.emit(obj)
 
 
 # --- Vaulting -------------------------------------------------------------------------

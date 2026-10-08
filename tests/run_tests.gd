@@ -57,6 +57,7 @@ func _run() -> void:
 	_test_built_crossings()
 	_test_landscaping()
 	_test_paths_and_stairs()
+	_test_trees_and_rocks()
 	_test_storage()
 	_test_weather()
 	_test_sounds()
@@ -1792,7 +1793,7 @@ func _test_built_crossings() -> void:
 
 func _test_landscaping() -> void:
 	check(not ItemDB.has_item("cliff_pick") and IslandPhone.APPS.any(func(a): return a[0] == "landscape")
-		and Player.LANDSCAPE_TOOLS.size() == 3 + World.PATH_KINDS.size(), "landscaping tools come from a phone app, not the pockets")
+		and Player.LANDSCAPE_TOOLS.size() == 5 + World.PATH_KINDS.size(), "landscaping tools come from a phone app, not the pockets")
 	# Working the ground out again gives the same island as the generator.
 	var fresh := IslandGenerator.generate(7)
 	var again := IslandGenerator.generate(7)
@@ -1865,6 +1866,104 @@ func _test_landscaping() -> void:
 				tries += 1
 				blocked += 1 if w.terraform_plan(Vector2i(x - 1, z), Vector2i(1, 0), "water").has("why") else 0
 	check(tries > 0 and blocked == tries, "no ponds dug against the beach (%d of %d)" % [blocked, tries])
+	w.free()
+
+
+func _test_trees_and_rocks() -> void:
+	check(Player.LANDSCAPE_TOOLS.has("trees") and Player.LANDSCAPE_TOOLS.has("move"), "the landscaping app has tools for trees and for moving things")
+	var d := IslandGenerator.generate(7)
+	var w := World.new()
+	add_child(w)
+	w.setup(d)
+	# A grown tree with open grass to the south to stand on.
+	var tree: Dictionary = {}
+	for obj in w.objects():
+		if obj["kind"] == "tree" and w.is_walkable(obj["x"] + 0.5, obj["z"] + 1.5) and w.object_at(obj["x"], obj["z"] + 1).is_empty():
+			tree = obj
+			break
+	check(not tree.is_empty(), "there's a tree to chop down")
+	if tree.is_empty():
+		w.free()
+		return
+	var spot := Vector2i(tree["x"], tree["z"])
+	var at := Vector3(spot.x + 0.5, 0.0, spot.y + 1.6)
+	var uid: int = tree["uid"]
+	var wood_drops := func() -> int: return w.objects().filter(func(o): return o["kind"] == "drop" and o["item"] == "wood").size()
+	var wood_before: int = wood_drops.call()
+	check(not w.chop_down(tree, at) and not w.chop_down(tree, at) and tree["kind"] == "tree", "a tree stands up to a couple of chops")
+	check(w.chop_down(tree, at) and tree["kind"] == "stump" and tree["tree"] == "tree" and tree["uid"] == uid and w.object_at(spot.x, spot.y) == tree,
+		"the third brings it down to a stump")
+	check(wood_drops.call() - wood_before == 3 and not tree.has("wood_left"), "and its wood")
+	check(Models.key_for(tree).begins_with("stump:tree:") and Models.get_mesh(Models.key_for(tree)) != null, "stumps have a model")
+	check(not w.is_walkable(spot.x + 0.5, spot.y + 0.5) and w.seats(tree).size() == 4, "a stump's in the way, and makes a seat")
+	# Moving a rock somewhere new.
+	var rock: Dictionary = w.objects().filter(func(o): return o["kind"] == "rock")[0]
+	var from := Vector2i(rock["x"], rock["z"])
+	var away := Vector3(-50, 0, -50)
+	check(w.move_spot(rock, from, away) == "", "a rock can go back where it was")
+	check(w.move_spot(rock, spot, away) != "" and w.move_spot(rock, d.plaza.get_center(), away) != "", "but not on the stump or the plaza")
+	var water := Vector2i(-1, -1)
+	var to := Vector2i(-1, -1)
+	for z in range(2, d.height - 2):
+		for x in range(2, d.width - 2):
+			if water.x < 0 and d.tile(x, z) == IslandData.Tile.WATER:
+				water = Vector2i(x, z)
+			if to.x < 0 and Vector2i(x, z).distance_to(from) > 4.0 and w.move_spot(rock, Vector2i(x, z), away) == "":
+				to = Vector2i(x, z)
+	check(water.x >= 0 and w.move_spot(rock, water, away) != "", "nor in the water")
+	check(to.x >= 0, "there's somewhere to move it to")
+	check(w.move_spot(rock, to, Vector3(to.x + 0.5, 0, to.y + 0.5)) != "", "not where you're standing")
+	# Carried by the Move tool: put back, then set down on the tile ahead.
+	var mover := Player.new()
+	add_child(mover)
+	mover.setup(w, Vector3(to.x - 0.5, 0, to.y + 0.5), Appearance.DEFAULT)
+	mover.facing = Vector3(1, 0, 0)
+	var placing := Placement.new()
+	placing.player = mover
+	placing.world = w
+	add_child(placing)
+	var was_mode := Game.mode
+	Game.mode = Game.Mode.PLAY
+	placing.begin_move(rock)
+	check(Game.mode == Game.Mode.PLACING and not w.node_of(rock["uid"]).visible, "the Move tool lifts a rock")
+	placing.put_back()
+	check(Game.mode == Game.Mode.PLAY and w.node_of(rock["uid"]).visible and w.object_at(from.x, from.y) == rock, "and can put it back")
+	placing.begin_move(rock)
+	placing._process(0.0)
+	var use := InputEventAction.new()
+	use.action = "use"
+	use.pressed = true
+	placing._unhandled_input(use)
+	Game.mode = was_mode
+	mover.free()
+	placing.free()
+	check(w.object_at(to.x, to.y) == rock and w.object_at(from.x, from.y).is_empty() and w.get_object(rock["uid"]) == rock
+		and w.node_of(rock["uid"]) != null, "the rock moves, uid and all")
+	# Trees want room round them.
+	var other: Dictionary = w.objects().filter(func(o): return o["kind"] in ["tree", "fruit_tree"] and o["uid"] != uid)[0]
+	var crowded := Vector2i(-1, -1)
+	for q: Vector2i in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1), Vector2i(1, 1), Vector2i(-1, 1)]:
+		var c := Vector2i(other["x"], other["z"]) + q
+		if crowded.x < 0 and w.move_spot(rock, c, away) == "":
+			crowded = c
+	if crowded.x >= 0:
+		var tree2: Dictionary = w.objects().filter(func(o): return o["kind"] == "tree" and o["uid"] != other["uid"])[0]
+		check(w.move_spot(tree2, crowded, away).contains("room"), "a tree can't go right beside another")
+	# Kept with the island.
+	var saved: Dictionary = JSON.parse_string(JSON.stringify(w.to_save()))
+	var w2 := World.new()
+	add_child(w2)
+	w2.setup(IslandGenerator.generate(7), saved)
+	check(w2.object_at(spot.x, spot.y).get("kind", "") == "stump" and w2.object_at(to.x, to.y).get("uid", -1) == rock["uid"]
+		and w2.object_at(from.x, from.y).is_empty(), "stumps and moved rocks are saved")
+	w2.free()
+	# Digging up: the stump goes, and a young tree comes up with its fruit.
+	check(w.dig_out(tree) and w.object_at(spot.x, spot.y).is_empty() and w.get_object(uid).is_empty(), "the stump digs up")
+	var fruit := d.native_fruit
+	var sapling := w.plant_fruit(fruit, spot)
+	var fruits := Inventory.count_of(fruit)
+	check(w.dig_out(sapling) and Inventory.count_of(fruit) == fruits + 1 and w.object_at(spot.x, spot.y).is_empty(), "a young tree comes up whole, fruit back in the pockets")
+	Inventory.remove_item(fruit, 1)
 	w.free()
 
 

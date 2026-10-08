@@ -77,6 +77,14 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   (tool "umbrella") are held over the head (`CharacterModel.set_umbrella`), and neighbours
   put theirs up outdoors in the rain. `--weather=KIND` (`Weather.FORCES`), `--season=S`,
   `--look`.
+- `Sfx` (autoload): sound effects by name from `assets/sfx` (`Sfx.play("chop")` picks one of
+  `chop_1`, `chop_2`... and nudges its pitch; `play_at` fades with distance from the player;
+  jingles dip the music, `Music.duck`), the characters' babble (`Sfx.voice`, pitched by
+  species or the character's "voice", from `DialogueBox` as text appears), footsteps by
+  surface (`World.step_surface`), and the ambience round the player (rain, wind, waves near
+  the sea, a stream near fresh water, crickets on dry nights, birds by day). Silent headless,
+  in screenshots and with `--mute`; "Sounds" in the phone's Options. The sounds are built by
+  `tools/make_sfx.sh [KENNEY_DIR]` (synthesised with ffmpeg, plus Kenney's CC0 packs).
 - `Journal` (autoload, `data/journal.json`) counts what the player does (`Journal.add(stat)`)
   and pays stamps for milestones and daily tasks; its exchange sells pocket upgrades etc.
 - `Critters` (a child of the island `World`, `data/creatures.json`): fish shadows (pointed

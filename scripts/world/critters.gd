@@ -252,13 +252,17 @@ func _update_fish(f: Dictionary, delta: float, player: Player) -> void:
 					f["nibbles"] = int(f["nibbles"]) - 1
 					f["timer"] = _rng.randf_range(0.7, 1.5)
 					_dip(0.03)
+					Sfx.play("plop", -10.0, 1.3)
 				else:
 					f["state"] = "bite"
 					f["timer"] = BITE_TIME
 					_dip(0.09)
 					Effects.burst("splash", bobber.position)
+					Sfx.play("splash", -2.0)
 		"bite":
 			if float(f["timer"]) <= 0.0:
+				# Too slow: it got away.
+				Sfx.play("jingle_lost", -4.0, 1.0, 0.0)
 				_escape(f)
 		"flee":
 			f["fade"] = float(f["fade"]) + delta * 2.0
@@ -312,6 +316,7 @@ func cast(at: Vector3) -> void:
 	bobber.visible = true
 	_bobber_kind = water_kind(floori(at.x), floori(at.z))
 	Effects.burst("splash", at)
+	Sfx.play("plop", -3.0)
 
 
 ## True while a fish has the bait: reel in now to catch it.
@@ -325,6 +330,7 @@ func reel() -> String:
 	var caught := ""
 	if is_biting():
 		caught = _hooked["id"]
+		Sfx.play("splash")
 		var f := _hooked
 		_hooked = {}
 		_remove_fish(f)

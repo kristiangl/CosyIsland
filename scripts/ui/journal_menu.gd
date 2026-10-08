@@ -104,6 +104,7 @@ func _ready() -> void:
 
 
 func open(tab: String = "today") -> void:
+	Sfx.play("page")
 	visible = true
 	Game.mode = Game.Mode.MENU
 	_set_tab(tab)

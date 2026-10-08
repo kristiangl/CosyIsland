@@ -100,6 +100,7 @@ func _add_slots() -> void:
 func open() -> void:
 	Game.mode = Game.Mode.MENU
 	visible = true
+	Sfx.play("cloth", -2.0, 1.2)
 	_refresh()
 	reset_size()
 	position = Vector2((get_parent_area_size().x - size.x) * 0.5, 14)
@@ -107,6 +108,8 @@ func open() -> void:
 
 
 func close() -> void:
+	if visible:
+		Sfx.play("cloth", -4.0, 1.4)
 	visible = false
 	if Game.mode == Game.Mode.MENU:
 		Game.mode = Game.Mode.PLAY
@@ -228,6 +231,8 @@ func _construct(i: int, what: String) -> void:
 	Inventory.remove_from_slot(i)
 	var at := player.position + Vector3(facing.x, 0, facing.y) * 1.5
 	here.build_bridge(plan)
+	Sfx.play("hammer")
+	Sfx.play("jingle_build", 0.0, 1.0, 0.0)
 	Effects.burst("confetti", at + Vector3(0, 0.8, 0))
 	Effects.burst("chips", at + Vector3(0, 0.3, 0))
 	player.model.play("cheer")
@@ -283,6 +288,7 @@ func _use_flower(i: int) -> void:
 			player.model.set_look(look)
 			player.model.play("cheer")
 			Effects.burst("sparkle", player.position + Vector3(0, 1.0, 0))
+			Sfx.play("sparkle")
 		"Put it in a vase":
 			place_requested.emit(i)
 		"Take out my hair flower":

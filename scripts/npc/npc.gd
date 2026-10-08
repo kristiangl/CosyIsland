@@ -158,6 +158,7 @@ func _check_umbrella() -> void:
 
 
 func hop() -> void:
+	Sfx.play_at("boing", global_position, -4.0, Sfx.voice_pitch(id) * 0.8)
 	_hop = 0.35
 
 

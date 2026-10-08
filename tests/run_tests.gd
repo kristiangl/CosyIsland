@@ -59,6 +59,7 @@ func _run() -> void:
 	_test_paths_and_stairs()
 	_test_storage()
 	_test_weather()
+	_test_sounds()
 	_test_tour_crossings_and_pole()
 	print("\n%d checks, %d failures" % [_checks, _failures])
 	IslandMap.finish()
@@ -2031,6 +2032,31 @@ func _test_weather() -> void:
 	t.free()
 	Inventory.reset()
 	Story.reset()
+
+
+func _test_sounds() -> void:
+	# Every sound the game asks for by name is there (assets/sfx, tools/make_sfx.sh).
+	var wanted := {}
+	var calls := RegEx.create_from_string("Sfx\\.play(?:_at|_later)?\\(\"([a-z0-9_]+)\"")
+	var dirs: Array[String] = ["res://scripts/", "res://scripts/autoload/", "res://scripts/ui/", "res://scripts/world/",
+		"res://scripts/player/", "res://scripts/npc/"]
+	for dir in dirs:
+		for file in DirAccess.get_files_at(dir):
+			if file.ends_with(".gd"):
+				for m in calls.search_all(FileAccess.get_file_as_string(dir + file)):
+					wanted[m.get_string(1)] = true
+	for s: String in Sfx.LAYERS.values():
+		wanted[s] = true
+	for s: Array in Sfx.STEPS.values():
+		wanted[s[0]] = true
+	for v in ["a", "e", "i", "o", "u"]:
+		wanted["voice_" + v] = true
+	for n in range(1, 5):
+		wanted["bird_%d" % n] = true
+	var missing := wanted.keys().filter(func(k): return Sfx.takes(k).is_empty())
+	check(wanted.size() > 30 and missing.is_empty(), "every sound the game plays is there (%d; missing %s)" % [wanted.size(), missing])
+	check(Sfx.takes("step_grass").size() >= 3, "footsteps come in a few takes")
+	check(not is_equal_approx(Sfx.voice_pitch("poppy"), Sfx.voice_pitch("lucy")), "characters have their own voices")
 
 
 func _test_tour_crossings_and_pole() -> void:

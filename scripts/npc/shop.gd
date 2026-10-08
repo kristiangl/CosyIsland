@@ -184,6 +184,7 @@ static func buy(id: String, day: int, keeper: String = "lucy", wearing := false)
 	else:
 		Inventory.add_item(id)
 	Inventory.add_currency(-cost)
+	Sfx.play("coins")
 	Journal.add("bought")
 	if not id in STAPLES:
 		var ids := sold_today(day, keeper).duplicate()
@@ -203,6 +204,7 @@ static func sell(slot: int, count: int, keeper: String = "lucy") -> int:
 		Inventory.equip(-1)
 	Inventory.remove_from_slot(slot, n)
 	Inventory.add_currency(earned)
+	Sfx.play("coins")
 	Journal.add("sold", n)
 	Journal.add("acorns_earned", earned)
 	return earned

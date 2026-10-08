@@ -131,6 +131,7 @@ func _add_pocket_slots() -> void:
 func open() -> void:
 	Game.mode = Game.Mode.MENU
 	visible = true
+	Sfx.play("door_open", -6.0, 1.3)
 	_focus = ["pocket", 0]
 	_set_group(_group)
 	reset_size()
@@ -234,6 +235,8 @@ func _put_away(i: int) -> void:
 		return
 	if not Inventory.store(i):
 		Events.toast.emit("Your storage is full!")
+	else:
+		Sfx.play("cloth", -4.0)
 
 
 func _take_out(n: int) -> void:
@@ -241,6 +244,8 @@ func _take_out(n: int) -> void:
 		return
 	if not Inventory.retrieve(_shown[n]):
 		Events.toast.emit("Your pockets are full!")
+	else:
+		Sfx.play("pop", -2.0)
 
 
 class StoredButton:

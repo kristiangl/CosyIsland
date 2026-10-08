@@ -122,6 +122,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				world.place_item(_item, _rect, _rot)
 			Inventory.remove_from_slot(_slot)
 			Journal.add("placed")
+			Sfx.play("place")
 			if builds != "":
 				Events.toast.emit("Staked out! It'll be built tonight.")
 			else:

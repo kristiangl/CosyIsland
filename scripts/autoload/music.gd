@@ -37,6 +37,9 @@ var _mix := 1.0
 var _track := ""
 var _check := 0.0
 var _streams: Dictionary = {}
+## Dipped while a jingle plays (duck()), back up after.
+var _duck := 1.0
+var _duck_left := 0.0
 
 
 func _ready() -> void:
@@ -76,11 +79,21 @@ func _process(delta: float) -> void:
 		var wanted := track_for(GameClock.hour_float())
 		if wanted != _track:
 			_switch_to(wanted)
+	_duck_left -= delta
+	var duck := move_toward(_duck, 0.2 if _duck_left > 0.0 else 1.0, delta * (4.0 if _duck_left > 0.0 else 1.2))
+	if duck != _duck:
+		_duck = duck
+		_apply_mix()
 	if _mix < 1.0:
 		_mix = minf(1.0, _mix + delta / FADE_TIME)
 		_apply_mix()
 		if _mix >= 1.0:
 			_players[1 - _front].stop()
+
+
+## Dips the music for `seconds` (while a jingle plays).
+func duck(seconds: float) -> void:
+	_duck_left = maxf(_duck_left, seconds)
 
 
 func _switch_to(path: String) -> void:
@@ -100,5 +113,5 @@ func _switch_to(path: String) -> void:
 
 
 func _apply_mix() -> void:
-	_players[_front].volume_db = linear_to_db(maxf(_mix * VOLUME, 0.0001))
-	_players[1 - _front].volume_db = linear_to_db(maxf((1.0 - _mix) * VOLUME, 0.0001))
+	_players[_front].volume_db = linear_to_db(maxf(_mix * VOLUME * _duck, 0.0001))
+	_players[1 - _front].volume_db = linear_to_db(maxf((1.0 - _mix) * VOLUME * _duck, 0.0001))

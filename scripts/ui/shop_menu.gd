@@ -101,6 +101,7 @@ func _ready() -> void:
 
 
 func open(mode: String, shop_keeper: String = "lucy") -> void:
+	Sfx.play("ui_open", -2.0)
 	keeper = shop_keeper
 	var info: Dictionary = Shop.KEEPERS.get(keeper, Shop.KEEPERS["lucy"])
 	_title.text = info["title"]

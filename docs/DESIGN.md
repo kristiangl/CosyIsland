@@ -260,13 +260,19 @@ Milestone 3b:
 - [x] Tour islands keep their own time of day, weather and season (an evening in the snow,
   a misty spring morning...), and a piece or two of furniture lies about to take home. Fish
   shadows are pointed ovals that wiggle as they swim.
+- [x] Sound effects: footsteps on grass, sand, snow, stone and wood; chopping, mining,
+  digging, rustling trees, fishing plops and splashes, nets, doors, coins, pages, menus;
+  steel-drum and pizzicato jingles for catches, rewards, recipes and building; characters
+  babble as they talk, each at their own pitch. The island sounds alive round you: birds by
+  day (a dawn chorus), crickets on dry nights, waves by the sea, a stream by the river, rain
+  and wind with the weather, thunder after the lightning, and the rain on the roof indoors.
 
 Next milestones (suggested order):
 4. More to find on tours: other kinds of tree on rare islands, flower breeding for the
    rare colours.
 5. Path tool, rock moving (bridges, slopes, cliffs and water are in).
-6. Sound effects (music is in: four pieces each for morning, afternoon and evening, taking
-   turns by the hour), including rain and thunder.
+6. More sound: per-room ambience (a ticking clock, a crackling fire), music boxes and
+   record players that play.
 7. Platform work: touch controls, performance passes, Switch porting.
 
 ## Characters

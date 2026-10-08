@@ -25,6 +25,7 @@ var _time: Label
 var _date: Label
 var _island: Label
 var _hemisphere_button: Button
+var _sounds_button: Button
 var _weather_button: Button
 var _acorns: Label
 var _acorn_icon: TextureRect
@@ -145,6 +146,11 @@ func _build_options() -> Control:
 		_update_options())
 	box.add_child(_music_button)
 	_first_option = _music_button
+	_sounds_button = Button.new()
+	_sounds_button.pressed.connect(func():
+		Sfx.muted = not Sfx.muted
+		_update_options())
+	box.add_child(_sounds_button)
 	_hemisphere_button = Button.new()
 	_hemisphere_button.pressed.connect(func():
 		Story.flags["hemisphere"] = "north" if Weather.hemisphere() == "south" else "south"
@@ -166,6 +172,7 @@ func _build_options() -> Control:
 
 func _update_options() -> void:
 	_music_button.text = "Music: %s" % ("off" if Music.muted else "on")
+	_sounds_button.text = "Sounds: %s" % ("off" if Sfx.muted else "on")
 	_hemisphere_button.text = "Seasons: %s hemisphere" % Weather.hemisphere().capitalize()
 
 
@@ -262,6 +269,7 @@ func open() -> void:
 	if _acorn_icon.texture == null:
 		_acorn_icon.texture = Icons.get_icon("acorn_pouch")
 	visible = true
+	Sfx.play("ui_open")
 	_landscape_app.visible = Story.flags.get("landscaping", false)
 	_show_page("home")
 	# Slide up from below the screen.
@@ -275,6 +283,7 @@ func open() -> void:
 func close() -> void:
 	if not visible:
 		return
+	Sfx.play("ui_close")
 	Game.mode = Game.Mode.PLAY
 	var tw := create_tween()
 	tw.tween_property(_body, "position:y", get_parent_area_size().y, 0.18).set_ease(Tween.EASE_IN)

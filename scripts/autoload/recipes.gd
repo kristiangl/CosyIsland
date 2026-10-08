@@ -97,6 +97,7 @@ func learn(id: String) -> void:
 	if recipes.has(id) and not known.has(id):
 		known.append(id)
 		learned.emit(id)
+		Sfx.play("jingle_learn", 0.0, 1.0, 0.0)
 
 
 func to_save() -> Array:

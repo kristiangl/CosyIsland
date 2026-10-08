@@ -82,6 +82,8 @@ func _process(delta: float) -> void:
 				_flash = 0.8
 		if _next_flash <= 0.0:
 			_flash = 1.0
+			# The rumble follows the flash, closer storms sooner.
+			Sfx.play_later("thunder", randf_range(0.4, 2.5), randf_range(-6.0, 0.0), randf_range(0.85, 1.1))
 			_second_flash = 0.12 if randf() < 0.6 else -1.0
 			_next_flash = randf_range(5.0, 14.0)
 	_apply(_hour())

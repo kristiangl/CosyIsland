@@ -94,6 +94,7 @@ func _ready() -> void:
 
 
 func open(mode: String = "make") -> void:
+	Sfx.play("page")
 	browsing = false
 	_title.text = "Workbench"
 	for tab in _tabs:

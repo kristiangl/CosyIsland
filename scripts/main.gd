@@ -682,6 +682,7 @@ func _enter_home(uid: int, instant := false, index := 0) -> void:
 	_going_through_door = true
 	Game.mode = Game.Mode.MENU
 	if not instant:
+		Sfx.play("door_open")
 		await hud.fade_out()
 	_open_room(uid, index)
 	var spawn := room.data.spawn
@@ -802,6 +803,7 @@ func _go_through(index: int) -> void:
 		return
 	_going_through_door = true
 	Game.mode = Game.Mode.MENU
+	Sfx.play("door_open", -3.0, 1.1)
 	await hud.fade_out()
 	var from := _room_index
 	_close_room()
@@ -830,6 +832,7 @@ func _leave_home() -> void:
 		return
 	_going_through_door = true
 	Game.mode = Game.Mode.MENU
+	Sfx.play("door_close")
 	await hud.fade_out()
 	_close_room()
 	_switch_world(world)

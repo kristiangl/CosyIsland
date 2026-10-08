@@ -753,6 +753,30 @@ func node_of(uid: int) -> Node3D:
 
 # --- Walking -------------------------------------------------------------------------
 
+## What's underfoot at a world position, for footsteps (Sfx.STEPS): grass, sand, snow,
+## stone (paths, the plaza), wood (bridges, the dock, wooden paths, floors) or carpet.
+func step_surface(p: Vector3) -> String:
+	var x := floori(p.x)
+	var z := floori(p.z)
+	if not data.in_bounds(x, z):
+		return "grass"
+	var i := data.idx(x, z)
+	if interior:
+		return "carpet" if _rugs.has(i) else "wood"
+	if _deck.has(i) or object_at(x, z).get("item", "") == "dock":
+		return "wood"
+	var path: String = paths.get(i, "")
+	if path != "":
+		return {"wood": "wood", "sand": "sand", "dirt": "grass"}.get(path, "stone")
+	if data.plaza.has_point(Vector2i(x, z)):
+		return "stone"
+	if Weather.snow_cover > 0.5:
+		return "snow"
+	if data.surface_at(p.x, p.z) == IslandData.Tile.SAND:
+		return "sand"
+	return "grass"
+
+
 func ground_height(px: float, pz: float) -> float:
 	var x := floori(px)
 	var z := floori(pz)
@@ -895,6 +919,7 @@ func shake(obj: Dictionary, player_pos: Vector3) -> void:
 	if node:
 		Effects.burst("leaves", node.global_position + Vector3(0, {"palm": 2.4, "bush": 0.6}.get(obj["kind"], 1.9), 0))
 	if obj["kind"] == "fruit_tree" and obj.get("fruit_count", 0) > 0:
+		Sfx.play_later("thud", 0.25, -2.0)
 		for i in obj["fruit_count"]:
 			_drop_near(obj, player_pos, {"item": obj["fruit"], "count": 1})
 		Journal.add("fruit", obj["fruit_count"])
@@ -906,6 +931,8 @@ func shake(obj: Dictionary, player_pos: Vector3) -> void:
 			# A piece of furniture tumbles out (two trees a day hide one).
 			_drop_near(obj, player_pos, {"item": obj["gift"], "count": 1})
 			Events.toast.emit("Something fell out of the tree!")
+			Sfx.play_later("thud", 0.25)
+			Sfx.play("jingle_ding", -2.0, 1.0, 0.0)
 			if node:
 				Effects.burst("sparkle", node.global_position + Vector3(0, 1.2, 0))
 			obj.erase("gift")
@@ -939,6 +966,7 @@ func pack_up(obj: Dictionary) -> bool:
 	var node := node_of(obj["uid"])
 	if node:
 		Effects.burst("dust", node.global_position + Vector3(0, 0.1, 0))
+	Sfx.play("pop")
 	remove_object(obj["uid"])
 	return true
 
@@ -951,6 +979,7 @@ func pick_up(x: int, z: int) -> bool:
 	match obj["kind"]:
 		"drop":
 			if obj["item"] == "acorn_pouch":
+				Sfx.play("coins")
 				Inventory.add_currency(obj.get("amount", 100))
 				Journal.add("acorns_earned", obj.get("amount", 100))
 				Events.toast.emit("You got %d %s!" % [obj.get("amount", 100), Game.CURRENCY_NAME.to_lower()])
@@ -958,6 +987,7 @@ func pick_up(x: int, z: int) -> bool:
 				Effects.burst("sparkle", Vector3(x + 0.5, data.height_at(x + 0.5, z + 0.5) + 0.4, z + 0.5))
 				var learned := Recipes.learn_random(_rng)
 				Journal.add("bottles")
+				Sfx.play("jingle_learn" if learned != "" else "pop", 0.0, 1.0, 0.0)
 				if learned == "":
 					Events.toast.emit("A note inside says: \"Hello from across the sea!\"")
 				else:
@@ -967,6 +997,7 @@ func pick_up(x: int, z: int) -> bool:
 					Events.toast.emit("Your pockets are full!")
 					return false
 				Events.toast.emit("You got %s!" % ItemDB.display_name(obj["item"]).to_lower())
+				Sfx.play("pop")
 			remove_object(obj["uid"])
 			return true
 		"flower":
@@ -982,6 +1013,7 @@ func pick_up(x: int, z: int) -> bool:
 			obj["picked"] = true
 			refresh_node(obj)
 			Journal.add("flowers_picked")
+			Sfx.play("rustle", -4.0, 1.3)
 			Effects.burst("leaves", Vector3(x + 0.5, data.height_at(x + 0.5, z + 0.5) + 0.4, z + 0.5))
 			return true
 	return false
@@ -1088,6 +1120,7 @@ func drop_from_pockets(here: Vector2i, front: Vector2i, item: String, count: int
 	for t in [here, front]:
 		if _can_hold_drop(t.x, t.y):
 			_pop_in(add_object({"kind": "drop", "item": item, "count": count, "x": t.x, "z": t.y}))
+			Sfx.play("thud", -4.0)
 			return true
 	return false
 

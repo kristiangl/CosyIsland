@@ -27,6 +27,7 @@ Effects="*res://scripts/autoload/effects.gd"
 Journal="*res://scripts/autoload/journal.gd"
 Music="*res://scripts/autoload/music.gd"
 Weather="*res://scripts/autoload/weather.gd"
+Sfx="*res://scripts/autoload/sfx.gd"
 
 [display]
 

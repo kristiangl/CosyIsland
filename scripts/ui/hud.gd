@@ -257,6 +257,7 @@ func _update_minimap() -> void:
 
 func open_map() -> void:
 	Game.mode = Game.Mode.MENU
+	Sfx.play("page")
 	_map_title.text = "A little island" if Game.tour else ("%s Island" % Game.island_name if Game.island_name != "" else "Island Map")
 	_map.visible = true
 	_map.reset_size()
@@ -264,6 +265,7 @@ func open_map() -> void:
 
 
 func _close_map() -> void:
+	Sfx.play("page", -3.0, 1.2)
 	_map.visible = false
 	Game.mode = Game.Mode.PLAY
 

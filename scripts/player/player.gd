@@ -20,6 +20,9 @@ var _seat_uid := -1
 var _stand_spot := Vector3.ZERO
 ## True while the line is out.
 var fishing := false
+## How far since the last footstep, and how far a stride is.
+var _stride := 0.0
+const STRIDE := 0.62
 ## The landscaping tool in hand ("" when they're put away): see LANDSCAPE_TOOLS.
 var landscaping := ""
 var _line: MeshInstance3D
@@ -87,7 +90,13 @@ func _physics_process(delta: float) -> void:
 		facing = facing.slerp(dir.normalized(), 1.0 - exp(-delta * 14.0)).normalized()
 	if _speed > 0.01:
 		var heading := dir.normalized() if dir.length() > 0.1 else facing
+		var before := position
 		_move(heading * _speed * delta)
+		# A footstep every stride, on whatever's underfoot.
+		_stride += Vector2(position.x - before.x, position.z - before.z).length()
+		if _stride > STRIDE:
+			_stride = 0.0
+			Sfx.step(world.step_surface(position), running)
 	if dir.length() > 0.5 and Game.mode == Game.Mode.PLAY:
 		_check_doors(dir)
 	var yaw := atan2(facing.x, facing.z)
@@ -235,28 +244,38 @@ func _use() -> void:
 			model.play({"axe": "chop", "shovel": "dig", "pickaxe": "mine"}[tool_kind])
 			await get_tree().create_timer(IMPACT_TIME).timeout
 			if kind == "bush":
+				Sfx.play("rustle")
 				world.shake(obj, position)
 			elif kind in ["tree", "fruit_tree", "palm"]:
 				if tool_kind == "axe":
+					Sfx.play("chop")
 					world.chop(obj, position)
 					Inventory.wear_equipped()
 				else:
+					Sfx.play("rustle")
 					world.shake(obj, position)
 			elif kind == "rock":
 				if tool_kind == "pickaxe":
+					Sfx.play("mine")
 					world.strike_rock(obj, position)
 					Inventory.wear_equipped()
 				else:
+					Sfx.play("clonk")
 					world.bump_rock(obj, position)
 					Events.toast.emit("Clonk! A pickaxe would break bits off.")
 				_recoil()
 			elif kind == "flower" and tool_kind == "shovel":
+				Sfx.play("dig")
 				if world.dig_up(obj):
 					Inventory.wear_equipped()
+			else:
+				# A swing at nothing in particular.
+				Sfx.play("whoosh", -6.0)
 		_:
 			if kind in ["tree", "fruit_tree", "palm", "bush"]:
 				_busy = SWING_TIME
 				model.play("shake")
+				Sfx.play("rustle")
 				world.shake(obj, position)
 
 
@@ -299,6 +318,7 @@ func _landscape() -> void:
 			plan = world.path_plan(tile(), cardinal(), what.get_slice(":", 1))
 	if plan.has("why"):
 		Events.toast.emit(plan["why"])
+		Sfx.play("ui_error", -4.0)
 		return
 	_busy = SWING_TIME
 	model.play("mine" if kind == "cliff" else "dig")
@@ -307,14 +327,21 @@ func _landscape() -> void:
 	match kind:
 		"cliff", "water":
 			world.terraform(plan)
+			if kind == "cliff":
+				Sfx.play("rumble")
+				Sfx.play("mine", -4.0)
+			else:
+				Sfx.play("splash" if plan["verb"] == "dig" else "dig")
 		"slope":
 			if plan.has("remove"):
 				world.remove_slope(plan)
 			else:
 				world.build_incline(plan)
 				t = plan["top"] + plan["dir"]
+			Sfx.play("rumble", -3.0)
 		_:
 			world.set_path(plan)
+			Sfx.play("place" if plan["kind"] in ["wood"] else ("dig" if plan["kind"] in ["", "sand", "dirt"] else "clonk"), -2.0)
 	var at := Vector3(t.x + 0.5, world.ground_height(t.x + 0.5, t.y + 0.5), t.y + 0.5)
 	Effects.burst("splash" if plan.get("verb", "") == "dig" else "dust", at + Vector3(0, 0.2, 0))
 	if kind == "cliff":
@@ -335,6 +362,7 @@ func _start_vault() -> void:
 	_vault_t = 0.0
 	_speed = 0.0
 	model.play("chop")
+	Sfx.play("whoosh")
 
 
 func _vault(delta: float) -> void:
@@ -347,6 +375,7 @@ func _vault(delta: float) -> void:
 		_vault_t = -1.0
 		position = _vault_to
 		Effects.burst("step", position)
+		Sfx.play("thud", -2.0)
 
 
 # --- Fishing and bugs ----------------------------------------------------------------
@@ -358,6 +387,7 @@ func _cast() -> void:
 		return
 	_busy = 0.5
 	model.play("cast")
+	Sfx.play("whoosh", -3.0, 1.2)
 	await get_tree().create_timer(0.3).timeout
 	world.critters.cast(spot)
 	fishing = true
@@ -388,6 +418,7 @@ func _reel() -> void:
 func _swing_net() -> void:
 	_busy = SWING_TIME
 	model.play("net")
+	Sfx.play("whoosh")
 	await get_tree().create_timer(IMPACT_TIME).timeout
 	var id := world.critters.net(position + facing * 0.9) if world.critters else ""
 	if id == "":
@@ -406,6 +437,7 @@ func _landed(id: String, line: String, size: float) -> void:
 	model.play("cheer")
 	model.hold(Models.get_mesh("drop:" + id), 1.4, size)
 	Effects.burst("sparkle", position + Vector3(0, 1.3, 0))
+	Sfx.play("jingle_catch", 0.0, 1.0, 0.0)
 	Events.toast.emit(line % ItemDB.display_name(id).to_lower())
 
 
@@ -469,6 +501,7 @@ func _sit_on(obj: Dictionary) -> void:
 	tw.tween_property(model, "position:y", spot["height"] - CharacterParts.HIP_Y + 0.05, 0.22)
 	model.rotation.y = atan2(facing.x, facing.z)
 	model.set_sitting(true)
+	Sfx.play("creak", -4.0)
 	if not Story.flags.get("seat_hint", false):
 		Story.flags["seat_hint"] = true
 		Events.toast.emit(Prompts.fill("Move, or press {use}, to get up again."))
@@ -487,6 +520,7 @@ func _lie_in(obj: Dictionary) -> void:
 	model.rotation.y = atan2(facing.x, facing.z)
 	model.position.y = maxf(height - 0.12, 0.0)
 	model.mode = "sleeping"
+	Sfx.play("cloth")
 
 
 ## Gets out of bed and stands beside it, back where we got in.
@@ -547,6 +581,8 @@ func eat(item_id: String) -> void:
 	for i in 3:
 		await get_tree().create_timer(0.35 + i * 0.3).timeout
 		Effects.burst("crumbs", position + facing * 0.25 + Vector3(0, 1.0, 0))
+		if i == 0:
+			Sfx.play("munch")
 	await get_tree().create_timer(0.35).timeout
 	Effects.burst("hearts", position + Vector3(0, 1.6, 0))
 
@@ -559,8 +595,10 @@ func craft_animation() -> void:
 	for i in 4:
 		await get_tree().create_timer(0.3).timeout
 		Effects.burst("sparks", bench)
+		Sfx.play("hammer", -2.0)
 	await get_tree().create_timer(0.3).timeout
 	Effects.burst("confetti", bench + Vector3(0, 0.2, 0))
+	Sfx.play("jingle_craft", 0.0, 1.0, 0.0)
 	Effects.burst("sparkle", bench + Vector3(0, 0.3, 0))
 
 

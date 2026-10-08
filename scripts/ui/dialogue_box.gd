@@ -16,6 +16,8 @@ const CHARS_PER_SECOND := 42.0
 ## Extra pause after punctuation, in characters' worth of time.
 const PAUSES := {".": 6.0, "!": 6.0, "?": 6.0, ",": 3.0, "…": 8.0}
 
+## Who is talking ("" for the game itself), for their babble.
+var _speaker := ""
 var _panel: PanelContainer
 var _tag: PanelContainer
 var _tag_label: Label
@@ -86,6 +88,9 @@ func _process(delta: float) -> void:
 			_text.visible_characters += 1
 			# Linger a moment after punctuation.
 			var ch := _text.text[_text.visible_characters - 1]
+			# Characters babble as their words appear (every other letter).
+			if _speaker != "" and _text.visible_characters % 2 == 0:
+				Sfx.voice(_speaker, ch)
 			if PAUSES.has(ch) and _text.visible_characters < _text.text.length():
 				_shown = _text.visible_characters - PAUSES[ch]
 				break
@@ -172,6 +177,7 @@ func _choose(i: int) -> void:
 
 
 func _open(speaker: String) -> void:
+	_speaker = speaker
 	var def := NpcData.get_character(speaker)
 	_tag_label.text = def.get("name", speaker.capitalize())
 	var tag_style := UIStyle.panel(Color(def.get("tag", "#f0b65a")), 18)

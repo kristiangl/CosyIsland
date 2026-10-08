@@ -62,6 +62,7 @@ func donate(id: String) -> bool:
 	if id in donated or not ItemDB.is_creature(id):
 		return false
 	donated.append(id)
+	Sfx.play("jingle_ding", 0.0, 1.0, 0.0)
 	if not id in caught:
 		caught.append(id)
 	add("donated")
@@ -100,6 +101,7 @@ func add(stat: String, amount: int = 1) -> void:
 
 func _pay(text: String, reward: int) -> void:
 	stamps += reward
+	Sfx.play("jingle_reward", 0.0, 1.0, 0.0)
 	stamps_changed.emit(stamps)
 	completed.emit(text, reward)
 	Events.toast.emit("Journal: %s. +%d stamps" % [text, reward])

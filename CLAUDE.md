@@ -34,7 +34,7 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   (`-- --shadows`, checks the cel lighting maths).
 - Game screenshot options are listed at the top of `scripts/main.gd` (`--weather=rain`,
   `--season=autumn`, `--look` for the sky, `--demo`,
-  `--demo=decor|sit|home|door|shop|site|tailors|museum|dock|tour|orchard|neighbours|visitor|flowers|fishing|bugs|felling|garden|fences`
+  `--demo=decor|sit|home|door|shop|site|tailors|museum|dock|tour|orchard|neighbours|visitor|flowers|fishing|bugs|felling|garden|fences|life`
 (`--island=orchard|meadow|quarry|buggy|fishy` with `--demo=tour`) (`--house` builds the house first, `--series=id` furnishes
   the home from one series; `--built` turns the museum tent into the museum, `--visit`
   goes inside the museum or a neighbour's home),
@@ -129,6 +129,24 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   only within it (`Npc.bounds`).
   Neighbours sometimes think of moving (`Story.check_moving` each morning,
   `flags["moving"]`, a "..." bubble on the `Npc`); they leave only if told to.
+- Neighbour life (`Neighbourhood`, made by main.gd, `Game.neighbourhood`): residents out
+  and about take up pastimes by personality and weather (`LIKES`, `take_up`; the body side
+  is `Npc.pastime`: "fishing" from a shore near home with a bobber and line, "bugs" with a
+  net, "chat" face to face with another neighbour with remarks over their heads, "sit" on
+  an outdoor seat or stump), and have a thing in hand most days (`Neighbourhood.daily_prop`,
+  `Npc.everyday`: Models "held:" keys like coffee_cup, juice_box, newspaper, tote). A few
+  times a day one who's been met shows an orange "!" (`calling`) and asks to play
+  (`Story._game_offer`): "hide" (hide and seek: up to three hide north of trees and houses,
+  out of the camera's sight; walk up to find them), "catch" (a fish or bug that's about,
+  in a time limit; `Events.caught`) or "race" (to the plaza, Marlow's dock, a shop...: a
+  `goal_flag` at the finish, a countdown, `RACE_SPEED` by personality). The HUD shows the
+  game (`Hud.show_game`, `big_note`); after, the asker has a "!" until you talk
+  (`Story._game_result`: a present if you won, `Journal` "games_won"). Neighbours find
+  their way with `World.nav_path` (an AStar2D of roomy walkable tiles joined where you can
+  walk across, built a slice at a time by `prepare_nav` and again after the land changes;
+  blocking things are switched off at each search; `Npc.walk_to` follows it, cutting
+  corners with `World.shortcut`). `--demo=life` (`--do=fishing|bugs|chat|sit`,
+  `--game=hide|catch|race`, `--start`, `--talk`).
 - Movement: `World.can_move` (the middle steps; edge points must land level with
   themselves or the middle, so ramps never snag). The vaulting pole (tool "pole")
   hops rivers and ponds via `World.vault_landing`; the phone's SOS (`Main.rescue_spot`)

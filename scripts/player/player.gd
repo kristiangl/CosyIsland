@@ -40,18 +40,7 @@ func setup(w: World, start: Vector3, look: Dictionary) -> void:
 	add_child(model)
 	model.set_tool(Inventory.equipped_id())
 	Events.equipped_changed.connect(func(id: String): if landscaping == "": model.set_tool(id))
-	_line = MeshInstance3D.new()
-	var thread := CylinderMesh.new()
-	thread.top_radius = 0.006
-	thread.bottom_radius = 0.006
-	thread.height = 1.0
-	thread.radial_segments = 4
-	thread.rings = 1
-	_line.mesh = thread
-	_line.material_override = Models.material()
-	_line.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	_line.top_level = true
-	_line.visible = false
+	_line = fishing_line()
 	add_child(_line)
 
 
@@ -499,11 +488,32 @@ func _update_line() -> void:
 	var tip := model.tool_point(ROD_TIP)
 	var end := world.critters.bobber.position + Vector3(0, 0.08, 0)
 	var span := end - tip
-	if span.length() < 0.01:
-		return
-	# Stretched along its own length (`scaled` would stretch along the world's axes).
-	_line.global_transform = Transform3D(Basis(Quaternion(Vector3.UP, span.normalized())) * Basis.from_scale(Vector3(1, span.length(), 1)),
-		(tip + end) * 0.5)
+	if span.length() > 0.01:
+		_line.global_transform = line_between(tip, end)
+
+
+## Where a line one unit long (along y, centred) goes to run from `a` to `b`: stretched
+## along its own length (`scaled` would stretch it along the world's axes).
+static func line_between(a: Vector3, b: Vector3) -> Transform3D:
+	var span := b - a
+	return Transform3D(Basis(Quaternion(Vector3.UP, span.normalized())) * Basis.from_scale(Vector3(1, span.length(), 1)), (a + b) * 0.5)
+
+
+## A fishing line: a thin thread one unit long, stretched into place by `line_between`.
+static func fishing_line() -> MeshInstance3D:
+	var line := MeshInstance3D.new()
+	var thread := CylinderMesh.new()
+	thread.top_radius = 0.006
+	thread.bottom_radius = 0.006
+	thread.height = 1.0
+	thread.radial_segments = 4
+	thread.rings = 1
+	line.mesh = thread
+	line.material_override = Models.material()
+	line.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	line.top_level = true
+	line.visible = false
+	return line
 
 
 func _reel() -> void:
@@ -534,6 +544,7 @@ func _landed(id: String, line: String, size: float) -> void:
 		return
 	Inventory.wear_equipped()
 	Journal.catch(id)
+	Events.caught.emit(id)
 	_busy = 1.2
 	model.play("cheer")
 	model.hold(Models.get_mesh("drop:" + id), 1.4, size)

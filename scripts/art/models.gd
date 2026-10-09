@@ -85,6 +85,8 @@ static func get_mesh(key: String) -> ArrayMesh:
 			CreatureModels.shadow(k, p[1])
 		"bobber":
 			CreatureModels.bobber(k)
+		"goal_flag":
+			_goal_flag(k)
 		"hairflower":
 			_hair_flower(k, p[1])
 		"vase":
@@ -1652,6 +1654,47 @@ static func _camping_prop(k: MeshKit, what: String) -> void:
 			var lens := Vector3(0, 0.17, 0.02)
 			_arc(k, lens, 0.07, 0.07, Vector3.UP, Vector3.LEFT, 0.0, TAU, 0.011, MeshKit.lin(Color("e0b04a")), 12)
 			k.cylinder(lens + Vector3(0, 0, -0.004), lens + Vector3(0, 0, 0.004), 0.064, 0.064, MeshKit.lin(Color("cfe8f0")), 12)
+		"coffee_cup":
+			# A takeaway coffee: a paper cup with a sleeve round it and a lid.
+			k.cylinder(Vector3(0, -0.07, 0.06), Vector3(0, 0.07, 0.06), 0.034, 0.045, MeshKit.lin(Color("fbf6ee")), 10)
+			k.cylinder(Vector3(0, -0.025, 0.06), Vector3(0, 0.035, 0.06), 0.042, 0.045, MeshKit.lin(Color("b08463")), 10, false)
+			k.cylinder(Vector3(0, 0.07, 0.06), Vector3(0, 0.09, 0.06), 0.049, 0.044, MeshKit.lin(Color("6b4a35")), 10)
+			k.cylinder(Vector3(0, 0.09, 0.08), Vector3(0, 0.1, 0.08), 0.01, 0.01, MeshKit.lin(Color("6b4a35")), 6)
+		"juice_box":
+			# A little carton of orange juice with a bendy straw.
+			k.box(Vector3(0, 0.0, 0.05), Vector3(0.05, 0.1, 0.07), MeshKit.lin(Color("f2a65a")))
+			k.box(Vector3(0, -0.005, 0.05), Vector3(0.052, 0.04, 0.072), MeshKit.lin(Color("fbf3e2")))
+			k.sphere(Vector3(0, -0.005, 0.087), Vector3(0.016, 0.016, 0.004), MeshKit.lin(Color("f2a65a")), 3, 8)
+			k.cylinder(Vector3(0, 0.05, 0.06), Vector3(0, 0.1, 0.06), 0.006, 0.006, MeshKit.lin(Color("f2a7c0")), 5, false)
+			k.cylinder(Vector3(0, 0.1, 0.06), Vector3(0, 0.12, 0.08), 0.006, 0.006, MeshKit.lin(Color("f2a7c0")), 5, false)
+		"newspaper":
+			# The morning paper, folded, carried by its edge.
+			k.box(Vector3(0, -0.05, 0.06), Vector3(0.025, 0.26, 0.17), MeshKit.lin(Color("f3eee4")))
+			for i in 5:
+				k.box(Vector3(-0.013, 0.04 - i * 0.04, 0.06), Vector3(0.002, 0.012, 0.13), MeshKit.lin(Color("9a948c")))
+			k.box(Vector3(-0.013, 0.06, 0.06), Vector3(0.002, 0.03, 0.14), MeshKit.lin(Color("4a4650")))
+		"lollipop":
+			# A big swirly lollipop on a stick.
+			k.cylinder(Vector3(0, -0.06, 0.02), Vector3(0, 0.14, 0.02), 0.007, 0.007, MeshKit.lin(Color("fbf6ee")), 5)
+			k.cylinder(Vector3(-0.012, 0.2, 0.02), Vector3(0.012, 0.2, 0.02), 0.065, 0.065, MeshKit.lin(Color("f2a7c0")), 14)
+			k.cylinder(Vector3(-0.014, 0.2, 0.02), Vector3(0.014, 0.2, 0.02), 0.042, 0.042, MeshKit.lin(Color("fbf6ee")), 12)
+			k.cylinder(Vector3(-0.016, 0.2, 0.02), Vector3(0.016, 0.2, 0.02), 0.022, 0.022, MeshKit.lin(Color("9fd3c7")), 10)
+		"parcel":
+			# A parcel in brown paper, tied with string.
+			var paper := MeshKit.lin(Color("c9965e"))
+			var string := MeshKit.lin(Color("f6ecd8"))
+			k.box(Vector3(0, -0.07, 0.06), Vector3(0.11, 0.12, 0.15), paper)
+			k.box(Vector3(0, -0.07, 0.06), Vector3(0.115, 0.125, 0.012), string)
+			k.box(Vector3(0, -0.07, 0.06), Vector3(0.012, 0.125, 0.155), string)
+			k.box(Vector3(0, -0.007, 0.06), Vector3(0.114, 0.006, 0.012), string)
+		"tote":
+			# A canvas shopping bag with leeks and a loaf poking out.
+			k.box(Vector3(0, -0.2, 0.0), Vector3(0.06, 0.2, 0.2), MeshKit.lin(Color("efe4cc")))
+			k.box(Vector3(-0.031, -0.21, 0.0), Vector3(0.002, 0.07, 0.07), MeshKit.lin(Color("7fb069")))
+			_arc(k, Vector3(0, -0.1, 0), 0.07, 0.1, Vector3.FORWARD, Vector3.UP, 0.0, PI, 0.008, MeshKit.lin(Color("c9b48e")), 6)
+			k.cylinder(Vector3(0.01, -0.12, 0.05), Vector3(0.01, 0.05, 0.08), 0.014, 0.012, MeshKit.lin(Color("f3f6e4")), 6)
+			k.cylinder(Vector3(0.01, 0.05, 0.08), Vector3(0.01, 0.13, 0.09), 0.012, 0.004, MeshKit.lin(Color("6f9a4a")), 6)
+			k.sphere(Vector3(0.01, -0.08, -0.05), Vector3(0.03, 0.06, 0.03), MeshKit.lin(Color("dba45e")), 4, 8)
 		"kite":
 			# A diamond kite with a bowed tail, held by its spine, turned half to the front.
 			k.xform = HELD_UPRIGHT * Transform3D(Basis(Vector3.UP, deg_to_rad(-45.0)), Vector3(-0.04, 0, 0))
@@ -1674,6 +1717,20 @@ static func _camping_prop(k: MeshKit, what: String) -> void:
 				k.cylinder(prev, pt, 0.004, 0.004, MeshKit.lin(Color("3a3236")), 3, false)
 				k.box(pt, Vector3(0.01, 0.02, 0.05), red if i % 2 == 0 else yellow)
 				prev = pt
+
+
+## Where a race finishes: a pole with a chequered pennant, on a round base.
+static func _goal_flag(k: MeshKit) -> void:
+	k.cylinder(Vector3(0, 0, 0), Vector3(0, 0.06, 0), 0.22, 0.2, MeshKit.lin(Color("fbf3e2")), 14)
+	k.cylinder(Vector3(0, 0.06, 0), Vector3(0, 1.9, 0), 0.03, 0.025, MeshKit.lin(Color("e0b04a")), 6)
+	k.sphere(Vector3(0, 1.92, 0), Vector3.ONE * 0.05, MeshKit.lin(Color("e0656b")), 3, 6)
+	for row in 3:
+		for col in 4:
+			var light := (row + col) % 2 == 0
+			var y := 1.84 - row * 0.12
+			var x := 0.04 + col * 0.12
+			_panel(k, Vector3(x, y, 0), Vector3(x + 0.12, y, 0), Vector3(x + 0.12, y - 0.12, 0), MeshKit.lin(Color("fbf6ee") if light else Color("3a3236")))
+			_panel(k, Vector3(x, y, 0), Vector3(x + 0.12, y - 0.12, 0), Vector3(x, y - 0.12, 0), MeshKit.lin(Color("fbf6ee") if light else Color("3a3236")))
 
 
 ## A loop (or part of one) of thin tube round `centre` in the plane of `a` and `b`, with

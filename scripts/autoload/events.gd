@@ -2,6 +2,8 @@ extends Node
 ## Global signal bus. Systems emit here so they don't need references to each other.
 
 signal toast(text: String)
+## The player caught a fish or a bug.
+signal caught(id: String)
 signal inventory_changed
 ## The pockets gained more slots.
 signal pockets_resized

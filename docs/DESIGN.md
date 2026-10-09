@@ -269,6 +269,14 @@ Milestone 3b:
   up on one note ("x5") instead of queueing; the fishing line comes off the rod's tip, and
   a bite makes a big splash. Bigger rugs: a big round rug, square, oval and grand rugs, a
   room-sized rug and a long runner.
+- [x] Neighbour life: the neighbours who've moved in go fishing from the shore near home,
+  catch bugs with a net, stop for a chat with each other (little remarks over their
+  heads), and sit on benches and stumps; most days they've something in hand (a takeaway
+  coffee, a juice box, the paper, a lollipop, a parcel, a shopping bag...). A few times a
+  day one of them has a "!" over their head and asks to play: hide and seek (they and a
+  couple of others hide behind trees and houses while you count; two and a half minutes
+  to find them), "bet you can't catch a ... in three minutes", or a race to the plaza,
+  Marlow's dock or a shop, with a flag at the finish. Win for a present or acorns.
 - [x] Fences that join up: picket fences, palisades, low stone walls and iron railings, plus
   wooden and iron gates (standing open, to walk through). Each fills a tile, stacks to 99
   and goes down one after another without going back to the pockets; side by side they

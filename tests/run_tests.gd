@@ -64,6 +64,10 @@ func _run() -> void:
 	_test_visitors_on_the_plaza()
 	_test_fishing_session()
 	_test_camper_props()
+	_test_neighbour_paths()
+	_test_neighbour_pastimes()
+	_test_neighbour_games()
+	_test_neighbours_left_to_it()
 	_test_furniture_and_toasts()
 	_test_big_rugs()
 	_test_storage()
@@ -2360,6 +2364,309 @@ func _test_big_rugs() -> void:
 	room.place_item("room_rug_cherry", Rect2i(1, 1, 5, 4), 0)
 	check(not room.can_place_rug(Rect2i(0, 0, 3, 3)), "and nothing else goes on top of it")
 	room.free()
+
+
+func _test_neighbour_paths() -> void:
+	var d := IslandGenerator.generate(7)
+	var w := World.new()
+	add_child(w)
+	w.setup(d)
+	var t0 := Time.get_ticks_usec()
+	var slices := 1
+	while not w.prepare_nav(3000):
+		slices += 1
+	var built_ms := (Time.get_ticks_usec() - t0) / 1000.0
+	print("  nav graph: %.0f ms in %d slices, %d tiles" % [built_ms, slices, w._nav.get_point_count()])
+	check(built_ms < 1000.0 and slices > 1, "the island's way-finding graph builds a bit at a time (%.0f ms)" % built_ms)
+	var plaza := Vector2(d.plaza.get_center())
+	var start := Vector3(plaza.x + 0.5, 0, plaza.y + 0.5)
+	start.y = w.ground_height(start.x, start.z)
+	# Ways from the plaza to spots all over the island: each step of the way walkable.
+	var tried := 0
+	var found := 0
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 3
+	t0 = Time.get_ticks_usec()
+	while tried < 20:
+		var x := rng.randi_range(2, d.width - 3)
+		var z := rng.randi_range(2, d.height - 3)
+		if not w.can_move(Vector3(x + 0.5, w.ground_height(x + 0.5, z + 0.5), z + 0.5), x + 0.5, z + 0.5, Npc.RADIUS):
+			continue
+		tried += 1
+		var goal := Vector3(x + 0.5, w.ground_height(x + 0.5, z + 0.5), z + 0.5)
+		var way := w.nav_path(start, goal)
+		if way.is_empty():
+			continue
+		found += 1
+		# Walked as a neighbour walks it, cutting corners where it's clear.
+		var at := start
+		var ok := true
+		var walk := way.duplicate()
+		var cut := 0
+		while not walk.is_empty():
+			var skip := w.shortcut(at, walk)
+			cut += skip
+			walk = walk.slice(skip)
+			ok = ok and w.clear_line(at, walk[0])
+			at = walk[0]
+			walk.remove_at(0)
+		check(cut > 0 or way.size() < 4, "and corners are cut")
+		check(ok and at.distance_to(goal) < 0.01, "a way to (%d, %d) can be walked all along" % [x, z])
+	print("  20 searches: %.0f ms" % ((Time.get_ticks_usec() - t0) / 1000.0))
+	check(found >= 14, "most of the island can be reached from the plaza (%d of 20)" % found)
+	check(w.nav_path(start, Vector3(1.5, 0, 1.5)).is_empty(), "there's no way out to sea")
+	w.free()
+
+
+## An island with three neighbours living on it, a player, and a Neighbourhood that
+## only does what it's told (for the pastime and game tests). Undo with `_end_life`.
+func _life_island() -> Dictionary:
+	var d := IslandGenerator.generate(7)
+	var w := World.new()
+	add_child(w)
+	w.setup(d)
+	while not w.prepare_nav(100000):
+		pass
+	var was := {"island": Game.island, "world": Game.world, "player": Game.player, "mode": Game.mode,
+		"offset": GameClock.offset_seconds, "flags": Story.flags.duplicate(true), "hood": Game.neighbourhood}
+	Game.island = w
+	Game.world = w
+	Game.mode = Game.Mode.PLAY
+	GameClock.set_hour(10.0)
+	var plaza := Vector2(d.plaza.get_center())
+	var folk: Array[Npc] = []
+	for id: String in ["biscuit", "maple", "pip"]:
+		var spot := Vector3.ZERO
+		for r in range(4, 30):
+			for a in 16:
+				var p := plaza + Vector2.from_angle(a * TAU / 16.0 + folk.size()) * r
+				var at := Vector3(p.x, w.ground_height(p.x, p.y), p.y)
+				if spot == Vector3.ZERO and w.can_move(at, at.x, at.z, Npc.RADIUS) and not w.nav_path(Vector3(plaza.x, 0, plaza.y), at).is_empty() \
+						and folk.all(func(f): return f.position.distance_to(at) > 4.0):
+					spot = at
+		var n := Npc.new()
+		w.add_child(n)
+		n.setup(id, w, spot, Vector3(0, 0, 1))
+		n.wanders = true
+		n.home = n.position
+		n.visible = true
+		Game.npcs.append(n)
+		folk.append(n)
+	var p := Player.new()
+	add_child(p)
+	p.setup(w, folk[0].position + Vector3(1.5, 0, 1.5), Appearance.DEFAULT)
+	Game.player = p
+	var hood := Neighbourhood.new()
+	hood.spontaneous = false
+	add_child(hood)
+	Game.neighbourhood = hood
+	Story.flags["met_neighbours"] = ["biscuit", "maple", "pip"]
+	return {"world": w, "folk": folk, "player": p, "hood": hood, "was": was}
+
+
+func _end_life(life: Dictionary) -> void:
+	var was: Dictionary = life["was"]
+	for n: Npc in life["folk"]:
+		Game.npcs.erase(n)
+	Game.island = was["island"]
+	Game.world = was["world"]
+	Game.player = was["player"]
+	Game.mode = was["mode"]
+	Game.neighbourhood = was["hood"]
+	GameClock.offset_seconds = was["offset"]
+	Story.flags = was["flags"]
+	life["hood"].free()
+	life["player"].free()
+	life["world"].free()
+
+
+## Steps a neighbour along for a while (as their _process would each frame).
+func _live(n: Npc, seconds: float) -> void:
+	for i in int(seconds / 0.05):
+		n._process(0.05)
+
+
+func _test_neighbour_pastimes() -> void:
+	var life := _life_island()
+	var w: World = life["world"]
+	var folk: Array[Npc] = life["folk"]
+	var hood: Neighbourhood = life["hood"]
+	# Something in hand most days, the same all day.
+	var props: Array[String] = []
+	for day in 40:
+		props.append(Neighbourhood.daily_prop("biscuit", 20000 + day))
+	check(props.count("") > 5 and props.count("") < 35, "neighbours have something in hand some days (%d of 40 empty-handed)" % props.count(""))
+	check(Neighbourhood.daily_prop("biscuit", 20003) == props[3], "and the same thing all day")
+	for prop: String in props:
+		check(prop == "" or Models.get_mesh(prop).get_aabb().size.length() > 0.05, "%s has a model" % prop)
+	# Fishing: off to a shore near home, a cast, a line from the rod tip to the bobber.
+	var fisher := folk[0]
+	var shore := Vector3.ZERO
+	for z in range(4, w.data.height - 4):
+		for x in range(4, w.data.width - 4):
+			if shore == Vector3.ZERO and w.critters.water_kind(x, z + 3) == "sea" and w.can_move(Vector3(x + 0.5, w.ground_height(x + 0.5, z + 0.5), z + 0.5), x + 0.5, z + 0.5, Npc.RADIUS) \
+					and not w.nav_path(fisher.position, Vector3(x + 0.5, 0, z + 0.5)).is_empty():
+				shore = Vector3(x + 0.5, w.ground_height(x + 0.5, z + 0.5), z + 0.5)
+	fisher.home = shore + Vector3(0, 0, -3)
+	fisher.position = Vector3(fisher.home.x, w.ground_height(fisher.home.x, fisher.home.z), fisher.home.z)
+	check(hood.take_up(fisher, "fishing") and fisher.pastime == "fishing", "a neighbour by the sea goes fishing")
+	check(fisher.prop.ends_with("_rod"), "with a rod")
+	_live(fisher, 40.0)
+	check(not fisher.on_the_way() and fisher._bobber != null and (fisher._bobber.visible or fisher.model.mode == "" ), "gets to the shore and casts")
+	var into := fisher._bob_at - fisher.position
+	check(w.critters.swim_kind(fisher._bob_at) != "" and Vector2(into.x, into.z).normalized().dot(Vector2(fisher._face.x, fisher._face.z)) > 0.9, "into the water, facing it")
+	fisher.stop()
+	check(fisher.pastime == "" and fisher.prop == fisher.everyday and not fisher._bobber.visible and fisher.model.mode == "", "and puts the rod away after")
+	# A chat: one walks over to the other, and they face each other.
+	var a := folk[1]
+	var b := folk[2]
+	b.position = a.position + Vector3(3.0, 0, 0)
+	b.position.y = w.ground_height(b.position.x, b.position.z)
+	if not w.can_move(b.position, b.position.x, b.position.z, Npc.RADIUS):
+		b.position = a.position + Vector3(0, 0, 3.0)
+		b.position.y = w.ground_height(b.position.x, b.position.z)
+	check(hood.take_up(b, "chat") and a.pastime == "chat" and b.pastime == "chat" and a.partner == b and b.partner == a, "two neighbours stop for a chat")
+	_live(a, 5.0)
+	_live(b, 5.0)
+	_live(a, 0.5)
+	var ab := (b.position - a.position).normalized()
+	check(not b.on_the_way() and a.position.distance_to(b.position) < 1.6 and a._face.dot(ab) > 0.9 and b._face.dot(-ab) > 0.9, "standing together, face to face")
+	b.stop()
+	_live(a, 1.0)
+	check(a.pastime == "" and b.pastime == "", "and when one goes, the chat's over")
+	# A sit on a bench.
+	var sitter := folk[1]
+	var at := Vector2i(floori(sitter.position.x) + 2, floori(sitter.position.z) + 2)
+	var bench := {}
+	for dz in range(0, 8):
+		for dx in range(-4, 5):
+			var r := Rect2i(at + Vector2i(dx, dz), Vector2i(2, 1))
+			if bench.is_empty() and w.can_place(r, Vector3(-50, 0, -50)) and not w.nav_path(sitter.position, Vector3(r.position.x + 1.0, 0, r.position.y + 1.6)).is_empty():
+				bench = w.place_item("park_bench", r, 0)
+	check(not bench.is_empty() and hood.take_up(sitter, "sit"), "a neighbour goes to sit on a bench nearby")
+	_live(sitter, 20.0)
+	check(sitter._seated and w.footprint(bench).has(Vector2i(floori(sitter.position.x), floori(sitter.position.z))), "and sits on it")
+	sitter.stop()
+	check(not sitter._seated and sitter._lift == 0.0 and not w.footprint(bench).has(Vector2i(floori(sitter.position.x), floori(sitter.position.z))), "and gets up again")
+	# Bug catching.
+	hood.take_up(folk[2], "bugs")
+	check(folk[2].pastime == "bugs" and folk[2].prop.ends_with("_net"), "and one goes after bugs with a net")
+	_live(folk[2], 20.0)
+	check(folk[2].pastime == "bugs", "for a while")
+	_end_life(life)
+
+
+func _test_neighbour_games() -> void:
+	var life := _life_island()
+	var w: World = life["world"]
+	var folk: Array[Npc] = life["folk"]
+	var hood: Neighbourhood = life["hood"]
+	var p: Player = life["player"]
+	var n := folk[0]
+	# Catch me a ...: something that's about right now; catching it wins.
+	check(hood.make_offer(n, "catch") and hood.calling(n.id), "a neighbour asks you to catch them something, with a \"!\"")
+	var what: String = hood.offer["what"]
+	check(ItemDB.is_creature(what), "something that's about now (%s)" % what)
+	hood.start(n)
+	check(hood.game.get("kind", "") == "catch" and not hood.calling(n.id) and hood.played_today() == 1, "the game's on")
+	check(hood.status().begins_with("Catch a"), "and the HUD says so: %s" % hood.status())
+	Events.caught.emit("not_" + what)
+	check(not hood.game.is_empty(), "catching something else doesn't count")
+	Events.caught.emit(what)
+	check(hood.game.is_empty() and hood.result_for(n.id).get("won", false) and hood.calling(n.id), "catching it wins, and they want to hear about it")
+	hood.clear_result()
+	# Run out of time and it's lost.
+	hood.make_offer(n, "catch")
+	hood.start(n)
+	hood._play(Neighbourhood.CATCH_TIME + 1.0)
+	check(not hood.result_for(n.id).get("won", true), "running out of time loses")
+	hood.clear_result()
+	# Hide and seek: everyone hides behind something; walking up to each one finds them.
+	check(hood.make_offer(n, "hide"), "a neighbour asks to play hide and seek")
+	hood.start(n)
+	var hiders: Array = hood.game.get("hiders", [])
+	check(hiders.size() == 3, "three of them hide (%d)" % hiders.size())
+	for id: String in hiders:
+		var h := Story.npc(id)
+		check(h.pastime == "hide" and h.position.distance_to(p.position) > 7.0 and not w.nav_path(p.position, h.position).is_empty(),
+			"%s hides somewhere you can get to, away from you" % id)
+	check(hood.status().contains("Found 0 of 3"), "and the HUD counts them: %s" % hood.status())
+	for id: String in hiders:
+		p.position = Story.npc(id).position + Vector3(0.8, 0, 0.5)
+		hood._play(0.1)
+	check(hood.game.is_empty() and hood.result_for(n.id).get("won", false), "finding them all wins")
+	hood.clear_result()
+	for f in folk:
+		f.stop()
+		f.position = f.home
+	# A race: to somewhere a fair way off for both; whoever's first to the flag wins.
+	var plaza := Vector2(w.data.plaza.get_center())
+	for r in range(16, 40):
+		var at := Vector3(plaza.x, 0, plaza.y + r)
+		at.y = w.ground_height(at.x, at.z)
+		if w.can_move(at, at.x, at.z, Npc.RADIUS) and not w.nav_path(at, Vector3(plaza.x, 0, plaza.y)).is_empty():
+			n.position = at
+			break
+	var start := n.position
+	p.position = n.position + Vector3(1.2, 0, 0.8)
+	check(hood.make_offer(n, "race"), "a neighbour asks for a race")
+	var goal: Vector3 = hood.offer["at"]
+	hood.start(n)
+	check(hood._flag != null and hood._flag.visible, "with a flag at the finish (%s)" % hood.game["name"])
+	check(n.race_to(goal, 5.0), "they can find the way there")
+	hood.game["off"] = true
+	var steps := 0
+	while not hood.game.is_empty() and steps < 2000:
+		n._process(0.05)
+		hood._play(0.05)
+		steps += 1
+	check(hood.result_for(n.id).has("won") and not hood.result_for(n.id)["won"], "standing still, you lose (after %.0f s)" % (steps * 0.05))
+	check(n.position.distance_to(goal) < 0.5, "they ran all the way there")
+	hood.clear_result()
+	n.stop()
+	n.position = start
+	p.position = n.position + Vector3(1.2, 0, 0.8)
+	check(hood.make_offer(n, "race"), "and another")
+	hood.start(n)
+	n.race_to(hood.game["at"], 5.0)
+	hood.game["off"] = true
+	p.position = hood.game["at"]
+	hood._play(0.05)
+	check(hood.result_for(n.id).get("won", false) and not hood._flag.visible, "getting to the flag first wins")
+	hood.clear_result()
+	# Not too many in a day.
+	check(hood.played_today() >= 3, "games played today are counted (%d)" % hood.played_today())
+	hood._next_offer = 0.0
+	hood._maybe_offer()
+	check(hood.offer.is_empty(), "and after %d games, nobody asks for another today" % Neighbourhood.GAMES_PER_DAY)
+	_end_life(life)
+
+
+func _test_neighbours_left_to_it() -> void:
+	# Ten minutes of neighbours left to their own devices: they take things up, someone
+	# asks to play, and nothing goes wrong along the way.
+	var life := _life_island()
+	var hood: Neighbourhood = life["hood"]
+	var folk: Array[Npc] = life["folk"]
+	hood.spontaneous = true
+	hood._next_offer = 30.0
+	var log := ErrorLog.new()
+	OS.add_logger(log)
+	var seen := {}
+	var offered := false
+	for second in 600:
+		for n in folk:
+			for i in 10:
+				n._process(0.1)
+		hood._process(1.0)
+		for n in folk:
+			seen[n.pastime] = true
+		offered = offered or not hood.offer.is_empty()
+	OS.remove_logger(log)
+	check(log.lines.is_empty(), "no errors (%s)" % [log.lines.slice(0, 3)])
+	check(seen.size() >= 3, "they get up to all sorts (%s)" % [seen.keys()])
+	check(offered, "and someone asks to play")
+	_end_life(life)
 
 
 func _test_camper_props() -> void:

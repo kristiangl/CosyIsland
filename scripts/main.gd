@@ -37,6 +37,8 @@ extends Node3D
 ##   --demo=site        Lucy's shop kit staked out, waiting to be built
 ##   --demo=neighbours  two neighbours have just moved in (--visit: go inside one's home, --who=id,id: who,
 ##                      --moving: the first is thinking of moving away)
+##   --demo=life        neighbours living by the plaza, up to something (--do=fishing|bugs|chat|sit)
+##                      or asking to play (--game=hide|catch|race, --start), --who=id,id,id, --talk
 ##   --demo=visitor     someone met on a tour is visiting the plaza (--who=id; or a travelling
 ##                      visitor: --who=fennel|tansy|basil|marina; or one of each: --who=kiwi,basil)
 ##   --demo=fishing     fishing off the beach with fish about (--demo=bugs: bugs nearby)
@@ -56,6 +58,7 @@ var camera_rig: CameraRig
 var day_night: DayNight
 var hud: Hud
 var placement: Placement
+var neighbourhood: Neighbourhood
 var _seed := 0
 var _gen_version := IslandGenerator.VERSION
 var _welcome_pending := false
@@ -167,6 +170,10 @@ func _ready() -> void:
 	hud.wardrobe_requested.connect(func(): hud.creator.open(player.model.look, false))
 	add_child(hud)
 	hud.creator.finished.connect(_on_creator_finished)
+	neighbourhood = Neighbourhood.new()
+	neighbourhood.hud = hud
+	add_child(neighbourhood)
+	Game.neighbourhood = neighbourhood
 	Game.player_name = saved.get("player_name", "")
 	Game.island_name = saved.get("island_name", "")
 	Events.home_entered.connect(_enter_home)
@@ -466,6 +473,7 @@ func _exit_tree() -> void:
 	IslandMap.finish()
 	# Back to the title: nothing of this island stays behind for the next file.
 	Game.npcs.clear()
+	Game.neighbourhood = null
 	Game.world = null
 	Game.island = null
 	Game.tour = null
@@ -630,6 +638,8 @@ func _spawn_neighbour(house: Dictionary) -> void:
 	npc.setup(house["resident"], world, at["position"], at["facing"])
 	npc.wanders = true
 	npc.home = at["position"]
+	npc.everyday = Neighbourhood.daily_prop(npc.id, GameClock.day_key())
+	npc.carry(npc.everyday)
 	Game.npcs.append(npc)
 
 
@@ -1080,6 +1090,99 @@ func _switch_world(to: World) -> void:
 
 ## Scripted actions for checking gameplay visuals in screenshots: pitch the tent near
 ## the spawn, then chop the nearest tree.
+## --demo=life: three neighbours living by the plaza (--who=id,id,id), one of them up to
+## something (--do=fishing|bugs|chat|sit) or asking to play (--game=hide|catch|race; with
+## --start the game's under way).
+func _demo_life(spawn: Vector2i) -> void:
+	var who: PackedStringArray = Game.args.get("who", "biscuit,maple,pip").split(",", false)
+	var homes: Array[Dictionary] = []
+	neighbourhood.spontaneous = false
+	# Side by side in a row south of the plaza on a patch of level grass, cleared of
+	# trees and flowers (so nothing's in front of their doors and they're in view).
+	var tier := world.data.tier(spawn.x, spawn.y)
+	for r in range(5, 30):
+		var patch := Rect2i(spawn + Vector2i(-10, r - 1), Vector2i(19, 9))
+		var level := true
+		for z in range(patch.position.y, patch.end.y):
+			for x in range(patch.position.x, patch.end.x):
+				level = level and world.data.in_bounds(x, z) and world.data.tile(x, z) == IslandData.Tile.GRASS \
+					and world.data.tier(x, z) == tier and not world.data.is_ramp(x, z)
+		if not level:
+			continue
+		for obj in world.objects():
+			if obj["kind"] != "placed" and patch.has_point(Vector2i(obj["x"], obj["z"])):
+				world.remove_object(obj["uid"])
+		var blocked := false
+		for obj in world.objects():
+			blocked = blocked or (obj["kind"] == "placed" and patch.has_point(Vector2i(obj["x"], obj["z"])))
+		if blocked:
+			continue
+		for i in who.size():
+			var house := world.place_item("neighbour_house", Rect2i(spawn + Vector2i(-9 + i * 6, r), Vector2i(3, 3)), 0)
+			house["resident"] = who[i]
+			world.refresh_node(house)
+			_spawn_neighbour(house)
+			homes.append(house)
+		break
+	while not world.prepare_nav(50000):
+		await get_tree().process_frame
+	var folk: Array[Npc] = []
+	for id: String in who:
+		if Story.npc(id):
+			folk.append(Story.npc(id))
+	if folk.is_empty():
+		return
+	var n := folk[0]
+	Story.flags["met_neighbours"] = Array(who)
+	# Stand where there's ground to stand on, in front of them or beside.
+	for off: Vector3 in [Vector3(0.4, 0, 2.6), Vector3(1.8, 0, 0.4), Vector3(-1.8, 0, 0.4)]:
+		var at := n.position + off
+		if world.is_walkable(at.x, at.z):
+			player.position = Vector3(at.x, world.ground_height(at.x, at.z), at.z)
+			break
+	match Game.args.get("do", ""):
+		"fishing":
+			var spot := neighbourhood._fishing_spot(n)
+			if not spot.is_empty():
+				n.go_fishing(spot["stand"], spot["water"], 600.0)
+				n.position = spot["stand"]
+				n._route.clear()
+		"bugs":
+			n.catch_bugs(600.0)
+		"chat":
+			if folk.size() > 1:
+				folk[1].position = n.position + Vector3(2.4, 0, 0.6)
+				folk[1].position.y = world.ground_height(folk[1].position.x, folk[1].position.z)
+				neighbourhood._start_chat(folk[1])
+		"sit":
+			var at := Vector2i(floori(n.position.x) + 2, floori(n.position.z) + 2)
+			if world.can_place(Rect2i(at, Vector2i(2, 1)), Vector3(-50, 0, -50)):
+				world.place_item("park_bench", Rect2i(at, Vector2i(2, 1)), 0)
+			neighbourhood.take_up(n, "sit")
+	if Game.args.has("game"):
+		neighbourhood.make_offer(n, Game.args["game"])
+		# Standing still for the picture.
+		n._wait = 60.0
+		if Game.args.has("start"):
+			await neighbourhood.start(n)
+			if Game.args["game"] == "race":
+				await neighbourhood.count_down(n)
+	for i in (2 if Game.args.has("start") else 30):
+		await get_tree().process_frame
+	# Stand where there's ground to stand on, in front of them or beside.
+	for off: Vector3 in [Vector3(0.4, 0, 2.6), Vector3(1.8, 0, 0.4), Vector3(-1.8, 0, 0.4)]:
+		var at := n.position + off
+		if world.is_walkable(at.x, at.z):
+			player.position = Vector3(at.x, world.ground_height(at.x, at.z), at.z)
+			break
+	player.face_towards(n.position)
+	camera_rig.snap()
+	if Game.args.has("talk"):
+		# --talk: what they say when you talk to them.
+		await get_tree().process_frame
+		Story.talk_to(n)
+
+
 func _run_demo() -> void:
 	for i in 5:
 		await get_tree().process_frame
@@ -1125,6 +1228,9 @@ func _run_demo() -> void:
 				player.facing = Vector3(0, 0, -1)
 			player.position.y = world.ground_height(player.position.x, player.position.z)
 			camera_rig.snap()
+		return
+	if Game.args["demo"] == "life":
+		await _demo_life(spawn)
 		return
 	if Game.args["demo"] == "neighbours":
 		# Two plots staked out yesterday, so two neighbours have just moved in.

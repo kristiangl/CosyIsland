@@ -1499,6 +1499,18 @@ func _neighbour(who: Npc) -> void:
 	if leaving() == who.id:
 		await say(who.id, ["Nearly all packed! It's funny, the boxes take up more room than I did. %s." % catch.capitalize()])
 		return
+	# A game: one they'd like to play, one being played, or how one went.
+	var hood := Game.neighbourhood
+	if hood:
+		if not hood.result_for(who.id).is_empty():
+			await _game_result(who, data)
+			return
+		if not hood.offer_for(who.id).is_empty():
+			await _game_offer(who, data)
+			return
+		if hood.game.get("by", "") == who.id and hood.game.get("kind", "") == "catch":
+			await say(who.id, ["Any luck with the %s yet? Go on, you can do it, %s!" % [ItemDB.display_name(hood.game["what"]).to_lower(), catch]])
+			return
 	# The first chat each day counts towards being friends.
 	var chatted: Dictionary = flags.get("chatted", {})
 	if int(chatted.get(who.id, -1)) != GameClock.day_key():
@@ -1510,6 +1522,9 @@ func _neighbour(who: Npc) -> void:
 	var remark := weather_line(catch)
 	if remark != "":
 		greeting = remark
+	var doing := _pastime_line(who, catch)
+	if doing != "":
+		greeting = doing
 	var wanted := request_for(who.id)
 	var options := ["Let's chat!", "I've got something for you", "Need anything?", "Bye!"]
 	if wanted != "" and Inventory.count_of(wanted) > 0:
@@ -1525,6 +1540,109 @@ func _neighbour(who: Npc) -> void:
 			await say(who.id, ["See you around, {player}! %s!" % catch.capitalize()])
 			return
 	await _maybe_present(who, data)
+
+
+## Something to say about what a neighbour's up to (fishing, catching bugs, chatting
+## with someone, having a sit, the coffee in their hand), or "".
+func _pastime_line(who: Npc, catch: String) -> String:
+	var lines: Array = []
+	match who.pastime:
+		"fishing":
+			lines = ["Shh! You'll scare the fish. ...Oh, it's you, {player}!",
+				"They're biting today, %s! Well. Nibbling." % catch,
+				"I could sit here with a rod all day. Some days I do!"]
+		"bugs":
+			lines = ["I nearly had one! Nearly, %s." % catch, "Bug hunting! Don't tell the bugs.",
+				"Did you see where that butterfly went? It was right here!"]
+		"chat":
+			if who.partner:
+				var topics := ["the weather", "Lucy's new stock", "who's the best at hide and seek", "the best fishing spot",
+					"what Poppy keeps in that office", "whether bugs have favourite flowers", "dinner"]
+				lines = ["Oh, {player}! %s and I were just talking about %s." % [NpcData.display_name(who.partner.id), topics[(hash(who.id) + GameClock.day_key()) % topics.size()]]]
+		"sit":
+			lines = ["Just having a little sit, %s. My feet were telling me to." % catch,
+				"Lovely spot, this. You can see half the island from here! Well, some of it."]
+	if lines.is_empty() and who.prop == "held:coffee_cup":
+		lines = ["Mmm. Coffee. Nothing works before coffee, %s." % catch]
+	if lines.is_empty() or (who.pastime == "" and randf() < 0.5):
+		return ""
+	return lines[randi() % lines.size()]
+
+
+## A neighbour with a "!" over their head asks to play a game (Neighbourhood.offer).
+func _game_offer(who: Npc, data: Dictionary) -> void:
+	var hood := Game.neighbourhood
+	var offer := hood.offer_for(who.id)
+	var catch := String(data.get("catchphrase", ""))
+	var question := ""
+	match offer["game"]:
+		"hide":
+			question = "{player}! Let's play hide and seek! We hide, you seek. Want to play?"
+		"catch":
+			question = "I bet you can't catch a %s in three minutes, %s! Want to try?" % [ItemDB.display_name(offer["what"]).to_lower(), catch]
+		"race":
+			question = "Race you to %s! First one there wins. Ready?" % offer["name"]
+	who.hop()
+	if await ask(who.id, question, ["Let's play!", "Not now"]) != 0:
+		hood.decline()
+		await say(who.id, ["Aww. Another time, then! %s." % catch.capitalize()])
+		return
+	match offer["game"]:
+		"hide":
+			await say(who.id, ["Yay! Close your eyes and count to ten. No peeking!",
+				"You've got two and a half minutes to find us. Walk right up to us when you do!"])
+			if Game.camera:
+				Game.camera.talk_with = null
+			await hood.start(who)
+			if hood.game.is_empty():
+				await say(who.id, ["...Hmm. There's nowhere good to hide. Never mind!"])
+			else:
+				Events.toast.emit("Ready or not! Find %d hiding %s." % [hood.game["hiders"].size(), "neighbour" if hood.game["hiders"].size() == 1 else "neighbours"])
+		"catch":
+			await say(who.id, ["Go on then! Three minutes, starting... now!"])
+			await hood.start(who)
+		"race":
+			await say(who.id, ["Look for the flag at %s. On your marks..." % offer["name"]])
+			await hood.start(who)
+			await hood.count_down(who)
+
+
+## How a game went, with a present if you won.
+func _game_result(who: Npc, data: Dictionary) -> void:
+	var hood := Game.neighbourhood
+	var r := hood.result_for(who.id)
+	hood.clear_result()
+	var catch := String(data.get("catchphrase", ""))
+	if not r["won"]:
+		befriend(who.id, 1)
+		match r["game"]:
+			"hide":
+				await say(who.id, ["Ha! Couldn't find us all, could you? I'm not telling where I was. %s!" % catch.capitalize()])
+			"catch":
+				await say(who.id, ["No %s? They're tricky. Thanks for trying, {player}!" % ItemDB.display_name(r["what"]).to_lower()])
+			"race":
+				await say(who.id, ["I win! I win! Rematch tomorrow, %s?" % catch])
+		return
+	befriend(who.id, 3)
+	Journal.add("games_won")
+	who.hop()
+	_npc_cheer(who.id)
+	match r["game"]:
+		"hide":
+			await say(who.id, ["You found us all! You've got sharp eyes, {player}."])
+		"catch":
+			await say(who.id, ["A %s! You really did it, and in time too! %s!" % [ItemDB.display_name(r["what"]).to_lower(), catch.capitalize()]])
+		"race":
+			await say(who.id, ["You beat me! You're fast, {player}. I'll get you next time, %s!" % catch])
+	var piece := _their_piece(data)
+	if piece != "" and randf() < 0.5:
+		await say(who.id, ["Here, a prize for the winner!"])
+		_give(piece)
+	else:
+		var acorns := 300 + hearts(who.id) * 100
+		Inventory.add_currency(acorns)
+		Sfx.play("coins")
+		await say(who.id, ["Here's %d acorns for the winner!" % acorns])
 
 
 ## Something to say about the weather or the season today ("" if there's nothing much to

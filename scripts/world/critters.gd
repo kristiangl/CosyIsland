@@ -98,6 +98,15 @@ func refresh_water() -> void:
 	_classify_water(false)
 
 
+## The kinds of water on this island ("sea", "river", "pond").
+func waters() -> Array[String]:
+	var kinds: Array[String] = []
+	for w in _water:
+		if w > 0 and not WATER_KINDS[w] in kinds:
+			kinds.append(WATER_KINDS[w])
+	return kinds
+
+
 func water_kind(x: int, z: int) -> String:
 	if not world.data.in_bounds(x, z):
 		return ""

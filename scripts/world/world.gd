@@ -239,6 +239,7 @@ func _build_chunk(chunk: MeshInstance3D, cx: int, cz: int) -> void:
 ## Builds the ground in `area` (and the rivers and ponds) again after the land changed
 ## there, and settles the grass on it. The sea never changes.
 func rebuild_terrain(area: Rect2i) -> void:
+	_nav = null
 	var ground := get_node("Ground")
 	# Walls along the area's edge belong to the tiles just outside it too.
 	var walls := area.grow(1).intersection(Rect2i(0, 0, data.width, data.height))
@@ -618,6 +619,7 @@ func remove_object(uid: int) -> void:
 		if obj["kind"] == "placed" and grass:
 			grass.set_tile_visible(data, tile.x, tile.y, _grass_shown(tile.x, tile.y))
 	_objects.erase(uid)
+	_nav_objects_moved = true
 	data.objects.erase(obj)
 	if _nodes.has(uid):
 		_nodes[uid].queue_free()
@@ -647,7 +649,9 @@ func footprint(obj: Dictionary) -> Array[Vector2i]:
 func _register(obj: Dictionary) -> void:
 	var uid: int = obj["uid"]
 	_objects[uid] = obj
+	_nav_objects_moved = true
 	if obj["kind"] == "bridge":
+		_nav = null
 		var deck := IslandData.tier_height(data.tier(obj["x"], obj["z"]))
 		for tile in footprint(obj):
 			_deck[data.idx(tile.x, tile.y)] = deck
@@ -833,6 +837,168 @@ func is_walkable(px: float, pz: float) -> bool:
 	var obj: Dictionary = _objects[uid]
 	# Arches and archways are walked under.
 	return not obj["kind"] in BLOCKING_KINDS or (obj["kind"] == "placed" and ItemDB.placeable(obj["item"]).get("walk_through", false))
+
+
+## Walkable ground, whatever's standing on it (for finding the way: `nav_path`).
+func _ground_walkable(px: float, pz: float) -> bool:
+	var x := floori(px)
+	var z := floori(pz)
+	if not data.in_bounds(x, z):
+		return false
+	if _deck.has(data.idx(x, z)):
+		return true
+	var surface := data.surface_at(px, pz)
+	if surface != T.GRASS and surface != T.SAND:
+		return false
+	return surface != T.SAND or data.height_at(px, pz) >= IslandData.SEA_LEVEL - 0.06
+
+
+# --- Finding the way -----------------------------------------------------------------
+
+## The island's walkable tiles joined to the ones beside them where you can walk across
+## (no cliff between, or a slope, stairs or bridge), for neighbours finding their way
+## about (`nav_path`). Built from the ground alone, a few rows at a time (`prepare_nav`),
+## and again after the land changes; things standing about are stepped round at each
+## search.
+var _nav: AStar2D
+## How far the build has got: the next row to join up.
+var _nav_row := 0
+## Tiles switched off for the last search (something's standing there), and whether
+## anything's been put down or taken away since.
+var _nav_off: Array[int] = []
+var _nav_objects_moved := true
+
+
+## Builds some more of the way-finding graph, for up to `budget_usec`; true once it's
+## all built.
+func prepare_nav(budget_usec: int = 3000) -> bool:
+	if _nav == null:
+		_nav = AStar2D.new()
+		_nav_row = 0
+		_nav_objects_moved = true
+		_nav_off.clear()
+	var start := Time.get_ticks_usec()
+	while _nav_row < data.height:
+		if _nav_row == 0:
+			_nav_points(0)
+		if _nav_row + 1 < data.height:
+			_nav_points(_nav_row + 1)
+		_nav_join(_nav_row)
+		_nav_row += 1
+		if Time.get_ticks_usec() - start > budget_usec:
+			break
+	return _nav_row >= data.height
+
+
+func _nav_points(z: int) -> void:
+	for x in data.width:
+		# Room to stand in the middle (not right at the water's edge).
+		if _ground_walkable(x + 0.5, z + 0.5) and _ground_walkable(x + 0.18, z + 0.5) and _ground_walkable(x + 0.82, z + 0.5) \
+				and _ground_walkable(x + 0.5, z + 0.18) and _ground_walkable(x + 0.5, z + 0.82):
+			_nav.add_point(data.idx(x, z), Vector2(x + 0.5, z + 0.5))
+
+
+func _nav_join(z: int) -> void:
+	for x in data.width:
+		var i := data.idx(x, z)
+		if not _nav.has_point(i):
+			continue
+		if x + 1 < data.width and _nav.has_point(i + 1) and _nav_edge(x, z, 1, 0):
+			_nav.connect_points(i, i + 1)
+		if z + 1 < data.height and _nav.has_point(i + data.width) and _nav_edge(x, z, 0, 1):
+			_nav.connect_points(i, i + data.width)
+
+
+## True if you can walk from the middle of tile (x, z) to the middle of the one beside it
+## (`dx`, `dz`): walkable all the way, with no step up or down too big on the way.
+func _nav_edge(x: int, z: int, dx: int, dz: int) -> bool:
+	var bx := x + dx
+	var bz := z + dz
+	if data.tier(x, z) == data.tier(bx, bz) and not data.is_ramp(x, z) and not data.is_ramp(bx, bz) \
+			and not _deck.has(data.idx(x, z)) and not _deck.has(data.idx(bx, bz)):
+		# Level ground: only the edge between them to check (the corner of a river or a
+		# cliff can cut across it).
+		var mx := x + 0.5 + dx * 0.5
+		var mz := z + 0.5 + dz * 0.5
+		return _ground_walkable(mx, mz) and absf(data.height_at(mx, mz) - data.height_at(x + 0.5, z + 0.5)) <= IslandData.MAX_STEP
+	var h := ground_height(x + 0.5, z + 0.5)
+	for k in range(1, 6):
+		var px := x + 0.5 + dx * k / 5.0
+		var pz := z + 0.5 + dz * k / 5.0
+		if not _ground_walkable(px, pz):
+			return false
+		var next := ground_height(px, pz)
+		if absf(next - h) > IslandData.MAX_STEP:
+			return false
+		h = next
+	return true
+
+
+## A way from `from` to `to` for a neighbour: points along the ground to walk through in
+## turn (the middles of tiles, ending at `to`; `shortcut` cuts the corners while walking),
+## or empty if there's no way there. Anything standing in the way is walked round.
+func nav_path(from: Vector3, to: Vector3) -> PackedVector3Array:
+	while not prepare_nav(1000000):
+		pass
+	if _nav_objects_moved:
+		_nav_objects_moved = false
+		for i in _nav_off:
+			_nav.set_point_disabled(i, false)
+		_nav_off.clear()
+		for i: int in _occupant:
+			if _nav.has_point(i) and not is_walkable(i % data.width + 0.5, i / data.width + 0.5):
+				_nav.set_point_disabled(i, true)
+				_nav_off.append(i)
+	var a := _nav_point(from)
+	var b := _nav_point(to)
+	if a < 0 or b < 0:
+		return PackedVector3Array()
+	var ids := _nav.get_id_path(a, b)
+	if ids.is_empty():
+		return PackedVector3Array()
+	var points := PackedVector3Array()
+	for k in range(1, ids.size()):
+		var p := _nav.get_point_position(ids[k])
+		points.append(Vector3(p.x, ground_height(p.x, p.y), p.y))
+	# On to `to` itself if it's clear to step there from the last tile's middle.
+	var end := Vector3(to.x, ground_height(to.x, to.z), to.z)
+	if clear_line(from if points.is_empty() else points[points.size() - 1], end):
+		points.append(end)
+	return points
+
+
+## The searchable tile at `p` (or the nearest one to it), or -1.
+func _nav_point(p: Vector3) -> int:
+	var x := floori(p.x)
+	var z := floori(p.z)
+	if data.in_bounds(x, z) and _nav.has_point(data.idx(x, z)) and not _nav.is_point_disabled(data.idx(x, z)):
+		return data.idx(x, z)
+	var near := _nav.get_closest_point(Vector2(p.x, p.z))
+	if near < 0 or _nav.get_point_position(near).distance_to(Vector2(p.x, p.z)) > 1.6:
+		return -1
+	return near
+
+
+## How many of the next points of a way being walked from `at` can be skipped by walking
+## straight on to a later one (looking up to `ahead` points on).
+func shortcut(at: Vector3, way: PackedVector3Array, ahead: int = 4) -> int:
+	for k in range(mini(ahead, way.size() - 1), 0, -1):
+		if clear_line(at, way[k]):
+			return k
+	return 0
+
+
+## True if someone a neighbour's size can walk straight from `a` to `b`.
+func clear_line(a: Vector3, b: Vector3, radius: float = 0.32) -> bool:
+	var steps := maxi(1, ceili(Vector2(b.x - a.x, b.z - a.z).length() / 0.25))
+	var prev := a
+	for k in range(1, steps + 1):
+		var p := a.lerp(b, float(k) / steps)
+		p.y = ground_height(p.x, p.z)
+		if not can_move(prev, p.x, p.z, radius):
+			return false
+		prev = p
+	return true
 
 
 ## True if the player can step from `from` to the point (px, pz).

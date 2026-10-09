@@ -24,6 +24,8 @@ var house_paint: HousePaint
 var creator: CharacterCreator
 ## The characters standing about on the island.
 var npcs: Array[Npc] = []
+## What the neighbours living here get up to, and the games they play with you.
+var neighbourhood: Neighbourhood
 var player_name := ""
 var island_name := ""
 

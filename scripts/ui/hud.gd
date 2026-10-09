@@ -23,6 +23,11 @@ var _landscape_border: ColorRect
 const LANDSCAPE_USES := {"cliff": "raise or lower", "water": "dig or fill in water", "slope": "lay or take away a slope",
 	"trees": "chop down or dig up", "move": "dig up and move", "path": "lay or lift the path"}
 var _toast_label: Label
+## A game with a neighbour: how it's going, top middle (`show_game`), and big words in the
+## middle of the screen for the start of a race (`big_note`).
+var _game_panel: PanelContainer
+var _game_label: Label
+var _big_note: Label
 ## Notes waiting their turn: {"text", "count"}. The same note again joins its twin.
 var _toast_queue: Array[Dictionary] = []
 var _toast_timer := 0.0
@@ -138,6 +143,30 @@ func _ready() -> void:
 	_toast_label = Label.new()
 	_toast_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_toast_panel.add_child(_toast_label)
+
+	_game_panel = PanelContainer.new()
+	_game_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+	_game_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_game_panel.position.y += 24
+	_game_panel.visible = false
+	root.add_child(_game_panel)
+	_game_label = Label.new()
+	_game_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_game_label.add_theme_font_size_override("font_size", 22)
+	_game_panel.add_child(_game_label)
+	_big_note = Label.new()
+	_big_note.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	_big_note.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_big_note.grow_vertical = Control.GROW_DIRECTION_BOTH
+	_big_note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_big_note.add_theme_font_override("font", UIStyle.font(700))
+	_big_note.add_theme_font_size_override("font_size", 140)
+	_big_note.add_theme_color_override("font_color", Color("e0794a"))
+	_big_note.add_theme_color_override("font_outline_color", UIStyle.CREAM)
+	_big_note.add_theme_constant_override("outline_size", 28)
+	_big_note.modulate.a = 0.0
+	_big_note.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(_big_note)
 
 	_build_maps(root)
 
@@ -299,6 +328,31 @@ func fade_in() -> void:
 	var tw := create_tween()
 	tw.tween_property(_fade, "modulate:a", 0.0, 0.3)
 	await tw.finished
+
+
+# --- Games with neighbours ------------------------------------------------------------
+
+## Shows how a game's going ("Hide and seek   Found 1 of 3   1:42").
+func show_game(text: String) -> void:
+	if _game_label.text != text:
+		_game_label.text = text
+	_game_panel.visible = true
+
+
+func hide_game() -> void:
+	_game_panel.visible = false
+
+
+## Big words in the middle of the screen for a moment ("3", "2", "1", "Go!").
+func big_note(text: String) -> void:
+	_big_note.text = text
+	_big_note.pivot_offset = _big_note.size * 0.5
+	_big_note.scale = Vector2.ONE * 1.4
+	_big_note.modulate.a = 1.0
+	var tw := create_tween()
+	tw.tween_property(_big_note, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_interval(0.35)
+	tw.tween_property(_big_note, "modulate:a", 0.0, 0.2)
 
 
 # --- Toasts --------------------------------------------------------------------------

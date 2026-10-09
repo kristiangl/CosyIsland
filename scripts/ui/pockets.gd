@@ -181,6 +181,16 @@ func _use_slot(i: int) -> void:
 	if def.has("construct"):
 		_construct(i, def["construct"])
 		return
+	if def.get("category", "") == "recipe":
+		var makes: String = def["makes"]
+		if Recipes.is_known(makes):
+			Events.toast.emit("You already know how to make that. Lucy will buy the card.")
+			return
+		Inventory.remove_from_slot(i)
+		Recipes.learn(makes)
+		Journal.add("recipes_learned")
+		Events.toast.emit("You learned to make: %s!" % ItemDB.display_name(makes))
+		return
 	if ItemDB.is_tool(id):
 		Inventory.equip(-1 if Inventory.equipped_slot == i else i)
 	elif not ItemDB.placeable(id).is_empty():

@@ -249,7 +249,22 @@ func _def(id: String) -> Dictionary:
 		def = _make_basic(id)
 	elif def.is_empty() and id.begins_with("nature."):
 		def = _make_nature(id)
+	elif def.is_empty() and id.begins_with("recipe."):
+		def = _make_recipe_card(id)
 	return def
+
+
+## A DIY recipe card, "recipe.<item>" (Lucy sells a couple a day): read it from the
+## pockets to learn how to make the item. {} if there's no such item.
+func _make_recipe_card(id: String) -> Dictionary:
+	var item := id.substr(7)
+	var made := _def(item)
+	if made.is_empty() or item.begins_with("recipe."):
+		return {}
+	items[id] = {"name": "%s DIY Recipe" % made["name"], "category": "recipe", "stack": 1,
+		"price": clampi(int(made.get("price", 200)) / 4, 50, 1500), "color": made.get("color", "#ffffff"),
+		"desc": "How to make %s at a workbench. Read it to learn it." % String(made["name"]).to_lower(), "makes": item}
+	return items[id]
 
 
 ## Trees, bushes, rocks and stumps dug up into the pockets with the landscaping Move tool

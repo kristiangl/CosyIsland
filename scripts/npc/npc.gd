@@ -21,6 +21,12 @@ var always_out := false
 ## Visiting from a tour island for the day (wanders round the plaza).
 var visiting := false
 var home := Vector3.ZERO
+## Where a wanderer keeps to (the plaza, for visitors), or an empty rect for anywhere
+## within ROAM of home.
+var bounds := Rect2()
+## What they carry about (characters.json "prop"): a tool, or a held prop's model key.
+var prop := ""
+var _flourish := 6.0
 const WALK := 1.1
 const ROAM := 7.0
 var _yaw := 0.0
@@ -51,6 +57,8 @@ func setup(character_id: String, w: World, spot: Vector3, facing: Vector3) -> vo
 	model = NpcData.model(character_id)
 	add_child(model)
 	model.rotation.y = _yaw
+	prop = NpcData.get_character(character_id).get("prop", "")
+	model.set_tool(prop)
 	add_to_group("npcs")
 	if NpcData.is_neighbour(character_id):
 		_thought = Label3D.new()
@@ -81,6 +89,7 @@ func _process(delta: float) -> void:
 	if _umbrella_check <= 0.0:
 		_umbrella_check = 1.0
 		_check_umbrella()
+	_show_off(delta)
 	var speed := 0.0
 	if wanders:
 		visible = always_out or out_at(GameClock.hour_float())
@@ -137,6 +146,8 @@ func _wander(delta: float) -> float:
 func _pick_target() -> void:
 	for attempt in 8:
 		var p := home + Vector3(_rng.randf_range(-ROAM, ROAM), 0, _rng.randf_range(-ROAM, ROAM))
+		if bounds.has_area():
+			p = Vector3(_rng.randf_range(bounds.position.x, bounds.end.x), 0, _rng.randf_range(bounds.position.y, bounds.end.y))
 		# Somewhere on the same level as home (ramps aside, cliffs are in the way).
 		if world.is_walkable(p.x, p.z) and world.object_at(floori(p.x), floori(p.z)).is_empty() \
 				and absf(world.ground_height(p.x, p.z) - world.ground_height(home.x, home.z)) < 0.3:
@@ -154,7 +165,20 @@ func blocks(px: float, pz: float) -> bool:
 ## Out in the rain or snow, up goes the umbrella.
 func _check_umbrella() -> void:
 	var wet := (Weather.rain > 0.1 or Weather.snow > 0.1) and world != null and not world.interior
+	# The umbrella takes the hand that carries their prop (set first: it puts umbrellas away).
+	if prop != "":
+		model.set_tool("" if wet else prop)
 	model.set_umbrella(UMBRELLAS[absi(hash(id)) % UMBRELLAS.size()] if wet else "")
+
+
+## Now and then someone with a net gives it a practice swing.
+func _show_off(delta: float) -> void:
+	if not prop.ends_with("_net") or Story.talking:
+		return
+	_flourish -= delta
+	if _flourish <= 0.0:
+		_flourish = _rng.randf_range(7.0, 14.0)
+		model.play("net")
 
 
 func hop() -> void:

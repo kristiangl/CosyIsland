@@ -1,5 +1,5 @@
 {
-	"_note": "Main island characters. look uses ids from appearance.json; species colours are hex (cats: fur, fur2 for the muzzle, bib and tail tip, stripes for tabby markings, blaze for a pale stripe up the nose, short for a British Shorthair's round face and small ears).",
+	"_note": "Main island characters. look uses ids from appearance.json; species colours are hex (cats: fur, fur2 for the muzzle, bib and tail tip, stripes for tabby markings, blaze for a pale stripe up the nose, short for a British Shorthair's round face and small ears). \"prop\": what a visitor carries about (a tool's item id, or a Models key like \"held:watering_can\").",
 	"poppy": {
 		"name": "Poppy",
 		"title": "Island Office",
@@ -201,7 +201,8 @@
 			"hat": "beret",
 			"hat_color": "coral",
 			"glasses": "none"
-		}
+		},
+		"prop": "held:fabric_roll"
 	},
 	"tansy": {
 		"name": "Tansy",
@@ -230,7 +231,8 @@
 			"hat": "straw",
 			"hat_color": "yellow",
 			"glasses": "none"
-		}
+		},
+		"prop": "held:watering_can"
 	},
 	"basil": {
 		"name": "Basil",
@@ -260,7 +262,8 @@
 			"hat": "bucket",
 			"hat_color": "olive",
 			"glasses": "none"
-		}
+		},
+		"prop": "sturdy_net"
 	},
 	"marina": {
 		"name": "Marina",
@@ -290,6 +293,7 @@
 			"hat": "sou_wester",
 			"hat_color": "yellow",
 			"glasses": "none"
-		}
+		},
+		"prop": "sturdy_rod"
 	}
 }

@@ -140,6 +140,8 @@ static func get_mesh(key: String) -> ArrayMesh:
 			_drop(k, p[1])
 		"landscape":
 			_landscape_tool(k, p[1])
+		"held":
+			_held_prop(k, p[1])
 		"umbrella":
 			_umbrella(k, Color(p[1]))
 		"tool":
@@ -1206,6 +1208,14 @@ static func _drop(k: MeshKit, item: String) -> void:
 		"fish", "bug":
 			CreatureModels.build(k, item)
 			return
+		"recipe":
+			# A recipe card: cream paper with a band in the colour of what it makes, and
+			# a little hammer.
+			k.box(Vector3(0, 0.015, 0), Vector3(0.42, 0.03, 0.32), MeshKit.lin(Color("fbf3dc")))
+			k.box(Vector3(0, 0.033, -0.1), Vector3(0.42, 0.008, 0.09), col)
+			k.box(Vector3(0.06, 0.036, 0.06), Vector3(0.2, 0.012, 0.03), MeshKit.lin(Color("b08463")))
+			k.box(Vector3(-0.05, 0.038, 0.06), Vector3(0.05, 0.016, 0.08), MeshKit.lin(Color("8a8f99")))
+			return
 		"clothing":
 			# A neatly folded bundle tied with a ribbon.
 			k.rounded_box(Vector3(0, 0.07, 0), Vector3(0.36, 0.14, 0.28), col, 0.4)
@@ -1293,6 +1303,11 @@ static func _drop(k: MeshKit, item: String) -> void:
 			k.xform = Transform3D.IDENTITY
 		"iron_nugget", "gold_nugget":
 			k.sphere(Vector3(0, 0.09, 0), Vector3(0.13, 0.1, 0.12), col, 3, 5, 0.3, 0.4, 5)
+		"cloth":
+			# Three folded lengths of cloth in a pile.
+			for i in 3:
+				var tint: Color = [Color("e9d6ef"), Color("f6e3a1"), Color("cde6f2")][i]
+				k.rounded_box(Vector3(0, 0.04 + i * 0.065, 0), Vector3(0.34 - i * 0.03, 0.06, 0.24 - i * 0.02), MeshKit.lin(tint), 0.4)
 		"bridge_kit":
 			# A bundle of planks tied with rope.
 			for i in 3:
@@ -1430,6 +1445,33 @@ static func _landscape_tool(k: MeshKit, what: String) -> void:
 			k.box(Vector3(0, -0.1, 0), Vector3(0.14, 0.03, 0.03), handle)
 			k.box(Vector3(0, 0.7, 0), Vector3(0.05, 0.12, 0.05), metal)
 			k.box(Vector3(0, 0.78, 0), Vector3(0.22, 0.04, 0.22), MeshKit.lin(Color("b9b1aa")))
+
+
+## Things characters carry about that aren't tools (Npc "prop"), built round the grip at
+## the origin like a tool's handle.
+static func _held_prop(k: MeshKit, what: String) -> void:
+	match what:
+		"watering_can":
+			# A blue can hanging from its handle, spout forward.
+			var can := MeshKit.lin(Color("6fa9d8"))
+			var dark := MeshKit.lin(Color("4f86b8"))
+			k.cylinder(Vector3(0, -0.32, 0), Vector3(0, -0.1, 0), 0.12, 0.105, can, 10)
+			k.cylinder(Vector3(0, -0.12, 0), Vector3(0, -0.09, 0), 0.108, 0.108, dark, 10)
+			k.cylinder(Vector3(0, -0.25, 0.08), Vector3(0, -0.13, 0.26), 0.022, 0.018, can, 6)
+			k.cylinder(Vector3(0, -0.13, 0.26), Vector3(0, -0.12, 0.28), 0.04, 0.045, dark, 8)
+			# The handle arching over the top, where the hand holds it.
+			var prev := Vector3(0, -0.1, -0.08)
+			for i in range(1, 7):
+				var a := PI * i / 6.0
+				var pt := Vector3(0, -0.1 + sin(a) * 0.12, -0.08 * cos(a))
+				k.cylinder(prev, pt, 0.016, 0.016, dark, 5, false)
+				prev = pt
+		"fabric_roll":
+			# A bolt of lavender cloth with a cream stripe, tucked under the arm.
+			k.cylinder(Vector3(0, -0.2, 0), Vector3(0, 0.3, 0), 0.075, 0.075, MeshKit.lin(Color("c9b3e6")), 10)
+			for y: float in [-0.08, 0.18]:
+				k.cylinder(Vector3(0, y, 0), Vector3(0, y + 0.04, 0), 0.078, 0.078, MeshKit.lin(Color("f6ecd8")), 10, false)
+			k.cylinder(Vector3(0, -0.22, 0), Vector3(0, 0.32, 0), 0.02, 0.02, MeshKit.lin(Color("b08463")), 6)
 
 
 static func _tool(k: MeshKit, item: String) -> void:

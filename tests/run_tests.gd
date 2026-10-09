@@ -60,6 +60,8 @@ func _run() -> void:
 	_test_trees_and_rocks()
 	_test_outdoor_decorations()
 	_test_fences()
+	_test_every_item_has_a_recipe()
+	_test_visitors_on_the_plaza()
 	_test_storage()
 	_test_weather()
 	_test_sounds()
@@ -650,7 +652,7 @@ func _test_shop_and_house() -> void:
 	var today := Shop.stock(42, 100)
 	check(today == Shop.stock(42, 100), "the shop's stock is the same all day")
 	check(today != Shop.stock(42, 101), "and changes the next day")
-	check(today.size() == Shop.STAPLES.size() + 1 + Shop.FURNITURE_PER_DAY + Shop.OUTDOOR_PER_DAY + Shop.INTERIORS_PER_DAY + Shop.CLOTHES_PER_DAY,
+	check(today.size() == Shop.STAPLES.size() + 1 + Shop.FURNITURE_PER_DAY + Shop.OUTDOOR_PER_DAY + Shop.INTERIORS_PER_DAY + Shop.RECIPES_PER_DAY + Shop.CLOTHES_PER_DAY,
 		"the shop has a full stock (and an umbrella)")
 	check(today.filter(func(id): return ItemDB.placeable(id).get("outdoor", false)).size() == Shop.OUTDOOR_PER_DAY, "including something for outdoors")
 	check(today.any(func(id): return ItemDB.is_clothing(id)), "the shop sells clothes")
@@ -1563,8 +1565,8 @@ func _test_tour_visitors() -> void:
 	for id: String in Story.DAILY_VISITORS:
 		check(not NpcData.get_character(id).is_empty() and Shop.KEEPERS.has(id), "%s has a character and a stall" % id)
 	var fabrics := Shop.stock(7, today, "", "fennel")
-	check(fabrics.size() == Shop.FENNEL_PER_DAY and fabrics.all(func(id): return ItemDB.get_item(id).get("category", "") == "interior" \
-		or ItemDB.placeable(id).get("rug", false)), "Fennel sells wallpaper, flooring, curtains and rugs")
+	check(fabrics.size() == Shop.FENNEL_PER_DAY + 1 and fabrics[0] == "cloth" and fabrics.slice(1).all(func(id): return ItemDB.get_item(id).get("category", "") == "interior" \
+		or ItemDB.placeable(id).get("rug", false)), "Fennel sells cloth, wallpaper, flooring, curtains and rugs")
 	var seeds := Shop.stock(7, today, d.native_flower, "tansy")
 	check(seeds.any(func(id): return ItemDB.get_item(id).get("category", "") == "flower_plant" \
 		and ItemDB.is_rare_flower(ItemDB.get_item(id)["species"], ItemDB.get_item(id)["flower_color"])), "Tansy has a rare flower")
@@ -2183,6 +2185,70 @@ func _test_fences() -> void:
 	placing.free()
 	Inventory.reset()
 	w.free()
+
+
+func _test_visitors_on_the_plaza() -> void:
+	var d := IslandGenerator.generate(7)
+	var w := World.new()
+	add_child(w)
+	w.setup(d)
+	var first := Main.visitor_spot(w, Vector2(2, 2))
+	check(not first.is_empty() and first["plaza"] and d.plaza.has_point(Vector2i(floori(first["at"].x), floori(first["at"].z))),
+		"visitors stand on the plaza")
+	# A second visitor finds their own spot, not on top of the first.
+	var other := Npc.new()
+	w.add_child(other)
+	other.setup("basil", w, first["at"], Vector3(0, 0, 1))
+	Game.npcs.append(other)
+	var second := Main.visitor_spot(w, Vector2(2, 2))
+	check(second["plaza"] and Vector2(second["at"].x, second["at"].z).distance_to(Vector2(first["at"].x, first["at"].z)) >= 1.8,
+		"a second one stands a little way off")
+	check(other.prop == "sturdy_net" and other.model._tool.mesh != null, "Basil carries his net")
+	other.bounds = Rect2(d.plaza)
+	other.home = other.position
+	for i in 20:
+		other._pick_target()
+		check(Rect2(d.plaza).has_point(Vector2(other._target.x, other._target.z)) or other._target == other.home, "visitors wander about the plaza only")
+	Game.npcs.erase(other)
+	w.free()
+	var props := Story.DAILY_VISITORS.map(func(id): return NpcData.get_character(id).get("prop", ""))
+	check(props.all(func(p): return p != "" and Models.get_mesh(p if ":" in p else "tool:" + p) != null), "every travelling visitor carries something")
+
+
+func _test_every_item_has_a_recipe() -> void:
+	var missing: Array[String] = []
+	for id: String in ItemDB.items:
+		if Recipes.craftable(id) and not Recipes.recipes.has(id):
+			missing.append(id)
+	check(missing.is_empty(), "everything you'd make has a DIY recipe (missing: %s)" % [missing.slice(0, 5)])
+	for id: String in ["big_boulder", "comfy_sofa_sunny", "knit_jumper_cream", "lilac_carpet", "umbrella_red", "rail_fence", "street_lamp"]:
+		check(Recipes.recipes.has(id), "%s can be made" % id)
+	check(not Recipes.recipes.has("comfy_sofa_rose") and not Recipes.recipes.has("tent_kit") and not Recipes.recipes.has("wood")
+		and not Recipes.recipes.has("knit_jumper_mint"), "but not colourways (customise those), kits or materials")
+	var bad: Array[String] = []
+	for id: String in Recipes.recipes:
+		for mat: String in Recipes.materials(id):
+			if not ItemDB.has_item(mat):
+				bad.append("%s needs %s" % [id, mat])
+	check(bad.is_empty(), "every recipe's materials are things (%s)" % [bad.slice(0, 3)])
+	check(Recipes.materials("comfy_sofa_sunny").has("cloth") and Recipes.materials("big_boulder").has("stone")
+		and Recipes.materials("knit_jumper_cream").has("cloth"), "made of what they look made of")
+	# Recipe cards: Lucy sells a couple a day; reading one teaches it.
+	var lucy := Shop.stock(7, 100)
+	var cards := lucy.filter(func(id): return String(id).begins_with("recipe."))
+	check(cards.size() == Shop.RECIPES_PER_DAY and "cloth" in lucy, "Lucy sells recipe cards and cloth")
+	Recipes.reset()
+	Inventory.reset()
+	var card: String = cards[0]
+	var makes: String = ItemDB.get_item(card)["makes"]
+	Inventory.add_item(card)
+	var pockets := Pockets.new()
+	add_child(pockets)
+	pockets._use_slot(Inventory.slots.find_custom(func(sl): return sl.get("id", "") == card))
+	check(Recipes.is_known(makes) and Inventory.count_of(card) == 0, "reading a recipe card teaches it")
+	pockets.free()
+	Recipes.reset()
+	Inventory.reset()
 
 
 func _test_paths_and_stairs() -> void:

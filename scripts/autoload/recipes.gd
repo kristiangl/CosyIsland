@@ -1,6 +1,7 @@
 extends Node
 ## DIY recipes (data/recipes.json, plus furniture series pieces) and which ones the
-## player knows.
+## player knows. Everything you'd make and keep has one: whatever has no recipe written
+## down gets one worked out from what it's made of and what it costs (`made_up`).
 
 signal learned(item_id: String)
 
@@ -15,7 +16,87 @@ var known: Array[String] = []
 func _ready() -> void:
 	recipes = JSON.parse_string(FileAccess.get_file_as_string(DATA_PATH))["recipes"]
 	recipes.merge(ItemDB.series_recipes)
+	var ids: Array = ItemDB.items.keys()
+	ids.sort()
+	for id: String in ids:
+		if not recipes.has(id) and craftable(id):
+			recipes[id] = {"materials": made_up(id)}
 	reset()
+
+
+## Whether an item is something you'd make at a workbench: furniture and outdoor things,
+## wallpaper, flooring, rugs and curtains, designed clothes and umbrellas. One recipe
+## per piece: its other colourways are made by customising it.
+static func craftable(id: String) -> bool:
+	var def := ItemDB.get_item(id)
+	if def.get("basic", false) or id.contains("."):
+		return false
+	match def.get("category", ""):
+		"furniture", "interior", "clothing":
+			pass
+		"tool":
+			if def.get("tool", "") != "umbrella":
+				return false
+		_:
+			return false
+	var placeable: Dictionary = def.get("placeable", {})
+	if placeable.get("structure", false) or placeable.has("builds") or placeable.has("room") or placeable.has("inside"):
+		return false
+	var all := ItemDB.variants_of(id)
+	return all.is_empty() or all[0] == id
+
+
+## What a thing takes to make, worked out from its name and price: stone for rocks and
+## walls, clay for pots and tiles, iron for lamps and pans, gold for trophies and gems,
+## cloth for soft things and clothes, branches for plants and wicker, and wood for the
+## rest (and the frames of the others). Dearer things take more.
+static func made_up(id: String) -> Dictionary:
+	var def := ItemDB.get_item(id)
+	var words := (id + " " + String(def.get("name", ""))).to_lower()
+	var price := int(def.get("price", 200))
+	var units := clampi(roundi(price / 110.0), 2, 24)
+	var category: String = def.get("category", "")
+	if category == "clothing":
+		return {"cloth": clampi(roundi(price / 90.0), 2, 10)}
+	if category == "tool":
+		return {"cloth": 3, "tree_branch": 2}
+	var main := "wood"
+	for entry: Array in MADE_OF:
+		if (entry[1] as Array).any(func(w: String): return words.contains(w)):
+			main = entry[0]
+			break
+	if category == "interior" and main == "wood" and words.contains("wallpaper"):
+		return {"wood": maxi(1, units / 2), "clay": maxi(1, units - units / 2)}
+	match main:
+		"gold_nugget":
+			return {"gold_nugget": clampi(units / 6, 1, 3), "wood": maxi(2, units / 2)}
+		"wood":
+			return {"wood": units}
+	# Mostly the main stuff, with a wooden frame, except for things made all of it.
+	var whole: bool = category == "interior" or (ALL_OF as Array).any(func(w: String): return words.contains(w))
+	if whole:
+		return {main: units}
+	var frame := maxi(1, units / 3)
+	return {main: units - frame, "wood": frame}
+
+
+## Words in an item's id or name, and what it's mostly made of. The first match wins.
+const MADE_OF := [
+	["wood", ["crate", "wooden", "log", "plank", "barrel", "stage", "sign", "box", "potato"]],
+	["gold_nugget", ["gold", "trophy", "golden", "gem"]],
+	["iron_nugget", ["iron", "lamp", "lantern", "hydrant", "frying_pan", "stove", "oven", "fridge", "bell", "kettle",
+		"camera", "skates", "water_tower", "clock", "radio", "cauldron", "telescope", "sink"]],
+	["stone", ["rock", "boulder", "stone", "crag", "pebble", "rubble", "grave", "shrine", "well", "outcrop", "brick",
+		"statue", "fountain", "post", "pillar"]],
+	["clay", ["pot", "vase", "jar", "plate", "mug", "tile", "teacup", "planter", "cactus", "bowl", "teapot", "dinner",
+		"burger", "cookie", "chocolate"]],
+	["cloth", ["rug", "carpet", "curtain", "cushion", "pillow", "plush", "sofa", "armchair", "bed", "sleeping", "tent",
+		"canopy", "fabric", "pennant", "flag", "quilt", "blanket", "hammock", "beanbag", "futon", "mat", "parasol"]],
+	["tree_branch", ["tree", "fir", "shrub", "bush", "wreath", "broom", "basket", "wicker", "rush", "straw"]],
+]
+## Things made all of their main stuff, without a wooden frame.
+const ALL_OF := ["rock", "boulder", "crag", "pebble", "rubble", "rug", "carpet", "curtain", "cushion", "pillow",
+	"plush", "pennant", "flag", "brick", "plate", "pot", "jar", "mug", "teacup", "tree", "fir", "shrub", "bush", "wreath"]
 
 
 ## Back to the starter set.

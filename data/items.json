@@ -32,6 +32,14 @@
 			"color": "#c98a5c",
 			"desc": "Soft, damp clay. It holds its shape well."
 		},
+		"cloth": {
+			"name": "Cloth",
+			"category": "material",
+			"stack": 30,
+			"price": 30,
+			"color": "#e9d6ef",
+			"desc": "A folded length of soft cloth, for anything that needs sewing. Lucy and Fennel sell it."
+		},
 		"iron_nugget": {
 			"name": "Iron Nugget",
 			"category": "material",

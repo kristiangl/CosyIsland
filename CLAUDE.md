@@ -118,7 +118,11 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   (`shaders/tour_border.gdshader`). Campers you've met (`Story.flags["met"]`) visit your
   plaza some days (`Story.visitor_today`, `Npc.visiting`, `main.gd` `_check_visitor`).
   Travelling visitors (`Story.DAILY_VISITORS`, `daily_visitor_today`, in
-  `data/characters.json`) set up east of the plaza with a stall (`Shop.KEEPERS`).
+  `data/characters.json`) set up on the plaza with a stall (`Shop.KEEPERS`), carrying
+  their "prop" (Basil a net he swings now and then, Marina a rod, Fennel a bolt of cloth,
+  Tansy a watering can: a tool, or a `Models` "held:<name>" key; put away for an umbrella).
+  Visitors stand where `Main.visitor_spot` finds room on the plaza, and campers wander
+  only within it (`Npc.bounds`).
   Neighbours sometimes think of moving (`Story.check_moving` each morning,
   `flags["moving"]`, a "..." bubble on the `Npc`); they leave only if told to.
 - Movement: `World.can_move` (the middle steps; edge points must land level with
@@ -209,7 +213,15 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   (models with fabric have a second surface: show them with `Models.dress`). Rugs
   (`placeable.rug`) sit on their own floor layer in `World`, under furniture. Parts that
   glow at night go in a series model's glow surface (`night_glow` global). Effects: `Effects.burst(kind, pos)` / `Effects.emitter(kind)`.
-  `data/recipes.json`: DIY recipes. `data/appearance.json`: character options.
+  `data/recipes.json`: DIY recipes; anything you'd make (`Recipes.craftable`: furniture,
+  outdoor things, wallpaper, flooring, rugs, curtains, designed clothes, umbrellas; one per
+  piece, its colourways come from customising) without one gets one worked out from its
+  name and price (`Recipes.made_up`, `MADE_OF`), using wood, stone, clay, iron, gold,
+  branches and "cloth" (Lucy's and Fennel's). Recipe cards are items made on demand,
+  "recipe.<item>" (`ItemDB._make_recipe_card`): Lucy sells `Shop.RECIPES_PER_DAY`, and
+  reading one from the pockets teaches it. The workbench and recipe book filter by kind
+  (`CraftingMenu.GROUPS`, left/right). `--ui=crafting --learn [--group=N]`.
+  `data/appearance.json`: character options.
   Everyday clothes (the plain styles there) are items made on demand,
   `basic.<slot>.<style>.<colour>[.<colour2>.<pattern>]` (`ItemDB.basic_id`); the
   wardrobe (`Inventory.closet`) only offers clothes you own.

@@ -1,12 +1,19 @@
 class_name CraftingMenu
 extends PanelContainer
 ## The DIY workbench, with two tabs (switch with L/R, Q/E or by clicking). Make: known
-## recipes on the left, the selected one's materials on the right; A crafts. Customise:
+## recipes on the left, the selected one's materials on the right; A crafts; left and
+## right show one kind of thing at a time (GROUPS). Customise:
 ## furniture and clothes in your pockets that come in other colourways; left/right picks
 ## one and A remakes it with a customisation kit. B closes. Opened from the phone
 ## (open_book) it's just the recipe book: the recipes you know and what they need.
 
 var _mode := "make"
+## The kinds of thing the recipe list can show, one at a time: [id, name].
+const GROUPS := [["all", "All"], ["furniture", "Furniture"], ["outdoor", "Outdoor"], ["interior", "Walls & floors"],
+	["clothing", "Clothes"], ["tool", "Tools"]]
+var _group := 0
+var _group_buttons: Array[Button] = []
+var _group_row: HBoxContainer
 ## The phone's recipe book: look, don't make.
 var browsing := false
 var _title: Label
@@ -49,6 +56,18 @@ func _ready() -> void:
 		b.pressed.connect(_set_mode.bind(mode))
 		title_row.add_child(b)
 		_tabs.append(b)
+	_group_row = HBoxContainer.new()
+	_group_row.add_theme_constant_override("separation", 4)
+	left.add_child(_group_row)
+	for i in GROUPS.size():
+		var g := Button.new()
+		g.text = GROUPS[i][1]
+		g.toggle_mode = true
+		g.focus_mode = Control.FOCUS_NONE
+		g.add_theme_font_size_override("font_size", 14)
+		g.pressed.connect(_set_group.bind(i))
+		_group_row.add_child(g)
+		_group_buttons.append(g)
 	var scroll := ScrollContainer.new()
 	scroll.follow_focus = true
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -111,7 +130,7 @@ func open_book() -> void:
 	_title.text = "DIY Recipes"
 	for tab in _tabs:
 		tab.visible = false
-	_hint_template = "%d recipes   Make them at a workbench   {ui_cancel} close" % Recipes.known.size()
+	_hint_template = "%d recipes   Left/right sort   Make them at a workbench   {ui_cancel} close" % Recipes.known.size()
 	_hint.text = Prompts.fill(_hint_template)
 
 
@@ -131,6 +150,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		close()
 	elif (event.is_action_pressed("tab_prev") or event.is_action_pressed("tab_next")) and not browsing:
 		_set_mode("customise" if _mode == "make" else "make")
+	elif _mode == "make" and (event.is_action_pressed("ui_left") or event.is_action_pressed("ui_right")):
+		# (With a recipe picked, its row takes these; this is for an empty list.)
+		cycle_group(-1 if event.is_action_pressed("ui_left") else 1)
 	else:
 		return
 	get_viewport().set_input_as_handled()
@@ -140,7 +162,7 @@ func _set_mode(mode: String) -> void:
 	_mode = mode
 	_tabs[0].button_pressed = mode == "make"
 	_tabs[1].button_pressed = mode == "customise"
-	var hint := "{ui_accept} craft   {tab_prev} {tab_next} customise   {ui_cancel} close" if mode == "make" \
+	var hint := "{ui_accept} craft   Left/right sort   {tab_prev} {tab_next} customise   {ui_cancel} close" if mode == "make" \
 		else "Left/right colour   {ui_accept} customise   {tab_prev} {tab_next} make   {ui_cancel} close"
 	_hint_template = hint
 	_hint.text = Prompts.fill(hint)
@@ -154,8 +176,11 @@ func _rebuild() -> void:
 		r.queue_free()
 	_rows.clear()
 	_selected = null
+	_group_row.visible = _mode == "make"
+	for i in _group_buttons.size():
+		_group_buttons[i].button_pressed = i == _group
 	if _mode == "make":
-		var ids := Recipes.known.duplicate()
+		var ids := Recipes.known.filter(func(id): return _in_group(id))
 		# Craftable things first, then alphabetical.
 		ids.sort_custom(func(a, b):
 			var ca := Recipes.can_craft(a)
@@ -172,7 +197,7 @@ func _rebuild() -> void:
 				_add_row(RecipeRow.new(slot["id"], i, self))
 	if _rows.is_empty():
 		_icon.texture = null
-		_name.text = "Nothing to customise" if _mode == "customise" else "No recipes yet"
+		_name.text = "Nothing to customise" if _mode == "customise" else ("No recipes yet" if _group == 0 else "None of these yet")
 		_desc.text = "Bring furniture or clothes that come in other colours." if _mode == "customise" \
 			else "Message bottles wash up with recipes."
 		for child in _materials.get_children():
@@ -184,6 +209,36 @@ func _rebuild() -> void:
 		if row and row.is_inside_tree():
 			row.grab_focus()).call_deferred()
 	_show(_rows[0])
+
+
+## Shows one kind of recipe (an index into GROUPS).
+func _set_group(i: int) -> void:
+	_group = posmod(i, GROUPS.size())
+	Sfx.play("ui_move", -4.0, 1.0, 0.03)
+	_rebuild()
+
+
+func cycle_group(direction: int) -> void:
+	_set_group(_group + direction)
+
+
+func _in_group(id: String) -> bool:
+	return GROUPS[_group][0] == "all" or GROUPS[_group][0] == group_of(id)
+
+
+## Which of GROUPS a recipe's item belongs to.
+static func group_of(id: String) -> String:
+	var def := ItemDB.get_item(id)
+	if ItemDB.placeable(id).get("outdoor", false):
+		return "outdoor"
+	match def.get("category", ""):
+		"interior":
+			return "interior"
+		"clothing":
+			return "clothing"
+		"tool":
+			return "tool"
+	return "furniture"
 
 
 func _add_row(row: RecipeRow) -> void:
@@ -314,6 +369,11 @@ class RecipeRow:
 
 	func _gui_input(event: InputEvent) -> void:
 		if slot < 0:
+			# Making: left and right show another kind of thing.
+			for step: Array in [["ui_left", -1], ["ui_right", 1]]:
+				if event.is_action_pressed(step[0]):
+					menu.cycle_group(step[1])
+					accept_event()
 			return
 		if event.is_action_pressed("ui_left"):
 			menu.cycle(self, -1)

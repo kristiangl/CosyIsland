@@ -255,6 +255,13 @@ Milestone 3b:
   or sand for palms and rocks, with room round trees). A grassy border goes round the screen
   while a landscaping tool is out. B while carrying puts it in your pockets instead, looking
   just as it did, to plant again anywhere outside.
+- [x] Everything has a DIY recipe: furniture, outdoor things, wallpaper, flooring, rugs,
+  curtains, designed clothes and umbrellas, made of what they look made of (soft things and
+  clothes take cloth, which Lucy and Fennel sell). Lucy sells a couple of recipe cards a
+  day, and the workbench sorts recipes by kind.
+- [x] Visitors on the plaza: campers wander about it and travelling visitors set up on it,
+  each with something to suit them (Basil's net, Marina's rod, Fennel's cloth, Tansy's
+  watering can).
 - [x] Fences that join up: picket fences, palisades, low stone walls and iron railings, plus
   wooden and iron gates (standing open, to walk through). Each fills a tile, stacks to 99
   and goes down one after another without going back to the pockets; side by side they

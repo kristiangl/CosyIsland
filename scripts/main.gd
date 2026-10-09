@@ -37,14 +37,15 @@ extends Node3D
 ##   --demo=site        Lucy's shop kit staked out, waiting to be built
 ##   --demo=neighbours  two neighbours have just moved in (--visit: go inside one's home, --who=id,id: who,
 ##                      --moving: the first is thinking of moving away)
-##   --demo=visitor     someone met on a tour is visiting by the plaza (--who=id; or a travelling
-##                      visitor: --who=fennel|tansy|basil|marina)
+##   --demo=visitor     someone met on a tour is visiting the plaza (--who=id; or a travelling
+##                      visitor: --who=fennel|tansy|basil|marina; or one of each: --who=kiwi,basil)
 ##   --demo=fishing     fishing off the beach with fish about (--demo=bugs: bugs nearby)
 ##   --demo=flowers     stand by some flowers, one picked, with a flower in your hair
 ##   --house            with --demo: the tent has already become a house (--big: the big house,
 ##                      --in=N: go into its room N with --demo=home, --paint=wall,roof,door hex colours)
 ##   --series=ID        with --demo or --demo=home: furniture from one series (--variant=ID)
 ##   --give=ID,ID       put things in the pockets (repeat an id for more of it)
+##   --learn            with --ui=crafting or recipes: know every recipe (--group=N: show one kind)
 ##   --ui=pockets|storage|landscape|pause|map|creator|crafting|recipes|customise|journal|exchange|critters|friends|neighbour|placing (--place=ID)|intro|ask|lucy|sleep|asleep|shop|sell (--sold: just sold one)|paint (--big)|fitting (--tab=N)  (--tab=N picks a creator tab, --try=key:id,... dresses up, --closet=TEXT opens the wardrobe with clothes whose ids contain TEXT)  open a menu or mode (for screenshots)
 
 const AUTOSAVE_SECONDS := 60.0
@@ -286,10 +287,18 @@ func _ready() -> void:
 		"crafting", "recipes":
 			Inventory.add_item("wood", 12)
 			Inventory.add_item("stone", 5)
+			Inventory.add_item("cloth", 10)
+			if Game.args.has("learn"):
+				# Every recipe there is.
+				for id: String in Recipes.recipes:
+					if not Recipes.is_known(id):
+						Recipes.known.append(id)
 			if Game.args["ui"] == "recipes":
 				hud.crafting.open_book()
 			else:
 				hud.crafting.open()
+			if Game.args.has("group"):
+				hud.crafting._set_group(int(Game.args["group"]))
 		"critters":
 			for id: String in ["sea_bass", "koi", "anchovy", "white_butterfly", "ladybug", "cicada", "frog"]:
 				Journal.catch(id)
@@ -512,15 +521,6 @@ func _spawn_npcs() -> void:
 	_check_visitor()
 
 
-## Nothing on this tile or near it (so a visitor isn't hidden in the trees).
-func _open_around(x: int, z: int) -> bool:
-	for dz in range(-2, 3):
-		for dx in range(-2, 3):
-			if not world.object_at(x + dx, z + dz).is_empty():
-				return false
-	return true
-
-
 ## The house Poppy promised goes up once a night has passed (not while you're inside).
 func _check_house() -> void:
 	if Story.finish_house(world):
@@ -553,8 +553,8 @@ func _check_house() -> void:
 	_check_visitor()
 
 
-## Someone you met on a tour drops in for the day, south of the plaza, and a travelling
-## visitor sets up east of it; yesterday's go home.
+## Someone you met on a tour drops in for the day and wanders about the plaza, and a
+## travelling visitor sets up shop on it; yesterday's go home.
 func _check_visitor() -> void:
 	var who := Story.visitor_today()
 	var daily := Story.daily_visitor_today()
@@ -563,35 +563,60 @@ func _check_visitor() -> void:
 			Game.npcs.erase(n)
 			n.queue_free()
 	var plaza := world.data.plaza
-	if who != "" and Story.npc(who) == null:
-		_add_visitor(who, Vector2(0, plaza.size.y * 0.5 + 2.0), true)
 	if daily != "" and Story.npc(daily) == null:
-		_add_visitor(daily, Vector2(plaza.size.x * 0.5 + 2.5, 0), false)
+		_add_visitor(daily, Vector2(plaza.size.x * 0.25, plaza.size.y * 0.3), false)
+	if who != "" and Story.npc(who) == null:
+		_add_visitor(who, Vector2(-plaza.size.x * 0.25, plaza.size.y * 0.3), true)
 
 
-## A visitor standing on open grass nearest `offset` from the plaza's middle.
+## A visitor on the plaza (`visitor_spot`); one who wanders keeps to it.
 func _add_visitor(id: String, offset: Vector2, wanders: bool) -> void:
-	var plaza := world.data.plaza
-	var centre := Vector2(plaza.get_center())
-	var spot := Vector3.ZERO
-	var best := INF
-	for z in range(plaza.position.y - 4, plaza.end.y + 4):
-		for x in range(plaza.position.x - 4, plaza.end.x + 4):
-			var c := Vector2(x + 0.5, z + 0.5)
-			var d := c.distance_to(centre + offset)
-			if not plaza.grow(1).has_point(Vector2i(x, z)) and world.data.tile(x, z) == IslandData.Tile.GRASS \
-					and world.is_walkable(c.x, c.y) and _open_around(x, z) and d < best:
-				best = d
-				spot = Vector3(c.x, 0, c.y)
-	if best == INF:
+	var at := visitor_spot(world, offset)
+	if at.is_empty():
 		return
 	var npc := Npc.new()
 	world.add_child(npc)
-	npc.setup(id, world, spot, (Vector3(centre.x, 0, centre.y) - spot).normalized() if not wanders else Vector3(0, 0, 1))
+	npc.setup(id, world, at["at"], Vector3(0, 0, 1))
 	npc.wanders = wanders
 	npc.visiting = true
 	npc.home = npc.position
+	if at["plaza"]:
+		npc.bounds = Rect2(world.data.plaza).grow(-0.4)
 	Game.npcs.append(npc)
+
+
+## Where a visitor stands: on the plaza, as near `offset` from its middle as there's room
+## (open paving with a tile clear all round and nobody else close by), or on open grass
+## round it if the plaza's full. {"at": Vector3, "plaza": bool}, or {} if nowhere.
+static func visitor_spot(w: World, offset: Vector2) -> Dictionary:
+	var plaza := w.data.plaza
+	var centre := Vector2(plaza.get_center())
+	var best := INF
+	var found := {}
+	var away := Vector3(-50, 0, -50)
+	for z in range(plaza.position.y - 4, plaza.end.y + 4):
+		for x in range(plaza.position.x - 4, plaza.end.x + 4):
+			var c := Vector2(x + 0.5, z + 0.5)
+			if not w.is_walkable(c.x, c.y):
+				continue
+			var on_plaza := plaza.has_point(Vector2i(x, z))
+			var fits := on_plaza and w.can_place(Rect2i(x - 1, z - 1, 3, 3), away)
+			if fits:
+				for n in Game.npcs:
+					if n.world == w and Vector2(n.position.x, n.position.z).distance_to(c) < 1.8:
+						fits = false
+			elif not on_plaza and not plaza.grow(1).has_point(Vector2i(x, z)) and w.data.tile(x, z) == IslandData.Tile.GRASS:
+				# Nothing on the tile or near it, so they're not hidden in the trees.
+				fits = true
+				for dz in range(-2, 3):
+					for dx in range(-2, 3):
+						fits = fits and w.object_at(x + dx, z + dz).is_empty()
+			# Anywhere on the plaza beats the grass.
+			var d := c.distance_to(centre + offset) + (0.0 if on_plaza else 100.0)
+			if fits and d < best:
+				best = d
+				found = {"at": Vector3(c.x, 0, c.y), "plaza": on_plaza}
+	return found
 
 
 ## A neighbour, out and about near their house.
@@ -1077,18 +1102,26 @@ func _run_demo() -> void:
 			tent["paint"] = {"wall": colours[0], "roof": colours[1], "door": colours[2]}
 			world.refresh_node(tent)
 	if Game.args["demo"] == "visitor":
-		var who: String = Game.args.get("who", "kiwi")
-		if who in Story.DAILY_VISITORS:
-			Story.force_daily = who
-		else:
-			Story.flags["met"] = {who: GameClock.day_key() - 1}
-			Story.force_visitor = who
+		# --who=id,id: a camper and a travelling visitor at once.
+		var whos: PackedStringArray = String(Game.args.get("who", "kiwi")).split(",", false)
+		for who: String in whos:
+			if who in Story.DAILY_VISITORS:
+				Story.force_daily = who
+			else:
+				Story.flags["met"] = {who: GameClock.day_key() - 1}
+				Story.force_visitor = who
 		_check_visitor()
-		var visitor := Story.npc(who)
+		var visitor := Story.npc(whos[0])
 		if visitor:
 			visitor.wanders = false
 			player.position = visitor.position + Vector3(1.3, 0, 0.6)
 			player.facing = Vector3(-1, 0, -0.4).normalized()
+			if whos.size() > 1:
+				# Both in view: stand south of the plaza looking up at it.
+				var plaza := Vector2(world.data.plaza.get_center())
+				player.position = Vector3(plaza.x, 0, world.data.plaza.end.y + 1.2)
+				player.facing = Vector3(0, 0, -1)
+			player.position.y = world.ground_height(player.position.x, player.position.z)
 			camera_rig.snap()
 		return
 	if Game.args["demo"] == "neighbours":

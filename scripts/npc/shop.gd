@@ -1,8 +1,8 @@
 class_name Shop
 extends RefCounted
 ## The island's shops. Lucy's ("lucy"): a few things for sale each day (furniture, garden
-## and outdoor decorations, wallpaper and flooring, and everyday clothes, chosen by the
-## island and the day), and
+## and outdoor decorations, wallpaper and flooring, DIY recipe cards and everyday clothes,
+## chosen by the island and the day), and
 ## buying back anything with a price. Daisy and Morris's ("tailors"): designed clothes
 ## only, more of them, and they don't buy.
 ## Things sell to Lucy for their listed price and cost four times that to buy. Once her
@@ -13,7 +13,9 @@ extends RefCounted
 
 const BUY_MARKUP := 4
 ## Always in stock, however many you buy.
-const STAPLES := ["flimsy_axe", "flimsy_pickaxe", "flimsy_shovel", "customisation_kit"]
+const STAPLES := ["flimsy_axe", "flimsy_pickaxe", "flimsy_shovel", "customisation_kit", "cloth"]
+## DIY recipe cards ("recipe.<item>") for things you can't make from the start.
+const RECIPES_PER_DAY := 2
 const FURNITURE_PER_DAY := 4
 ## Garden and outdoor decorations ("outdoor" placeables), apart from the furniture.
 const OUTDOOR_PER_DAY := 2
@@ -105,12 +107,14 @@ static func stock(island_seed: int, day: int, native_flower: String = "", keeper
 	if keeper == "tailors":
 		return _pick(rng, clothes, TAILOR_CLOTHES_PER_DAY)
 	if keeper == "fennel":
-		# Wallpaper, flooring, curtains and rugs.
+		# Cloth, and wallpaper, flooring, curtains and rugs.
 		var fabrics := interiors.duplicate()
 		for id: String in furniture:
 			if ItemDB.placeable(id).get("rug", false):
 				fabrics.append(id)
-		return _pick(rng, fabrics, FENNEL_PER_DAY)
+		var cart: Array[String] = ["cloth"]
+		cart.append_array(_pick(rng, fabrics, FENNEL_PER_DAY))
+		return cart
 	if keeper == "tansy":
 		return tansy_stock(rng, native_flower)
 	var more := 1 + level()
@@ -121,6 +125,12 @@ static func stock(island_seed: int, day: int, native_flower: String = "", keeper
 	out.append_array(_pick(rng, furniture, FURNITURE_PER_DAY * more))
 	out.append_array(_pick(rng, outdoor, OUTDOOR_PER_DAY * more))
 	out.append_array(_pick(rng, interiors, INTERIORS_PER_DAY * more))
+	var cards: Array[String] = []
+	for id: String in Recipes.recipes:
+		if not Recipes.recipes[id].get("known", false):
+			cards.append("recipe." + id)
+	cards.sort()
+	out.append_array(_pick(rng, cards, RECIPES_PER_DAY))
 	var everyday: Array[String] = []
 	for i in CLOTHES_PER_DAY * more * 4:
 		var id := ItemDB.random_basic(rng)

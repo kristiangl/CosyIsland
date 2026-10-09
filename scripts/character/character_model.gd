@@ -363,6 +363,11 @@ func set_tool(item_id: String) -> void:
 		_tool.mesh = null if item_id == "" or umbrella else Models.get_mesh(item_id if ":" in item_id else "tool:" + item_id)
 
 
+## Where a point on the held tool is in the world (a rod's tip, say).
+func tool_point(local: Vector3) -> Vector3:
+	return _tool.global_transform * local if _tool else global_position
+
+
 ## Holds an umbrella of colour `hex` up over the head ("" puts it away).
 func set_umbrella(hex: String) -> void:
 	if hex == "":

@@ -256,9 +256,10 @@ func _update_fish(f: Dictionary, delta: float, player: Player) -> void:
 				else:
 					f["state"] = "bite"
 					f["timer"] = BITE_TIME
-					_dip(0.09)
-					Effects.burst("splash", bobber.position)
-					Sfx.play("splash", -2.0)
+					_dip(0.14)
+					Effects.burst("bite", bobber.position)
+					Effects.burst("foam", bobber.position + Vector3(0, 0.05, 0))
+					Sfx.play("splash", 0.0)
 		"bite":
 			if float(f["timer"]) <= 0.0:
 				# Too slow: it got away.

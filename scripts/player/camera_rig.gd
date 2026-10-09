@@ -42,7 +42,9 @@ func _process(delta: float) -> void:
 	if target:
 		focus = focus.lerp(_goal(), 1.0 - exp(-delta * 6.0))
 	var indoors := room.has_area()
-	_zoom = lerpf(_zoom, 0.7 if talk_with else 1.0, 1.0 - exp(-delta * 4.0))
+	# `--zoom=F` brings screenshots closer in (or further out).
+	var zoom := float(Game.args.get("zoom", 1.0))
+	_zoom = lerpf(_zoom, zoom * (0.7 if talk_with else 1.0), 1.0 - exp(-delta * 4.0))
 	var pitch := deg_to_rad(52.0 if indoors else pitch_degrees)
 	# Bigger rooms need the camera further back to fit in.
 	var indoor_distance := 13.5 * maxf(1.0, maxf(room.size.x / 6.5, room.size.y / 6.0))

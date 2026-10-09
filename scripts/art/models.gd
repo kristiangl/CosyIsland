@@ -1447,9 +1447,15 @@ static func _landscape_tool(k: MeshKit, what: String) -> void:
 			k.box(Vector3(0, 0.78, 0), Vector3(0.22, 0.04, 0.22), MeshKit.lin(Color("b9b1aa")))
 
 
+## Turns a held prop built standing up (+y) and facing forward (+z) from the grip, with +x
+## towards the body, to the hand's own axes (+y forward, -x up, -z towards the body).
+const HELD_UPRIGHT := Transform3D(Basis(Vector3(0, 0, -1), Vector3(-1, 0, 0), Vector3(0, 1, 0)), Vector3.ZERO)
+
+
 ## Things characters carry about that aren't tools (Npc "prop"), built round the grip at
 ## the origin like a tool's handle.
 static func _held_prop(k: MeshKit, what: String) -> void:
+	k.xform = HELD_UPRIGHT
 	match what:
 		"watering_can":
 			# A blue can hanging from its handle, spout forward.
@@ -1468,10 +1474,225 @@ static func _held_prop(k: MeshKit, what: String) -> void:
 				prev = pt
 		"fabric_roll":
 			# A bolt of lavender cloth with a cream stripe, tucked under the arm.
+			k.xform = Transform3D.IDENTITY
 			k.cylinder(Vector3(0, -0.2, 0), Vector3(0, 0.3, 0), 0.075, 0.075, MeshKit.lin(Color("c9b3e6")), 10)
 			for y: float in [-0.08, 0.18]:
 				k.cylinder(Vector3(0, y, 0), Vector3(0, y + 0.04, 0), 0.078, 0.078, MeshKit.lin(Color("f6ecd8")), 10, false)
 			k.cylinder(Vector3(0, -0.22, 0), Vector3(0, 0.32, 0), 0.02, 0.02, MeshKit.lin(Color("b08463")), 6)
+		_:
+			_camping_prop(k, what)
+	k.xform = Transform3D.IDENTITY
+
+
+## What the campers carry about (neighbours.json "prop"), built upright round the grip.
+static func _camping_prop(k: MeshKit, what: String) -> void:
+	match what:
+		"balloon":
+			# A sky-blue balloon on a string, bobbing above the head.
+			var knot := Vector3(-0.18, 1.02, 0.06)
+			k.cylinder(Vector3.ZERO, knot, 0.005, 0.005, MeshKit.lin(Color("f6ecd8")), 3, false)
+			k.cone(knot - Vector3(0, 0.02, 0), knot + Vector3(0, 0.03, 0), 0.02, MeshKit.lin(Color("5a8fc8")), 6)
+			k.sphere(knot + Vector3(-0.01, 0.2, 0), Vector3(0.15, 0.175, 0.15), MeshKit.lin(Color("7fb2e5")), 7, 12, 0.6)
+			k.sphere(knot + Vector3(-0.07, 0.26, 0.05), Vector3(0.025, 0.04, 0.025), MeshKit.lin(Color("d8ecfb")), 3, 6)
+		"book":
+			# A red book carried by its edge, pages towards the front.
+			k.box(Vector3(0, -0.04, 0.06), Vector3(0.055, 0.27, 0.2), MeshKit.lin(Color("b5524a")))
+			k.box(Vector3(0, -0.04, 0.07), Vector3(0.04, 0.25, 0.195), MeshKit.lin(Color("f6ecd8")))
+			k.box(Vector3(0, 0.03, -0.035), Vector3(0.058, 0.03, 0.012), MeshKit.lin(Color("f2c94e")))
+		"ball":
+			# A football, palmed from above: white with dark patches.
+			var at := Vector3(0, -0.1, 0.02)
+			k.sphere(at, Vector3.ONE * 0.12, MeshKit.lin(Color("f6f2ea")), 7, 12)
+			var phi := (1.0 + sqrt(5.0)) * 0.5
+			for v: Vector3 in [Vector3(0, 1, phi), Vector3(0, -1, phi), Vector3(0, 1, -phi), Vector3(0, -1, -phi),
+					Vector3(1, phi, 0), Vector3(-1, phi, 0), Vector3(1, -phi, 0), Vector3(-1, -phi, 0),
+					Vector3(phi, 0, 1), Vector3(-phi, 0, 1), Vector3(phi, 0, -1), Vector3(-phi, 0, -1)]:
+				var n := v.normalized()
+				k.cylinder(at + n * 0.112, at + n * 0.122, 0.04, 0.036, MeshKit.lin(Color("3a3a44")), 5)
+		"picnic_basket":
+			# A wicker basket hanging from its handle, a gingham cloth over the top.
+			var wicker := MeshKit.lin(Color("c9965e"))
+			k.box(Vector3(0, -0.24, 0), Vector3(0.15, 0.14, 0.26), wicker)
+			for y: float in [-0.29, -0.2]:
+				k.box(Vector3(0, y, 0), Vector3(0.156, 0.02, 0.266), MeshKit.lin(Color("a8774a")))
+			k.box(Vector3(0, -0.16, 0), Vector3(0.14, 0.03, 0.24), MeshKit.lin(Color("e0656b")))
+			for z: float in [-0.08, 0.0, 0.08]:
+				k.box(Vector3(0, -0.145, z), Vector3(0.142, 0.004, 0.03), MeshKit.lin(Color("fbf0dc")))
+			_arc(k, Vector3(0, -0.16, 0), 0.11, 0.16, Vector3.FORWARD, Vector3.UP, 0.0, PI, 0.012, MeshKit.lin(Color("a8774a")), 7)
+		"pillow":
+			# A plump cream pillow with a blue stripe, held by a corner.
+			k.sphere(Vector3(0, -0.15, 0.06), Vector3(0.065, 0.15, 0.2), MeshKit.lin(Color("fbf3e2")), 6, 12, 0.6)
+			k.box(Vector3(0, -0.15, 0.06), Vector3(0.11, 0.24, 0.035), MeshKit.lin(Color("8fb4dc")))
+			for corner: Vector3 in [Vector3(0, -0.02, 0.22), Vector3(0, -0.02, -0.1), Vector3(0, -0.28, 0.22), Vector3(0, -0.28, -0.1)]:
+				k.sphere(corner, Vector3(0.03, 0.03, 0.03), MeshKit.lin(Color("ece0c8")), 3, 6)
+		"mug":
+			# A blue mug of cocoa, the hand round its handle.
+			var mug := MeshKit.lin(Color("6a9ac8"))
+			k.cylinder(Vector3(0, -0.07, 0.08), Vector3(0, 0.07, 0.08), 0.06, 0.065, mug, 10)
+			k.cylinder(Vector3(0, 0.055, 0.08), Vector3(0, 0.072, 0.08), 0.056, 0.056, MeshKit.lin(Color("8a5a3c")), 10)
+			k.cylinder(Vector3(0, 0.068, 0.08), Vector3(0, 0.074, 0.08), 0.066, 0.066, MeshKit.lin(Color("f6ecd8")), 10, false)
+			_arc(k, Vector3(0, 0, 0.02), 0.045, 0.04, Vector3.UP, Vector3.FORWARD, 0.0, PI, 0.012, mug, 5)
+		"frisbee":
+			# A red frisbee, held by its rim.
+			k.cylinder(Vector3(-0.015, 0, 0.13), Vector3(0.015, 0, 0.13), 0.14, 0.13, MeshKit.lin(Color("e0656b")), 14)
+			k.cylinder(Vector3(-0.02, 0, 0.13), Vector3(-0.012, 0, 0.13), 0.08, 0.08, MeshKit.lin(Color("f2c94e")), 12)
+		"camera":
+			# A little teal camera with its lens to the front.
+			k.box(Vector3(0, 0.03, 0.05), Vector3(0.13, 0.085, 0.06), MeshKit.lin(Color("6fb0a8")))
+			k.box(Vector3(0, 0.03, 0.05), Vector3(0.132, 0.03, 0.062), MeshKit.lin(Color("3a3a44")))
+			k.box(Vector3(0.03, 0.085, 0.05), Vector3(0.04, 0.025, 0.035), MeshKit.lin(Color("3a3a44")))
+			k.cylinder(Vector3(-0.01, 0.03, 0.08), Vector3(-0.01, 0.03, 0.12), 0.034, 0.03, MeshKit.lin(Color("3a3a44")), 10)
+			k.cylinder(Vector3(-0.01, 0.03, 0.118), Vector3(-0.01, 0.03, 0.124), 0.022, 0.022, MeshKit.lin(Color("a8d4e6")), 10)
+		"bouquet":
+			# Flowers wrapped in pink paper.
+			k.cylinder(Vector3(0, -0.13, 0), Vector3(0, 0.1, 0), 0.02, 0.026, MeshKit.lin(Color("6f9a4a")), 6)
+			k.cylinder(Vector3(0, -0.05, 0), Vector3(0, 0.17, 0.02), 0.035, 0.085, MeshKit.lin(Color("f2a7c0")), 10, false)
+			var colours := ["fbf6ee", "f2c94e", "e0656b", "b9a6e6", "fbf6ee", "f2a65a"]
+			for i in 6:
+				var a := TAU * i / 6.0
+				var head := Vector3(cos(a) * 0.045, 0.2 + 0.03 * (i % 2), 0.02 + sin(a) * 0.045)
+				k.sphere(head, Vector3(0.036, 0.026, 0.036), MeshKit.lin(Color(colours[i])), 3, 6)
+				k.sphere(head + Vector3(0, 0.02, 0), Vector3.ONE * 0.012, MeshKit.lin(Color("f2b84a")), 2, 4)
+			k.sphere(Vector3(0, 0.23, 0.02), Vector3(0.034, 0.026, 0.034), MeshKit.lin(Color("e0656b")), 3, 6)
+		"teddy":
+			# A teddy bear held by its paw, looking out to the front.
+			var fur := MeshKit.lin(Color("b07a45"))
+			var light := MeshKit.lin(Color("e8c9a0"))
+			k.sphere(Vector3(0, -0.12, 0.08), Vector3(0.075, 0.09, 0.065), fur, 5, 10)
+			k.sphere(Vector3(0, -0.11, 0.135), Vector3(0.045, 0.055, 0.02), light, 3, 8)
+			k.sphere(Vector3(0, 0.0, 0.08), Vector3.ONE * 0.068, fur, 5, 10)
+			k.sphere(Vector3(0, -0.012, 0.14), Vector3(0.03, 0.024, 0.02), light, 3, 6)
+			k.sphere(Vector3(0, -0.004, 0.158), Vector3.ONE * 0.01, MeshKit.lin(Color("3a3236")), 2, 4)
+			for side: float in [-1.0, 1.0]:
+				k.sphere(Vector3(side * 0.05, 0.055, 0.08), Vector3(0.026, 0.026, 0.016), fur, 3, 6)
+				k.sphere(Vector3(side * 0.025, 0.018, 0.142), Vector3.ONE * 0.009, MeshKit.lin(Color("3a3236")), 2, 4)
+				k.sphere(Vector3(side * 0.04, -0.2, 0.1), Vector3(0.028, 0.026, 0.035), fur, 3, 6)
+			k.sphere(Vector3(0, -0.06, 0.02), Vector3(0.026, 0.05, 0.026), fur, 3, 6)
+			k.box(Vector3(0, -0.045, 0.14), Vector3(0.08, 0.018, 0.012), MeshKit.lin(Color("e0656b")))
+		"skateboard":
+			# A skateboard carried upright by its edge, wheels to the body.
+			k.box(Vector3(0, -0.06, 0.09), Vector3(0.022, 0.4, 0.15), MeshKit.lin(Color("5fa8a0")))
+			for y: float in [-0.26, 0.14]:
+				k.cylinder(Vector3(-0.011, y, 0.09), Vector3(0.011, y, 0.09), 0.075, 0.075, MeshKit.lin(Color("5fa8a0")), 12)
+			k.box(Vector3(-0.012, -0.06, 0.09), Vector3(0.003, 0.4, 0.04), MeshKit.lin(Color("f2c94e")))
+			for y: float in [-0.24, 0.12]:
+				k.box(Vector3(0.025, y, 0.09), Vector3(0.025, 0.03, 0.1), MeshKit.lin(Color("9aa3a8")))
+				for z: float in [0.04, 0.14]:
+					k.cylinder(Vector3(0.035, y, z), Vector3(0.06, y, z), 0.022, 0.022, MeshKit.lin(Color("fbf0dc")), 8)
+		"teacup":
+			# A cup of tea on its saucer.
+			var china := MeshKit.lin(Color("f6ecd8"))
+			k.cylinder(Vector3(0, -0.005, 0.07), Vector3(0, 0.008, 0.07), 0.07, 0.075, china, 12)
+			k.cylinder(Vector3(0, 0.008, 0.07), Vector3(0, 0.065, 0.07), 0.035, 0.048, china, 10)
+			k.cylinder(Vector3(0, 0.045, 0.07), Vector3(0, 0.055, 0.07), 0.046, 0.047, MeshKit.lin(Color("6a9ac8")), 10, false)
+			k.cylinder(Vector3(0, 0.058, 0.07), Vector3(0, 0.063, 0.07), 0.043, 0.043, MeshKit.lin(Color("b07a45")), 10)
+			_arc(k, Vector3(0, 0.038, 0.112), 0.02, 0.018, Vector3.UP, Vector3.BACK, 0.0, PI, 0.007, china, 4)
+		"candle":
+			# A candle in a brass holder, its flame lit.
+			var brass := MeshKit.lin(Color("e0b04a"))
+			k.cylinder(Vector3(0, -0.01, 0.08), Vector3(0, 0.005, 0.08), 0.065, 0.07, brass, 12)
+			k.cylinder(Vector3(0, 0.005, 0.08), Vector3(0, 0.02, 0.08), 0.03, 0.026, brass, 8)
+			_arc(k, Vector3(0, 0.0, 0.0), 0.018, 0.018, Vector3.UP, Vector3.BACK, 0.0, TAU, 0.007, brass, 6)
+			k.cylinder(Vector3(0, 0.02, 0.08), Vector3(0, 0.15, 0.08), 0.02, 0.02, MeshKit.lin(Color("fbf3e2")), 8)
+			k.cylinder(Vector3(0, 0.15, 0.08), Vector3(0, 0.165, 0.08), 0.002, 0.002, MeshKit.lin(Color("3a3236")), 3, false)
+			k.sphere(Vector3(0, 0.18, 0.08), Vector3(0.014, 0.026, 0.014), MeshKit.lin(Color("ffd65a")), 3, 6)
+			k.cone(Vector3(0, 0.19, 0.08), Vector3(0, 0.215, 0.08), 0.01, MeshKit.lin(Color("ff9f40")), 5)
+		"baguette":
+			# A long loaf tucked under the arm.
+			k.xform = HELD_UPRIGHT * Transform3D(Basis(Vector3.RIGHT, deg_to_rad(-55.0)), Vector3.ZERO)
+			k.sphere(Vector3(0, 0.02, 0), Vector3(0.042, 0.3, 0.042), MeshKit.lin(Color("dba45e")), 6, 10)
+			for y: float in [-0.14, -0.04, 0.06, 0.16]:
+				k.box(Vector3(0, y, 0.036), Vector3(0.028, 0.05, 0.016), MeshKit.lin(Color("f2d8a4")))
+			k.xform = HELD_UPRIGHT
+		"racket":
+			# A tennis racket, its head hanging by the leg, turned half to the front.
+			k.xform = HELD_UPRIGHT * Transform3D(Basis(Vector3.UP, deg_to_rad(-50.0)), Vector3.ZERO)
+			k.cylinder(Vector3(0, 0.06, 0), Vector3(0, -0.08, 0), 0.016, 0.016, MeshKit.lin(Color("f6ecd8")), 6)
+			k.cylinder(Vector3(0, -0.08, 0), Vector3(0, -0.12, 0), 0.012, 0.012, MeshKit.lin(Color("6a9ac8")), 5, false)
+			var head := Vector3(0, -0.22, 0)
+			_arc(k, head, 0.1, 0.075, Vector3.UP, Vector3.BACK, 0.0, TAU, 0.011, MeshKit.lin(Color("6a9ac8")), 12)
+			for i in range(-2, 3):
+				k.box(head + Vector3(0, i * 0.033, 0), Vector3(0.003, 0.003, 0.15 * sqrt(1.0 - pow(i * 0.033 / 0.1, 2.0))), MeshKit.lin(Color("f6f2ea")))
+				k.box(head + Vector3(0, 0, i * 0.026), Vector3(0.003, 0.2 * sqrt(1.0 - pow(i * 0.026 / 0.075, 2.0)), 0.003), MeshKit.lin(Color("f6f2ea")))
+			k.xform = HELD_UPRIGHT
+		"binoculars":
+			# Binoculars on a strap, for watching birds.
+			var body := MeshKit.lin(Color("4a4f58"))
+			for x: float in [-0.04, 0.04]:
+				k.cylinder(Vector3(x, 0.0, -0.04), Vector3(x, 0.0, 0.07), 0.032, 0.036, body, 8)
+				k.cylinder(Vector3(x, 0.0, 0.07), Vector3(x, 0.0, 0.09), 0.04, 0.04, MeshKit.lin(Color("8a6a4a")), 8)
+				k.cylinder(Vector3(x, 0.0, 0.088), Vector3(x, 0.0, 0.092), 0.03, 0.03, MeshKit.lin(Color("a8d4e6")), 8)
+			k.box(Vector3(0, 0.0, 0.01), Vector3(0.05, 0.03, 0.05), body)
+			_arc(k, Vector3(0, -0.02, 0.01), 0.07, 0.12, Vector3.FORWARD, Vector3.DOWN, 0.0, PI, 0.006, MeshKit.lin(Color("8a6a4a")), 7)
+		"cactus":
+			# A little cactus in a terracotta pot, with a pink flower.
+			var green := MeshKit.lin(Color("6fa86a"))
+			k.cylinder(Vector3(0, -0.07, 0.06), Vector3(0, 0.03, 0.06), 0.045, 0.055, MeshKit.lin(Color("c8744f")), 10)
+			k.cylinder(Vector3(0, 0.02, 0.06), Vector3(0, 0.045, 0.06), 0.062, 0.062, MeshKit.lin(Color("b0603f")), 10)
+			k.cylinder(Vector3(0, 0.04, 0.06), Vector3(0, 0.16, 0.06), 0.034, 0.034, green, 8, false)
+			k.sphere(Vector3(0, 0.16, 0.06), Vector3.ONE * 0.034, green, 4, 8)
+			k.cylinder(Vector3(0, 0.1, 0.09), Vector3(0, 0.1, 0.11), 0.014, 0.014, green, 6, false)
+			k.cylinder(Vector3(0, 0.1, 0.11), Vector3(0, 0.14, 0.11), 0.014, 0.014, green, 6)
+			k.sphere(Vector3(0, 0.198, 0.06), Vector3(0.022, 0.012, 0.022), MeshKit.lin(Color("f2a7c0")), 3, 6)
+		"hot_water_bottle":
+			# A hot-water bottle in a red knitted cover, held by its neck.
+			k.sphere(Vector3(0, -0.15, 0.03), Vector3(0.035, 0.12, 0.095), MeshKit.lin(Color("e0656b")), 6, 12)
+			k.box(Vector3(0, -0.13, 0.03), Vector3(0.068, 0.02, 0.17), MeshKit.lin(Color("fbf0dc")))
+			k.cylinder(Vector3(0, -0.04, 0.03), Vector3(0, 0.0, 0.03), 0.026, 0.022, MeshKit.lin(Color("f2c94e")), 8)
+			k.cylinder(Vector3(0, 0.0, 0.03), Vector3(0, 0.025, 0.03), 0.026, 0.026, MeshKit.lin(Color("e0b04a")), 8)
+		"ice_cream":
+			# Two scoops on a cone, a cherry on top.
+			k.cylinder(Vector3(0, -0.1, 0.02), Vector3(0, 0.05, 0.02), 0.0, 0.045, MeshKit.lin(Color("e0b06a")), 8)
+			k.sphere(Vector3(0, 0.08, 0.02), Vector3(0.05, 0.045, 0.05), MeshKit.lin(Color("f2a7c0")), 5, 10)
+			k.sphere(Vector3(0, 0.14, 0.02), Vector3(0.045, 0.04, 0.045), MeshKit.lin(Color("bfe6d4")), 5, 10)
+			k.sphere(Vector3(0, 0.188, 0.02), Vector3.ONE * 0.016, MeshKit.lin(Color("d9363e")), 3, 6)
+		"magnifier":
+			# A magnifying glass, held up to look closely at things.
+			k.cylinder(Vector3(0, -0.07, 0.02), Vector3(0, 0.09, 0.02), 0.016, 0.014, MeshKit.lin(Color("8a5a3c")), 6)
+			var lens := Vector3(0, 0.17, 0.02)
+			_arc(k, lens, 0.07, 0.07, Vector3.UP, Vector3.LEFT, 0.0, TAU, 0.011, MeshKit.lin(Color("e0b04a")), 12)
+			k.cylinder(lens + Vector3(0, 0, -0.004), lens + Vector3(0, 0, 0.004), 0.064, 0.064, MeshKit.lin(Color("cfe8f0")), 12)
+		"kite":
+			# A diamond kite with a bowed tail, held by its spine, turned half to the front.
+			k.xform = HELD_UPRIGHT * Transform3D(Basis(Vector3.UP, deg_to_rad(-45.0)), Vector3(-0.04, 0, 0))
+			var red := MeshKit.lin(Color("e0656b"))
+			var yellow := MeshKit.lin(Color("6a9ac8"))
+			var top := Vector3(-0.02, 0.56, 0.02)
+			var bottom := Vector3(0, -0.12, 0.02)
+			var front := Vector3(-0.01, 0.36, 0.25)
+			var back := Vector3(-0.01, 0.36, -0.21)
+			var mid := Vector3(-0.03, 0.36, 0.02)
+			_panel(k, top, front, mid, red)
+			_panel(k, top, mid, back, yellow)
+			_panel(k, mid, front, bottom, yellow)
+			_panel(k, back, mid, bottom, red)
+			k.cylinder(top, bottom, 0.005, 0.005, MeshKit.lin(Color("8a6a4a")), 4, false)
+			k.cylinder(front, back, 0.005, 0.005, MeshKit.lin(Color("8a6a4a")), 4, false)
+			var prev := bottom
+			for i in range(1, 5):
+				var pt := bottom + Vector3(0, -0.05 * i, sin(i * 1.4) * 0.03)
+				k.cylinder(prev, pt, 0.004, 0.004, MeshKit.lin(Color("3a3236")), 3, false)
+				k.box(pt, Vector3(0.01, 0.02, 0.05), red if i % 2 == 0 else yellow)
+				prev = pt
+
+
+## A loop (or part of one) of thin tube round `centre` in the plane of `a` and `b`, with
+## radii `ra` and `rb` along them, from angle `from` to `to`.
+static func _arc(k: MeshKit, centre: Vector3, ra: float, rb: float, a: Vector3, b: Vector3, from: float, to: float,
+		thick: float, col: Color, steps: int) -> void:
+	var prev := centre + a * ra * cos(from) + b * rb * sin(from)
+	for i in range(1, steps + 1):
+		var t := lerpf(from, to, float(i) / steps)
+		var pt := centre + a * ra * cos(t) + b * rb * sin(t)
+		k.cylinder(prev, pt, thick, thick, col, 5, false)
+		prev = pt
+
+
+## A triangle seen from both sides.
+static func _panel(k: MeshKit, a: Vector3, b: Vector3, c: Vector3, col: Color) -> void:
+	var n := (b - a).cross(c - a).normalized()
+	for facing: Vector3 in [n, -n]:
+		k.tri(k.vertex(a, facing, col), k.vertex(b, facing, col), k.vertex(c, facing, col), k.xform.basis * facing)
 
 
 static func _tool(k: MeshKit, item: String) -> void:

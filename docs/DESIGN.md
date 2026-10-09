@@ -261,7 +261,14 @@ Milestone 3b:
   day, and the workbench sorts recipes by kind.
 - [x] Visitors on the plaza: campers wander about it and travelling visitors set up on it,
   each with something to suit them (Basil's net, Marina's rod, Fennel's cloth, Tansy's
-  watering can).
+  watering can). Campers carry something of their own while they're away from home: a
+  balloon, a book, a football, a kite, a teddy, a candle, a cactus... (none once they've
+  moved in).
+- [x] Small fixes: A on furniture with nothing to do does nothing (no more "What a lovely..."),
+  and goes on to whatever you're holding; the same note popping up again and again counts
+  up on one note ("x5") instead of queueing; the fishing line comes off the rod's tip, and
+  a bite makes a big splash. Bigger rugs: a big round rug, square, oval and grand rugs, a
+  room-sized rug and a long runner.
 - [x] Fences that join up: picket fences, palisades, low stone walls and iron railings, plus
   wooden and iron gates (standing open, to walk through). Each fills a tile, stacks to 99
   and goes down one after another without going back to the pockets; side by side they

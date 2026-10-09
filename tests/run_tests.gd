@@ -62,6 +62,10 @@ func _run() -> void:
 	_test_fences()
 	_test_every_item_has_a_recipe()
 	_test_visitors_on_the_plaza()
+	_test_fishing_session()
+	_test_camper_props()
+	_test_furniture_and_toasts()
+	_test_big_rugs()
 	_test_storage()
 	_test_weather()
 	_test_sounds()
@@ -2215,6 +2219,174 @@ func _test_visitors_on_the_plaza() -> void:
 	check(props.all(func(p): return p != "" and Models.get_mesh(p if ":" in p else "tool:" + p) != null), "every travelling visitor carries something")
 
 
+func _test_fishing_session() -> void:
+	# A whole afternoon's fishing through the player: cast, wait for a bite, reel in.
+	var d := IslandGenerator.generate(7)
+	var w := World.new()
+	add_child(w)
+	w.setup(d)
+	var c: Critters = w.critters
+	var stand := Vector3.ZERO
+	var face := Vector3.ZERO
+	for z in range(2, d.height - 2):
+		for x in range(2, d.width - 2):
+			if stand == Vector3.ZERO and w.is_walkable(x + 0.5, z + 0.5):
+				for dir: Vector3 in [Vector3(1, 0, 0), Vector3(-1, 0, 0), Vector3(0, 0, 1), Vector3(0, 0, -1)]:
+					var from := Vector3(x + 0.5, w.ground_height(x + 0.5, z + 0.5), z + 0.5)
+					if stand == Vector3.ZERO and c.cast_spot(from, dir) != null and c.swim_kind(from + dir * 2.5) == "sea":
+						stand = from
+						face = dir
+	check(stand != Vector3.ZERO, "somewhere to fish from")
+	var p := Player.new()
+	add_child(p)
+	p.setup(w, stand, Appearance.DEFAULT)
+	p.facing = face
+	Game.player = p
+	Inventory.reset()
+	Inventory.add_item("flimsy_rod")
+	Inventory.equip(Inventory.slots.find_custom(func(sl): return sl.get("id", "") == "flimsy_rod"))
+	var was_mode := Game.mode
+	Game.mode = Game.Mode.PLAY
+	var log := ErrorLog.new()
+	OS.add_logger(log)
+	var caught := 0
+	for round in 6:
+		# Holding up a catch turns you round, so face the water again.
+		p.position = stand
+		p.facing = face
+		var spot: Variant = c.cast_spot(p.position, p.facing)
+		c.cast(spot)
+		# A fish close by every time, so something bites.
+		c.add_fish("sea_bass", c.bobber.position + face * 0.8 + Vector3(0, 0.03, 0))
+		p.fishing = true
+		p.model.mode = "fishing"
+		p._line.visible = true
+		if round == 0:
+			# The line runs from the rod's tip to the bobber.
+			for i in 5:
+				p._physics_process(0.05)
+			var tip := p.model.tool_point(Player.ROD_TIP)
+			var from := p._line.global_transform * Vector3(0, -0.5, 0)
+			var to := p._line.global_transform * Vector3(0, 0.5, 0)
+			check(from.distance_to(tip) < 0.06, "the line comes off the rod's tip (%.2f away)" % from.distance_to(tip))
+			check(to.distance_to(c.bobber.position + Vector3(0, 0.08, 0)) < 0.06, "and ends at the bobber")
+		for i in 900:
+			p._physics_process(0.05)
+			p.model.animate(0.05, 0.0)
+			c._process(0.05)
+			if c.is_biting():
+				p._reel()
+				caught += 1
+				break
+		if p.fishing:
+			p._reel()
+		for i in 30:
+			p._physics_process(0.05)
+	OS.remove_logger(log)
+	check(log.lines.is_empty(), "fishing raises no errors (%s)" % [log.lines.slice(0, 3)])
+	check(caught >= 4, "and fish bite and get caught (%d of 6)" % caught)
+	check(not p.fishing, "fishing ends when you reel in")
+	Game.mode = was_mode
+	Game.player = null
+	p.free()
+	w.free()
+	Inventory.reset()
+
+
+func _test_furniture_and_toasts() -> void:
+	# A on furniture with nothing to do does nothing (no note), and goes on to the tool.
+	var room := World.new()
+	room.interior = true
+	add_child(room)
+	room.setup(IslandData.room(6, 6))
+	var plant := room.place_item("potted_plant", Rect2i(1, 1, 1, 1), 0)
+	var chair := room.place_item("wooden_chair", Rect2i(3, 1, 1, 1), 0)
+	var p := Player.new()
+	add_child(p)
+	p.setup(room, Vector3(1.5, 0, 2.5), Appearance.DEFAULT)
+	var notes: Array[String] = []
+	var note := func(t: String): notes.append(t)
+	Events.toast.connect(note)
+	check(not p._interact(plant), "a pot plant has nothing to do")
+	check(notes.is_empty(), "and says nothing")
+	check(p._interact(chair) and p.is_sitting(), "a chair is sat on")
+	# And A (or B) gets up again, straight from the button press.
+	var was_mode := Game.mode
+	Game.mode = Game.Mode.PLAY
+	for i in 10:
+		p._physics_process(0.05)
+	for action: String in ["use", "cancel"]:
+		if not p.is_sitting():
+			p._interact(chair)
+			for i in 10:
+				p._physics_process(0.05)
+		var press := InputEventAction.new()
+		press.action = action
+		press.pressed = true
+		p._unhandled_input(press)
+		check(not p.is_sitting(), "pressing %s gets up from a chair" % action)
+	Game.mode = was_mode
+	Events.toast.disconnect(note)
+	p.free()
+	room.free()
+	# The same note again and again counts up on one note instead of queueing them all.
+	var hud := Hud.new()
+	add_child(hud)
+	for i in 5:
+		Events.toast.emit("You bought picket fence!")
+	check(hud._toast_queue.size() == 1 and hud._toast_queue[0]["count"] == 5, "five of the same note wait as one")
+	hud._update_toast(0.016)
+	check(hud._toast_label.text == "You bought picket fence!  x5", "shown with how many (%s)" % hud._toast_label.text)
+	Events.toast.emit("You bought picket fence!")
+	check(hud._toast_label.text.ends_with("x6") and hud._toast_queue.is_empty(), "another while it's up counts up on it")
+	Events.toast.emit("You bought stone wall!")
+	check(hud._toast_queue.size() == 1, "a different note waits its turn")
+	for i in 200:
+		hud._update_toast(0.05)
+	check(hud._toast_label.text == "You bought stone wall!", "and shows after")
+	hud.free()
+
+
+func _test_big_rugs() -> void:
+	for id: String in ["big_round_rug", "square_rug", "oval_rug", "grand_rug", "room_rug", "long_runner"]:
+		var pl := ItemDB.placeable(id + "_cherry")
+		check(pl.get("rug", false) and int(pl["footprint"][0]) * int(pl["footprint"][1]) >= 5, "%s is a big rug" % id)
+	var room := World.new()
+	room.interior = true
+	add_child(room)
+	room.setup(IslandData.room(8, 6))
+	room.place_item("wooden_table", Rect2i(2, 2, 2, 2), 0)
+	check(room.can_place_rug(Rect2i(1, 1, 5, 4)), "a room rug goes down under the furniture")
+	room.place_item("room_rug_cherry", Rect2i(1, 1, 5, 4), 0)
+	check(not room.can_place_rug(Rect2i(0, 0, 3, 3)), "and nothing else goes on top of it")
+	room.free()
+
+
+func _test_camper_props() -> void:
+	# Every neighbour has something to carry while camping, with a model; at home they
+	# carry nothing, and campers do.
+	for id: String in NpcData.neighbours():
+		var prop: String = NpcData.get_character(id).get("prop", "")
+		check(prop.begins_with("held:"), "%s carries something while camping" % id)
+		var mesh := Models.get_mesh(prop)
+		check(mesh != null and mesh.get_aabb().size.length() > 0.1, "%s's %s has a model" % [id, prop])
+	var d := IslandGenerator.generate(7)
+	var w := World.new()
+	add_child(w)
+	w.setup(d)
+	var home := Npc.new()
+	w.add_child(home)
+	home.setup("clover", w, Vector3(d.width * 0.5, 0, d.height * 0.5), Vector3(0, 0, 1))
+	check(home.prop == "", "a neighbour at home carries nothing")
+	home.carry(NpcData.get_character("clover").get("prop", ""))
+	check(home.prop == "held:bouquet" and home.model._tool.mesh != null, "and carries theirs while away")
+	var shop := Npc.new()
+	w.add_child(shop)
+	shop.setup("basil", w, Vector3(d.width * 0.5 + 2, 0, d.height * 0.5), Vector3(0, 0, 1))
+	check(shop.prop == "sturdy_net", "travelling visitors carry theirs as before")
+	w.free()
+
+
 func _test_every_item_has_a_recipe() -> void:
 	var missing: Array[String] = []
 	for id: String in ItemDB.items:
@@ -2503,3 +2675,15 @@ func _test_tour_crossings_and_pole() -> void:
 	w.free()
 	check(UIStyle.acorns(1250) == "1,250 Acorns" and UIStyle.acorns(7) == "7 Acorns" and UIStyle.acorns(1000000) == "1,000,000 Acorns",
 		"acorns are counted with commas")
+
+
+## Collects errors and warnings pushed while it's added (OS.add_logger).
+class ErrorLog extends Logger:
+	var lines: Array[String] = []
+
+	func _log_error(function: String, file: String, line: int, code: String, rationale: String, _editor_notify: bool, _error_type: int, _backtraces: Array[ScriptBacktrace]) -> void:
+		lines.append("%s:%d %s: %s %s" % [file, line, function, code, rationale])
+
+	func _log_message(_message: String, _error: bool) -> void:
+		pass
+

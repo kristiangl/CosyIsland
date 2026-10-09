@@ -24,7 +24,8 @@ var home := Vector3.ZERO
 ## Where a wanderer keeps to (the plaza, for visitors), or an empty rect for anywhere
 ## within ROAM of home.
 var bounds := Rect2()
-## What they carry about (characters.json "prop"): a tool, or a held prop's model key.
+## What they carry about ("prop" in characters.json, or neighbours.json for campers): a
+## tool, or a held prop's model key.
 var prop := ""
 var _flourish := 6.0
 const WALK := 1.1
@@ -57,8 +58,8 @@ func setup(character_id: String, w: World, spot: Vector3, facing: Vector3) -> vo
 	model = NpcData.model(character_id)
 	add_child(model)
 	model.rotation.y = _yaw
-	prop = NpcData.get_character(character_id).get("prop", "")
-	model.set_tool(prop)
+	# Neighbours only carry theirs while camping or visiting (`carry`).
+	carry("" if NpcData.is_neighbour(character_id) else NpcData.get_character(character_id).get("prop", ""))
 	add_to_group("npcs")
 	if NpcData.is_neighbour(character_id):
 		_thought = Label3D.new()
@@ -74,6 +75,14 @@ func setup(character_id: String, w: World, spot: Vector3, facing: Vector3) -> vo
 		_thought.position = Vector3(0, 2.05, 0)
 		_thought.visible = false
 		add_child(_thought)
+
+
+## Carries `what` about (a tool or a "held:" model key; "" for nothing). Campers carry
+## their neighbours.json "prop" while away from home (main.gd `_add_camper`, `_add_visitor`).
+func carry(what: String) -> void:
+	prop = what
+	if model:
+		model.set_tool(what)
 
 
 func _process(delta: float) -> void:

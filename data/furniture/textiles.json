@@ -18,6 +18,12 @@
 		{"id": "round_rug", "name": "Round Rug", "kind": "rug", "footprint": [2, 2], "price": 560, "desc": "Soft underfoot. Furniture can stand on it.", "params": {"shape": "round", "border": true}, "rug": true},
 		{"id": "large_rug", "name": "Large Rug", "kind": "rug", "footprint": [3, 2], "price": 840, "desc": "Big enough to pull a room together.", "params": {"shape": "rect", "border": true, "fringe": true}, "rug": true},
 		{"id": "runner_rug", "name": "Runner", "kind": "rug", "footprint": [1, 3], "price": 420, "desc": "A long, narrow rug for a hallway or a bedside.", "params": {"shape": "rect", "border": true}, "rug": true},
+		{"id": "big_round_rug", "name": "Big Round Rug", "kind": "rug", "footprint": [3, 3], "price": 960, "desc": "A great round rug to gather the furniture on.", "params": {"shape": "round", "border": true}, "rug": true},
+		{"id": "square_rug", "name": "Square Rug", "kind": "rug", "footprint": [3, 3], "price": 1080, "desc": "Square and generous, with a border all round.", "params": {"shape": "rect", "border": true}, "rug": true},
+		{"id": "oval_rug", "name": "Oval Rug", "kind": "rug", "footprint": [4, 3], "price": 1150, "desc": "A long oval for in front of the sofa.", "params": {"shape": "round", "border": true}, "rug": true},
+		{"id": "grand_rug", "name": "Grand Rug", "kind": "rug", "footprint": [4, 3], "price": 1350, "desc": "Wide and fringed, for a room you want to show off.", "params": {"shape": "rect", "border": true, "fringe": true}, "rug": true},
+		{"id": "room_rug", "name": "Room Rug", "kind": "rug", "footprint": [5, 4], "price": 1900, "desc": "Covers most of a room. Wall to wall cosy.", "params": {"shape": "rect", "border": true, "fringe": true, "inner": true}, "rug": true},
+		{"id": "long_runner", "name": "Long Runner", "kind": "rug", "footprint": [1, 5], "price": 600, "desc": "A very long, narrow rug for a long hallway.", "params": {"shape": "rect", "border": true}, "rug": true},
 		{"id": "curtains", "name": "Curtains", "kind": "curtains", "price": 480, "desc": "Hang them at home: they dress every window.", "room": "window"}
 	]
 }

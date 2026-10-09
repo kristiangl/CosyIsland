@@ -19,7 +19,7 @@ extends Node3D
 ##   --demo             pitch the tent, place furniture and chop a tree before the screenshot
 ##   --demo=decor       same, but stay by the furniture instead of chopping
 ##   --demo=sit         same, and sit on the chair
-##   --demo=home        pitch the tent, go inside and furnish it (--room=wallpaper,flooring)
+##   --demo=home        pitch the tent, go inside and furnish it (--room=wallpaper,flooring, --rug=id)
 ##   --demo=door        pitch the tent and stand outside its door
 ##   --demo=office      inside Poppy's office
 ##   --demo=terraform   a raised lawn with stairs and a slope, paths and a pond (--landscape=TOOL in hand)
@@ -579,6 +579,7 @@ func _add_visitor(id: String, offset: Vector2, wanders: bool) -> void:
 	npc.setup(id, world, at["at"], Vector3(0, 0, 1))
 	npc.wanders = wanders
 	npc.visiting = true
+	npc.carry(NpcData.get_character(id).get("prop", ""))
 	npc.home = npc.position
 	if at["plaza"]:
 		npc.bounds = Rect2(world.data.plaza).grow(-0.4)
@@ -1025,6 +1026,7 @@ func _add_camper(t: World) -> Npc:
 	camper.setup(who, t, spot, Vector3(0, 0, 1))
 	camper.wanders = true
 	camper.always_out = true
+	camper.carry(NpcData.get_character(who).get("prop", ""))
 	camper.home = camper.position
 	Game.npcs.append(camper)
 	camper.tree_exiting.connect(func(): Game.npcs.erase(camper))
@@ -1533,6 +1535,11 @@ func _run_demo() -> void:
 				["stone_lantern", Vector2i(5, 0), 0], ["potted_plant", Vector2i(5, 5), 0], ["barrel", Vector2i(5, 3), 0], ["log_bench", Vector2i(0, 3), 1]]
 		if Game.args.has("series"):
 			furniture = _series_layout(Game.args["series"], Game.args.get("variant", ""))
+		if Game.args.has("rug"):
+			# --rug=id: a rug in the middle of the room first.
+			var fp: Array = ItemDB.placeable(Game.args["rug"])["footprint"]
+			var size := Vector2i(fp[0], fp[1])
+			room.place_item(Game.args["rug"], Rect2i((Vector2i(room.data.width, room.data.height) - size) / 2, size), 0)
 		for entry in furniture:
 			var size: Array = ItemDB.placeable(entry[0])["footprint"]
 			var dims := Vector2i(size[0], size[1]) if entry[2] % 2 == 0 else Vector2i(size[1], size[0])

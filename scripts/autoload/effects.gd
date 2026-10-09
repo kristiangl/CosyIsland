@@ -48,6 +48,13 @@ const KINDS := {
 	"splash": {"shape": "dot", "amount": 12, "lifetime": 0.6, "size": [0.06, 0.1], "colours": ["e4f6f2", "bfe6ec"],
 		"speed": [1.5, 2.5], "direction": [0, 1, 0], "spread": 35.0, "gravity": -9.0, "radius": 0.15,
 		"one_shot": true, "grow": 0.5},
+	# A fish taking the bait: a big splash and a puff of foam, so you know to reel in.
+	"bite": {"shape": "dot", "amount": 28, "lifetime": 0.85, "size": [0.1, 0.17], "colours": ["f4fbfa", "d4eef2", "bfe6ec"],
+		"speed": [2.6, 4.0], "direction": [0, 1, 0], "spread": 32.0, "gravity": -9.0, "radius": 0.22,
+		"one_shot": true, "grow": 0.5},
+	"foam": {"shape": "puff", "amount": 7, "lifetime": 0.8, "size": [0.3, 0.45], "colours": ["f8fdfc", "e4f6f2"],
+		"speed": [0.7, 1.1], "direction": [0, 0.15, 0], "spread": 90.0, "gravity": 0.0, "radius": 0.2,
+		"one_shot": true, "grow": 1.8, "fade": true, "alpha": 0.85},
 	"zzz": {"shape": "ring", "amount": 3, "lifetime": 1.8, "size": [0.1, 0.16], "colours": ["c9d8f2"],
 		"speed": [0.35, 0.5], "direction": [0.3, 1, 0], "spread": 10.0, "gravity": 0.0, "radius": 0.05,
 		"one_shot": true, "grow": 1.8, "fade": true, "explosive": 0.0},

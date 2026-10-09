@@ -23,8 +23,12 @@ var _landscape_border: ColorRect
 const LANDSCAPE_USES := {"cliff": "raise or lower", "water": "dig or fill in water", "slope": "lay or take away a slope",
 	"trees": "chop down or dig up", "move": "dig up and move", "path": "lay or lift the path"}
 var _toast_label: Label
-var _toast_queue: Array[String] = []
+## Notes waiting their turn: {"text", "count"}. The same note again joins its twin.
+var _toast_queue: Array[Dictionary] = []
 var _toast_timer := 0.0
+## The note showing now, and how many times it's been said.
+var _toast_text := ""
+var _toast_count := 0
 var _pockets: Pockets
 var creator: CharacterCreator
 var crafting: CraftingMenu
@@ -299,9 +303,34 @@ func fade_in() -> void:
 
 # --- Toasts --------------------------------------------------------------------------
 
+## Shows a note. The same note again while it's up (buying fence after fence, say) counts
+## up on the one showing ("x3") instead of queueing another; one already waiting counts
+## up there. Notes waiting behind others show for less time.
 func _on_toast(text: String) -> void:
+	if _toast_timer > 0.0 and text == _toast_text:
+		_toast_count += 1
+		_toast_label.text = toast_line(text, _toast_count)
+		_toast_timer = maxf(_toast_timer, TOAST_AGAIN)
+		_toast_panel.pivot_offset = _toast_panel.size * 0.5
+		_toast_panel.scale = Vector2.ONE * 1.06
+		create_tween().tween_property(_toast_panel, "scale", Vector2.ONE, 0.15)
+		return
+	for waiting: Dictionary in _toast_queue:
+		if waiting["text"] == text:
+			waiting["count"] = int(waiting["count"]) + 1
+			return
 	if _toast_queue.size() < 4:
-		_toast_queue.append(text)
+		_toast_queue.append({"text": text, "count": 1})
+
+
+const TOAST_TIME := 2.2
+const TOAST_HURRIED := 1.3
+const TOAST_AGAIN := 1.8
+
+
+## A note with how many times it's been said, if more than once.
+static func toast_line(text: String, count: int) -> String:
+	return text if count <= 1 else "%s  x%d" % [text, count]
 
 
 func _update_toast(delta: float) -> void:
@@ -311,9 +340,14 @@ func _update_toast(delta: float) -> void:
 		_toast_panel.modulate.a = minf(1.0, _toast_panel.modulate.a + delta * 6.0)
 	else:
 		_toast_panel.modulate.a = maxf(0.0, _toast_panel.modulate.a - delta * 4.0)
-		if _toast_timer <= 0.0 and not _toast_queue.is_empty():
-			_toast_label.text = _toast_queue.pop_front()
-			_toast_timer = 2.2
+		if _toast_timer <= 0.0:
+			_toast_text = ""
+			if not _toast_queue.is_empty():
+				var next: Dictionary = _toast_queue.pop_front()
+				_toast_text = next["text"]
+				_toast_count = next["count"]
+				_toast_label.text = toast_line(_toast_text, _toast_count)
+				_toast_timer = TOAST_TIME if _toast_queue.is_empty() else TOAST_HURRIED
 
 
 func _on_landscaping(what: String) -> void:

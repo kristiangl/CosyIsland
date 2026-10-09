@@ -1,148 +1,148 @@
 {
-	"_note": "Animal neighbours who move in to plots. personality picks their small talk (cheerful, bookish, sporty, sleepy). home: house colours (wall, roof, door) and inside: their furniture series and variant, wallpaper and flooring.",
+	"_note": "Animal neighbours who move in to plots. personality picks their small talk (cheerful, bookish, sporty, sleepy). home: house colours (wall, roof, door) and inside: their furniture series and variant, wallpaper and flooring. prop: what they carry about while camping on a tour island or visiting yours (a Models \"held:\" key).",
 	"neighbours": {
 		"biscuit": {
-			"name": "Biscuit", "personality": "cheerful", "catchphrase": "crumbs",
+			"name": "Biscuit", "personality": "cheerful", "catchphrase": "crumbs", "prop": "held:picnic_basket",
 			"species": {"kind": "dog", "fur": "#d9a86c", "fur2": "#fbf0dc", "eyes": "#4a3020", "inner_ear": "#b07a45", "nose": "#3a3236"},
 			"look": {"eyes": "happy", "mouth": "cat", "cheeks": "blush", "top": "knit_jumper", "top_color": "yellow", "top_color2": "coral", "bottom": "shorts", "bottom_color": "navy"},
 			"home": {"wall": "fbe7c6", "roof": "f2a660", "door": "e0857a"},
 			"inside": {"series": "meadow", "variant": "butter", "wall": "peach_dot_wallpaper", "floor": "wooden_flooring"}
 		},
 		"maple": {
-			"name": "Maple", "personality": "bookish", "catchphrase": "indeed",
+			"name": "Maple", "personality": "bookish", "catchphrase": "indeed", "prop": "held:book",
 			"species": {"kind": "cat", "fur": "#e0995a", "fur2": "#fbe8d0", "eyes": "#5a8a3a", "inner_ear": "#e3a5aa", "nose": "#d98f98"},
 			"look": {"eyes": "almond", "mouth": "smile", "cheeks": "none", "top": "cardigan", "top_color": "olive", "top_color2": "cream", "bottom": "long_skirt", "bottom_color": "brown", "glasses": "round"},
 			"home": {"wall": "f3ead6", "roof": "8f6a4a", "door": "6f8a55"},
 			"inside": {"series": "lodge", "variant": "honey", "wall": "cabin_wall", "floor": "woven_flooring"}
 		},
 		"pip": {
-			"name": "Pip", "personality": "sporty", "catchphrase": "go go",
+			"name": "Pip", "personality": "sporty", "catchphrase": "go go", "prop": "held:ball",
 			"species": {"head": "dog_upright", "kind": "dog", "fur": "#3a3434", "fur2": "#f6f1e8", "eyes": "#7a4a2a", "inner_ear": "#5a4a4a", "nose": "#2a2426"},
 			"look": {"eyes": "wide", "mouth": "cat", "cheeks": "none", "top": "tank", "top_color": "blue", "top_color2": "white", "bottom": "board_shorts", "bottom_color": "teal"},
 			"home": {"wall": "e8f2f4", "roof": "5f8fb8", "door": "f2d68a"},
 			"inside": {"series": "driftwood", "variant": "seaglass", "wall": "sky_wallpaper", "floor": "cream_tile_flooring"}
 		},
 		"clementine": {
-			"name": "Clementine", "personality": "cheerful", "catchphrase": "zing",
+			"name": "Clementine", "personality": "cheerful", "catchphrase": "zing", "prop": "held:balloon",
 			"species": {"kind": "cat", "fur": "#f2a65a", "fur2": "#fff4e6", "eyes": "#3a7a9a", "inner_ear": "#f2b8b0", "nose": "#e0857a"},
 			"look": {"eyes": "sparkle", "mouth": "cat", "cheeks": "blush", "top": "sundress", "top_color": "pink", "top_color2": "white", "top_pattern": "dots"},
 			"home": {"wall": "fff0e6", "roof": "e0656b", "door": "8fc58a"},
 			"inside": {"series": "mushroom", "variant": "coral", "wall": "peach_dot_wallpaper", "floor": "rosy_carpet"}
 		},
 		"juniper": {
-			"name": "Juniper", "personality": "sleepy", "catchphrase": "mm-hm",
+			"name": "Juniper", "personality": "sleepy", "catchphrase": "mm-hm", "prop": "held:pillow",
 			"species": {"kind": "cat", "fur": "#9aa0aa", "fur2": "#e8e8ee", "eyes": "#c8a040", "inner_ear": "#d8b0b8", "nose": "#c88f98"},
 			"look": {"eyes": "sleepy", "mouth": "smile", "cheeks": "blush", "top": "pyjama_top", "top_color": "lavender", "top_color2": "white", "top_pattern": "stars", "bottom": "pyjama_bottoms", "bottom_color": "lavender"},
 			"home": {"wall": "eeeaf6", "roof": "8c7bc9", "door": "f6d58c"},
 			"inside": {"series": "starlight", "variant": "dusk", "wall": "striped_wallpaper", "floor": "rosy_carpet"}
 		},
 		"bean": {
-			"name": "Bean", "personality": "sleepy", "catchphrase": "yawny",
+			"name": "Bean", "personality": "sleepy", "catchphrase": "yawny", "prop": "held:mug",
 			"species": {"kind": "dog", "fur": "#8a6448", "fur2": "#c8a080", "eyes": "#3a2418", "inner_ear": "#6a4a34", "nose": "#2a2022"},
 			"look": {"eyes": "sleepy", "mouth": "cat", "cheeks": "none", "top": "hoodie", "top_color": "green", "top_color2": "cream", "bottom": "trousers", "bottom_color": "tan"},
 			"home": {"wall": "efe2cc", "roof": "6f4c33", "door": "c86c64"},
 			"inside": {"series": "lodge", "variant": "walnut", "wall": "cabin_wall", "floor": "wooden_flooring"}
 		},
 		"sunny": {
-			"name": "Sunny", "personality": "sporty", "catchphrase": "hup",
+			"name": "Sunny", "personality": "sporty", "catchphrase": "hup", "prop": "held:frisbee",
 			"species": {"head": "dog_upright", "kind": "dog", "fur": "#f2c86a", "fur2": "#fff4d8", "eyes": "#4a3020", "inner_ear": "#d8a050", "nose": "#3a3236"},
 			"look": {"eyes": "classic", "mouth": "cat", "cheeks": "blush", "top": "tee", "top_color": "orange", "top_color2": "white", "bottom": "shorts", "bottom_color": "navy", "hat": "none"},
 			"home": {"wall": "fff8e0", "roof": "8fc58a", "door": "f2a660"},
 			"inside": {"series": "meadow", "variant": "sage", "wall": "mint_dot_wallpaper", "floor": "mint_tile_flooring"}
 		},
 		"nori": {
-			"name": "Nori", "personality": "bookish", "catchphrase": "hmm",
+			"name": "Nori", "personality": "bookish", "catchphrase": "hmm", "prop": "held:camera",
 			"species": {"kind": "cat", "fur": "#2e2a30", "fur2": "#5a5460", "eyes": "#e0c050", "inner_ear": "#c88f98", "nose": "#c88f98"},
 			"look": {"eyes": "almond", "mouth": "smile", "cheeks": "none", "top": "turtleneck", "top_color": "charcoal", "top_color2": "white", "bottom": "trousers", "bottom_color": "grey", "glasses": "square"},
 			"home": {"wall": "e6e6ea", "roof": "4a5688", "door": "f2cf73"},
 			"inside": {"series": "driftwood", "variant": "grey", "wall": "striped_wallpaper", "floor": "cream_tile_flooring"}
 		},
 		"clover": {
-			"name": "Clover", "personality": "cheerful", "catchphrase": "hop hop",
+			"name": "Clover", "personality": "cheerful", "catchphrase": "hop hop", "prop": "held:bouquet",
 			"species": {"kind": "rabbit", "fur": "#f4eee4", "fur2": "#fffaf3", "eyes": "#7a4a3a", "inner_ear": "#f2b0b8", "nose": "#e88a98"},
 			"look": {"eyes": "sparkle", "mouth": "smile", "cheeks": "blush", "top": "dress", "top_color": "mint", "top_color2": "white", "top_pattern": "dots"},
 			"home": {"wall": "fff6ee", "roof": "8fc58a", "door": "f2a7b0"},
 			"inside": {"series": "meadow", "variant": "rose", "wall": "mint_dot_wallpaper", "floor": "wooden_flooring"}
 		},
 		"hazel": {
-			"name": "Hazel", "personality": "sleepy", "catchphrase": "snuggle",
+			"name": "Hazel", "personality": "sleepy", "catchphrase": "snuggle", "prop": "held:teddy",
 			"species": {"kind": "rabbit", "lop": true, "fur": "#a87a55", "fur2": "#f0e2cc", "eyes": "#3a2418", "inner_ear": "#d9a0a0", "nose": "#8a5a50"},
 			"look": {"eyes": "classic", "mouth": "smile", "cheeks": "blush", "top": "knit_jumper", "top_color": "rose", "top_color2": "cream", "bottom": "long_skirt", "bottom_color": "brown"},
 			"home": {"wall": "f4e6d6", "roof": "a8705a", "door": "e8c47a"},
 			"inside": {"series": "textiles", "variant": "cherry", "wall": "peach_dot_wallpaper", "floor": "woven_flooring"}
 		},
 		"sable": {
-			"name": "Sable", "personality": "sporty", "catchphrase": "zoom",
+			"name": "Sable", "personality": "sporty", "catchphrase": "zoom", "prop": "held:skateboard",
 			"species": {"kind": "ferret", "fur": "#8a6a50", "fur2": "#f4ead8", "stripes": "#5e4434", "eyes": "#9a5a28", "inner_ear": "#e2a8a0", "nose": "#5e4434"},
 			"look": {"eyes": "wide", "mouth": "cat", "cheeks": "none", "top": "hoodie", "top_color": "red", "top_color2": "white", "bottom": "cargo_shorts", "bottom_color": "olive"},
 			"home": {"wall": "efe6d8", "roof": "c8564a", "door": "4a6a8a"},
 			"inside": {"series": "lodge", "variant": "moss", "wall": "cabin_wall", "floor": "wooden_flooring"}
 		},
 		"pepper": {
-			"name": "Pepper", "personality": "bookish", "catchphrase": "quite so",
+			"name": "Pepper", "personality": "bookish", "catchphrase": "quite so", "prop": "held:teacup",
 			"species": {"kind": "ferret", "fur": "#d6bc9a", "fur2": "#fbf4e8", "stripes": "#a88664", "eyes": "#3a2418", "inner_ear": "#e8bcb4", "nose": "#e3a0a8"},
 			"look": {"eyes": "almond", "mouth": "cat", "cheeks": "none", "top": "waistcoat", "top_color": "navy", "top_color2": "cream", "bottom": "trousers", "bottom_color": "tan", "glasses": "round"},
 			"home": {"wall": "f3ecdf", "roof": "5a6a9a", "door": "c8a060"},
 			"inside": {"series": "study", "variant": "oak", "wall": "striped_wallpaper", "floor": "woven_flooring"}
 		},
 		"crumb": {
-			"name": "Crumb", "personality": "sleepy", "catchphrase": "squeak",
+			"name": "Crumb", "personality": "sleepy", "catchphrase": "squeak", "prop": "held:candle",
 			"species": {"kind": "mouse", "fur": "#aaa4a6", "fur2": "#efe8ea", "eyes": "#2a2024", "inner_ear": "#f0b4bc", "nose": "#e88a98"},
 			"look": {"eyes": "dots", "mouth": "cat", "cheeks": "blush", "top": "nightgown", "top_color": "sky", "top_color2": "white", "top_pattern": "stars"},
 			"home": {"wall": "eef0f4", "roof": "8aa0c8", "door": "f2d68a"},
 			"inside": {"series": "starlight", "variant": "dawn", "wall": "sky_wallpaper", "floor": "rosy_carpet"}
 		},
 		"barley": {
-			"name": "Barley", "personality": "cheerful", "catchphrase": "nibble",
+			"name": "Barley", "personality": "cheerful", "catchphrase": "nibble", "prop": "held:baguette",
 			"species": {"kind": "mouse", "fur": "#c8a07a", "fur2": "#f6eadc", "eyes": "#2a1a14", "inner_ear": "#eeaab0", "nose": "#e0848e"},
 			"look": {"eyes": "happy", "mouth": "cat", "cheeks": "blush", "top": "pinafore", "top_color": "yellow", "top_color2": "white", "bottom": "shorts", "bottom_color": "brown"},
 			"home": {"wall": "fbf0dc", "roof": "d8a050", "door": "8fc58a"},
 			"inside": {"series": "mushroom", "variant": "golden", "wall": "peach_dot_wallpaper", "floor": "wooden_flooring"}
 		},
 		"rosie": {
-			"name": "Rosie", "personality": "sporty", "catchphrase": "chirp",
+			"name": "Rosie", "personality": "sporty", "catchphrase": "chirp", "prop": "held:racket",
 			"species": {"kind": "bird", "fur": "#8c6c52", "fur2": "#ef8a5a", "stripes": "#f8e8d6", "crest": "#7a5c44", "beak": "#4a3a32", "eyes": "#1a1214"},
 			"look": {"eyes": "classic", "mouth": "smile", "cheeks": "none", "top": "tank", "top_color": "teal", "top_color2": "white", "bottom": "board_shorts", "bottom_color": "navy"},
 			"home": {"wall": "fbeee4", "roof": "d0604a", "door": "5f8fb8"},
 			"inside": {"series": "driftwood", "variant": "sandy", "wall": "sky_wallpaper", "floor": "cream_tile_flooring"}
 		},
 		"kiwi": {
-			"name": "Kiwi", "personality": "bookish", "catchphrase": "tweet",
+			"name": "Kiwi", "personality": "bookish", "catchphrase": "tweet", "prop": "held:binoculars",
 			"species": {"kind": "bird", "fur": "#86c860", "fur2": "#f6e27a", "stripes": "#3a66b0", "crest": "#f6e27a", "beak": "#c8844a", "eyes": "#1a1214"},
 			"look": {"eyes": "classic", "mouth": "smile", "cheeks": "none", "top": "collared", "top_color": "white", "top_color2": "sky", "bottom": "pleated_skirt", "bottom_color": "navy"},
 			"home": {"wall": "f2f6e4", "roof": "6aa04a", "door": "f2cf73"},
 			"inside": {"series": "mushroom", "variant": "teal", "wall": "mint_dot_wallpaper", "floor": "mint_tile_flooring"}
 		},
 		"cacticat": {
-			"name": "Cacticat", "personality": "cheerful", "catchphrase": "prickly",
+			"name": "Cacticat", "personality": "cheerful", "catchphrase": "prickly", "prop": "held:cactus",
 			"species": {"kind": "cat", "cactus": true, "fur": "#a8c84a", "fur2": "#a8c84a", "stripes": "#5e8a2a", "eyes": "#2a2a20", "inner_ear": "#7ea03a", "nose": "#f0703a"},
 			"look": {"eyes": "happy", "mouth": "cat", "cheeks": "none", "top": "sundress", "top_color": "cream", "top_color2": "white", "hair_flower": "pansy_red"},
 			"home": {"wall": "f6f0dc", "roof": "7ea03a", "door": "e8603a"},
 			"inside": {"series": "hearth", "variant": "sage", "wall": "mint_dot_wallpaper", "floor": "cream_tile_flooring"}
 		},
 		"pudding": {
-			"name": "Pudding", "personality": "sleepy", "catchphrase": "snug",
+			"name": "Pudding", "personality": "sleepy", "catchphrase": "snug", "prop": "held:hot_water_bottle",
 			"species": {"kind": "rabbit", "lop": true, "fur": "#a8a2a8", "fur2": "#ece8ec", "eyes": "#3a2a30", "inner_ear": "#e8b4bc", "nose": "#d88a98"},
 			"look": {"eyes": "happy", "mouth": "smile", "cheeks": "blush", "top": "sweater", "top_color": "lavender", "top_color2": "white", "bottom": "leggings", "bottom_color": "grey"},
 			"home": {"wall": "efeaf2", "roof": "9a8ab8", "door": "f2c8d0"},
 			"inside": {"series": "hearth", "variant": "rose", "wall": "striped_wallpaper", "floor": "rosy_carpet"}
 		},
 		"mochi": {
-			"name": "Mochi", "personality": "cheerful", "catchphrase": "yum yum",
+			"name": "Mochi", "personality": "cheerful", "catchphrase": "yum yum", "prop": "held:ice_cream",
 			"species": {"kind": "mouse", "fur": "#f6f2ee", "fur2": "#fffaf6", "eyes": "#3a1a24", "inner_ear": "#f4a8b8", "nose": "#f08aa0"},
 			"look": {"eyes": "sparkle", "mouth": "cat", "cheeks": "blush", "top": "dress", "top_color": "pink", "top_color2": "white", "top_pattern": "cherries"},
 			"home": {"wall": "fff2f4", "roof": "f08aa0", "door": "a8d0a0"},
 			"inside": {"series": "playroom", "variant": "candy", "wall": "peach_dot_wallpaper", "floor": "cream_tile_flooring"}
 		},
 		"truffle": {
-			"name": "Truffle", "personality": "bookish", "catchphrase": "hmm hmm",
+			"name": "Truffle", "personality": "bookish", "catchphrase": "hmm hmm", "prop": "held:magnifier",
 			"species": {"kind": "ferret", "fur": "#4a3a34", "fur2": "#efe4d4", "stripes": "#2a2220", "eyes": "#8a5a34", "inner_ear": "#d8a098", "nose": "#2a2220"},
 			"look": {"eyes": "wide", "mouth": "cat", "cheeks": "none", "top": "turtleneck", "top_color": "mint", "top_color2": "white", "bottom": "trousers", "bottom_color": "charcoal", "glasses": "square"},
 			"home": {"wall": "ece6dc", "roof": "4a5a4a", "door": "c8a060"},
 			"inside": {"series": "study", "variant": "walnut", "wall": "cabin_wall", "floor": "woven_flooring"}
 		},
 		"wren": {
-			"name": "Wren", "personality": "sporty", "catchphrase": "flap",
+			"name": "Wren", "personality": "sporty", "catchphrase": "flap", "prop": "held:kite",
 			"species": {"kind": "bird", "fur": "#b08a62", "fur2": "#f2e2c8", "stripes": "#7a5a3e", "crest": "#8a6a4a", "beak": "#e0a050", "eyes": "#1a1214"},
 			"look": {"eyes": "sparkle", "mouth": "smile", "cheeks": "blush", "top": "raincoat", "top_color": "yellow", "top_color2": "white", "bottom": "shorts", "bottom_color": "navy"},
 			"home": {"wall": "f6eedf", "roof": "b07a4a", "door": "6a9ac8"},

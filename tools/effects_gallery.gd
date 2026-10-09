@@ -51,9 +51,9 @@ func _ready() -> void:
 			e.emitting = true
 			node.add_child(e)
 
-	var bursts := ["sparkle", "confetti", "leaves", "chips", "sparks", "dust", "hearts", "crumbs", "splash", "zzz"]
+	var bursts := ["sparkle", "confetti", "leaves", "chips", "sparks", "dust", "hearts", "crumbs", "splash", "bite", "foam", "zzz"]
 	for i in bursts.size():
-		var at := Vector3((i - 4.5) * 1.3, 0.6, 1.2)
+		var at := Vector3((i - 5.5) * 1.1, 0.6, 1.2)
 		var label := Label3D.new()
 		label.text = bursts[i]
 		label.font_size = 40

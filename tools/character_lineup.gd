@@ -1,7 +1,7 @@
 extends Node3D
 ## Renders a row of characters for checking the character art:
 ##   tools/screenshot_scene.sh out.png res://tools/character_lineup.tscn [--seed=N] [--angle=DEG]
-##     [--vary=KEY [--only=id,id]] [--base=key:id,key:id] [--npcs[=id,id] [--angles=0,35]] [--close]
+##     [--vary=KEY [--only=id,id]] [--base=key:id,key:id] [--npcs[=id,id] [--angles=0,35] [--props]] [--close]
 ##     [--poses [--only=chop,dig,...] [--times=0.1,0.2 (one pose at several moments)]]
 ## Without --vary: the --base look (default look if none) and five random ones.
 ## With --vary: one character per option of KEY, all on the --base look.
@@ -46,6 +46,11 @@ func _ready() -> void:
 			m.position.x = (i - (count - 1) * 0.5) * spacing
 			m.rotation.y = deg_to_rad(float(angles[i % angles.size()]))
 			add_child(m)
+			if Game.args.has("props"):
+				# Carrying their prop, standing as they do in the game.
+				m.set_tool(NpcData.get_character(npc_ids[i / angles.size()]).get("prop", ""))
+				for s in 50:
+					m.animate(0.01, 0.0)
 		_add_camera()
 		return
 	if Game.args.has("npcs"):

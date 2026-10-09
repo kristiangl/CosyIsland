@@ -61,8 +61,8 @@ func _physics_process(delta: float) -> void:
 	if _seat_uid >= 0:
 		if _busy > 0.0:
 			_busy -= delta
-		# Any push on the stick, use or cancel gets back up.
-		if input.length() > 0.5 or (active and _busy <= 0.0 and (Input.is_action_just_pressed("cancel") or Input.is_action_just_pressed("use"))):
+		# A push on the stick gets back up (and so do use and cancel: `_unhandled_input`).
+		if input.length() > 0.5 and _busy <= 0.0:
 			_stand_up()
 		model.animate(delta, 0.0)
 		return
@@ -106,7 +106,13 @@ func _physics_process(delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if Game.mode != Game.Mode.PLAY or _busy > 0.0 or _seat_uid >= 0:
+	if _seat_uid >= 0:
+		# Straight from the button press, so a quick tap is never missed between frames.
+		if Game.mode == Game.Mode.PLAY and _busy <= 0.0 and (event.is_action_pressed("use") or event.is_action_pressed("cancel")):
+			_stand_up()
+			get_viewport().set_input_as_handled()
+		return
+	if Game.mode != Game.Mode.PLAY or _busy > 0.0:
 		return
 	if fishing:
 		if event.is_action_pressed("use"):
@@ -261,8 +267,9 @@ func _use() -> void:
 	var kind: String = obj.get("kind", "")
 	if obj.has("x"):
 		_turn_towards(obj)
-	if kind == "placed":
-		_interact(obj)
+	# Furniture with something to do (a seat, a bed, a door...) does it; anything else
+	# is just to look at, so A goes on to whatever's held (casting over a fence, say).
+	if kind == "placed" and _interact(obj):
 		return
 	if kind == "stump":
 		_sit_on(obj)
@@ -483,12 +490,19 @@ func _cast() -> void:
 	_update_line()
 
 
+## The tip of a rod, where the line comes from (`Models._tool`).
+const ROD_TIP := Vector3(0, 0.9, 0)
+
+
 ## The line from the rod tip to the bobber.
 func _update_line() -> void:
-	var tip := position + facing * 0.75 + Vector3(0, 1.15, 0)
+	var tip := model.tool_point(ROD_TIP)
 	var end := world.critters.bobber.position + Vector3(0, 0.08, 0)
 	var span := end - tip
-	_line.global_transform = Transform3D(Basis(Quaternion(Vector3.UP, span.normalized())).scaled(Vector3(1, span.length(), 1)),
+	if span.length() < 0.01:
+		return
+	# Stretched along its own length (`scaled` would stretch along the world's axes).
+	_line.global_transform = Transform3D(Basis(Quaternion(Vector3.UP, span.normalized())) * Basis.from_scale(Vector3(1, span.length(), 1)),
 		(tip + end) * 0.5)
 
 
@@ -528,7 +542,8 @@ func _landed(id: String, line: String, size: float) -> void:
 	Events.toast.emit(line % ItemDB.display_name(id).to_lower())
 
 
-func _interact(obj: Dictionary) -> void:
+## Uses a placed thing: true if it does something.
+func _interact(obj: Dictionary) -> bool:
 	var def := ItemDB.placeable(obj["item"])
 	if def.get("bed", false):
 		_bed(obj)
@@ -547,7 +562,8 @@ func _interact(obj: Dictionary) -> void:
 	elif def.get("museum", false) and Story.npc("bramble"):
 		Story.talk_to(Story.npc("bramble"))
 	else:
-		Events.toast.emit("What a lovely %s." % ItemDB.display_name(obj["item"]).to_lower())
+		return false
+	return true
 
 
 ## Beds offer a sleep: the clock moves on to the chosen time of day.

@@ -674,9 +674,14 @@ func _rug() -> void:
 		cushion(Vector3(0, 0.012, 0), Vector3(w, 0.02, d), 0.0, FABRIC_TRIM if border else FABRIC, 1)
 		if border:
 			cushion(Vector3(0, 0.014, 0), Vector3(w - 0.16, 0.02, d - 0.16), 0.0, FABRIC, 1)
+		if params.get("inner", false):
+			# A second border inside the first, for the biggest rugs.
+			cushion(Vector3(0, 0.016, 0), Vector3(w - 0.56, 0.02, d - 0.56), 0.0, FABRIC_TRIM, 1)
+			cushion(Vector3(0, 0.018, 0), Vector3(w - 0.72, 0.02, d - 0.72), 0.0, FABRIC, 1)
 		if params.get("fringe", false):
 			for sz: float in [-1.0, 1.0]:
-				var count := int(w / 0.07)
+				# A tuft every 7cm, spaced out a little on the biggest rugs to stay cheap.
+				var count := mini(int(w / 0.07), 40)
 				for i in count:
 					var x := lerpf(-w * 0.5 + 0.03, w * 0.5 - 0.03, i / float(count - 1))
 					k.box(Vector3(x, 0.006, sz * (d * 0.5 + 0.035)), Vector3(0.025, 0.01, 0.07), wood)
@@ -684,9 +689,11 @@ func _rug() -> void:
 	# Round and oval rugs: a disc, squashed for an oval, with a plain ring round it.
 	var r := minf(w, d) * 0.5
 	f.xform = Transform3D(Basis.from_scale(Vector3(w * 0.5 / r, 1, d * 0.5 / r)), Vector3.ZERO)
+	# More sides on the bigger ones, so they stay round.
+	var sides := 28 if maxf(w, d) < 2.5 else 40
 	if border:
-		f.cylinder(Vector3(0, 0.0, 0), Vector3(0, 0.02, 0), r, r, FABRIC_TRIM, 28, true)
-	f.cylinder(Vector3(0, 0.0, 0), Vector3(0, 0.024, 0), r - (0.09 if border else 0.0), r - (0.09 if border else 0.0), FABRIC, 28, true)
+		f.cylinder(Vector3(0, 0.0, 0), Vector3(0, 0.02, 0), r, r, FABRIC_TRIM, sides, true)
+	f.cylinder(Vector3(0, 0.0, 0), Vector3(0, 0.024, 0), r - (0.09 if border else 0.0), r - (0.09 if border else 0.0), FABRIC, sides, true)
 	f.xform = Transform3D.IDENTITY
 
 

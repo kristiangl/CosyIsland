@@ -28,7 +28,7 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   inferred-Variant types as errors, so type loop variables over literal arrays).
 - Art check scenes (render with `tools/screenshot_scene.sh out.png res://tools/<scene>`):
   `character_lineup.tscn` (`--seed`, `--angle`, `--vary=KEY`, `--base=k:v`, `--poses`,
-  `--npcs[=id,id]` (`--angles=0,35`), `--close`, `--poses` (`--only=chop,sit,...`)),
+  `--npcs[=id,id]` (`--angles=0,35`, `--props` holding their prop), `--close`, `--poses` (`--only=chop,sit,...`)),
   `model_gallery.tscn` (`--drops`, `--keys`, `--only=id,id`, `--series=id`, `--variant=id`), `effects_gallery.tscn`
   (`--night`, every particle effect), `calibrate.tscn`
   (`-- --shadows`, checks the cel lighting maths).
@@ -40,7 +40,7 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   goes inside the museum or a neighbour's home),
   `--ui=pockets|pause|map|creator|crafting|customise|placing|intro|ask|lucy|sleep|asleep|shop|sell|tailors` (`--place=id` picks what to place),
   `--tab=N` and `--try=key:id` for the creator, `--room=wallpaper,flooring`, `--gen=N`,
-  `--at=X,Z`, `--hour`, `--give=id,id` to fill the pockets).
+  `--at=X,Z`, `--hour`, `--give=id,id` to fill the pockets, `--zoom=0.4` to bring the camera in).
 
 ## Layout
 
@@ -121,6 +121,10 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   `data/characters.json`) set up on the plaza with a stall (`Shop.KEEPERS`), carrying
   their "prop" (Basil a net he swings now and then, Marina a rod, Fennel a bolt of cloth,
   Tansy a watering can: a tool, or a `Models` "held:<name>" key; put away for an umbrella).
+  Campers carry theirs too while away from home, on a tour island or visiting your plaza
+  (neighbours.json "prop", given by `Npc.carry` in `_add_camper` / `_add_visitor`; never at
+  home): held props are built upright round the grip and turned to the hand by
+  `Models.HELD_UPRIGHT` (+x towards the body).
   Visitors stand where `Main.visitor_spot` finds room on the plaza, and campers wander
   only within it (`Npc.bounds`).
   Neighbours sometimes think of moving (`Story.check_moving` each morning,
@@ -225,6 +229,8 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   Everyday clothes (the plain styles there) are items made on demand,
   `basic.<slot>.<style>.<colour>[.<colour2>.<pattern>]` (`ItemDB.basic_id`); the
   wardrobe (`Inventory.closet`) only offers clothes you own.
+- `Events.toast.emit(text)` shows a note at the bottom of the screen; the HUD counts the
+  same text again on one note ("x3", `Hud.toast_line`) rather than queueing repeats.
 - `Icons.portrait(id)` renders a character's face (journal, map); `Music.muted` is the
   phone's Options setting, kept in `user://settings.cfg`.
 

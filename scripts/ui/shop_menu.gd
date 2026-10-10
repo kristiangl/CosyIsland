@@ -228,6 +228,9 @@ func _activate(index: int) -> void:
 			Events.toast.emit(problem)
 		else:
 			Events.toast.emit("You bought %s!" % ItemDB.display_name(id).to_lower())
+			# Something pricey gets talked about.
+			if Shop.buy_price(id) >= 600:
+				Story.gossip("bought", id, "", Shop.buy_price(id))
 			_rows[index].flash()
 			_pop_acorns(-Shop.buy_price(id))
 		_show(index)

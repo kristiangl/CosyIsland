@@ -170,6 +170,7 @@ func buy(offer: Dictionary, rng: RandomNumberGenerator) -> String:
 	var got := ""
 	if offer.has("pockets"):
 		Inventory.expand(int(offer["pockets"]))
+		Story.gossip("upgrade", "pockets")
 		got = "%d pocket spaces" % int(offer["pockets"])
 	elif offer.get("recipe", false):
 		got = "the %s recipe" % ItemDB.display_name(Recipes.learn_random(rng))

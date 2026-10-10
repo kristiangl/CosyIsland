@@ -105,9 +105,11 @@ static func daily_prop(id: String, day: int) -> String:
 
 
 func _new_day() -> void:
+	_stretch_time = 0.0
 	for n in Game.npcs:
 		if is_instance_valid(n) and n.wanders and not n.visiting and NpcData.is_neighbour(n.id):
 			n.everyday = daily_prop(n.id, GameClock.day_key())
+			n.out_until = 18.0
 			if n.pastime == "":
 				n.carry(n.everyday)
 
@@ -120,6 +122,7 @@ func _process(delta: float) -> void:
 	var ready := island.prepare_nav(2500)
 	if Game.mode == Game.Mode.PLAY:
 		_play(delta)
+	_stretching(delta)
 	_think -= delta
 	if _think > 0.0 or not ready:
 		return
@@ -127,6 +130,7 @@ func _process(delta: float) -> void:
 	if not spontaneous:
 		return
 	var wet := Weather.rain > 0.1 or Weather.snow > 0.1
+	routine(GameClock.hour_float(), wet)
 	for n in residents():
 		if wet and n.pastime in ["fishing", "bugs", "sit"]:
 			n.stop()
@@ -180,12 +184,17 @@ func _start_chat(n: Npc) -> bool:
 	var away := n.position - best.position
 	away.y = 0.0
 	away = away.normalized() if away.length() > 0.1 else Vector3(1, 0, 0)
+	# In the rain they huddle under one umbrella.
+	var wet := Weather.rain > 0.1 or Weather.snow > 0.1
 	for turn: float in [0.0, 0.8, -0.8, 1.6, -1.6]:
-		var stand := best.position + away.rotated(Vector3.UP, turn) * 1.1
+		var stand := best.position + away.rotated(Vector3.UP, turn) * (0.75 if wet else 1.1)
 		if Game.island.can_move(Vector3(stand.x, Game.island.ground_height(stand.x, stand.z), stand.z), stand.x, stand.z, Npc.RADIUS):
 			var seconds := _rng.randf_range(30.0, 60.0)
 			if n.chat_with(best, stand, seconds):
 				best.chat_with(n, Vector3.ZERO, seconds + 15.0)
+				if wet:
+					n.shelter = best
+					best.sheltering = true
 				return true
 			return false
 	return false
@@ -244,6 +253,213 @@ func _free_seat(n: Npc) -> Dictionary:
 			if free:
 				near.append(spot)
 	return {} if near.is_empty() else near[_rng.randi() % near.size()]
+
+
+# --- The day's routine -----------------------------------------------------------------
+
+## Morning stretches on the plaza from STRETCH_FROM till STRETCH_TO on dry days, the
+## moves called in time (`_stretching`), which you can join in with (`join_stretches`);
+## a friend going round to another's for the evening (`visits`: waiting by their door
+## from VISIT_FROM, then inside with them until VISIT_TO); and on evenings with a campfire
+## lit outside, gathering round it until CAMPFIRE_TO.
+const STRETCH_FROM := 7.0
+const STRETCH_TO := 8.0
+## Reach up, touch your toes, a wave side to side, a jump, arms out.
+const STRETCHES := ["cheer", "pickup", "wave", "jump", "shake"]
+const STRETCH_BEAT := 1.9
+## How long you have to stretch along with everyone for their thanks (once a day).
+const STRETCH_SECONDS := 40.0
+const VISIT_FROM := 17.3
+const VISIT_TO := 22.0
+const CAMPFIRE_FROM := 17.0
+const CAMPFIRE_TO := 20.0
+var _stretch_beat := 0.0
+var _stretch_move := 0
+var _stretch_time := 0.0
+var _stretch_spots: Array[Vector3] = []
+var _stretch_day := -1
+## Tonight's visits (guest -> host), for `_visits_day`.
+var _visits := {}
+var _visits_day := -1
+
+
+## Keeps everyone to the day's routine (each THINK): stretches, visits, the campfire.
+func routine(hour: float, wet: bool) -> void:
+	var stretch_time := hour >= STRETCH_FROM and hour < STRETCH_TO and not wet
+	var spots := stretch_spots() if stretch_time else ([] as Array[Vector3])
+	var fire := campfire() if hour >= CAMPFIRE_FROM and hour < CAMPFIRE_TO else {}
+	var slot := 0
+	for n in residents():
+		if _in_game(n.id):
+			continue
+		if stretch_time:
+			if n.pastime != "stretch" and slot < spots.size():
+				n.stretch_at(spots[slot])
+			slot += 1
+			continue
+		if n.pastime == "stretch":
+			# All done: off home again.
+			n.go_home()
+		var host := host_of(n.id)
+		if host != "" and hour >= VISIT_FROM and n.pastime != "visit":
+			var house := Game.island.building_of(host)
+			if not house.is_empty():
+				var door := Game.island.outside_door(house)
+				var side := Vector3(door["facing"].z, 0, -door["facing"].x)
+				n.out_until = 18.0
+				n.visit(door["position"] + side * 0.9 + door["facing"] * 0.4, door["position"])
+			continue
+		if not fire.is_empty() and n.pastime != "campfire" and host == "" and guest_of(n.id) == "" and (hash(n.id) + GameClock.day_key()) % 3 != 0:
+			var at := _fireside(fire, n)
+			if at != Vector3.ZERO and n.warm_up(at, _fire_at(fire)):
+				n.out_until = CAMPFIRE_TO
+	if not stretch_time and Game.player and Game.player.stretching:
+		Game.player.stretching = false
+
+
+## Calls the moves for morning stretches, and counts how long you've joined in.
+func _stretching(delta: float) -> void:
+	var hour := GameClock.hour_float()
+	if hour < STRETCH_FROM or hour >= STRETCH_TO:
+		return
+	_stretch_beat -= delta
+	var player := Game.player
+	if _stretch_beat <= 0.0:
+		_stretch_beat = STRETCH_BEAT
+		var move: String = STRETCHES[_stretch_move % STRETCHES.size()]
+		_stretch_move += 1
+		for n in residents():
+			if n.pastime == "stretch" and not n.on_the_way():
+				n.model.play(move)
+		if player and player.stretching:
+			player.model.play(move)
+	if player and player.stretching and Game.mode == Game.Mode.PLAY:
+		_stretch_time += delta
+		if _stretch_time >= STRETCH_SECONDS and int(Story.flags.get("stretched", -1)) != GameClock.day_key():
+			Story.flags["stretched"] = GameClock.day_key()
+			Journal.add("stretches")
+			for n in residents():
+				if n.pastime == "stretch":
+					Story.befriend(n.id, 1)
+					n.hop()
+			Effects.burst("sparkle", player.position + Vector3(0, 1.4, 0))
+			Sfx.play("jingle_ding", -2.0, 1.0, 0.0)
+			Events.toast.emit("What a lovely stretch! Everyone's feeling limber.")
+
+
+## Where everyone stands for stretches: a row across the middle of the plaza, facing
+## the front, with room for you at the end (worked out once a day).
+func stretch_spots() -> Array[Vector3]:
+	if _stretch_day == GameClock.day_key() and not _stretch_spots.is_empty():
+		return _stretch_spots
+	_stretch_day = GameClock.day_key()
+	_stretch_spots.clear()
+	var w := Game.island
+	var plaza := w.data.plaza
+	if not plaza.has_area():
+		return _stretch_spots
+	var c := Vector2(plaza.get_center())
+	for row in 4:
+		for k in 12:
+			var x := c.x + (k / 2 + 0.5) * 1.3 * (1 if k % 2 == 0 else -1)
+			var at := Vector3(x, 0, c.y + 1.0 + row * 1.3)
+			at.y = w.ground_height(at.x, at.z)
+			if _stretch_spots.size() < 7 and plaza.grow(1).has_point(Vector2i(floori(at.x), floori(at.z))) \
+					and w.can_move(at, at.x, at.z, Npc.RADIUS) and _stretch_spots.all(func(p): return p.distance_to(at) > 1.1):
+				_stretch_spots.append(at)
+	return _stretch_spots
+
+
+## Joins in with the stretches: you take the next free place in the row.
+func join_stretches() -> void:
+	var player := Game.player
+	var spots := stretch_spots()
+	if player == null or spots.is_empty():
+		return
+	var taken := 0
+	for n in residents():
+		if n.pastime == "stretch":
+			taken += 1
+	var at: Vector3 = spots[mini(taken, spots.size() - 1)]
+	player.position = at
+	player.facing = Vector3(0, 0, 1)
+	player.stretching = true
+	_stretch_time = 0.0
+
+
+## Tonight's visits: guest -> host, one or two a night (if there's anyone to visit),
+## the same all day.
+func visits(day: int) -> Dictionary:
+	if _visits_day == day:
+		return _visits
+	_visits_day = day
+	_visits = {}
+	if Game.island == null:
+		return _visits
+	var ids: Array = []
+	for obj in Game.island.objects():
+		if obj.has("resident") and not obj["resident"] in ids:
+			ids.append(obj["resident"])
+	ids.sort()
+	if ids.size() < 2:
+		return _visits
+	var rng := RandomNumberGenerator.new()
+	rng.seed = day * 977 + 13
+	for i in (1 if ids.size() < 4 else 2):
+		if rng.randf() < 0.6:
+			var guest: String = ids[rng.randi() % ids.size()]
+			var host: String = ids[rng.randi() % ids.size()]
+			if guest != host and not _visits.has(guest) and not _visits.has(host) and not guest in _visits.values() and not host in _visits.values():
+				_visits[guest] = host
+	return _visits
+
+
+## Whose home `guest` is going round to this evening ("" if nobody's).
+func host_of(guest: String) -> String:
+	return visits(GameClock.day_key()).get(guest, "")
+
+
+## Who's coming round to `host`'s this evening ("" if nobody).
+func guest_of(host: String) -> String:
+	var tonight := visits(GameClock.day_key())
+	for guest: String in tonight:
+		if tonight[guest] == host:
+			return guest
+	return ""
+
+
+## A campfire outside on the island, near the plaza if there are several ({} if none).
+func campfire() -> Dictionary:
+	var w := Game.island
+	var best := {}
+	var plaza := Vector2(w.data.plaza.get_center())
+	for obj in w.objects():
+		if obj["kind"] == "placed" and obj["item"] == "campfire" \
+				and (best.is_empty() or Vector2(obj["x"], obj["z"]).distance_to(plaza) < Vector2(best["x"], best["z"]).distance_to(plaza)):
+			best = obj
+	return best
+
+
+func _fire_at(fire: Dictionary) -> Vector3:
+	var fp: Array = ItemDB.placeable(fire["item"])["footprint"]
+	return Vector3(fire["x"] + fp[0] * 0.5, 0, fire["z"] + fp[1] * 0.5)
+
+
+## A place on the ground round the fire nobody else has taken, that `n` can get to.
+func _fireside(fire: Dictionary, n: Npc) -> Vector3:
+	var w := Game.island
+	var centre := _fire_at(fire)
+	for i in 8:
+		var a := TAU * i / 8.0 + 0.4
+		var at := centre + Vector3(cos(a), 0, sin(a)) * 1.45
+		at.y = w.ground_height(at.x, at.z)
+		var free := w.can_move(at, at.x, at.z, Npc.RADIUS)
+		for other in residents():
+			if other != n and (other.position.distance_to(at) < 0.8 or (other.on_the_way() and other._route[other._route.size() - 1].distance_to(at) < 0.8)):
+				free = false
+		if free and not w.nav_path(n.position, at).is_empty():
+			return at
+	return Vector3.ZERO
 
 
 # --- Games ---------------------------------------------------------------------------

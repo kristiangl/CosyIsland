@@ -277,6 +277,13 @@ Milestone 3b:
   couple of others hide behind trees and houses while you count; two and a half minutes
   to find them), "bet you can't catch a ... in three minutes", or a race to the plaza,
   Marlow's dock or a shop, with a flag at the finish. Win for a present or acorns.
+- [x] A living island: morning stretches on the plaza from seven (join in, and everyone's
+  pleased), friends going round to each other's homes in the evening (you'll find them
+  both in), campfire evenings (sit round it toasting marshmallows until eight), chatting
+  neighbours sharing an umbrella in the rain (and a spare one for you if you're caught
+  without), neighbours giving you something they caught (the museum's missing one,
+  ideally), and gossip: gifts, donations, rare catches, games, landscaping, big
+  purchases, upgrades, tours and new looks all get talked about, to you and to each other.
 - [x] Fences that join up: picket fences, palisades, low stone walls and iron railings, plus
   wooden and iron gates (standing open, to walk through). Each fills a tile, stacks to 99
   and goes down one after another without going back to the pockets; side by side they

@@ -37,7 +37,8 @@ extends Node3D
 ##   --demo=site        Lucy's shop kit staked out, waiting to be built
 ##   --demo=neighbours  two neighbours have just moved in (--visit: go inside one's home, --who=id,id: who,
 ##                      --moving: the first is thinking of moving away)
-##   --demo=life        neighbours living by the plaza, up to something (--do=fishing|bugs|chat|sit)
+##   --demo=life        neighbours living by the plaza, up to something (--do=fishing|bugs|chat|sit, or
+##                      the day's routine at --hour: --do=stretch|campfire|visit, --inside for the host's)
 ##                      or asking to play (--game=hide|catch|race, --start), --who=id,id,id, --talk
 ##   --demo=visitor     someone met on a tour is visiting the plaza (--who=id; or a travelling
 ##                      visitor: --who=fennel|tansy|basil|marina; or one of each: --who=kiwi,basil)
@@ -374,6 +375,10 @@ func _new_game_pockets() -> void:
 
 
 func _on_creator_finished(look: Dictionary, player_name: String, island_name: String) -> void:
+	if not _welcome_pending and look != player.model.look:
+		# A change of clothes gets noticed.
+		var top := ItemDB.worn_item("top", look)
+		Story.gossip("look", top if top != ItemDB.worn_item("top", player.model.look) else "")
 	player.model.set_look(look)
 	# The outfit you start in is the first thing in your wardrobe.
 	Inventory.own_outfit(player.model.look)
@@ -533,17 +538,22 @@ func _spawn_npcs() -> void:
 func _check_house() -> void:
 	if Story.finish_house(world):
 		Events.toast.emit("Your house is ready! Go and have a look inside.")
+		Story.gossip("upgrade", "big_house" if Story.flags.get("extension_done", false) else "house")
 	if Story.finish_shop(world):
 		Events.toast.emit("Lucy's shop is open! Go and say hello.")
+		Story.gossip("upgrade", "lucy_shop")
 		_place_lucy()
 	if Story.finish_tailors(world):
 		Events.toast.emit("Daisy and Morris's clothes shop is open!")
+		Story.gossip("upgrade", "tailor_shop")
 		_place_tailors()
 	if Story.finish_museum(world):
 		Events.toast.emit("Bramble has put up his museum tent! Go and say hello.")
+		Story.gossip("upgrade", "museum_tent")
 		_place_bramble()
 	if Story.finish_museum_building(world):
 		Events.toast.emit("The museum is finished! Go and look inside.")
+		Story.gossip("upgrade", "museum")
 	if Story.finish_dock(world):
 		Events.toast.emit("A ferry has tied up at the beach! Go and say hello.")
 		_place_marlow(world)
@@ -720,9 +730,15 @@ func _enter_home(uid: int, instant := false, index := 0) -> void:
 	if _going_through_door or room != null or not def.has("room"):
 		return
 	var resident: String = home.get("resident", "")
-	if resident != "" and Npc.out_at(GameClock.hour_float()):
-		Events.toast.emit("Nobody's home. %s is out and about until six." % NpcData.display_name(resident))
-		return
+	if resident != "":
+		var outside := Story.npc(resident)
+		if (outside and outside.world == world and outside.visible) or (outside == null and Npc.out_at(GameClock.hour_float())):
+			Events.toast.emit("Nobody's home. %s is out and about." % NpcData.display_name(resident))
+			return
+		var away := neighbourhood.host_of(resident) if neighbourhood else ""
+		if away != "" and GameClock.hour_float() < Neighbourhood.VISIT_TO:
+			Events.toast.emit("Nobody's home. %s is round at %s's this evening." % [NpcData.display_name(resident), NpcData.display_name(away)])
+			return
 	_going_through_door = true
 	Game.mode = Game.Mode.MENU
 	if not instant:
@@ -820,6 +836,23 @@ func _open_room(uid: int, index: int) -> void:
 		room.reserve(Vector2i(floori(spot.x), floori(spot.z)))
 		Game.npcs.append(host)
 		room.tree_exiting.connect(func(): Game.npcs.erase(host))
+		# Someone round for the evening: chatting with them, a step away.
+		var guest := neighbourhood.guest_of(resident) if neighbourhood and GameClock.hour_float() < Neighbourhood.VISIT_TO else ""
+		var near := Vector3.ZERO
+		for off: Vector3 in [Vector3(1, 0, 0), Vector3(-1, 0, 0), Vector3(0, 0, 1), Vector3(1, 0, 1), Vector3(-1, 0, 1), Vector3(0, 0, -1)]:
+			var c := spot + off
+			if guest != "" and near == Vector3.ZERO and floori(c.x) != door.x and room.data.in_bounds(floori(c.x), floori(c.z)) \
+					and room.object_at(floori(c.x), floori(c.z)).is_empty() and room.is_walkable(c.x, c.z):
+				near = c
+		if near != Vector3.ZERO:
+			var company := Npc.new()
+			room.add_child(company)
+			company.setup(guest, room, near, (spot - near).normalized())
+			room.reserve(Vector2i(floori(near.x), floori(near.z)))
+			Game.npcs.append(company)
+			room.tree_exiting.connect(func(): Game.npcs.erase(company))
+			host.chat_with(company, Vector3.ZERO, 36000.0)
+			company.chat_with(host, Vector3.ZERO, 36000.0)
 	_home_uid = uid
 	_room_index = index
 	_switch_world(room)
@@ -905,6 +938,7 @@ func _start_tour() -> void:
 	var luck := RandomNumberGenerator.new()
 	luck.seed = hash([_seed, GameClock.day_key(), trips, "kind"])
 	var kind: String = Game.args.get("island", TourKinds.pick(trips, luck.randf(), luck.randf()))
+	Story.gossip("tour", kind)
 	var dock := {}
 	for attempt in 6:
 		var data := IslandGenerator.generate_tour(absi(hash([_seed, GameClock.day_key(), trips, attempt])) % 1000000,
@@ -1159,6 +1193,24 @@ func _demo_life(spawn: Vector2i) -> void:
 			if world.can_place(Rect2i(at, Vector2i(2, 1)), Vector3(-50, 0, -50)):
 				world.place_item("park_bench", Rect2i(at, Vector2i(2, 1)), 0)
 			neighbourhood.take_up(n, "sit")
+		"stretch", "campfire", "visit":
+			# The day's routine at --hour: everyone straight to where they're going.
+			if Game.args["do"] == "campfire" and not homes.is_empty():
+				var fire := Vector2i(homes[1 if homes.size() > 1 else 0]["x"] + 1, homes[0]["z"] + 5)
+				world.place_item("campfire", Rect2i(fire, Vector2i.ONE), 0)
+			if Game.args["do"] == "visit" and folk.size() > 1:
+				neighbourhood._visits = {folk[0].id: folk[1].id}
+				neighbourhood._visits_day = GameClock.day_key()
+			neighbourhood.routine(GameClock.hour_float(), false)
+			for f in folk:
+				if f.on_the_way():
+					f.position = f._route[f._route.size() - 1]
+					f._route.clear()
+			if Game.args["do"] == "stretch":
+				n = folk[folk.size() / 2]
+			if Game.args.has("inside") and folk.size() > 1:
+				await _enter_home(world.building_of(folk[1].id)["uid"], true)
+				return
 	if Game.args.has("game"):
 		neighbourhood.make_offer(n, Game.args["game"])
 		# Standing still for the picture.

@@ -59,6 +59,14 @@ func fill(text: String) -> String:
 	return Prompts.fill(text)
 
 
+func _ready() -> void:
+	# A rare catch gets talked about.
+	Events.caught.connect(func(id: String):
+		var c: Dictionary = ItemDB.fish.get(id, ItemDB.bugs.get(id, {}))
+		if int(c.get("weight", 9)) <= 2:
+			gossip("catch", id))
+
+
 func npc(id: String) -> Npc:
 	for n: Npc in Game.npcs:
 		if n.id == id:
@@ -694,6 +702,7 @@ func _fitting(speaker: String) -> void:
 	for id in wanted:
 		Shop.buy(id, day, "tailors", true)
 	Game.player.model.set_look(look)
+	gossip("look", ItemDB.worn_item("top", look) if ItemDB.worn_item("top", look) in wanted else "")
 	_npc_cheer(speaker)
 	await say(speaker, ["They're yours! You look wonderful. Wear them well!" if speaker == "daisy" else "...Good choice. Very good."])
 
@@ -916,6 +925,7 @@ func _donate() -> void:
 	for id in giving:
 		Journal.donate(id)
 		Inventory.remove_item(id, 1)
+		gossip("museum", id)
 		lines.append("A %s! %s" % [ItemDB.display_name(id).to_lower(), _thanks(id)])
 	if lines.is_empty():
 		await say("bramble", ["Hmm, nothing new for the collection there, I'm afraid.",
@@ -1298,6 +1308,7 @@ func move_in(island: World) -> Array[String]:
 		island.refresh_node(obj)
 		here.append(who)
 		arrived.append(who)
+		gossip("moved_in", "", who)
 		var moved: Dictionary = flags.get("moved_in", {})
 		moved[who] = island.day_key
 		flags["moved_in"] = moved
@@ -1499,6 +1510,14 @@ func _neighbour(who: Npc) -> void:
 	if leaving() == who.id:
 		await say(who.id, ["Nearly all packed! It's funny, the boxes take up more room than I did. %s." % catch.capitalize()])
 		return
+	# Caught out in the rain without an umbrella? Someone always has a spare.
+	if (Weather.rain > 0.1 or Weather.snow > 0.1) and not flags.get("spare_umbrella", false) and _no_umbrella() \
+			and who.world and not who.world.interior:
+		flags["spare_umbrella"] = true
+		await say(who.id, ["{player}, you're soaked through! Here, take my spare umbrella. I've another at home, %s." % catch])
+		_give(Npc.umbrella_item(who.id))
+		await say(who.id, ["Hold it like any tool and up it goes. There, much better!"])
+		return
 	# A game: one they'd like to play, one being played, or how one went.
 	var hood := Game.neighbourhood
 	if hood:
@@ -1507,6 +1526,9 @@ func _neighbour(who: Npc) -> void:
 			return
 		if not hood.offer_for(who.id).is_empty():
 			await _game_offer(who, data)
+			return
+		if who.pastime == "stretch" and Game.player and not Game.player.stretching:
+			await _stretch_offer(who, data)
 			return
 		if hood.game.get("by", "") == who.id and hood.game.get("kind", "") == "catch":
 			await say(who.id, ["Any luck with the %s yet? Go on, you can do it, %s!" % [ItemDB.display_name(hood.game["what"]).to_lower(), catch]])
@@ -1522,6 +1544,9 @@ func _neighbour(who: Npc) -> void:
 	var remark := weather_line(catch)
 	if remark != "":
 		greeting = remark
+	var news := gossip_line(who.id) if randf() < 0.45 else ""
+	if news != "":
+		greeting = news
 	var doing := _pastime_line(who, catch)
 	if doing != "":
 		greeting = doing
@@ -1539,7 +1564,153 @@ func _neighbour(who: Npc) -> void:
 		_:
 			await say(who.id, ["See you around, {player}! %s!" % catch.capitalize()])
 			return
+	await _share_catch(who, data)
 	await _maybe_present(who, data)
+
+
+# --- Gossip --------------------------------------------------------------------------
+
+## What the island's been saying about you: the latest things you've done, oldest
+## first, each {"day", "kind", "what", "who", "worth"}. Neighbours bring them up when you
+## talk to them (`gossip_line`) and talk them over with each other (`gossip_topic`).
+## Kinds: "gift" (what, to who), "museum" (what), "catch" (a rare what), "game" (what:
+## "race_won", "hide_lost"..., with who), "landscape" (what: the tool), "bought" (the
+## priciest thing that day), "upgrade" (what: "house", "big_house", "pockets", "bridge",
+## or a building), "tour" (what: the island's kind), "look" (what: the top you put on),
+## "moved_in" (who).
+const GOSSIP_KEEP := 30
+## How many days old news stays news.
+const GOSSIP_DAYS := 4
+## Who's been told what, so they don't say the same thing every time.
+var _gossiped := {}
+
+
+## Something for the island to talk about. One of each kind (and person) a day: the
+## latest, or for "bought" the priciest (`worth`).
+func gossip(kind: String, what: String = "", who: String = "", worth: int = 0) -> void:
+	var news: Array = flags.get("gossip", [])
+	var day := GameClock.day_key()
+	for i in range(news.size() - 1, -1, -1):
+		var g: Dictionary = news[i]
+		if int(g["day"]) == day and g["kind"] == kind and g.get("who", "") == who:
+			if int(g.get("worth", 0)) > worth:
+				return
+			news.remove_at(i)
+	news.append({"day": day, "kind": kind, "what": what, "who": who, "worth": worth})
+	while news.size() > GOSSIP_KEEP:
+		news.remove_at(0)
+	flags["gossip"] = news
+
+
+## The news from the last few days that `listener` could talk about (not their own
+## moving in), newest last.
+func recent_gossip(listener: String = "") -> Array:
+	var out: Array = []
+	for g: Dictionary in flags.get("gossip", []):
+		if GameClock.day_key() - int(g["day"]) <= GOSSIP_DAYS and not (g["kind"] == "moved_in" and g["who"] == listener):
+			out.append(g)
+	return out
+
+
+## Something `listener` has heard about you lately ("I heard you gave Maple a teacup!"),
+## a different bit of news each time; "" if there's nothing new.
+func gossip_line(listener: String) -> String:
+	var news := recent_gossip(listener)
+	if news.is_empty():
+		return ""
+	var n: int = _gossiped.get(listener, 0)
+	_gossiped[listener] = n + 1
+	return _gossip_said(news[news.size() - 1 - n % mini(news.size(), 4)], listener)
+
+
+func _gossip_said(g: Dictionary, listener: String) -> String:
+	var what: String = g.get("what", "")
+	var who: String = g.get("who", "")
+	var them := NpcData.display_name(who) if who != "" else ""
+	var thing := ItemDB.display_name(what).to_lower() if what != "" else ""
+	match g["kind"]:
+		"gift":
+			if who == listener:
+				return "I keep looking at the %s you gave me. It's just right!" % thing
+			return "I heard you gave %s a %s! They haven't stopped talking about it." % [them, thing]
+		"museum":
+			return "Bramble says you gave the museum a %s! I must go and see it." % thing
+		"catch":
+			return "Is it true you caught a %s? Everyone's talking about it!" % thing
+		"game":
+			var lines := {
+				"race_won": ["You beat me fair and square in that race. I want a rematch!", "%s says you beat them in a race! I'd like to see that."],
+				"race_lost": ["I still can't believe I beat you in that race. Hee hee!", "%s says they beat you in a race. Want me to train you?"],
+				"hide_won": ["You found me so fast in hide and seek! How?", "I heard you found everyone in hide and seek! Sharp eyes."],
+				"hide_lost": ["Nobody found my hiding spot. I'm a legend!", "%s says you never found them in hide and seek!"],
+				"catch_won": ["You really did catch it in time! I was so sure you wouldn't.", "%s set you a catching challenge and you did it! Show-off."],
+				"catch_lost": ["Never mind about that challenge. They're tricky to catch!", "%s says you didn't quite manage their catching challenge."],
+			}
+			var pair: Array = lines.get(what, lines["race_won"])
+			return pair[0] if who == listener else (pair[1] % them if "%s" in pair[1] else pair[1])
+		"landscape":
+			return {"cliff": "You've been moving cliffs about! I nearly walked off a new one.",
+				"water": "Was the new water your doing? The fish must be thrilled.",
+				"slope": "The new slope's ever so handy. My knees thank you!",
+				"path": "I love the new paths. My shoes have never been so clean!",
+				"trees": "Did you chop down a tree? I'm sure there was one there yesterday.",
+				"move": "Has a tree moved? I'm sure it was somewhere else yesterday!"}.get(what, "You've been busy changing the island!")
+		"bought":
+			return "Lucy says you bought a %s! Ooh, fancy." % thing
+		"upgrade":
+			return {"house": "Your new house looks lovely! Will you have me round?",
+				"big_house": "All those rooms! You'll have to give me a tour.",
+				"pockets": "Bigger pockets! What are you going to fill them with?",
+				"bridge": "Thank you for the new bridge! It saves an awful lot of swimming.",
+				"lucy_shop": "Lucy's new shop is wonderful, isn't it?",
+				"tailor_shop": "Have you seen the tailors'? I want everything on the rails.",
+				"museum_tent": "A museum on our island! Bramble's ever so pleased.",
+				"museum": "The new museum is so grand! You've done the island proud."}.get(what, "You've been building things, I hear!")
+		"tour":
+			var place: String = TourKinds.get_kind(what).get("name", "") if what != "" else ""
+			if place == "" or what == "plain":
+				return "Marlow says you went off on a tour! Did you meet anyone nice?"
+			return "Marlow says you went to a %s! What was it like?" % place.to_lower()
+		"look":
+			return "Ooh, a new look! It really suits you." if thing == "" else "Ooh, new %s? It really suits you!" % thing
+		"moved_in":
+			return "Have you met %s yet? They've just moved in!" % them
+	return ""
+
+
+## Something neighbours chatting together might be talking about: the latest news about
+## you ("the coelacanth you caught"), or "" if there's none.
+func gossip_topic() -> String:
+	var news := recent_gossip()
+	if news.is_empty():
+		return ""
+	var g: Dictionary = news[news.size() - 1 - randi() % mini(news.size(), 3)]
+	var what: String = g.get("what", "")
+	var thing := ItemDB.display_name(what).to_lower() if what != "" else ""
+	var them := NpcData.display_name(g.get("who", "")) if g.get("who", "") != "" else ""
+	match g["kind"]:
+		"gift":
+			return "the %s you gave %s" % [thing, them]
+		"museum":
+			return "the %s you gave the museum" % thing
+		"catch":
+			return "the %s you caught" % thing
+		"game":
+			return "your race with %s" % them if what.begins_with("race") else ("hide and seek" if what.begins_with("hide") else "%s's catching challenge" % them)
+		"landscape":
+			return "all your landscaping"
+		"bought":
+			return "your new %s" % thing
+		"upgrade":
+			return {"house": "your new house", "big_house": "your big house", "pockets": "your bigger pockets",
+				"bridge": "the new bridge"}.get(what, "the new %s" % ItemDB.display_name(what).to_lower())
+		"tour":
+			return "your trip with Marlow"
+		"look":
+			return "your new look"
+		"moved_in":
+			return "%s moving in" % them
+	return ""
 
 
 ## Something to say about what a neighbour's up to (fishing, catching bugs, chatting
@@ -1558,15 +1729,40 @@ func _pastime_line(who: Npc, catch: String) -> String:
 			if who.partner:
 				var topics := ["the weather", "Lucy's new stock", "who's the best at hide and seek", "the best fishing spot",
 					"what Poppy keeps in that office", "whether bugs have favourite flowers", "dinner"]
-				lines = ["Oh, {player}! %s and I were just talking about %s." % [NpcData.display_name(who.partner.id), topics[(hash(who.id) + GameClock.day_key()) % topics.size()]]]
+				# Most likely, you.
+				var topic := gossip_topic() if randf() < 0.7 else ""
+				if topic == "":
+					topic = topics[(hash(who.id) + GameClock.day_key()) % topics.size()]
+				lines = ["Oh, {player}! %s and I were just talking about %s." % [NpcData.display_name(who.partner.id), topic]]
 		"sit":
 			lines = ["Just having a little sit, %s. My feet were telling me to." % catch,
 				"Lovely spot, this. You can see half the island from here! Well, some of it."]
+		"visit":
+			var host := Game.neighbourhood.host_of(who.id) if Game.neighbourhood else ""
+			if host != "":
+				lines = ["I'm going round to %s's for the evening. They've promised me cake, %s!" % [NpcData.display_name(host), catch],
+					"Shh, I'm surprising %s! I've brought biscuits." % NpcData.display_name(host)]
+		"campfire":
+			lines = ["Pull up a log, {player}! There's always room by the fire.",
+				"I've burnt three marshmallows. This one's going to be perfect, %s." % catch,
+				"Listen to it crackle. Best sound there is."]
 	if lines.is_empty() and who.prop == "held:coffee_cup":
 		lines = ["Mmm. Coffee. Nothing works before coffee, %s." % catch]
 	if lines.is_empty() or (who.pastime == "" and randf() < 0.5):
 		return ""
 	return lines[randi() % lines.size()]
+
+
+## Morning stretches on the plaza: would you like to join in?
+func _stretch_offer(who: Npc, data: Dictionary) -> void:
+	var catch := String(data.get("catchphrase", ""))
+	if await ask(who.id, "Morning, {player}! It's stretch time. Join in, %s?" % catch, ["Join in!", "Not today"]) != 0:
+		await say(who.id, ["Suit yourself! More stretching for me."])
+		return
+	await say(who.id, ["Find a space and copy everyone. Reach for the sky! Walk off whenever you've had enough."])
+	if Game.camera:
+		Game.camera.talk_with = null
+	Game.neighbourhood.join_stretches()
 
 
 ## A neighbour with a "!" over their head asks to play a game (Neighbourhood.offer).
@@ -1615,6 +1811,7 @@ func _game_result(who: Npc, data: Dictionary) -> void:
 	var catch := String(data.get("catchphrase", ""))
 	if not r["won"]:
 		befriend(who.id, 1)
+		gossip("game", r["game"] + "_lost", who.id)
 		match r["game"]:
 			"hide":
 				await say(who.id, ["Ha! Couldn't find us all, could you? I'm not telling where I was. %s!" % catch.capitalize()])
@@ -1625,6 +1822,7 @@ func _game_result(who: Npc, data: Dictionary) -> void:
 		return
 	befriend(who.id, 3)
 	Journal.add("games_won")
+	gossip("game", r["game"] + "_won", who.id)
 	who.hop()
 	_npc_cheer(who.id)
 	match r["game"]:
@@ -1677,6 +1875,11 @@ func weather_line(catch: String = "") -> String:
 ## Chatter that warms up as you become friends.
 func _chat_line(id: String, data: Dictionary) -> String:
 	var catch: String = data.get("catchphrase", "")
+	# Now and then, what everyone's been saying about you.
+	if randf() < 0.4:
+		var news := gossip_line(id)
+		if news != "":
+			return news
 	var h := hearts(id)
 	if h >= 4:
 		return String(_small_talk(id + "_close", [
@@ -1712,6 +1915,7 @@ func _gift_to(who: Npc, data: Dictionary) -> void:
 	var gift := choices[pick]
 	Inventory.remove_item(gift, 1)
 	Journal.add("gifts_given")
+	gossip("gift", gift, who.id)
 	var liked: bool = ItemDB.get_item(gift).get("category", "") in LIKES.get(data.get("personality", ""), [])
 	var given: Dictionary = flags.get("gift_points", {})
 	var today: Dictionary = given.get(who.id, {})
@@ -1773,6 +1977,39 @@ func _their_piece(data: Dictionary) -> String:
 		return ""
 	pieces.sort()
 	return pieces[(GameClock.day_key() + friendship(String(data.get("name", "")))) % pieces.size()]
+
+
+## True if you've no umbrella, in your pockets or put away at home.
+func _no_umbrella() -> bool:
+	for stack: Dictionary in Inventory.slots + Inventory.storage:
+		if stack.get("id", "") != "" and ItemDB.tool_type(stack["id"]) == "umbrella":
+			return false
+	return true
+
+
+## Something they caught today, offered to you now and then (once a day each): one the
+## museum hasn't got yet, if they've one of those.
+func _share_catch(who: Npc, data: Dictionary) -> void:
+	var caught := who.catches_today()
+	var shared: Dictionary = flags.get("shared_catch", {})
+	if caught.is_empty() or int(shared.get(who.id, -1)) == GameClock.day_key() or randf() < 0.35:
+		return
+	var pick: String = caught[0]
+	for id in caught:
+		if not id in Journal.donated:
+			pick = id
+			break
+	shared[who.id] = GameClock.day_key()
+	flags["shared_catch"] = shared
+	var name := ItemDB.display_name(pick).to_lower()
+	var line := "Oh! I caught a %s earlier and I've nowhere to put it. Would you like it?" % name
+	if not pick in Journal.donated:
+		line += " The museum hasn't got one yet, you know!"
+	if await ask(who.id, line, ["Yes please!", "You keep it"]) == 0:
+		_give(pick)
+		await say(who.id, ["It's all yours! Look after it, %s." % String(data.get("catchphrase", ""))])
+	else:
+		await say(who.id, ["Then I'll let it go. Off you go, little %s!" % name])
 
 
 ## Now and then (more often as friends), a little present, once a day at most.

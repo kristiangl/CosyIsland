@@ -36,11 +36,19 @@ var prop := ""
 ## up again when a pastime's tool is put away.
 var everyday := ""
 ## What they're up to: "" (strolling), "fishing", "bugs", "chat", "sit", "hide" (in a
-## game of hide and seek), "race", or "home" (walking back), and for how much longer.
+## game of hide and seek), "race", "home" (walking back), "stretch" (morning stretches on
+## the plaza), "visit" (at a friend's door for the evening) or "campfire" (sitting round
+## one at dusk), and for how much longer.
 var pastime := ""
 var pastime_left := 0.0
+## The hour they go indoors (later on campfire evenings).
+var out_until := 18.0
 ## Who they're chatting with.
 var partner: Npc
+## In the rain, chatting: whose umbrella they're under (`shelter`), or that someone's
+## under theirs (`sheltering`).
+var shelter: Npc
+var sheltering := false
 var _flourish := 6.0
 const WALK := 1.1
 const ROAM := 7.0
@@ -52,6 +60,7 @@ var _rng := RandomNumberGenerator.new()
 ## The way being walked (`walk_to`), and how fast.
 var _route := PackedVector3Array()
 var _route_speed := WALK
+var _rerouted := false
 ## Where a pastime faces (the water, a bench's way, whoever they're chatting with).
 var _face := Vector3.ZERO
 ## Time to the next little thing in a pastime (a cast, a swing of the net, a remark).
@@ -61,6 +70,8 @@ var _bobber: MeshInstance3D
 var _line: MeshInstance3D
 var _bob_at := Vector3.ZERO
 var _bite := false
+var _catches: Array[String] = []
+var _catch_day := -1
 ## Sitting: the seat ({position, facing, height}) and where they stood before.
 var _seat := {}
 var _stood := Vector3.ZERO
@@ -135,21 +146,22 @@ func _process(delta: float) -> void:
 	var player := Game.player
 	var with_me := Story.talking and Game.camera != null and Game.camera.talk_with == self
 	if wanders:
-		visible = always_out or out_at(GameClock.hour_float())
+		var hour := GameClock.hour_float()
+		visible = always_out or (hour >= 7.0 and hour < out_until)
 		if not visible:
 			if pastime != "":
 				stop()
 			_route.clear()
 			position = home
 			return
-		if Story.talking:
-			pass
-		elif not _route.is_empty():
-			speed = _follow(delta)
-		elif pastime != "":
-			speed = _pastime(delta)
-		else:
-			speed = _wander(delta)
+	if Story.talking:
+		pass
+	elif not _route.is_empty():
+		speed = _follow(delta)
+	elif pastime != "":
+		speed = _pastime(delta)
+	elif wanders:
+		speed = _wander(delta)
 	if speed > 0.0:
 		var ahead := _route[0] if not _route.is_empty() else _target
 		look = (ahead - position).normalized()
@@ -241,13 +253,18 @@ func _follow(delta: float) -> float:
 	var step := minf(_route_speed * delta, to.length())
 	if to.length() > 0.0001:
 		var move := to.normalized() * step
-		if not world.is_walkable(position.x + move.x * 3.0, position.z + move.y * 3.0):
-			# Something's been put down in the way since: find another way round, or give up.
-			var goal := _route[_route.size() - 1]
-			_route = world.nav_path(position, goal)
+		if world.is_walkable(position.x, position.z) and not world.is_walkable(position.x + move.x * 3.0, position.z + move.y * 3.0):
+			# Something's been put down in the way since: find another way round (once),
+			# or give up.
+			if _rerouted:
+				stop()
+				return 0.0
+			_rerouted = true
+			_route = world.nav_path(position, _route[_route.size() - 1])
 			if _route.is_empty():
 				stop()
 			return 0.0
+		_rerouted = false
 		position.x += move.x
 		position.z += move.y
 	position.y = world.ground_height(position.x, position.z)
@@ -327,6 +344,43 @@ func race_to(to: Vector3, speed: float) -> bool:
 	return true
 
 
+## Lines up at `spot` for morning stretches, facing the front (`Neighbourhood` calls the
+## moves).
+func stretch_at(spot: Vector3) -> bool:
+	stop()
+	if not walk_to(spot):
+		return false
+	pastime = "stretch"
+	_face = Vector3(0, 0, 1)
+	return true
+
+
+## Goes round to a friend's for the evening: waits at `stand` by their door, facing it.
+func visit(stand: Vector3, door: Vector3) -> bool:
+	stop()
+	if not walk_to(stand):
+		return false
+	pastime = "visit"
+	var to := door - stand
+	to.y = 0.0
+	_face = to.normalized() if to.length() > 0.01 else Vector3(0, 0, -1)
+	return true
+
+
+## Goes and sits by the campfire at `fire`, on the ground at `spot`, toasting a
+## marshmallow.
+func warm_up(spot: Vector3, fire: Vector3) -> bool:
+	stop()
+	if not walk_to(spot):
+		return false
+	pastime = "campfire"
+	var to := fire - spot
+	to.y = 0.0
+	_face = to.normalized() if to.length() > 0.01 else Vector3(0, 0, 1)
+	_beat = _rng.randf_range(3.0, 8.0)
+	return true
+
+
 ## Walks back home (after a game far from it), then strolls about there again.
 func go_home() -> void:
 	stop()
@@ -346,18 +400,25 @@ func stop() -> void:
 	if _bobber:
 		_bobber.visible = false
 		_line.visible = false
-	if model.mode == "fishing":
+	if model.mode in ["fishing", "floor"]:
 		model.mode = ""
 	if partner and partner.partner == self and partner.pastime == "chat":
 		partner.partner = null
 		partner.pastime_left = minf(partner.pastime_left, 0.5)
+		if partner.shelter == self:
+			partner.shelter = null
+		partner.sheltering = false
+		partner._umbrella_check = 0.0
 	partner = null
+	shelter = null
+	sheltering = false
+	_umbrella_check = 0.0
 	_route.clear()
 	_face = Vector3.ZERO
 	_stood = Vector3.ZERO
 	_bite = false
 	_remark_left = 0.0
-	if pastime in ["fishing", "bugs"] or prop != everyday:
+	if pastime in ["fishing", "bugs", "campfire"] or prop != everyday:
 		carry(everyday)
 	pastime = ""
 	pastime_left = 0.0
@@ -395,6 +456,14 @@ func _pastime(delta: float) -> float:
 		"race", "home":
 			# Got there.
 			stop()
+		"campfire":
+			if model.mode != "floor":
+				model.mode = "floor"
+				_set_tool("held:marshmallow")
+			if _beat <= 0.0:
+				_beat = _rng.randf_range(5.0, 11.0)
+				_remark = ["so cosy", "mmm...", "toasty!", "look, sparks!", "ahh", "one more?"][_rng.randi() % 6]
+				_remark_left = 2.0
 	return speed
 
 
@@ -466,8 +535,19 @@ func _swing_net() -> void:
 			get_tree().create_timer(0.45).timeout.connect(_show_catch.bind(bug["id"], 2.2))
 
 
+## What they've caught today (fish and bugs, item ids), to give you one now and then
+## (Story._share_catch).
+func catches_today() -> Array[String]:
+	return _catches if _catch_day == GameClock.day_key() else ([] as Array[String])
+
+
 ## Holds up something just caught, with a cheer.
 func _show_catch(item: String, size: float) -> void:
+	if _catch_day != GameClock.day_key():
+		_catch_day = GameClock.day_key()
+		_catches.clear()
+	if not item in _catches:
+		_catches.append(item)
 	model.play("cheer")
 	model.hold(Models.get_mesh("drop:" + item), 1.4, size)
 	Effects.burst("sparkle", position + Vector3(0, 1.3, 0))
@@ -511,7 +591,7 @@ func _update_bubble(delta: float) -> void:
 		elif Game.neighbourhood and Game.neighbourhood.calling(id):
 			text = "!"
 			shout = true
-		elif _remark_left > 0.0 and pastime == "chat":
+		elif _remark_left > 0.0 and pastime in ["chat", "campfire"]:
 			text = _remark
 		if text != _bubble.text:
 			_bubble.text = text
@@ -527,13 +607,22 @@ func blocks(px: float, pz: float) -> bool:
 	return visible and Vector2(px - position.x, pz - position.z).length() < RADIUS
 
 
-## Out in the rain or snow, up goes the umbrella.
+## Out in the rain or snow, up goes the umbrella (unless they're under a friend's).
 func _check_umbrella() -> void:
 	var wet := (Weather.rain > 0.1 or Weather.snow > 0.1) and world != null and not world.interior
+	var under := wet and shelter != null and is_instance_valid(shelter) and pastime == "chat" and _route.is_empty()
 	# The umbrella takes the hand that carries their prop (set first: it puts umbrellas away).
 	if prop != "":
 		model.set_tool("" if wet else prop)
-	model.set_umbrella(UMBRELLAS[absi(hash(id)) % UMBRELLAS.size()] if wet else "")
+	model.set_umbrella(UMBRELLAS[absi(hash(id)) % UMBRELLAS.size()] if wet and not under else "")
+	model.share_umbrella(wet and sheltering)
+
+
+## The umbrella a neighbour would give you: theirs is their favourite colour.
+static func umbrella_item(character_id: String) -> String:
+	const ITEMS := ["umbrella_red", "umbrella_yellow", "umbrella_blue", "umbrella_green", "umbrella_pink", "umbrella_lilac",
+		"umbrella_red", "umbrella_green"]
+	return ITEMS[absi(hash(character_id)) % ITEMS.size()]
 
 
 ## Now and then someone with a net gives it a practice swing.

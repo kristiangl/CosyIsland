@@ -20,6 +20,9 @@ var _seat_uid := -1
 var _stand_spot := Vector3.ZERO
 ## True while the line is out.
 var fishing := false
+## Doing the morning stretches with everyone (Neighbourhood calls the moves); walking
+## off stops.
+var stretching := false
 ## How far since the last footstep, and how far a stride is.
 var _stride := 0.0
 const STRIDE := 0.62
@@ -58,6 +61,13 @@ func _physics_process(delta: float) -> void:
 	if _vault_t >= 0.0:
 		_vault(delta)
 		return
+	if stretching:
+		if input.length() > 0.5:
+			stretching = false
+		else:
+			model.rotation.y = atan2(facing.x, facing.z)
+			model.animate(delta, 0.0)
+			return
 	if _busy > 0.0:
 		_busy -= delta
 		input = Vector2.ZERO
@@ -390,6 +400,7 @@ func _landscape() -> void:
 	if kind == "cliff":
 		Effects.burst("pebbles", at + Vector3(0, 0.3, 0))
 	Journal.add("landscaped")
+	Story.gossip("landscape", kind)
 
 
 ## The Trees tool: chops at a grown tree (World.FELL_CHOPS bring it down, leaving a
@@ -409,6 +420,7 @@ func _landscape_trees() -> void:
 	if felling:
 		Sfx.play("chop")
 		if world.chop_down(obj, position):
+			Story.gossip("landscape", "trees")
 			Sfx.play("creak", -2.0, 0.7)
 			Journal.add("landscaped")
 	elif world.dig_out(obj):

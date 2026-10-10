@@ -241,6 +241,7 @@ func _construct(i: int, what: String) -> void:
 	Inventory.remove_from_slot(i)
 	var at := player.position + Vector3(facing.x, 0, facing.y) * 1.5
 	here.build_bridge(plan)
+	Story.gossip("upgrade", "bridge")
 	Sfx.play("hammer")
 	Sfx.play("jingle_build", 0.0, 1.0, 0.0)
 	Effects.burst("confetti", at + Vector3(0, 0.8, 0))

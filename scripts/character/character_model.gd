@@ -74,7 +74,8 @@ var _layer := 0.0
 var _rig: Array[Node3D] = []
 var _sample := {}
 var _sample_last := {}
-## "fishing" or "sleeping": what the character is doing while standing (or lying) still.
+## "fishing", "sleeping" or "floor" (sitting on the ground): what the character is doing
+## while standing (or lying, or sitting) still.
 var mode := ""
 
 ## How much thicker limbs and body are drawn than they're built (see _mesh).
@@ -101,6 +102,7 @@ const ACTIONS := {
 	"cast": ["Fishing_Cast", 0.6, 1.6, 0.5],
 	"reel": ["Fishing_Catch", 0.0, 1.6, 0.6],
 	"wave": ["Waving", 0.0, 2.13, 1.4],
+	"jump": ["Jump_Full_Short", 0.0, 1.17, 0.9],
 }
 
 static var _shaders: Dictionary = {}
@@ -384,8 +386,17 @@ func set_umbrella(hex: String) -> void:
 	_umbrella.visible = true
 
 
+## Holds the umbrella out in front (`sharing`), over whoever's standing there too, or
+## back over the shoulder.
+func share_umbrella(sharing: bool) -> void:
+	if _umbrella == null:
+		return
+	_umbrella.position = Vector3(0.08, 0.72, 0.36) if sharing else Vector3(0.26, 0.7, 0.04)
+	_umbrella.rotation_degrees = Vector3(10, 0, -3) if sharing else Vector3(-8, 0, -6)
+
+
 ## Plays a one-off action from ACTIONS: "chop", "dig", "net", "shake", "pickup",
-## "cheer", "eat", "craft", "cast", "reel" or "wave".
+## "cheer", "eat", "craft", "cast", "reel", "wave" or "jump".
 func play(action: String) -> void:
 	_action = action
 	_action_t = 0.0
@@ -460,6 +471,9 @@ func _play_clips(delta: float, moving: bool) -> void:
 		clip = "Sit_Chair_Idle"
 	elif mode == "fishing":
 		clip = "Fishing_Idle"
+	elif mode == "floor":
+		# Sitting on the ground (by a campfire): the hips follow the clip down.
+		clip = "Sit_Floor_Idle"
 	if clip != _clip:
 		_last_clip = _clip
 		_last_clip_t = _clip_t

@@ -1695,6 +1695,12 @@ static func _camping_prop(k: MeshKit, what: String) -> void:
 			k.cylinder(Vector3(0.01, -0.12, 0.05), Vector3(0.01, 0.05, 0.08), 0.014, 0.012, MeshKit.lin(Color("f3f6e4")), 6)
 			k.cylinder(Vector3(0.01, 0.05, 0.08), Vector3(0.01, 0.13, 0.09), 0.012, 0.004, MeshKit.lin(Color("6f9a4a")), 6)
 			k.sphere(Vector3(0.01, -0.08, -0.05), Vector3(0.03, 0.06, 0.03), MeshKit.lin(Color("dba45e")), 4, 8)
+		"marshmallow":
+			# A long toasting stick held out to the fire, a marshmallow browning on the end.
+			var tip := Vector3(0, 0.22, 0.62)
+			k.cylinder(Vector3(0, -0.06, -0.08), tip, 0.011, 0.007, MeshKit.lin(Color("8a6a4a")), 5)
+			k.cylinder(tip - Vector3(0, 0.0, 0.02), tip + Vector3(0, 0.0, 0.05), 0.028, 0.028, MeshKit.lin(Color("fbf6ee")), 8)
+			k.cylinder(tip + Vector3(0, 0.0, 0.05), tip + Vector3(0, 0.0, 0.06), 0.029, 0.025, MeshKit.lin(Color("c98a4a")), 8)
 		"kite":
 			# A diamond kite with a bowed tail, held by its spine, turned half to the front.
 			k.xform = HELD_UPRIGHT * Transform3D(Basis(Vector3.UP, deg_to_rad(-45.0)), Vector3(-0.04, 0, 0))

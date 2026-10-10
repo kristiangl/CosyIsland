@@ -68,6 +68,8 @@ func _run() -> void:
 	_test_neighbour_pastimes()
 	_test_neighbour_games()
 	_test_neighbours_left_to_it()
+	_test_gossip()
+	_test_neighbour_routines()
 	_test_furniture_and_toasts()
 	_test_big_rugs()
 	_test_storage()
@@ -2480,6 +2482,16 @@ func _end_life(life: Dictionary) -> void:
 	life["world"].free()
 
 
+## Somewhere a neighbour could stand about `distance` from `at`, with a way there.
+func _spot_near(w: World, at: Vector3, distance: float) -> Vector3:
+	for i in 16:
+		var p := at + Vector3(distance, 0, 0).rotated(Vector3.UP, i * TAU / 16.0)
+		p.y = w.ground_height(p.x, p.z)
+		if w.can_move(p, p.x, p.z, Npc.RADIUS) and not w.nav_path(at, p).is_empty():
+			return p
+	return at
+
+
 ## Steps a neighbour along for a while (as their _process would each frame).
 func _live(n: Npc, seconds: float) -> void:
 	for i in int(seconds / 0.05):
@@ -2666,6 +2678,178 @@ func _test_neighbours_left_to_it() -> void:
 	check(log.lines.is_empty(), "no errors (%s)" % [log.lines.slice(0, 3)])
 	check(seen.size() >= 3, "they get up to all sorts (%s)" % [seen.keys()])
 	check(offered, "and someone asks to play")
+	_end_life(life)
+
+
+func _test_gossip() -> void:
+	var saved := Story.flags.duplicate(true)
+	Story.flags.erase("gossip")
+	check(Story.gossip_line("maple") == "" and Story.gossip_topic() == "", "no news, nothing to say")
+	Story.gossip("gift", "teacup", "maple")
+	var told := Story.gossip_line("pip")
+	check("Maple" in told and "teacup" in told, "others hear about a gift: %s" % told)
+	check("you gave me" in Story.gossip_line("maple"), "and whoever got it says so: %s" % Story.gossip_line("maple"))
+	check("teacup" in Story.gossip_topic(), "and it's what they chat about: %s" % Story.gossip_topic())
+	# The priciest thing bought that day is the talk of the island.
+	Story.gossip("bought", "wooden_table", "", 900)
+	Story.gossip("bought", "wooden_chair", "", 400)
+	var bought: Array = Story.recent_gossip().filter(func(g): return g["kind"] == "bought")
+	check(bought.size() == 1 and bought[0]["what"] == "wooden_table", "one purchase a day: the priciest")
+	# A rare catch gets about; an everyday one doesn't.
+	Events.caught.emit("tuna")
+	Events.caught.emit("sea_bass")
+	var catches: Array = Story.recent_gossip().filter(func(g): return g["kind"] == "catch")
+	check(catches.size() == 1 and catches[0]["what"] == "tuna", "a rare catch is talked about")
+	# Every kind of news reads properly, from someone else and from whoever it's about.
+	var news: Array[Dictionary] = []
+	for tool: String in ["cliff", "water", "slope", "path", "trees", "move"]:
+		news.append({"kind": "landscape", "what": tool, "who": ""})
+	for what: String in ["house", "big_house", "pockets", "bridge", "lucy_shop", "tailor_shop", "museum_tent", "museum"]:
+		news.append({"kind": "upgrade", "what": what, "who": ""})
+	for what: String in ["race_won", "race_lost", "hide_won", "hide_lost", "catch_won", "catch_lost"]:
+		news.append({"kind": "game", "what": what, "who": "pip"})
+	for kind: String in TourKinds.data()["kinds"]:
+		news.append({"kind": "tour", "what": kind, "who": ""})
+	news.append({"kind": "museum", "what": "koi", "who": ""})
+	news.append({"kind": "look", "what": "", "who": ""})
+	news.append({"kind": "moved_in", "what": "", "who": "clover"})
+	for g in news:
+		for listener: String in ["pip", "maple"]:
+			var line := Story._gossip_said(g, listener)
+			check(line != "" and not "%" in line and not "  " in line, "%s/%s heard by %s: %s" % [g["kind"], g["what"], listener, line])
+	# Old news is no news, and the island only remembers so much.
+	Story.flags["gossip"] = [{"day": GameClock.day_key() - Story.GOSSIP_DAYS - 1, "kind": "gift", "what": "teacup", "who": "maple", "worth": 0}]
+	check(Story.recent_gossip().is_empty(), "news goes stale after a few days")
+	for i in Story.GOSSIP_KEEP + 10:
+		Story.gossip("gift", "teacup", "id%d" % i)
+	check(Story.flags["gossip"].size() == Story.GOSSIP_KEEP, "and only the latest %d are kept" % Story.GOSSIP_KEEP)
+	Story.gossip("moved_in", "", "clover")
+	check(Story.recent_gossip("clover").all(func(g): return g["kind"] != "moved_in"), "nobody tells you they've just moved in as news")
+	Story.flags = saved
+
+
+func _test_neighbour_routines() -> void:
+	var life := _life_island()
+	var w: World = life["world"]
+	var folk: Array[Npc] = life["folk"]
+	var hood: Neighbourhood = life["hood"]
+	var p: Player = life["player"]
+	# Morning stretches: everyone lines up on the plaza and does the moves together.
+	GameClock.set_hour(7.5)
+	hood.routine(7.5, false)
+	check(folk.all(func(n): return n.pastime == "stretch"), "at half seven everyone goes to stretch")
+	for n in folk:
+		_live(n, 30.0)
+	var plaza := Rect2(w.data.plaza).grow(1.5)
+	check(folk.all(func(n): return not n.on_the_way() and plaza.has_point(Vector2(n.position.x, n.position.z))), "lined up on the plaza")
+	hood._stretch_beat = 0.0
+	hood._stretching(0.01)
+	check(folk.all(func(n): return n.model._action == Neighbourhood.STRETCHES[0]), "doing the same stretch at once")
+	hood.join_stretches()
+	check(p.stretching and plaza.has_point(Vector2(p.position.x, p.position.z)), "you can join in")
+	var stretches := int(Journal.stats.get("stretches", 0))
+	var was_stretched: int = Story.flags.get("stretched", -1)
+	for i in int(Neighbourhood.STRETCH_SECONDS) + 2:
+		hood._stretching(1.0)
+	check(int(Story.flags.get("stretched", -1)) == GameClock.day_key() and int(Journal.stats.get("stretches", 0)) == stretches + 1, "and everyone's pleased you did")
+	hood.routine(8.2, false)
+	check(folk.all(func(n): return n.pastime in ["home", ""]) and not p.stretching, "at eight it's over")
+	for n in folk:
+		n.stop()
+	hood.routine(7.5, true)
+	check(folk.all(func(n): return n.pastime != "stretch"), "and there's no stretching in the rain")
+	# In the rain, chatting neighbours huddle under one umbrella.
+	var was_rain := Weather.rain
+	Weather.rain = 0.6
+	var a := folk[1]
+	var b := folk[2]
+	for n in folk:
+		n.stop()
+	folk[0].position = Vector3(-40, 0, -40)
+	b.position = _spot_near(w, a.position, 3.0)
+	var started := hood._start_chat(b)
+	check(started and b.shelter == a and a.sheltering, "in the rain one shares the other's umbrella")
+	_live(b, 6.0)
+	b._check_umbrella()
+	a._check_umbrella()
+	check(b.position.distance_to(a.position) < 1.0 and not b.model._umbrella.visible and a.model._umbrella.visible \
+		and a.model._umbrella.position.z > 0.2, "standing close under one umbrella, held out between them")
+	b.stop()
+	check(b.shelter == null and not a.sheltering, "until the chat's over")
+	Weather.rain = was_rain
+	for n in folk:
+		n.stop()
+		n.position = n.home
+	# Evening visits: the same all day, never to their own home.
+	for obj: Dictionary in [{"id": "biscuit"}, {"id": "maple"}, {"id": "pip"}]:
+		var home := Vector2i(floori(Story.npc(obj["id"]).home.x), floori(Story.npc(obj["id"]).home.z))
+		for r in range(2, 12):
+			var done := false
+			for dz in range(-r, r + 1):
+				for dx in range(-r, r + 1):
+					var rect := Rect2i(home + Vector2i(dx, dz), Vector2i(3, 3))
+					if not done and w.can_place(rect, Vector3(-50, 0, -50)) and w.door_clear("neighbour_house", rect, 0) \
+							and folk.all(func(f): return not Rect2(rect.grow(1)).has_point(Vector2(f.position.x, f.position.z))):
+						var house := w.place_item("neighbour_house", rect, 0)
+						house["resident"] = obj["id"]
+						done = true
+			if done:
+				break
+	var any := false
+	for day in 20:
+		var v := hood.visits(30000 + day)
+		check(v == hood.visits(30000 + day) and v.keys().all(func(g): return v[g] != g), "visits are planned by the day, never to your own home")
+		any = any or not v.is_empty()
+	check(any, "and someone goes visiting some evenings")
+	hood._visits = {"biscuit": "maple"}
+	hood._visits_day = GameClock.day_key()
+	check(hood.host_of("biscuit") == "maple" and hood.guest_of("maple") == "biscuit", "who's visiting whom")
+	var guest := Story.npc("biscuit")
+	GameClock.set_hour(17.5)
+	hood.routine(17.5, false)
+	check(guest.pastime == "visit", "from twenty past five the guest heads round")
+	_live(guest, 60.0)
+	var door: Vector3 = w.outside_door(w.building_of("maple"))["position"]
+	check(guest.position.distance_to(door) < 1.6, "and waits at their door (%.1f away)" % guest.position.distance_to(door))
+	guest.stop()
+	hood._visits = {}
+	# The campfire: some sit round it on the ground at dusk, toasting marshmallows, and
+	# stay out later.
+	var fire := {}
+	for r in range(2, 14):
+		for i in 16:
+			var c := folk[1].home + Vector3(r, 0, 0).rotated(Vector3.UP, i * TAU / 16.0)
+			var rect := Rect2i(floori(c.x), floori(c.z), 1, 1)
+			if fire.is_empty() and w.can_place(rect.grow(2), Vector3(-50, 0, -50)) and not w.nav_path(folk[1].home, c + Vector3(1.5, 0, 0)).is_empty():
+				fire = w.place_item("campfire", rect, 0)
+	check(not fire.is_empty() and hood.campfire() == fire, "a campfire on the island")
+	for n in folk:
+		n.stop()
+		n.position = n.home
+	p.position = Vector3(-50, 0, -50)
+	hood.routine(17.5, false)
+	var round: Array = folk.filter(func(n): return n.pastime == "campfire")
+	check(not round.is_empty(), "at dusk some go and sit by it (%d)" % round.size())
+	for n: Npc in round:
+		_live(n, 90.0)
+		var to_fire := hood._fire_at(fire) - n.position
+		check(n.model.mode == "floor" and n.prop == "held:marshmallow" and n.out_until == Neighbourhood.CAMPFIRE_TO \
+			and Vector2(to_fire.x, to_fire.z).length() < 2.0 and Vector2(n._face.x, n._face.z).dot(Vector2(to_fire.x, to_fire.z).normalized()) > 0.8,
+			"%s sits facing the fire with a marshmallow" % n.id)
+	GameClock.set_hour(19.0)
+	for n: Npc in round:
+		n._process(0.05)
+	check(round.all(func(n): return n.visible), "still out at seven")
+	GameClock.set_hour(20.5)
+	for n: Npc in round:
+		n._process(0.05)
+	check(round.all(func(n): return not n.visible and n.pastime == "" and n.model.mode == ""), "and in by half eight")
+	# Catches are remembered for the day, to give you one.
+	GameClock.set_hour(10.0)
+	folk[0]._show_catch("sea_bass", 0.8)
+	check(folk[0].catches_today() == ["sea_bass"], "neighbours remember what they caught today")
+	folk[0]._catch_day -= 1
+	check(folk[0].catches_today().is_empty(), "until the next day")
 	_end_life(life)
 
 

@@ -277,6 +277,7 @@ func _move_input(event: InputEvent) -> void:
 			Inventory.remove_from_slot(_slot)
 		else:
 			world.move_object(_moving, _rect.position)
+			Story.gossip("landscape", "move")
 		player.step_back_from(_rect)
 		player.model.play("dig")
 		Sfx.play("dig")

@@ -145,8 +145,26 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   their way with `World.nav_path` (an AStar2D of roomy walkable tiles joined where you can
   walk across, built a slice at a time by `prepare_nav` and again after the land changes;
   blocking things are switched off at each search; `Npc.walk_to` follows it, cutting
-  corners with `World.shortcut`). `--demo=life` (`--do=fishing|bugs|chat|sit`,
-  `--game=hide|catch|race`, `--start`, `--talk`).
+  corners with `World.shortcut`). The day's routine (`Neighbourhood.routine`): morning
+  stretches on the plaza 7-8 on dry days (`stretch_spots`; the moves called in time by
+  `_stretching`, `STRETCHES`, `CharacterModel` "jump"; talk to one to join in,
+  `Player.stretching`, walking off stops; `Journal` "stretches"), evening visits
+  (`visits(day)`: guest -> host; the guest waits at the host's door from `VISIT_FROM`, and
+  from six they're both in the host's home chatting, set up in main.gd `_open_room`;
+  `_enter_home` turns you away from an empty home), and with a campfire placed, some
+  sit round it on the ground (`CharacterModel` mode "floor", "held:marshmallow") until
+  `CAMPFIRE_TO` (`Npc.out_until`). In the rain chatting neighbours share one umbrella
+  (`Npc.shelter` / `sheltering`, `CharacterModel.share_umbrella`), and one gives you a
+  spare if you've none (`Story._no_umbrella`). They remember what they caught today
+  (`Npc.catches_today`) and sometimes give you one (`Story._share_catch`). `--demo=life`
+  (`--do=fishing|bugs|chat|sit`, or at `--hour` `--do=stretch|campfire|visit` with
+  `--inside`; `--game=hide|catch|race`, `--start`, `--talk`).
+- Gossip (`Story.gossip(kind, what, who, worth)`, kept in `flags["gossip"]`, the latest
+  `GOSSIP_KEEP`, news for `GOSSIP_DAYS`): what you've done gets talked about. Gifts,
+  museum donations, rare catches (`Events.caught`), games, landscaping, pricey purchases,
+  upgrades (house, pockets, bridges, buildings), tours, a new look, new neighbours.
+  Neighbours mention it (`gossip_line`, in greetings and chats) and chat about it with
+  each other (`gossip_topic`).
 - Movement: `World.can_move` (the middle steps; edge points must land level with
   themselves or the middle, so ramps never snag). The vaulting pole (tool "pole")
   hops rivers and ponds via `World.vault_landing`; the phone's SOS (`Main.rescue_spot`)

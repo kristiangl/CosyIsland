@@ -76,6 +76,8 @@ func _render_queue() -> void:
 		var sitter: CharacterModel = null
 		if id.begins_with("face:"):
 			sitter = _sit_for_portrait(id.trim_prefix("face:"))
+		elif ItemDB.placeable(id).has("figure"):
+			sitter = _sit_for_figure(ItemDB.placeable(id)["figure"])
 		else:
 			_frame(Models.get_mesh(model_key(id)))
 		_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
@@ -89,6 +91,20 @@ func _render_queue() -> void:
 		_icons[id] = ImageTexture.create_from_image(image)
 		icon_ready.emit(id)
 	_busy = false
+
+
+## A neighbour's little figure: them, sitting down, seen whole.
+func _sit_for_figure(character_id: String) -> CharacterModel:
+	_mesh.visible = false
+	var m := NpcData.model(character_id, false)
+	m.fixed_light = true
+	m.mode = "floor"
+	_viewport.add_child(m)
+	m.animate(1.0, 0.0)
+	var centre := Vector3(0, 0.5, 0.05)
+	var eye := centre + Vector3(0.35, 0.45, 1.0).normalized() * 3.6
+	_camera.transform = Transform3D(Basis.looking_at(centre - eye), eye)
+	return m
 
 
 ## Puts a character in front of the camera, framed on their face.

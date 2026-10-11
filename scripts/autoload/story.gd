@@ -1458,6 +1458,10 @@ const LIKES := {
 }
 ## Friendship points for each heart (five hearts in all).
 const HEART_POINTS := [3, 8, 15, 24, 35]
+## What a game's worth to a friendship: won, lost, and for each of the others who hid.
+const GAME_WON_POINTS := 6
+const GAME_LOST_POINTS := 3
+const GAME_HIDER_POINTS := 2
 ## Friendship gained from gifts each day, at most, per neighbour.
 const GIFT_POINTS_PER_DAY := 6
 
@@ -1470,6 +1474,25 @@ func befriend(id: String, points: int) -> void:
 	var f: Dictionary = flags.get("friendship", {})
 	f[id] = int(f.get(id, 0)) + points
 	flags["friendship"] = f
+
+
+## Whether `id` is a best friend (all five hearts) who hasn't yet given you their figure.
+func figure_due(id: String) -> bool:
+	return hearts(id) >= HEART_POINTS.size() and not id in flags.get("figures_given", []) \
+		and ItemDB.has_item("toy." + id)
+
+
+## All five hearts: they give you a little figure of themselves ("toy.<id>").
+func _best_friends(who: Npc, data: Dictionary) -> void:
+	var given: Array = flags.get("figures_given", [])
+	given.append(who.id)
+	flags["figures_given"] = given
+	who.hop()
+	_npc_cheer(who.id)
+	await say(who.id, ["{player}, can I tell you something? You're my very best friend on the whole island.",
+		"So I made you this. It's me! A little me, to sit on a shelf and keep you company. %s!" % String(data.get("catchphrase", "")).capitalize()])
+	_give("toy." + who.id)
+	gossip("best_friends", "", who.id, 3)
 
 
 ## 0 to 5 hearts.
@@ -1528,6 +1551,10 @@ func _neighbour(who: Npc) -> void:
 		return
 	if leaving() == who.id:
 		await say(who.id, ["Nearly all packed! It's funny, the boxes take up more room than I did. %s." % catch.capitalize()])
+		return
+	# Best friends now: a little figure of themselves, once.
+	if figure_due(who.id):
+		await _best_friends(who, data)
 		return
 	# Caught out in the rain without an umbrella? Someone always has a spare.
 	if (Weather.rain > 0.1 or Weather.snow > 0.1) and not flags.get("spare_umbrella", false) and _no_umbrella() \
@@ -1694,6 +1721,10 @@ func _gossip_said(g: Dictionary, listener: String) -> String:
 			return "Ooh, a new look! It really suits you." if thing == "" else "Ooh, new %s? It really suits you!" % thing
 		"moved_in":
 			return "Have you met %s yet? They've just moved in!" % them
+		"best_friends":
+			if who == listener:
+				return "Have you found somewhere nice for my little figure? Somewhere sunny, I hope!"
+			return "%s says you two are best friends now! I'm a teeny bit jealous." % them
 	return ""
 
 
@@ -1729,6 +1760,8 @@ func gossip_topic() -> String:
 			return "your new look"
 		"moved_in":
 			return "%s moving in" % them
+		"best_friends":
+			return "you and %s being best friends" % them
 	return ""
 
 
@@ -1828,8 +1861,12 @@ func _game_result(who: Npc, data: Dictionary) -> void:
 	var r := hood.result_for(who.id)
 	hood.clear_result()
 	var catch := String(data.get("catchphrase", ""))
+	# Playing at all brings you closer, the ones who hid too.
+	for hider: String in r.get("hiders", []):
+		if hider != who.id:
+			befriend(hider, GAME_HIDER_POINTS)
 	if not r["won"]:
-		befriend(who.id, 1)
+		befriend(who.id, GAME_LOST_POINTS)
 		gossip("game", r["game"] + "_lost", who.id)
 		match r["game"]:
 			"hide":
@@ -1838,8 +1875,10 @@ func _game_result(who: Npc, data: Dictionary) -> void:
 				await say(who.id, ["No %s? They're tricky. Thanks for trying, {player}!" % ItemDB.display_name(r["what"]).to_lower()])
 			"race":
 				await say(who.id, ["I win! I win! Rematch tomorrow, %s?" % catch])
+		if figure_due(who.id):
+			await _best_friends(who, data)
 		return
-	befriend(who.id, 3)
+	befriend(who.id, GAME_WON_POINTS)
 	Journal.add("games_won")
 	gossip("game", r["game"] + "_won", who.id)
 	who.hop()
@@ -1860,6 +1899,8 @@ func _game_result(who: Npc, data: Dictionary) -> void:
 		Inventory.add_currency(acorns)
 		Sfx.play("coins")
 		await say(who.id, ["Here's %d acorns for the winner!" % acorns])
+	if figure_due(who.id):
+		await _best_friends(who, data)
 
 
 ## Something to say about the weather or the season today ("" if there's nothing much to

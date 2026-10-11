@@ -11,7 +11,8 @@ const SIZE := 96
 const VIEWS := {
 	"face": [Vector3(0, 1.08, 1.45), Vector3(0, 1.03, 0)],
 	"head": [Vector3(0, 1.25, 2.1), Vector3(0, 1.08, 0)],
-	"body": [Vector3(0, 0.72, 1.75), Vector3(0, 0.5, 0)],
+	# The whole character, head and hair too (not cut off at the chin).
+	"body": [Vector3(0, 0.86, 2.75), Vector3(0, 0.7, 0)],
 	"feet": [Vector3(0, 0.45, 1.7), Vector3(0, 0.15, 0)],
 }
 
@@ -91,6 +92,12 @@ func _render_queue() -> void:
 		await RenderingServer.frame_post_draw
 		if not is_inside_tree():
 			return
-		_thumbs[job[0]] = ImageTexture.create_from_image(_viewport.get_texture().get_image())
+		var image := _viewport.get_texture().get_image()
+		if image.is_invisible() and job.size() < 4:
+			# The first picture of a session can come back empty: draw it again.
+			job.append(true)
+			_queue.push_front(job)
+			continue
+		_thumbs[job[0]] = ImageTexture.create_from_image(image)
 		thumb_ready.emit(job[0])
 	_busy = false

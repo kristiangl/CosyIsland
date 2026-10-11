@@ -605,9 +605,11 @@ static func hat(style: String) -> ArrayMesh:
 			k.sphere(Vector3(0, 0.13, 0), Vector3.ONE * 0.03, PLAIN, 3, 6)
 			k.xform = Transform3D.IDENTITY
 		"bow":
+			# Built round its knot, facing +z: the character model sets it on the hair
+			# (Appearance "positions": "at" and "face").
 			for s: float in [-1.0, 1.0]:
-				k.sphere(Vector3(0.18 + s * 0.08, 0.32, 0.02), Vector3(0.08, 0.06, 0.04), PLAIN, 5, 8)
-			k.sphere(Vector3(0.18, 0.32, 0.03), Vector3.ONE * 0.035, TRIM, 4, 6)
+				k.sphere(Vector3(s * 0.08, 0, 0), Vector3(0.08, 0.06, 0.04), PLAIN, 5, 8)
+			k.sphere(Vector3(0, 0, 0.01), Vector3.ONE * 0.035, TRIM, 4, 6)
 		"flower_crown":
 			for i in 11:
 				var a := TAU * i / 11.0

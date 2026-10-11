@@ -1615,6 +1615,7 @@ func _run_demo() -> void:
 						world.remove_object(obj["uid"])
 			# Each piece in the first spot with a tile's gap round it, row by row.
 			var away := Vector3(-50, 0, -50)
+			var first := Rect2i()
 			for id in ids:
 				var size: Array = ItemDB.placeable(id)["footprint"]
 				var done := false
@@ -1624,8 +1625,12 @@ func _run_demo() -> void:
 						if not done and world.can_place(rect.grow(1).intersection(area), away):
 							world.place_item(id, rect, 0)
 							done = true
-			# --back: stand in the middle to see the back rows.
+							if first.size == Vector2i.ZERO:
+								first = rect
+			# --back: stand in the middle to see the back rows; --near: just in front of the first.
 			player.position = Vector3(area.get_center().x, 0, area.get_center().y if Game.args.has("back") else area.end.y + 1.5)
+			if Game.args.has("near"):
+				player.position = Vector3(first.position.x + 3.0, 0, first.end.y + 2.0)
 			player.position.y = world.ground_height(player.position.x, player.position.z)
 			player.facing = Vector3(0, 0, -1)
 			camera_rig.snap()

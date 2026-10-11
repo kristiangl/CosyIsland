@@ -1,5 +1,5 @@
 {
-	"_note": "Character options. Order matters for eyes, brows, mouth, cheeks and patterns: the index is what the shaders use. Hats can list positions (names and a rotation in degrees about the head). \"designed\" options are clothes you own as items (data/clothing.json), not free in the creator. Hats say what hair they \"cover\" (full or top); shoes can be \"open\" (bare feet show).",
+	"_note": "Character options. Order matters for eyes, brows, mouth, cheeks and patterns: the index is what the shaders use. Hats can list positions (names and a rotation in degrees about the head, or for a bow \"at\", which way from the middle of the head it sits, on the outside of the hair, and \"face\", the way it faces). \"designed\" options are clothes you own as items (data/clothing.json), not free in the creator. Hats say what hair they \"cover\" (full or top); shoes can be \"open\" (bare feet show).",
 	"skin": [
 		{"id": "porcelain", "color": "#fde6d6"},
 		{"id": "peach", "color": "#f8d2b8"},
@@ -182,7 +182,7 @@
 		{"id": "bucket", "name": "Bucket hat", "positions": [{"name": "Level", "rot": [0, 0, 0]}, {"name": "Tipped back", "rot": [-12, 0, 0]}], "covers": "full"},
 		{"id": "straw", "name": "Straw hat", "positions": [{"name": "Level", "rot": [0, 0, 0]}, {"name": "Tipped back", "rot": [-12, 0, 0]}], "covers": "full"},
 		{"id": "beret", "name": "Beret", "positions": [{"name": "Tilted right", "rot": [0, 0, 0]}, {"name": "Straight", "rot": [0, 0, 11]}, {"name": "Tilted left", "rot": [0, 0, 23]}], "covers": "top"},
-		{"id": "bow", "name": "Bow", "positions": [{"name": "Right side", "rot": [0, 0, 0]}, {"name": "On top", "rot": [0, 0, 32]}, {"name": "Left side", "rot": [0, 0, 64]}, {"name": "At the back", "rot": [0, 95, 0]}]},
+		{"id": "bow", "name": "Bow", "positions": [{"name": "Right side", "at": [0.55, 0.8, 0.22], "face": [0.2, 0.25, 1]}, {"name": "On top", "at": [0, 1, 0.12], "face": [0, 0.15, 1]}, {"name": "Left side", "at": [-0.55, 0.8, 0.22], "face": [-0.2, 0.25, 1]}, {"name": "At the back", "at": [0, 0.45, -1], "face": [0, 0.3, -1]}]},
 		{"id": "flower_crown", "name": "Flower crown", "positions": [{"name": "Level", "rot": [0, 0, 0]}, {"name": "Tilted", "rot": [0, 0, -10]}]},
 		{"id": "cat_ears", "name": "Cat ears"},
 		{"id": "earmuffs", "name": "Earmuffs", "designed": true},

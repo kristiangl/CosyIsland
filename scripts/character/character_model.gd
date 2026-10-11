@@ -214,9 +214,11 @@ func rebuild() -> void:
 	var hat_style: String = "none" if animal else look["hat"]
 	if animal:
 		_build_animal()
-	else:
+	var hair: ArrayMesh = null
+	if not animal:
 		var covers: String = Appearance.option(look, "hat").get("covers", "")
-		var hair_mesh := _mesh(P.hair(look["hair"], covers == "full", covers == "top"), hair_mat, head_parent)
+		hair = P.hair(look["hair"], covers == "full", covers == "top")
+		var hair_mesh := _mesh(hair, hair_mat, head_parent)
 		hair_mesh.position = P.HEAD_CENTRE
 		# Hair, hats and glasses don't cast shadows, so faces stay bright under a brim.
 		hair_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -227,8 +229,26 @@ func rebuild() -> void:
 		# Some hats can be worn different ways (a bow on either side, a cap backwards).
 		var ways := Appearance.hat_positions(look)
 		if not ways.is_empty():
-			var rot: Array = ways[clampi(int(look.get("hat_pos", 0)), 0, ways.size() - 1)]["rot"]
-			hat_mesh.rotation_degrees = Vector3(rot[0], rot[1], rot[2])
+			var way: Dictionary = ways[clampi(int(look.get("hat_pos", 0)), 0, ways.size() - 1)]
+			if way.has("at"):
+				# A bow sits on the outside of the hair (or head) that way, facing out.
+				var at: Array = way["at"]
+				var face: Array = way["face"]
+				var dir := Vector3(at[0], at[1], at[2]).normalized()
+				hat_mesh.transform = Transform3D(facing_basis(Vector3(face[0], face[1], face[2])),
+					P.HEAD_CENTRE + dir * (outer_reach(hair, dir, BOW_SPREAD) + BOW_LIFT))
+			else:
+				var rot: Array = way["rot"]
+				hat_mesh.rotation_degrees = Vector3(rot[0], rot[1], rot[2])
+		if hat_style == "flower_crown" and hair:
+			# A crown sits round big hair, not inside it.
+			var grow := 1.0
+			for i in 8:
+				# Its ring of flowers is 0.37 out and 0.2 up from the middle of the head.
+				var a := i * TAU / 8.0
+				var ring := Vector3(cos(a) * 0.37, 0.2, sin(a) * 0.37)
+				grow = maxf(grow, (outer_reach(hair, ring.normalized(), 0.1) + 0.02) / ring.length())
+			hat_mesh.scale = Vector3(grow, 1.0, grow)
 		hat_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	if look.get("hair_flower", "") != "":
 		# Tucked in above the left ear (an animal's, in front of it).
@@ -255,6 +275,33 @@ func rebuild() -> void:
 			# Generated heads have their eyes a little higher (at 0, not -0.035).
 			glasses_mesh.position.y += 0.035
 		glasses_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
+
+## How far a bow stands off the hair, and how wide a patch of hair it has to clear.
+const BOW_LIFT := 0.035
+const BOW_SPREAD := 0.13
+
+
+## How far out from the middle of the head the head or `hair` (head-centred) goes in
+## direction `dir`, over a patch `spread` across.
+static func outer_reach(hair: ArrayMesh, dir: Vector3, spread: float) -> float:
+	var r := P.HEAD_RADIUS
+	var reach := 1.0 / Vector3(dir.x / r.x, dir.y / r.y, dir.z / r.z).length()
+	if hair == null or hair.get_surface_count() == 0:
+		return reach
+	for v: Vector3 in hair.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]:
+		var along := v.dot(dir)
+		if along > reach and (v - dir * along).length() < spread:
+			reach = along
+	return reach
+
+
+## Turns +z to `face`, keeping +x level (a bow's loops side by side).
+static func facing_basis(face: Vector3) -> Basis:
+	var z := face.normalized()
+	var x := Vector3.UP.cross(z)
+	x = x.normalized() if x.length() > 0.05 else Vector3.RIGHT
+	return Basis(x, z.cross(x), z)
 
 
 ## Where the face features sit and how big they are, from the look's adjustments.

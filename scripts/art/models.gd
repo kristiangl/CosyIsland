@@ -97,6 +97,10 @@ static func get_mesh(key: String) -> ArrayMesh:
 			CreatureModels.bobber(k)
 		"goal_flag":
 			_goal_flag(k)
+		"toy":
+			# The round stand a neighbour's little figure sits on (see Figure).
+			var rim := Color(NpcData.get_character(p[1]).get("home", {}).get("roof", "e0857a"))
+			k.cylinder(Vector3.ZERO, Vector3(0, Figure.STAND, 0), 0.22, 0.21, MeshKit.lin(rim), 16, true, MeshKit.lin(Color("fbf3dc")))
 		"hairflower":
 			_hair_flower(k, p[1])
 		"vase":

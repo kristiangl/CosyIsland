@@ -78,6 +78,7 @@ func _run() -> void:
 	_test_tour_crossings_and_pole()
 	_test_new_day()
 	_test_fairground_and_statues()
+	_test_bows_thumbs_and_figures()
 	print("\n%d checks, %d failures" % [_checks, _failures])
 	IslandMap.finish()
 	get_tree().quit(1 if _failures > 0 else 0)
@@ -3320,3 +3321,86 @@ func _test_fairground_and_statues() -> void:
 	check(t0.origin.distance_to(t1.origin) > 0.2 and absf(Vector2(t1.origin.x, t1.origin.z).length() - LandmarkModels.HORSE_R) < 0.01, "carousel horses go round on their poles")
 	check(t1.basis.z.dot(Vector3(t1.origin.x, 0, t1.origin.z).normalized()) < 0.1, "facing the way they go")
 	w.free()
+
+
+func _test_bows_thumbs_and_figures() -> void:
+	# A bow sits on the outside of the hair, however big the hair is.
+	var up := Vector3(0, 1, 0.12).normalized()
+	var buzz := CharacterParts.hair("buzz", false)
+	var afro := CharacterParts.hair("afro", false)
+	check(CharacterModel.outer_reach(afro, up, CharacterModel.BOW_SPREAD) > CharacterModel.outer_reach(buzz, up, CharacterModel.BOW_SPREAD) + 0.05,
+		"big hair reaches further out than a buzz cut")
+	var look := Appearance.DEFAULT.duplicate()
+	look["hat"] = "bow"
+	look["hair"] = "afro"
+	for pos in Appearance.hat_positions(look).size():
+		look["hat_pos"] = pos
+		var m := CharacterModel.new(look)
+		add_child(m)
+		var bow: MeshInstance3D = null
+		for mi in m.find_children("*", "MeshInstance3D", true, false):
+			if (mi as MeshInstance3D).mesh and (mi as MeshInstance3D).mesh.get_aabb().size.y < 0.15 and mi.get_parent().name == "Head" \
+					and not (mi as MeshInstance3D).position.is_equal_approx(CharacterParts.HEAD_CENTRE):
+				bow = mi
+		var way: Dictionary = Appearance.hat_positions(look)[pos]
+		var dir := Vector3(way["at"][0], way["at"][1], way["at"][2]).normalized()
+		var out := (bow.position - CharacterParts.HEAD_CENTRE).length() if bow else 0.0
+		check(bow != null and out > CharacterModel.outer_reach(afro, dir, CharacterModel.BOW_SPREAD), "a bow %s sits on top of an afro (%.2f out)" % [String(way["name"]).to_lower(), out])
+		check(bow != null and bow.basis.z.normalized().dot(Vector3(way["face"][0], way["face"][1], way["face"][2]).normalized()) > 0.99, "facing the way it should")
+		m.free()
+
+	# Pictures of the face keep your own hair; priced tiles are the rail's.
+	var creator := CharacterCreator.new()
+	add_child(creator)
+	var rail: Array[String] = ["sailor_top_sky"]
+	var mine := Appearance.DEFAULT.duplicate()
+	mine["hair"] = "bob"
+	creator.open_fitting(mine, rail)
+	creator.thumb_base = mine.duplicate()
+	check(creator.thumb_look("eyes", "round", "face")["hair"] == "bob", "face pictures keep your own hair")
+	var body: Array = CharacterThumbs.VIEWS["body"]
+	var half: float = (body[0] - body[1]).length() * tan(deg_to_rad(15.0))
+	check(body[1].y + half > 1.4, "outfit pictures show the whole character, hair and all")
+	var tile := CharacterCreator.OptionTile.new(creator, "item", "sailor_top_sky", "body", false)
+	var own := CharacterCreator.OptionTile.new(creator, "item", Inventory.closet[0] if not Inventory.closet.is_empty() else "basic.top.tee.coral", "body", false)
+	check(tile.priced() and tile.custom_minimum_size.y > tile.custom_minimum_size.x and not own.priced(), "clothes on the rail show their price under the picture")
+	tile.free()
+	own.free()
+	creator.free()
+	Game.mode = Game.Mode.PLAY
+
+	# Best friends give you a little figure of themselves.
+	var fig := ItemDB.get_item("toy.biscuit")
+	check(fig.get("name", "") == "Little Biscuit" and ItemDB.placeable("toy.biscuit").get("figure", "") == "biscuit"
+		and ItemDB.placeable("toy.biscuit").get("small", false), "there's a little Biscuit, small enough for a table")
+	check(not Shop.can_sell("toy.biscuit") and not Recipes.craftable("toy.biscuit") and ItemDB.get_item("toy.nobody").is_empty(),
+		"it's not for sale or for making, and only neighbours have one")
+	var saved := Story.flags.duplicate(true)
+	Story.flags["friendship"] = {"biscuit": Story.HEART_POINTS[3]}
+	check(not Story.figure_due("biscuit"), "not until you're the very best of friends")
+	Story.befriend("biscuit", Story.GAME_WON_POINTS * 2)
+	check(Story.hearts("biscuit") == 5 and Story.figure_due("biscuit"), "two games won from four hearts makes five, and a figure's due")
+	Story.flags["figures_given"] = ["biscuit"]
+	check(not Story.figure_due("biscuit"), "and only once")
+	check(Story.GAME_WON_POINTS > 3 and Story.GAME_LOST_POINTS > 1, "games count for more than a chat")
+	Story.flags = saved
+	var room := World.new()
+	room.interior = true
+	add_child(room)
+	room.setup(IslandData.room(6, 6))
+	var placed := room.place_item("toy.biscuit", Rect2i(2, 2, 1, 1), 0)
+	var figure: Figure = null
+	for child in room.node_of(placed["uid"]).get_children():
+		if child is Figure:
+			figure = child
+	check(figure != null and figure.get_child_count() == 1 and (figure.get_child(0) as CharacterModel).mode == "floor", "placed, it's Biscuit, small and sitting down")
+	room.free()
+	# The ones who hid count too.
+	var life := _life_island()
+	var folk: Array = life["folk"]
+	var hood: Neighbourhood = Game.neighbourhood
+	hood.game = {"kind": "hide", "by": folk[0].id, "hiders": [folk[0].id, folk[1].id, folk[2].id], "found": [], "left": 10.0}
+	hood._finish(true)
+	check(hood.result_for(folk[0].id).get("hiders", []).size() == 3, "a game remembers who hid, to count for them too")
+	hood.clear_result()
+	_end_life(life)

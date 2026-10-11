@@ -299,6 +299,11 @@ Milestone 3b:
   holes, a skate ramp and rail, and statues after famous ones: a giant rubber duck, a moai,
   a sphinx cat, a small green torch statue, a leaning tower, a clock tower and a beckoning
   lucky cat.
+- [x] Best friends: games count for more (win or lose, and for everyone who hid), and a
+  neighbour on five hearts gives you a little figure of themselves, sitting on a stand, to
+  put on a shelf or a table. Bows sit on top of every hairstyle (and face backwards at the
+  back), flower crowns fit round big hair, the creator's pictures show the whole outfit
+  with your own hair, and clothes on the tailors' rail show their prices.
 - [x] Fences that join up: picket fences, palisades, low stone walls and iron railings, plus
   wooden and iron gates (standing open, to walk through). Each fills a tile, stacks to 99
   and goes down one after another without going back to the pockets; side by side they

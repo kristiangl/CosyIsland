@@ -109,8 +109,10 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   so are the insides where islanders work (placeable "inside": `Main.INSIDES`, fittings
   and people): Poppy's office, Bramble's museum tent (Bramble also stands in the museum),
   and the tailors', whose fitting mirror opens `CharacterCreator.open_fitting`
-  (`Story._fitting`; the creator names the tile in focus, with its price on the rail,
-  `CharacterCreator.caption`).
+  (`Story._fitting`; the creator names the tile in focus, `CharacterCreator.caption`, and
+  rail tiles show their price under the picture, `OptionTile.priced`). The creator's
+  pictures (`CharacterThumbs`) show outfits on the whole character and faces with your own
+  hair; an empty render is drawn again.
 - Island tours: `main.gd` swaps to a tour `World` (`tour = true`, `Game.tour`; nothing
   can be placed) built from `IslandGenerator.generate_tour`, and frees it on the way home.
   `Game.island` stays the home island; `Game.outdoors()` is whichever one you're on (the
@@ -174,6 +176,13 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   upgrades (house, pockets, bridges, buildings), tours, a new look, new neighbours.
   Neighbours mention it (`gossip_line`, in greetings and chats) and chat about it with
   each other (`gossip_topic`).
+- Friendship (`Story.befriend`, `hearts`, five at `HEART_POINTS`): chats, gifts, favours and
+  games (`GAME_WON_POINTS`, `GAME_LOST_POINTS`, and `GAME_HIDER_POINTS` for everyone who hid).
+  A best friend (five hearts) gives you a little figure of themselves once
+  (`Story.figure_due`, `_best_friends`, `flags["figures_given"]`): the item "toy.<id>"
+  (`ItemDB._make_figure`, small enough for a table, not for sale), drawn as their own model
+  sitting on a stand (`Figure`, Models "toy:<id>" for the stand; `Icons._sit_for_figure`).
+  `--demo=garden --only=toy.biscuit,toy.maple --near`.
 - Movement: `World.can_move` (the middle steps; edge points must land level with
   themselves or the middle, so ramps never snag). The vaulting pole (tool "pole")
   hops rivers and ponds via `World.vault_landing`; the phone's SOS (`Main.rescue_spot`)
@@ -279,7 +288,9 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   "recipe.<item>" (`ItemDB._make_recipe_card`): Lucy sells `Shop.RECIPES_PER_DAY`, and
   reading one from the pockets teaches it. The workbench and recipe book filter by kind
   (`CraftingMenu.GROUPS`, left/right). `--ui=crafting --learn [--group=N]`.
-  `data/appearance.json`: character options.
+  `data/appearance.json`: character options (a bow's positions say which way from the
+  middle of the head it sits, "at", and faces, "face": `CharacterModel` sets it on the
+  outside of the hair, `outer_reach`; a flower crown widens round big hair).
   Everyday clothes (the plain styles there) are items made on demand,
   `basic.<slot>.<style>.<colour>[.<colour2>.<pattern>]` (`ItemDB.basic_id`); the
   wardrobe (`Inventory.closet`) only offers clothes you own.

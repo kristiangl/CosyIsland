@@ -90,12 +90,21 @@ func begin(slot: int) -> void:
 	if def.has("ghost"):
 		ghost = ItemDB.placeable(def["ghost"]).get("model", ghost)
 	_ghost.mesh = Models.get_mesh(ghost)
+	_ghost_figure(def.get("figure", ""))
 	visible = true
 	Game.mode = Game.Mode.PLACING
 	if _fence:
 		Events.toast.emit(Prompts.fill("Fences join up with the ones beside them. {use} to place, {rotate} to turn, {cancel} when you're done."))
 	else:
 		Events.toast.emit(Prompts.fill("Where should it go? {use} to place, {rotate} to turn, {cancel} to put it away."))
+
+
+## A neighbour's little figure rides on the ghost while it's being placed ("" for none).
+func _ghost_figure(character: String) -> void:
+	for child in _ghost.get_children():
+		child.queue_free()
+	if character != "":
+		_ghost.add_child(Figure.new(character))
 
 
 ## A tree, bush, rock or stump from the pockets, to plant again on the tile ahead.
@@ -112,6 +121,7 @@ func _begin_planting(slot: int, item: String) -> void:
 	_rotatable = false
 	_checked = Vector2i(-9999, -9999)
 	_ghost.mesh = Models.get_mesh(Models.key_for(_moving))
+	_ghost_figure("")
 	_ghost.scale = Vector3.ONE
 	_ghost.rotation.y = 0.0
 	visible = true
@@ -136,6 +146,7 @@ func begin_move(obj: Dictionary) -> void:
 	_on_table = false
 	_checked = Vector2i(-9999, -9999)
 	_ghost.mesh = Models.get_mesh(Models.key_for(obj))
+	_ghost_figure("")
 	var node := world.node_of(obj["uid"])
 	_ghost.scale = node.scale if node else Vector3.ONE
 	_ghost.rotation.y = node.rotation.y if node else 0.0

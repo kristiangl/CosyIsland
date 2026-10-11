@@ -316,9 +316,10 @@ func _select_tab(i: int) -> void:
 	_scroll.scroll_vertical = 0
 
 
-func _focus_later(target: Control) -> void:
-	if is_instance_valid(target) and target.is_inside_tree():
-		target.grab_focus()
+## (Untyped: the tile may be gone by the time this is called.)
+func _focus_later(target) -> void:
+	if is_instance_valid(target) and (target as Control).is_inside_tree():
+		(target as Control).grab_focus()
 
 
 ## The selected tile anywhere on the tab (or the grid's first), to start the focus on.
@@ -458,10 +459,8 @@ func thumb_look(key: String, id: String, view: String) -> Dictionary:
 	l[key] = id
 	if key != "hat":
 		l["hat"] = "none"
-	if view == "face":
-		l["hair"] = "buzz"
-		if key != "glasses":
-			l["glasses"] = "none"
+	if view == "face" and key != "glasses":
+		l["glasses"] = "none"
 	return l
 
 
@@ -547,6 +546,9 @@ class OptionTile:
 		view = thumb_view
 		swatch = is_swatch
 		custom_minimum_size = Vector2(40, 40) if swatch else Vector2(76, 76)
+		if priced():
+			# Room under the picture for the price.
+			custom_minimum_size.y += PRICE_STRIP
 		focus_mode = Control.FOCUS_ALL
 		flat = true
 		tooltip_text = _name()
@@ -556,6 +558,12 @@ class OptionTile:
 		mouse_entered.connect(func(): creator.caption(self))
 		focus_exited.connect(queue_redraw)
 		pressed.connect(func(): creator.choose(key, id))
+
+	const PRICE_STRIP := 20.0
+
+	## Clothes from the tailors' rail that aren't yours yet show what they cost.
+	func priced() -> bool:
+		return key == "item" and id in creator._rail and not id in Inventory.closet
 
 	func is_selected() -> bool:
 		if key == "item":
@@ -613,11 +621,17 @@ class OptionTile:
 			tex = creator.thumbs.get_thumb(l, view)
 		else:
 			tex = creator.thumbs.get_thumb(creator.thumb_look(key, id, view), view)
+		# The picture fills the square at the top (a priced tile has its price under it).
+		var picture := Rect2(Vector2.ZERO, Vector2(size.x, size.x)).grow(-4)
 		if tex:
-			draw_texture_rect(tex, r.grow(-4), false)
+			draw_texture_rect(tex, picture, false)
 		else:
 			var font := get_theme_default_font()
-			draw_string(font, Vector2(4, size.y * 0.5 + 6), _name(), HORIZONTAL_ALIGNMENT_CENTER, size.x - 8, 13, UIStyle.BROWN)
+			draw_string(font, Vector2(4, size.x * 0.5 + 6), _name(), HORIZONTAL_ALIGNMENT_CENTER, size.x - 8, 13, UIStyle.BROWN)
+		if priced():
+			var font := get_theme_default_font()
+			draw_string(font, Vector2(0, size.y - 8), UIStyle.acorns(Shop.buy_price(id)).get_slice(" ", 0),
+				HORIZONTAL_ALIGNMENT_CENTER, size.x, 15, UIStyle.BROWN)
 
 
 ## An adjustment: "Label   - ●●●○●●●●● +". Left/right (or clicking either end) changes it.

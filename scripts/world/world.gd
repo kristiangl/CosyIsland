@@ -718,6 +718,8 @@ func _spawn_node(obj: Dictionary) -> void:
 	node.add_child(mesh)
 	if ride != "":
 		node.add_child(Ride.new(ride, obj["uid"] * 3.7))
+	elif obj["kind"] == "placed" and ItemDB.placeable(obj["item"]).has("figure"):
+		node.add_child(Figure.new(ItemDB.placeable(obj["item"])["figure"]))
 	var tiles := footprint(obj)
 	var centre := Vector2.ZERO
 	for t in tiles:

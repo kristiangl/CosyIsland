@@ -847,7 +847,8 @@ func _on_caught(id: String) -> void:
 
 
 func _finish(won: bool) -> void:
-	result = {"by": game["by"], "game": game["kind"], "won": won, "what": game.get("what", ""), "name": game.get("name", "")}
+	result = {"by": game["by"], "game": game["kind"], "won": won, "what": game.get("what", ""), "name": game.get("name", ""),
+		"hiders": game.get("hiders", []).duplicate()}
 	var by := Story.npc(game["by"])
 	if by and Game.player:
 		match game["kind"]:

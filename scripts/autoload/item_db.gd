@@ -251,7 +251,23 @@ func _def(id: String) -> Dictionary:
 		def = _make_nature(id)
 	elif def.is_empty() and id.begins_with("recipe."):
 		def = _make_recipe_card(id)
+	elif def.is_empty() and id.begins_with("toy."):
+		def = _make_figure(id)
 	return def
+
+
+## A little figure of a neighbour, "toy.<id>": their present once you're best friends
+## (Story `_best_friends`). Not for sale. {} if there's no such neighbour.
+func _make_figure(id: String) -> Dictionary:
+	var who := id.substr(4)
+	if not NpcData.is_neighbour(who):
+		return {}
+	var name := NpcData.display_name(who)
+	items[id] = {"name": "Little %s" % name, "category": "furniture", "stack": 1, "price": 0,
+		"color": "#" + String(NpcData.get_character(who).get("home", {}).get("roof", "e0857a")),
+		"desc": "A little %s, sitting pretty. From your very best friend." % name,
+		"placeable": {"footprint": [1, 1], "model": "toy:" + who, "rotatable": true, "small": true, "figure": who}}
+	return items[id]
 
 
 ## A DIY recipe card, "recipe.<item>" (Lucy sells a couple a day): read it from the

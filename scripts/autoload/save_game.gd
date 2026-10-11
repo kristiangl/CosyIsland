@@ -6,6 +6,10 @@ extends Node
 ## slot (1 to SLOTS); runs started from the command line with --new, --seed or
 ## --screenshot use the scratch slot (0) unless given --slot=N, so they never touch a
 ## real file.
+##
+## A file can be exported as a copy (a .cosysave, the same JSON) to take to another
+## computer, and a copy imported into any file (`export_file`, `import_file`; the title
+## screen's File options and Import a file).
 
 const SLOTS := 3
 const VERSION := 1
@@ -84,3 +88,122 @@ func latest() -> int:
 			when = int(s["saved_at"])
 			best = n
 	return best
+
+
+# --- Moving a file to another computer ---------------------------------------------------
+
+## Copies of a file to take to another computer are plain save files with this ending.
+const EXPORT_EXT := "cosysave"
+## Where copies go, and where else they're looked for when importing (besides any file
+## picked with the system's file dialog).
+const EXPORT_FOLDER := "Cosy Island"
+## Set to look somewhere else instead (the tests use a folder of their own).
+var export_dir_override := ""
+
+
+## The folder copies are saved to: "Cosy Island" in the player's Documents (or the
+## game's own folder if there's no Documents).
+func export_dir() -> String:
+	if export_dir_override != "":
+		return export_dir_override
+	var docs := OS.get_system_dir(OS.SYSTEM_DIR_DOCUMENTS)
+	if docs == "":
+		return ProjectSettings.globalize_path("user://exports")
+	return docs.path_join(EXPORT_FOLDER)
+
+
+## Folders a copy might have been put in on this computer: the export folder, then
+## Documents itself, Downloads and the Desktop.
+func import_dirs() -> PackedStringArray:
+	var dirs := PackedStringArray([export_dir()])
+	if export_dir_override == "":
+		for kind: int in [OS.SYSTEM_DIR_DOCUMENTS, OS.SYSTEM_DIR_DOWNLOADS, OS.SYSTEM_DIR_DESKTOP]:
+			var d := OS.get_system_dir(kind)
+			if d != "" and not d in dirs:
+				dirs.append(d)
+	return dirs
+
+
+## Saves a copy of file `n` in the export folder, named after the island, the player and
+## the date. Returns the copy's full path, or "" if it couldn't be written.
+func export_file(n: int) -> String:
+	var data := read(n)
+	if data.is_empty():
+		return ""
+	var dir := export_dir()
+	DirAccess.make_dir_recursive_absolute(dir)
+	var island: String = data.get("island_name", "")
+	var who: String = data.get("player_name", "")
+	var stem := "%s Island" % (island if island != "" else "My")
+	if who != "":
+		stem += " - " + who
+	stem += " - " + Time.get_date_string_from_system()
+	stem = safe_name(stem)
+	var to := dir.path_join("%s.%s" % [stem, EXPORT_EXT])
+	var tries := 2
+	while FileAccess.file_exists(to):
+		to = dir.path_join("%s (%d).%s" % [stem, tries, EXPORT_EXT])
+		tries += 1
+	return to if export_to(n, to) == OK else ""
+
+
+## Writes a copy of file `n` to `to` (a full path).
+func export_to(n: int, to: String) -> Error:
+	var data := read(n)
+	if data.is_empty():
+		return ERR_FILE_NOT_FOUND
+	var file := FileAccess.open(to, FileAccess.WRITE)
+	if file == null:
+		return FileAccess.get_open_error()
+	file.store_string(JSON.stringify(data))
+	return OK
+
+
+## A file name without the characters some systems won't have in one.
+static func safe_name(text: String) -> String:
+	for bad: String in ["/", "\\", ":", "*", "?", "\"", "<", ">", "|"]:
+		text = text.replace(bad, "")
+	return text.strip_edges()
+
+
+## What's in a copy at `from`: {"data": the save} if it can be imported, else
+## {"error": why not}.
+func check_import(from: String) -> Dictionary:
+	if not FileAccess.file_exists(from):
+		return {"error": "That file isn't there any more."}
+	# (Parsed quietly: a file that isn't JSON at all just isn't a save.)
+	var json := JSON.new()
+	var parsed = json.data if json.parse(FileAccess.get_file_as_string(from)) == OK else null
+	if not parsed is Dictionary or not parsed.has("seed") or not parsed.has("player") or not parsed.has("world"):
+		return {"error": "That doesn't look like a Cosy Island file."}
+	if int(parsed.get("version", 0)) != VERSION:
+		return {"error": "That file's from a different version of the game."}
+	return {"data": parsed}
+
+
+## Puts the copy at `from` into file `n`, replacing whatever's there. "" if it worked,
+## else why not.
+func import_file(from: String, n: int) -> String:
+	var checked := check_import(from)
+	if checked.has("error"):
+		return checked["error"]
+	var file := FileAccess.open(path(n), FileAccess.WRITE)
+	if file == null:
+		return "Couldn't write file %d." % n
+	file.store_string(JSON.stringify(checked["data"]))
+	return ""
+
+
+## Copies found on this computer (`import_dirs`), newest first: [{"path", "name", "when"}].
+func copies_found(limit: int = 6) -> Array:
+	var found: Array = []
+	for dir: String in import_dirs():
+		var access := DirAccess.open(dir)
+		if access == null:
+			continue
+		for name: String in access.get_files():
+			if name.get_extension().to_lower() == EXPORT_EXT:
+				var full := dir.path_join(name)
+				found.append({"path": full, "name": name.get_basename(), "when": FileAccess.get_modified_time(full)})
+	found.sort_custom(func(a, b): return a["when"] > b["when"])
+	return found.slice(0, limit)

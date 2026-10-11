@@ -304,6 +304,10 @@ Milestone 3b:
   put on a shelf or a table. Bows sit on top of every hairstyle (and face backwards at the
   back), flower crowns fit round big hair, the creator's pictures show the whole outfit
   with your own hair, and clothes on the tailors' rail show their prices.
+- [x] Moving to another computer: a file's options can export a copy (a .cosysave in
+  Documents/Cosy Island, or anywhere with the system's save dialog), and Import a file on
+  the title screen brings one into any file, checking it's a save from this version and
+  asking before replacing an island.
 - [x] Fences that join up: picket fences, palisades, low stone walls and iron railings, plus
   wooden and iron gates (standing open, to walk through). Each fills a tile, stacks to 99
   and goes down one after another without going back to the pockets; side by side they

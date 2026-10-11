@@ -17,7 +17,7 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   then Continue and three files). `-- --new` starts a new island straight away in the
   scratch file (never shown on the title screen), `-- --slot=N` opens file N
   (`--slot=N --new` starts it over; on the title screen that's under a file's File options,
-  asking twice). Title screenshots: `--title` (`=splash|file|options|confirm|sure|island`)
+  asking twice). Title screenshots: `--title` (`=splash|file|options|confirm|sure|export|import|island`)
   with `--screenshot=PATH`. Behind the menu is a picture (`assets/title/backdrop.jpg`) of
   an island seen from far out at sea, with butterflies (`TitleButterflies`) in front.
   Re-render it from the live 3D view (`TitleBackdrop`, no world curve, sea run out to
@@ -46,7 +46,11 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
 ## Layout
 
 - `scripts/autoload/`: global singletons (Events bus, Game state, ItemDB, GameClock,
-  Inventory, SaveGame: one JSON file per slot, `SaveGame.slot`, 0 is scratch; Music:
+  Inventory, SaveGame: one JSON file per slot, `SaveGame.slot`, 0 is scratch; a file can be
+  exported as a ".cosysave" copy to Documents/Cosy Island and imported into any slot on
+  another computer, `export_file` / `import_file`, from the title screen's File options and
+  Import a file, which lists copies in Documents, Downloads and the Desktop and opens the
+  system's file dialog on PC and Mac; Music:
   `assets/music`, morning/afternoon/evening pieces by the island clock, alternating
   hourly, silent headless, in screenshots and with `--mute`). Registered in `project.godot`.
 - `scripts/world/`: island generation (`island_generator.gd`, pure data), meshes

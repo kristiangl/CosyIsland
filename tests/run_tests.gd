@@ -79,6 +79,7 @@ func _run() -> void:
 	_test_new_day()
 	_test_fairground_and_statues()
 	_test_bows_thumbs_and_figures()
+	_test_save_export()
 	print("\n%d checks, %d failures" % [_checks, _failures])
 	IslandMap.finish()
 	get_tree().quit(1 if _failures > 0 else 0)
@@ -3404,3 +3405,49 @@ func _test_bows_thumbs_and_figures() -> void:
 	check(hood.result_for(folk[0].id).get("hiders", []).size() == 3, "a game remembers who hid, to count for them too")
 	hood.clear_result()
 	_end_life(life)
+
+
+func _test_save_export() -> void:
+	# Only the scratch file and a folder of the test's own are touched.
+	var dir := ProjectSettings.globalize_path("user://test_exports")
+	DirAccess.make_dir_recursive_absolute(dir)
+	for old: String in DirAccess.get_files_at(dir):
+		DirAccess.remove_absolute(dir.path_join(old))
+	SaveGame.export_dir_override = dir
+	var was_slot := SaveGame.slot
+	var scratch := SaveGame.read(0)
+	SaveGame.slot = 0
+	SaveGame.write({"seed": 7, "player": {"x": 1.0}, "world": {}, "island_name": "Pebble", "player_name": "Kit/Kat",
+		"inventory": {"currency": 1234}})
+	var to := SaveGame.export_file(0)
+	check(to.get_base_dir() == dir and to.get_extension() == SaveGame.EXPORT_EXT and FileAccess.file_exists(to),
+		"a copy goes in the export folder (%s)" % to.get_file())
+	check(to.get_file().begins_with("Pebble Island - KitKat - "), "named after the island and the player, without odd characters")
+	var again := SaveGame.export_file(0)
+	check(again != to and again.get_file().contains("(2)"), "a second copy doesn't overwrite the first")
+	var found := SaveGame.copies_found()
+	check(found.size() == 2 and found.any(func(c): return c["path"] == to), "both copies are found to import")
+	var checked := SaveGame.check_import(to)
+	check(checked.get("data", {}).get("island_name", "") == "Pebble", "a copy reads back as the same island")
+	var junk := dir.path_join("junk.%s" % SaveGame.EXPORT_EXT)
+	var f := FileAccess.open(junk, FileAccess.WRITE)
+	f.store_string("not a save at all")
+	f.close()
+	check(SaveGame.check_import(junk).has("error") and SaveGame.import_file(junk, 0) != "", "something that isn't a save is turned away")
+	var old_version := dir.path_join("old.%s" % SaveGame.EXPORT_EXT)
+	f = FileAccess.open(old_version, FileAccess.WRITE)
+	f.store_string(JSON.stringify({"version": SaveGame.VERSION + 1, "seed": 1, "player": {}, "world": {}}))
+	f.close()
+	check(SaveGame.check_import(old_version).get("error", "").contains("version"), "so is one from another version")
+	SaveGame.write({"seed": 9, "player": {}, "world": {}, "island_name": "Other"})
+	check(SaveGame.import_file(to, 0) == "" and SaveGame.read(0).get("island_name", "") == "Pebble"
+		and int(SaveGame.read(0)["inventory"]["currency"]) == 1234, "importing puts the copy in the file, acorns and all")
+	for made: String in DirAccess.get_files_at(dir):
+		DirAccess.remove_absolute(dir.path_join(made))
+	DirAccess.remove_absolute(dir)
+	SaveGame.export_dir_override = ""
+	if scratch.is_empty():
+		SaveGame.delete(0)
+	else:
+		SaveGame.write(scratch)
+	SaveGame.slot = was_slot

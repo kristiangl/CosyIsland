@@ -2,7 +2,8 @@ class_name TitleScreen
 extends Control
 ## The title screen: a short splash, then the main menu. Continue goes back into the
 ## file played last; each of the three files can be played, or (under its File options)
-## started over or deleted, asking twice first; an empty file starts a new island. Runs
+## exported as a copy to take to another computer, started over or deleted, asking twice
+## first; an empty file starts a new island. Import a file brings a copy in. Runs
 ## started from the command line
 ## with game options (--new, --slot, --seed, --demo, --screenshot...) skip straight into
 ## the game, so the tools keep working.
@@ -11,7 +12,8 @@ extends Control
 ##   --title=splash     the splash, for a screenshot (--title=island: the live 3D island
 ##                      the backdrop picture is rendered from)
 ##   --title=file       the actions for file 1 (--title=options: its file options,
-##                      --title=confirm and --title=sure: asking before deleting)
+##                      --title=confirm and --title=sure: asking before deleting,
+##                      --title=export: a copy of it saved, --title=import: bringing one in)
 
 const GAME_SCENE := "res://scenes/main.tscn"
 ## Options that mean "go straight into the game".
@@ -80,8 +82,12 @@ func _ready() -> void:
 		backdrop.build({})
 	else:
 		_show_menu()
-		if title_arg in ["file", "options", "confirm", "sure"] and SaveGame.has_save(1):
+		if title_arg == "import":
+			_import_list()
+		elif title_arg in ["file", "options", "confirm", "sure", "export"] and SaveGame.has_save(1):
 			match title_arg:
+				"export":
+					_export(1)
 				"file":
 					_file_actions(1)
 				"options":
@@ -176,6 +182,11 @@ func _build_menu() -> void:
 	_files = VBoxContainer.new()
 	_files.add_theme_constant_override("separation", 10)
 	_menu.add_child(_files)
+	var bring := Button.new()
+	bring.text = "Import a file"
+	bring.custom_minimum_size = Vector2(0, 44)
+	bring.pressed.connect(func(): if not _busy: _import_list())
+	_menu.add_child(bring)
 	var quit := Button.new()
 	quit.text = "Quit"
 	quit.custom_minimum_size = Vector2(0, 44)
@@ -332,6 +343,7 @@ func _file_options(n: int) -> void:
 	var s := SaveGame.summary(n)
 	_open_popup("File %d options" % n, "%s Island" % _island_of(s), [
 		["Back", func(): _file_actions(n)],
+		["Export a copy", func(): _export(n)],
 		["Start over", func(): _confirm_delete(n, true), "danger"],
 		["Delete this file", func(): _confirm_delete(n, false), "danger"],
 	])
@@ -358,6 +370,110 @@ func _really_delete(n: int, then_new: bool) -> void:
 				_start_game(n, true)
 			else:
 				_close_popup(), "danger"],
+	])
+
+
+# --- Moving files between computers ------------------------------------------------------
+
+## Whether this computer has its own file dialog (PC and Mac do).
+static func _native_files() -> bool:
+	return DisplayServer.has_feature(DisplayServer.FEATURE_NATIVE_DIALOG_FILE)
+
+
+## Saves a copy of file `n` in Documents/Cosy Island, to take to another computer.
+func _export(n: int) -> void:
+	var to := SaveGame.export_file(n)
+	if to == "":
+		_open_popup("Couldn't export", "Something went wrong saving the copy. Is the Documents folder full or locked?",
+			[["Back", func(): _file_options(n)]])
+		return
+	var options: Array = [["OK", _close_popup]]
+	if OS.has_feature("pc"):
+		options.append(["Show it in its folder", func(): OS.shell_show_in_file_manager(to)])
+	if _native_files():
+		options.append(["Save another copy somewhere else", func(): _export_elsewhere(n)])
+	_open_popup("Copy saved", "It's in %s, called \"%s\".\n\nPut it on the other computer (in Documents, Downloads or the Desktop), then choose Import a file on the title screen there."
+		% [to.get_base_dir(), to.get_file()], options)
+
+
+## A copy of file `n` wherever the player chooses, with the system's save dialog.
+func _export_elsewhere(n: int) -> void:
+	var island: String = SaveGame.summary(n).get("island_name", "")
+	var name := SaveGame.safe_name("%s Island.%s" % [island if island != "" else "My", SaveGame.EXPORT_EXT])
+	DisplayServer.file_dialog_show("Save a copy of file %d" % n, SaveGame.export_dir(), name, false,
+		DisplayServer.FILE_DIALOG_MODE_SAVE_FILE, PackedStringArray(["*.%s ; Cosy Island files" % SaveGame.EXPORT_EXT]),
+		func(ok: bool, paths: PackedStringArray, _filter: int):
+			if ok and not paths.is_empty():
+				_exported_elsewhere.call_deferred(n, paths[0]))
+
+
+func _exported_elsewhere(n: int, to: String) -> void:
+	if to.get_extension().to_lower() != SaveGame.EXPORT_EXT:
+		to += "." + SaveGame.EXPORT_EXT
+	if SaveGame.export_to(n, to) == OK:
+		_open_popup("Copy saved", "It's at %s." % to, [["OK", _close_popup]])
+	else:
+		_open_popup("Couldn't export", "Something went wrong saving the copy there.", [["Back", func(): _file_options(n)]])
+
+
+## The copies found on this computer to bring in, newest first.
+func _import_list() -> void:
+	var found := SaveGame.copies_found()
+	var options: Array = []
+	for copy: Dictionary in found:
+		options.append([copy["name"], func(): _import_from(copy["path"])])
+	if _native_files():
+		options.append(["Choose a file...", _import_picker])
+	options.append(["Back", _close_popup])
+	var where := "Documents, Downloads or the Desktop"
+	_open_popup("Import a file",
+		"Pick a copy to bring in." if not found.is_empty() else "No copies found yet. Put a .%s file in %s and it'll show up here." % [SaveGame.EXPORT_EXT, where],
+		options)
+
+
+func _import_picker() -> void:
+	DisplayServer.file_dialog_show("Import a Cosy Island file", SaveGame.export_dir(), "", false,
+		DisplayServer.FILE_DIALOG_MODE_OPEN_FILE,
+		PackedStringArray(["*.%s ; Cosy Island files" % SaveGame.EXPORT_EXT, "*.json ; Save files"]),
+		func(ok: bool, paths: PackedStringArray, _filter: int):
+			if ok and not paths.is_empty():
+				_import_from.call_deferred(paths[0]))
+
+
+## Checks the copy at `from`, then asks which file it should go in.
+func _import_from(from: String) -> void:
+	var checked := SaveGame.check_import(from)
+	if checked.has("error"):
+		_open_popup("Can't import that", checked["error"], [["Back", _import_list]])
+		return
+	var data: Dictionary = checked["data"]
+	var island: String = _island_of(data)
+	var options: Array = []
+	for n in range(1, SaveGame.SLOTS + 1):
+		var s := SaveGame.summary(n)
+		var label := "File %d: empty" % n if s.is_empty() else "File %d: replace %s Island" % [n, _island_of(s)]
+		options.append([label, func(): _import_into(from, n), "danger" if not s.is_empty() else ""])
+	options.append(["Back", _import_list])
+	var who: String = data.get("player_name", "")
+	_open_popup("Which file should it go in?", "%s Island%s" % [island, (", %s's" % who) if who != "" else ""], options)
+
+
+## Puts the copy in file `n`, asking first if that means replacing an island.
+func _import_into(from: String, n: int, sure := false) -> void:
+	var s := SaveGame.summary(n)
+	if not s.is_empty() and not sure:
+		_open_popup("Replace %s Island?" % _island_of(s), "It'll be gone for good, and the imported island takes its place in file %d." % n, [
+			["Keep it", func(): _import_from(from)],
+			["Replace it", func(): _import_into(from, n, true), "danger"],
+		])
+		return
+	var problem := SaveGame.import_file(from, n)
+	if problem != "":
+		_open_popup("Can't import that", problem, [["Back", _import_list]])
+		return
+	_open_popup("Imported!", "%s Island is in file %d." % [_island_of(SaveGame.summary(n)), n], [
+		["Play it", func(): _start_game(n, false)],
+		["OK", _close_popup],
 	])
 
 

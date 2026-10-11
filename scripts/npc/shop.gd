@@ -1,9 +1,9 @@
 class_name Shop
 extends RefCounted
 ## The island's shops. Lucy's ("lucy"): a few things for sale each day (furniture, garden
-## and outdoor decorations, wallpaper and flooring, DIY recipe cards and everyday clothes,
-## chosen by the island and the day), and
-## buying back anything with a price. Daisy and Morris's ("tailors"): designed clothes
+## and outdoor decorations, one of the big ones, wallpaper and flooring, DIY recipe cards
+## and everyday clothes, chosen by the island and the day), as many of each as you like
+## (but one of each recipe card), and buying back anything with a price. Daisy and Morris's ("tailors"): designed clothes
 ## only, more of them, and they don't buy.
 ## Things sell to Lucy for their listed price and cost four times that to buy. Once her
 ## shop is built (Story "shop_done") she stocks twice as much, plus flower plants from
@@ -19,6 +19,8 @@ const RECIPES_PER_DAY := 2
 const FURNITURE_PER_DAY := 4
 ## Garden and outdoor decorations ("outdoor" placeables), apart from the furniture.
 const OUTDOOR_PER_DAY := 2
+## Big ones for the island ("landmark" placeables: rides, stalls, statues).
+const LANDMARKS_PER_DAY := 1
 const INTERIORS_PER_DAY := 2
 const CLOTHES_PER_DAY := 3
 const PLANTS_PER_DAY := 2
@@ -75,6 +77,7 @@ static func stock(island_seed: int, day: int, native_flower: String = "", keeper
 	rng.seed = island_seed * 7919 + day + ({"lucy": 0, "tailors": 104729}.get(keeper, absi(hash(keeper)) % 1000003) as int)
 	var furniture: Array[String] = []
 	var outdoor: Array[String] = []
+	var landmarks: Array[String] = []
 	var interiors: Array[String] = []
 	var clothes: Array[String] = []
 	var plants: Array[String] = []
@@ -83,7 +86,9 @@ static func stock(island_seed: int, day: int, native_flower: String = "", keeper
 		var def := ItemDB.get_item(id)
 		match def.get("category", ""):
 			"furniture":
-				if def.get("placeable", {}).get("outdoor", false):
+				if def.get("placeable", {}).get("landmark", false):
+					landmarks.append(id)
+				elif def.get("placeable", {}).get("outdoor", false):
 					outdoor.append(id)
 				elif id != "workbench" and not def.get("placeable", {}).get("structure", false):
 					furniture.append(id)
@@ -101,6 +106,7 @@ static func stock(island_seed: int, day: int, native_flower: String = "", keeper
 					plants.append(id)
 	furniture.sort()
 	outdoor.sort()
+	landmarks.sort()
 	interiors.sort()
 	clothes.sort()
 	plants.sort()
@@ -124,6 +130,7 @@ static func stock(island_seed: int, day: int, native_flower: String = "", keeper
 	out.append_array(_pick(rng, umbrellas, 1))
 	out.append_array(_pick(rng, furniture, FURNITURE_PER_DAY * more))
 	out.append_array(_pick(rng, outdoor, OUTDOOR_PER_DAY * more))
+	out.append_array(_pick(rng, landmarks, LANDMARKS_PER_DAY * more))
 	out.append_array(_pick(rng, interiors, INTERIORS_PER_DAY * more))
 	var cards: Array[String] = []
 	for id: String in Recipes.recipes:
@@ -176,19 +183,20 @@ static func _pick(rng: RandomNumberGenerator, from: Array[String], count: int) -
 	return out
 
 
-## Things from today's stock already bought (staples never sell out).
+## Things from today's stock already bought (see `restocks` for what never sells out).
 static func sold_today(day: int, keeper: String = "lucy") -> Array:
 	var sold: Dictionary = Story.flags.get("shop_sold" if keeper == "lucy" else keeper + "_sold", {})
 	return sold.get("ids", []) if int(sold.get("day", -1)) == day else []
 
 
 static func is_sold_out(id: String, day: int, keeper: String = "lucy") -> bool:
-	return not restocks(id) and id in sold_today(day, keeper)
+	return not restocks(id, keeper) and id in sold_today(day, keeper)
 
 
-## Staples, and fences and gates (bought by the dozen), never sell out.
-static func restocks(id: String) -> bool:
-	return id in STAPLES or ItemDB.placeable(id).has("fence")
+## Staples, fences and gates (bought by the dozen), and everything at Lucy's but her
+## recipe cards never sell out.
+static func restocks(id: String, keeper: String = "lucy") -> bool:
+	return id in STAPLES or ItemDB.placeable(id).has("fence") or (keeper == "lucy" and not id.begins_with("recipe."))
 
 
 ## Buys one of an item. Returns "" on success, or why not. Clothes bought in the fitting
@@ -209,7 +217,7 @@ static func buy(id: String, day: int, keeper: String = "lucy", wearing := false)
 	Inventory.add_currency(-cost)
 	Sfx.play("coins")
 	Journal.add("bought")
-	if not restocks(id):
+	if not restocks(id, keeper):
 		var ids := sold_today(day, keeper).duplicate()
 		ids.append(id)
 		Story.flags["shop_sold" if keeper == "lucy" else keeper + "_sold"] = {"day": day, "ids": ids}

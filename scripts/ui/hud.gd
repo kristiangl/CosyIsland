@@ -23,6 +23,15 @@ var _landscape_border: ColorRect
 const LANDSCAPE_USES := {"cliff": "raise or lower", "water": "dig or fill in water", "slope": "lay or take away a slope",
 	"trees": "chop down or dig up", "move": "dig up and move", "path": "lay or lift the path"}
 var _toast_label: Label
+## Journal stamps earned slide down at the top of the screen, clear of conversations.
+var _stamp_panel: PanelContainer
+var _stamp_text: Label
+var _stamp_count: Label
+var _stamp_queue: Array[Dictionary] = []
+var _stamp_timer := 0.0
+const STAMP_TIME := 3.2
+## The sunrise shown when the island moves on to another day.
+var sunrise: SunriseSplash
 ## A game with a neighbour: how it's going, top middle (`show_game`), and big words in the
 ## middle of the screen for the start of a race (`big_note`).
 var _game_panel: PanelContainer
@@ -133,16 +142,14 @@ func _ready() -> void:
 	hint_panel.add_child(_landscape_hints)
 
 	# Toast, bottom centre.
+	# (placed each frame: bottom middle, or the top over a conversation)
 	_toast_panel = PanelContainer.new()
-	_toast_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
-	_toast_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	_toast_panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	_toast_panel.position.y -= 60
 	_toast_panel.modulate.a = 0.0
 	root.add_child(_toast_panel)
 	_toast_label = Label.new()
 	_toast_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_toast_panel.add_child(_toast_label)
+	_build_stamp_banner(root)
 
 	_game_panel = PanelContainer.new()
 	_game_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
@@ -215,6 +222,11 @@ func _ready() -> void:
 
 	# Toasts go in front of everything, menus included (so a sale shows over the shop).
 	root.move_child(_toast_panel, -1)
+	root.move_child(_stamp_panel, -1)
+	# And the sunrise in front of those.
+	sunrise = SunriseSplash.new()
+	root.add_child(sunrise)
+	Journal.completed.connect(_on_stamped)
 	Events.toast.connect(_on_toast)
 	Events.equipped_changed.connect(_on_equipped)
 	Events.landscaping_changed.connect(_on_landscaping)
@@ -330,6 +342,13 @@ func fade_in() -> void:
 	await tw.finished
 
 
+## Out of the dark of a fade straight into the sunrise, and back to the game after it.
+func sunrise_from_dark(title: String, date: String) -> void:
+	sunrise.play_from_dark(title, date)
+	_fade.modulate.a = 0.0
+	await sunrise.done
+
+
 # --- Games with neighbours ------------------------------------------------------------
 
 ## Shows how a game's going ("Hide and seek   Found 1 of 3   1:42").
@@ -364,6 +383,7 @@ func _on_toast(text: String) -> void:
 	if _toast_timer > 0.0 and text == _toast_text:
 		_toast_count += 1
 		_toast_label.text = toast_line(text, _toast_count)
+		_toast_panel.reset_size()
 		_toast_timer = maxf(_toast_timer, TOAST_AGAIN)
 		_toast_panel.pivot_offset = _toast_panel.size * 0.5
 		_toast_panel.scale = Vector2.ONE * 1.06
@@ -389,6 +409,17 @@ static func toast_line(text: String, count: int) -> String:
 
 func _update_toast(delta: float) -> void:
 	_tour_border.visible = Game.tour != null
+	# Notes wait for the sunrise to finish.
+	if sunrise.playing:
+		_toast_panel.modulate.a = 0.0
+		return
+	_update_stamps(delta)
+	# Over a conversation they go at the top of the screen (under any stamp showing).
+	var screen := get_viewport().get_visible_rect().size
+	var y := screen.y - 60.0 - _toast_panel.size.y
+	if dialogue.visible:
+		y = 20.0 + (_stamp_panel.position.y + _stamp_panel.size.y if _stamp_panel.visible else 0.0)
+	_toast_panel.position = Vector2((screen.x - _toast_panel.size.x) * 0.5, y)
 	_toast_timer -= delta
 	if _toast_timer > 0.3:
 		_toast_panel.modulate.a = minf(1.0, _toast_panel.modulate.a + delta * 6.0)
@@ -401,7 +432,93 @@ func _update_toast(delta: float) -> void:
 				_toast_text = next["text"]
 				_toast_count = next["count"]
 				_toast_label.text = toast_line(_toast_text, _toast_count)
+				_toast_panel.reset_size()
 				_toast_timer = TOAST_TIME if _toast_queue.is_empty() else TOAST_HURRIED
+
+
+# --- Journal stamps ------------------------------------------------------------------
+
+func _build_stamp_banner(root: Control) -> void:
+	_stamp_panel = PanelContainer.new()
+	var style := UIStyle.panel(UIStyle.CREAM, 24)
+	style.border_color = UIStyle.ACCENT
+	style.set_border_width_all(4)
+	style.content_margin_left = 16
+	style.content_margin_right = 22
+	style.content_margin_top = 10
+	style.content_margin_bottom = 10
+	_stamp_panel.add_theme_stylebox_override("panel", style)
+	_stamp_panel.visible = false
+	_stamp_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(_stamp_panel)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 14)
+	_stamp_panel.add_child(row)
+	var badge := Control.new()
+	badge.custom_minimum_size = Vector2(54, 54)
+	badge.draw.connect(func(): stamp_badge(badge, Vector2(27, 27), 25.0))
+	row.add_child(badge)
+	var words := VBoxContainer.new()
+	words.add_theme_constant_override("separation", -4)
+	words.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_child(words)
+	var head := Label.new()
+	head.text = "Journal"
+	head.add_theme_font_size_override("font_size", 16)
+	head.add_theme_color_override("font_color", UIStyle.BROWN_LIGHT)
+	words.add_child(head)
+	_stamp_text = Label.new()
+	_stamp_text.add_theme_font_size_override("font_size", 22)
+	words.add_child(_stamp_text)
+	_stamp_count = Label.new()
+	_stamp_count.add_theme_font_override("font", UIStyle.font(700))
+	_stamp_count.add_theme_font_size_override("font_size", 26)
+	_stamp_count.add_theme_color_override("font_color", Color("e0794a"))
+	row.add_child(_stamp_count)
+
+
+## A round postmark-style stamp with a star in it (the journal's stamps).
+static func stamp_badge(c: CanvasItem, at: Vector2, r: float) -> void:
+	var edge: PackedVector2Array = []
+	for i in 48:
+		var a := i * TAU / 48.0
+		edge.append(at + Vector2.from_angle(a) * (r if i % 2 == 0 else r * 0.9))
+	c.draw_colored_polygon(edge, Color("e0794a"))
+	c.draw_circle(at, r * 0.74, UIStyle.CREAM)
+	c.draw_arc(at, r * 0.66, 0.0, TAU, 32, Color("e0794a"), 2.0, true)
+	var star: PackedVector2Array = []
+	for i in 10:
+		star.append(at + Vector2.from_angle(-PI * 0.5 + i * PI / 5.0) * (r * 0.5 if i % 2 == 0 else r * 0.22))
+	c.draw_colored_polygon(star, UIStyle.ACCENT)
+
+
+func _on_stamped(text: String, stamps: int) -> void:
+	if _stamp_queue.size() < 6:
+		_stamp_queue.append({"text": text, "stamps": stamps})
+
+
+func _update_stamps(delta: float) -> void:
+	var screen := get_viewport().get_visible_rect().size
+	var top := 18.0
+	if _game_panel.visible:
+		top = _game_panel.position.y + _game_panel.size.y + 10.0
+	if _stamp_timer <= 0.0:
+		if _stamp_queue.is_empty():
+			_stamp_panel.visible = false
+			return
+		var next: Dictionary = _stamp_queue.pop_front()
+		_stamp_text.text = next["text"]
+		_stamp_count.text = "+%d" % int(next["stamps"])
+		_stamp_panel.reset_size()
+		_stamp_panel.visible = true
+		_stamp_timer = STAMP_TIME
+	_stamp_timer -= delta
+	# Slides down from above, waits, and slides back up.
+	var shown := STAMP_TIME - _stamp_timer
+	var out := minf(clampf(shown / 0.3, 0.0, 1.0), clampf(_stamp_timer / 0.3, 0.0, 1.0))
+	var eased := 1.0 - pow(1.0 - out, 3.0)
+	var h := _stamp_panel.size.y
+	_stamp_panel.position = Vector2((screen.x - _stamp_panel.size.x) * 0.5, lerpf(-h - 10.0, top, eased))
 
 
 func _on_landscaping(what: String) -> void:

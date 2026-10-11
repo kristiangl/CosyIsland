@@ -49,7 +49,7 @@ extends Node3D
 ##   --series=ID        with --demo or --demo=home: furniture from one series (--variant=ID)
 ##   --give=ID,ID       put things in the pockets (repeat an id for more of it)
 ##   --learn            with --ui=crafting or recipes: know every recipe (--group=N: show one kind)
-##   --ui=pockets|storage|landscape|pause|map|creator|crafting|recipes|customise|journal|exchange|critters|friends|neighbour|placing (--place=ID)|intro|ask|lucy|sleep|asleep|shop|sell (--sold: just sold one)|paint (--big)|fitting (--tab=N)  (--tab=N picks a creator tab, --try=key:id,... dresses up, --closet=TEXT opens the wardrobe with clothes whose ids contain TEXT)  open a menu or mode (for screenshots)
+##   --ui=pockets|storage|landscape|pause|map|creator|crafting|recipes|customise|journal|exchange|critters|friends|neighbour|placing (--place=ID)|intro|ask|lucy|sleep|asleep|shop|sell (--sold: just sold one)|paint (--big)|fitting (--tab=N)|sunrise (--t=SECONDS into it)|stamp (--talk: over a conversation)  (--tab=N picks a creator tab, --try=key:id,... dresses up, --closet=TEXT opens the wardrobe with clothes whose ids contain TEXT)  open a menu or mode (for screenshots)
 
 const AUTOSAVE_SECONDS := 60.0
 
@@ -76,6 +76,13 @@ var _room_index := 0
 var _rooms: Dictionary = {}
 var _going_through_door := false
 var ambient: AmbientEffects
+## The island day the island last caught up with (`_on_day_changed`).
+var _day := -1
+## Asleep: the screen's dark, so a new day needs no sunrise of its own.
+var _sleeping := false
+## The home that last turned you away, and when (msec), for `_nobody_home`.
+var _away_from := -1
+var _away_at := 0
 
 
 func _ready() -> void:
@@ -95,6 +102,7 @@ func _ready() -> void:
 	Weather.tour = {}
 	if Game.args.has("hour"):
 		GameClock.set_hour(float(Game.args["hour"]))
+	_day = GameClock.day_key()
 
 	world = World.new()
 	world.name = "World"
@@ -181,7 +189,7 @@ func _ready() -> void:
 	Events.home_left.connect(_leave_home)
 	Events.room_door.connect(_go_through)
 	Events.sleep_requested.connect(_sleep)
-	Events.day_changed.connect(func(_key): if room == null and tour == null: _check_house())
+	Events.day_changed.connect(_on_day_changed)
 	Events.tour_requested.connect(func(): _start_tour.call_deferred())
 	Events.tour_ended.connect(func(): _end_tour.call_deferred())
 	_check_house()
@@ -204,6 +212,13 @@ func _ready() -> void:
 	for id: String in String(Game.args.get("give", "")).split(",", false):
 		Inventory.add_item(id)
 	match Game.args.get("ui", ""):
+		"sunrise":
+			hud.sunrise.hold_at = float(Game.args.get("t", "2.8"))
+			hud.sunrise.play(new_day_words(GameClock.hour_float()), GameClock.date_string())
+		"stamp":
+			Journal.completed.emit("Caught 10 fish", 30)
+			if Game.args.has("talk"):
+				Game.dialogue.say("poppy", ["Look at that, a stamp for your journal! You're really getting the hang of island life."])
 		"pockets":
 			for id in ["wood", "stone", "clay", "iron_nugget", "tree_branch", "wooden_chair", "campfire", "apple", "tulip_red", "tour_ticket", "shop_kit"]:
 				Inventory.add_item(id, 3)
@@ -350,6 +365,7 @@ func _ready() -> void:
 			var item: String = Game.args.get("place", "wooden_table")
 			Inventory.add_item(item)
 			placement.begin(Inventory.slots.find_custom(func(s): return s.get("id", "") == item))
+	_day = GameClock.day_key()
 	if Game.args.has("screenshot"):
 		_take_screenshot(Game.args["screenshot"], int(Game.args.get("frames", "45")))
 	else:
@@ -534,6 +550,44 @@ func _spawn_npcs() -> void:
 	_check_visitor()
 
 
+## Another island day (time travel, sleeping, or the clock passing five in the morning):
+## a sunrise covers the screen while the island catches up with it.
+func _on_day_changed(key: int) -> void:
+	if key == _day:
+		return
+	var back := key < _day
+	_day = key
+	if _sleeping or hud.sunrise.playing or Game.args.has("screenshot"):
+		# The screen's dark or covered already.
+		_catch_up()
+		return
+	var was := Game.mode
+	Game.mode = Game.Mode.MENU
+	hud.sunrise.covered.connect(_catch_up, CONNECT_ONE_SHOT)
+	hud.sunrise.play(new_day_words(GameClock.hour_float(), back), GameClock.date_string())
+	await hud.sunrise.done
+	if Game.mode == Game.Mode.MENU:
+		Game.mode = was
+
+
+## What the sunrise says: hello for the time of day, or that you've gone back a day.
+static func new_day_words(hour: float, back := false) -> String:
+	if back:
+		return "Back a day!"
+	if hour >= 5.0 and hour < 12.0:
+		return "Good morning!"
+	return "A new day!"
+
+
+## The island catches up with the day: buildings finished overnight, who's moved in or
+## out, today's visitors on the plaza, and the neighbours start afresh from home.
+func _catch_up() -> void:
+	if room == null and tour == null:
+		_check_house()
+	if neighbourhood:
+		neighbourhood.fresh_start()
+
+
 ## The house Poppy promised goes up once a night has passed (not while you're inside).
 func _check_house() -> void:
 	if Story.finish_house(world):
@@ -710,11 +764,18 @@ func _place_lucy() -> void:
 func _sleep(hour: float) -> void:
 	Game.mode = Game.Mode.MENU
 	await hud.fade_out()
+	var before := GameClock.day_key()
+	_sleeping = true
 	var hours := GameClock.sleep_until(hour)
 	Journal.add("slept")
 	await get_tree().create_timer(0.6).timeout
+	_sleeping = false
 	player.get_up()
-	await hud.fade_in()
+	if GameClock.day_key() != before:
+		# Waking up to a new day: the sunrise, straight out of the dark.
+		await hud.sunrise_from_dark(new_day_words(GameClock.hour_float()), GameClock.date_string())
+	else:
+		await hud.fade_in()
 	Game.mode = Game.Mode.PLAY
 	player.model.play("cheer")
 	var greeting := "Good morning!" if hour >= 5.0 and hour < 12.0 else ("Good afternoon!" if hour >= 12.0 and hour < 17.0 else ("Good evening!" if hour >= 17.0 else "It's the middle of the night."))
@@ -733,11 +794,11 @@ func _enter_home(uid: int, instant := false, index := 0) -> void:
 	if resident != "":
 		var outside := Story.npc(resident)
 		if (outside and outside.world == world and outside.visible) or (outside == null and Npc.out_at(GameClock.hour_float())):
-			Events.toast.emit("Nobody's home. %s is out and about." % NpcData.display_name(resident))
+			_nobody_home(uid, "Nobody's home. %s is out and about." % NpcData.display_name(resident))
 			return
 		var away := neighbourhood.host_of(resident) if neighbourhood else ""
 		if away != "" and GameClock.hour_float() < Neighbourhood.VISIT_TO:
-			Events.toast.emit("Nobody's home. %s is round at %s's this evening." % [NpcData.display_name(resident), NpcData.display_name(away)])
+			_nobody_home(uid, "Nobody's home. %s is round at %s's this evening." % [NpcData.display_name(resident), NpcData.display_name(away)])
 			return
 	_going_through_door = true
 	Game.mode = Game.Mode.MENU
@@ -753,6 +814,16 @@ func _enter_home(uid: int, instant := false, index := 0) -> void:
 	if not instant:
 		await hud.fade_in()
 	_going_through_door = false
+
+
+## Says nobody's home, once: walking into the door frame after frame stays quiet until
+## you've stepped away for a moment.
+func _nobody_home(uid: int, text: String) -> void:
+	var now := Time.get_ticks_msec()
+	if uid != _away_from or now - _away_at > 1500:
+		Events.toast.emit(text)
+	_away_from = uid
+	_away_at = now
 
 
 ## A home's rooms: its main "room", then any others in "rooms".
@@ -1507,13 +1578,17 @@ func _run_demo() -> void:
 			camera_rig.snap()
 		return
 	if Game.args["demo"] == "garden":
-		# Outdoor decorations laid out on open ground near the plaza (--only=id,id for some).
+		# Outdoor decorations laid out on open ground near the plaza (--only=id,id for some,
+		# --only=landmarks for the big ones).
 		var ids: Array[String] = []
 		for id: String in ItemDB.items:
 			if ItemDB.placeable(id).get("outdoor", false):
 				ids.append(id)
 		ids.sort()
-		if Game.args.has("only"):
+		if Game.args.get("only", "") == "landmarks":
+			# The big ones: rides, stalls and statues.
+			ids.assign(ids.filter(func(id): return ItemDB.placeable(id).get("landmark", false)))
+		elif Game.args.has("only"):
 			ids.assign(String(Game.args["only"]).split(","))
 		var area := Rect2i()
 		var near := INF

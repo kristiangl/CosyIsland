@@ -284,6 +284,21 @@ Milestone 3b:
   without), neighbours giving you something they caught (the museum's missing one,
   ideally), and gossip: gifts, donations, rare catches, games, landscaping, big
   purchases, upgrades, tours and new looks all get talked about, to you and to each other.
+- [x] A sunrise for each new day: going forward (or back) a day, waking up, or the clock
+  passing five shows a little sunrise over the sea, and behind it the island catches up:
+  today's visitors arrive, yesterday's go home, and the neighbours start the day from their
+  doors. Campers you've met never visit two days running. Journal stamps slide in at the top
+  of the screen, and notes over a conversation go up there too. The fitting room names the
+  clothes (and their prices on the rail). Sitting on a chair puts you on the seat, not
+  behind it. Knocking at an empty home says so once.
+- [x] Big things for the island: Lucy never runs out (but for her recipe cards) and has one
+  big decoration a day (two once her shop's built) out of 23: a Ferris wheel that turns with
+  its cabins lit at night, a carousel with horses going up and down, teacups spinning round
+  a giant teapot, a tethered hot air balloon, ice cream, popcorn and candy floss carts, a
+  balloon bunch, a strength tester, hot dog and soda stands, a fairground gate, mini golf
+  holes, a skate ramp and rail, and statues after famous ones: a giant rubber duck, a moai,
+  a sphinx cat, a small green torch statue, a leaning tower, a clock tower and a beckoning
+  lucky cat.
 - [x] Fences that join up: picket fences, palisades, low stone walls and iron railings, plus
   wooden and iron gates (standing open, to walk through). Each fills a tile, stacks to 99
   and goes down one after another without going back to the pockets; side by side they

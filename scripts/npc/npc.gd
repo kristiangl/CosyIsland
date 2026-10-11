@@ -388,6 +388,15 @@ func go_home() -> void:
 		pastime = "home"
 
 
+## A fresh start on a new day: whatever they were doing is put away and they set off
+## from their front door.
+func restart() -> void:
+	stop()
+	position = Vector3(home.x, world.ground_height(home.x, home.z), home.z)
+	_target = Vector3.ZERO
+	_wait = _rng.randf_range(0.5, 4.0)
+
+
 ## Puts the pastime away: tools back in the pocket, up off the seat, the line reeled in.
 func stop() -> void:
 	if _seated:

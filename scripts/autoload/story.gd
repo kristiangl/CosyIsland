@@ -1074,13 +1074,14 @@ func _invite(who: Npc) -> void:
 # --- Visitors ------------------------------------------------------------------------
 
 ## How likely it is that someone you met on a tour drops in on a given day.
-const VISIT_CHANCE := 0.4
+const VISIT_CHANCE := 0.5
 ## Who visits regardless of the day's luck (for demos and tests).
 var force_visitor := ""
 
 
 ## Who's visiting your island today: now and then, someone you met camping on a tour
-## (on a later day) who hasn't moved in yet. "" for nobody.
+## (on a later day) who hasn't moved in yet, and not the same one two days running.
+## "" for nobody.
 func visitor_today() -> String:
 	var met: Dictionary = flags.get("met", {})
 	var day := GameClock.day_key()
@@ -1095,6 +1096,24 @@ func visitor_today() -> String:
 	if force_visitor in free:
 		return force_visitor
 	free.sort()
+	return _visitor_on(day, free, 6)
+
+
+## Who visits on `day` from `free`: the day's pick, or if they came yesterday someone
+## else (or nobody). Looks back `depth` days at most.
+func _visitor_on(day: int, free: Array, depth: int) -> String:
+	var who := _visitor_pick(day, free)
+	if who == "" or depth <= 0 or who != _visitor_on(day - 1, free, depth - 1):
+		return who
+	var others := free.filter(func(id): return id != who)
+	if others.is_empty():
+		return ""
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(["visitor_other", day])
+	return others[rng.randi() % others.size()]
+
+
+func _visitor_pick(day: int, free: Array) -> String:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(["visitor", day, Game.island.data.seed_value if Game.island else 0])
 	if rng.randf() >= VISIT_CHANCE:

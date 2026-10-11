@@ -63,6 +63,16 @@ static func get_mesh(key: String) -> ArrayMesh:
 		var mesh := _series(p[1])
 		_cache[key] = mesh
 		return mesh
+	if p[0] == "landmark":
+		# Big decorations built in code (LandmarkModels), lit bits in a glow surface.
+		var glow := MeshKit.new()
+		LandmarkModels.build(k, glow, p)
+		var built := k.commit()
+		if not glow.is_empty():
+			built.set_meta("glow_surface", built.get_surface_count())
+			glow.commit(built)
+		_cache[key] = built
+		return built
 	match p[0]:
 		"tree":
 			k = _kit_from(TREES[int(p[1]) % TREES.size()])

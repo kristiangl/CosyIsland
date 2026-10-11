@@ -19,6 +19,8 @@ extends SceneTree
 ##            canopies and bushes shade like soft puffs under the cel lighting
 ## KayKit models colour each face from a small palette texture, so sampling the
 ## texture at each vertex's UV gives its colour without needing the texture at all.
+## A few Kenney models (CC0, www.kenney.nl: names starting "kenney_") come through the
+## same way from their .glb files; give --src the folder both kinds are unpacked in.
 
 const LIST := "res://tools/kaykit.json"
 const OUT_DIR := "res://assets/kaykit/"
@@ -106,13 +108,26 @@ static func import_animations(src: String, files: Dictionary) -> AnimationLibrar
 
 
 ## One glTF file as a single-surface mesh, scaled, centred and standing on y = 0.
+## A glTF's JSON: the whole of a .gltf, or the first chunk of a binary .glb (Kenney's
+## packs come as .glb, with their colour map beside them in Textures/).
+static func gltf_json(path: String) -> Dictionary:
+	if path.get_extension().to_lower() != "glb":
+		return JSON.parse_string(FileAccess.get_file_as_string(path))
+	var bytes := FileAccess.get_file_as_bytes(path)
+	if bytes.size() < 20:
+		return {}
+	var length := bytes.decode_u32(12)
+	var parsed = JSON.parse_string(bytes.slice(20, 20 + length).get_string_from_utf8())
+	return parsed if parsed is Dictionary else {}
+
+
 static func import_model(path: String, entry: Dictionary, palette: Dictionary) -> ArrayMesh:
 	var doc := GLTFDocument.new()
 	var state := GLTFState.new()
 	if doc.append_from_file(path, state) != OK:
 		return null
 	var texture := Image.new()
-	var json: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(path))
+	var json := gltf_json(path)
 	var images: Array = json.get("images", [])
 	if not images.is_empty():
 		texture.load(path.get_base_dir().path_join(images[0]["uri"]))

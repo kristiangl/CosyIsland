@@ -114,6 +114,23 @@ func _new_day() -> void:
 				n.carry(n.everyday)
 
 
+## The island's moved on to another day (`Main._catch_up`, under the sunrise): any game
+## is called off and every neighbour starts the day afresh from their front door.
+func fresh_start() -> void:
+	_new_day()
+	if not game.is_empty():
+		game = {}
+		if _flag:
+			_flag.visible = false
+		if hud:
+			hud.hide_game()
+	offer = {}
+	for n in Game.npcs:
+		if is_instance_valid(n) and n.wanders and not n.visiting and not n.always_out and NpcData.is_neighbour(n.id) \
+				and n.world == Game.island:
+			n.restart()
+
+
 func _process(delta: float) -> void:
 	var island := Game.island
 	if island == null:
@@ -498,8 +515,12 @@ func _maybe_offer() -> void:
 		return
 	var n: Npc = near[_rng.randi() % near.size()]
 	var weights: Dictionary = GAMES.get(NpcData.get_character(n.id).get("personality", "cheerful"), GAMES["cheerful"])
+	# A weighted shuffle: each game draws once, the best draw is asked first.
 	var kinds: Array = weights.keys()
-	kinds.sort_custom(func(a, b): return _rng.randf() * float(weights[a]) > _rng.randf() * float(weights[b]))
+	var draw := {}
+	for kind: String in kinds:
+		draw[kind] = _rng.randf() * float(weights[kind])
+	kinds.sort_custom(func(a, b): return draw[a] > draw[b])
 	for kind: String in kinds:
 		if make_offer(n, kind):
 			return

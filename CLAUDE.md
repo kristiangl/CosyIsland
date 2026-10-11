@@ -38,7 +38,8 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
 (`--island=orchard|meadow|quarry|buggy|fishy` with `--demo=tour`) (`--house` builds the house first, `--series=id` furnishes
   the home from one series; `--built` turns the museum tent into the museum, `--visit`
   goes inside the museum or a neighbour's home),
-  `--ui=pockets|pause|map|creator|crafting|customise|placing|intro|ask|lucy|sleep|asleep|shop|sell|tailors` (`--place=id` picks what to place),
+  `--ui=pockets|pause|map|creator|crafting|customise|placing|intro|ask|lucy|sleep|asleep|shop|sell|tailors|sunrise|stamp` (`--place=id` picks what to place,
+  `--t=SECONDS` how far into the sunrise, `--talk` puts the stamp over a conversation),
   `--tab=N` and `--try=key:id` for the creator, `--room=wallpaper,flooring`, `--gen=N`,
   `--at=X,Z`, `--hour`, `--give=id,id` to fill the pockets, `--zoom=0.4` to bring the camera in).
 
@@ -87,7 +88,14 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   in screenshots and with `--mute`; "Sounds" in the phone's Options. The sounds are built by
   `tools/make_sfx.sh [KENNEY_DIR]` (synthesised with ffmpeg, plus Kenney's CC0 packs).
 - `Journal` (autoload, `data/journal.json`) counts what the player does (`Journal.add(stat)`)
-  and pays stamps for milestones and daily tasks; its exchange sells pocket upgrades etc.
+  and pays stamps for milestones and daily tasks (`Journal.completed`: the HUD slides a stamp
+  down at the top of the screen, `Hud._on_stamped`); its exchange sells pocket upgrades etc.
+- A new island day (time travel, waking up, the clock passing five) plays a sunrise over the
+  screen (`SunriseSplash`, `Hud.sunrise`; main.gd `_on_day_changed`), and while it covers the
+  screen the island catches up (`_catch_up`: `_check_house` for buildings, move-ins and
+  today's visitors, `Neighbourhood.fresh_start` sends everyone back to their door,
+  `Npc.restart`). Campers visit on some days, never the same one two days running
+  (`Story.visitor_today`).
 - `Critters` (a child of the island `World`, `data/creatures.json`): fish shadows (pointed
   ovals that wiggle: `CreatureModels.shadow`, `shaders/blob_shadow.gdshader`) and bugs
   spawned near the player by time of day; fishing (`cast`/`reel`) and `net`.
@@ -101,7 +109,8 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   so are the insides where islanders work (placeable "inside": `Main.INSIDES`, fittings
   and people): Poppy's office, Bramble's museum tent (Bramble also stands in the museum),
   and the tailors', whose fitting mirror opens `CharacterCreator.open_fitting`
-  (`Story._fitting`).
+  (`Story._fitting`; the creator names the tile in focus, with its price on the rail,
+  `CharacterCreator.caption`).
 - Island tours: `main.gd` swaps to a tour `World` (`tour = true`, `Game.tour`; nothing
   can be placed) built from `IslandGenerator.generate_tour`, and frees it on the way home.
   `Game.island` stays the home island; `Game.outdoors()` is whichever one you're on (the
@@ -218,6 +227,15 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   decorations (big rocks, fences, arches, lamps...): "outdoor" placeables that only go
   outside, which Lucy stocks apart from the furniture (`Shop.OUTDOOR_PER_DAY`), some with
   DIY recipes; "walk_through" ones (arches) are walked under. `--demo=garden` (`--back`).
+- Lucy never runs out of anything but her recipe cards (one of each a day); other stalls
+  sell out (`Shop.restocks(id, keeper)`).
+- Big island decorations (placeable "landmark", outdoor; Lucy has `Shop.LANDMARKS_PER_DAY`):
+  fairground rides, carts and stalls, and statues after famous ones, built in code by
+  `LandmarkModels` (Models keys "landmark:<id>", lit parts in a glow surface), plus a few
+  Kenney CC0 models (fairground stalls and gate, mini golf, skate ramp: "kenney_" names in
+  `tools/kaykit.json`, imported the same way). Those with a "ride" (Ferris wheel, carousel,
+  teacups, hot air balloon, lucky cat) are drawn as "landmark:<ride>_base" with their moving
+  parts on a `Ride` node (`scripts/world/ride.gd`). `--demo=garden --only=landmarks`.
 - Fences (placeable "fence": a `FenceModels` style, picket, palisade, stone or iron; "gate"
   for gates) fill one tile each, stack to 99, never sell out, and keep placing until the
   stack runs out (`Placement`, `_fence`). Each joins the fences beside it:
@@ -265,8 +283,9 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   Everyday clothes (the plain styles there) are items made on demand,
   `basic.<slot>.<style>.<colour>[.<colour2>.<pattern>]` (`ItemDB.basic_id`); the
   wardrobe (`Inventory.closet`) only offers clothes you own.
-- `Events.toast.emit(text)` shows a note at the bottom of the screen; the HUD counts the
-  same text again on one note ("x3", `Hud.toast_line`) rather than queueing repeats.
+- `Events.toast.emit(text)` shows a note at the bottom of the screen (at the top over a
+  conversation); the HUD counts the same text again on one note ("x3", `Hud.toast_line`)
+  rather than queueing repeats.
 - `Icons.portrait(id)` renders a character's face (journal, map); `Music.muted` is the
   phone's Options setting, kept in `user://settings.cfg`.
 

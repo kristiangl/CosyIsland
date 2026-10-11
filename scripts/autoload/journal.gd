@@ -103,8 +103,8 @@ func _pay(text: String, reward: int) -> void:
 	stamps += reward
 	Sfx.play("jingle_reward", 0.0, 1.0, 0.0)
 	stamps_changed.emit(stamps)
+	# The HUD slides a stamp down from the top of the screen (`Hud._on_stamped`).
 	completed.emit(text, reward)
-	Events.toast.emit("Journal: %s. +%d stamps" % [text, reward])
 
 
 ## Today's five tasks (rolled fresh each day, the same for everyone on the island).

@@ -701,6 +701,10 @@ func _spawn_node(obj: Dictionary) -> void:
 	var node := Node3D.new()
 	var mesh := MeshInstance3D.new()
 	mesh.mesh = Models.get_mesh(fence_key(obj["item"], Vector2i(obj["x"], obj["z"]), obj.get("rot", 0)) if is_fence(obj) else Models.key_for(obj))
+	var ride: String = ItemDB.placeable(obj.get("item", "")).get("ride", "") if obj["kind"] == "placed" else ""
+	if ride != "":
+		# A ride's still parts; the moving ones are the Ride's (see LandmarkModels).
+		mesh.mesh = Models.get_mesh("landmark:%s_base" % ride)
 	var base := Models.material()
 	if obj["kind"] == "flower":
 		base = Models.flower_material()
@@ -712,6 +716,8 @@ func _spawn_node(obj: Dictionary) -> void:
 	if obj["kind"] == "drop" or is_rug(obj):
 		mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	node.add_child(mesh)
+	if ride != "":
+		node.add_child(Ride.new(ride, obj["uid"] * 3.7))
 	var tiles := footprint(obj)
 	var centre := Vector2.ZERO
 	for t in tiles:

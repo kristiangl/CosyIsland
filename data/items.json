@@ -3645,6 +3645,426 @@
 				"rotatable": true,
 				"light": true
 			}
+		},
+		"ferris_wheel": {
+			"name": "Ferris Wheel",
+			"category": "furniture",
+			"stack": 1,
+			"price": 5000,
+			"color": "#e88aa6",
+			"desc": "Round and round, ever so slowly, with the whole island below. Its lights come on at night.",
+			"placeable": {
+				"footprint": [
+					4,
+					2
+				],
+				"model": "landmark:ferris_wheel",
+				"rotatable": true,
+				"outdoor": true,
+				"landmark": true,
+				"ride": "ferris_wheel"
+			}
+		},
+		"carousel": {
+			"name": "Carousel",
+			"category": "furniture",
+			"stack": 1,
+			"price": 4000,
+			"color": "#f2a7c0",
+			"desc": "Painted horses going round and round under a striped roof.",
+			"placeable": {
+				"footprint": [
+					3,
+					3
+				],
+				"model": "landmark:carousel",
+				"rotatable": true,
+				"outdoor": true,
+				"landmark": true,
+				"ride": "carousel"
+			}
+		},
+		"teacup_ride": {
+			"name": "Teacup Ride",
+			"category": "furniture",
+			"stack": 1,
+			"price": 3500,
+			"color": "#9fd3c7",
+			"desc": "Spinning teacups round a giant teapot. Best not ridden after lunch.",
+			"placeable": {
+				"footprint": [
+					3,
+					3
+				],
+				"model": "landmark:teacups",
+				"rotatable": true,
+				"outdoor": true,
+				"landmark": true,
+				"ride": "teacups"
+			}
+		},
+		"hot_air_balloon": {
+			"name": "Hot Air Balloon",
+			"category": "furniture",
+			"stack": 1,
+			"price": 3000,
+			"color": "#e0656b",
+			"desc": "Tied down tight, so it can only dream of floating away.",
+			"placeable": {
+				"footprint": [
+					2,
+					2
+				],
+				"model": "landmark:hot_air_balloon",
+				"rotatable": true,
+				"outdoor": true,
+				"landmark": true,
+				"ride": "hot_air_balloon"
+			}
+		},
+		"ice_cream_cart": {
+			"name": "Ice Cream Cart",
+			"category": "furniture",
+			"stack": 1,
+			"price": 1200,
+			"color": "#9fd3c7",
+			"desc": "Three flavours, one sunshade and a very big cone on top.",
+			"placeable": {
+				"footprint": [
+					2,
+					1
+				],
+				"model": "landmark:ice_cream_cart",
+				"rotatable": true,
+				"outdoor": true,
+				"landmark": true
+			}
+		},
+		"popcorn_cart": {
+			"name": "Popcorn Cart",
+			"category": "furniture",
+			"stack": 1,
+			"price": 800,
+			"color": "#e0656b",
+			"desc": "Smells wonderful. Always.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "landmark:popcorn_cart",
+				"rotatable": true,
+				"outdoor": true,
+				"landmark": true
+			}
+		},
+		"candy_floss_stand": {
+			"name": "Candy Floss Stand",
+			"category": "furniture",
+			"stack": 1,
+			"price": 800,
+			"color": "#b9a6e6",
+			"desc": "Pink, blue and lilac clouds on sticks.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "landmark:candy_floss",
+				"rotatable": true,
+				"outdoor": true,
+				"landmark": true
+			}
+		},
+		"balloon_bunch": {
+			"name": "Balloon Bunch",
+			"category": "furniture",
+			"stack": 1,
+			"price": 500,
+			"color": "#8cc8e8",
+			"desc": "Seven balloons tied to a weight, bobbing in the breeze.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "landmark:balloon_bunch",
+				"rotatable": true,
+				"outdoor": true,
+				"landmark": true
+			}
+		},
+		"strength_tester": {
+			"name": "Strength Tester",
+			"category": "furniture",
+			"stack": 1,
+			"price": 900,
+			"color": "#f2d36b",
+			"desc": "Swing the mallet, ring the bell.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "landmark:strength_tester",
+				"rotatable": true,
+				"outdoor": true,
+				"landmark": true
+			}
+		},
+		"hot_dog_stand": {
+			"name": "Hot Dog Stand",
+			"category": "furniture",
+			"stack": 1,
+			"price": 1500,
+			"color": "#f0a07a",
+			"desc": "A fairground snack stand with a giant hot dog on the roof.",
+			"placeable": {
+				"footprint": [
+					2,
+					2
+				],
+				"model": "kaykit:kenney_stall_food",
+				"rotatable": true,
+				"outdoor": true,
+				"landmark": true
+			}
+		},
+		"soda_stand": {
+			"name": "Soda Stand",
+			"category": "furniture",
+			"stack": 1,
+			"price": 1300,
+			"color": "#e0656b",
+			"desc": "Fizzy drinks, with a giant cup on the roof to prove it.",
+			"placeable": {
+				"footprint": [
+					2,
+					2
+				],
+				"model": "kaykit:kenney_stall_drinks",
+				"rotatable": true,
+				"outdoor": true,
+				"landmark": true
+			}
+		},
+		"fairground_gate": {
+			"name": "Fairground Gate",
+			"category": "furniture",
+			"stack": 1,
+			"price": 2000,
+			"color": "#9aa3ab",
+			"desc": "Two little towers with flags and an arch to walk through.",
+			"placeable": {
+				"footprint": [
+					3,
+					1
+				],
+				"model": "kaykit:kenney_park_entrance",
+				"rotatable": true,
+				"outdoor": true,
+				"landmark": true,
+				"walk_through": true
+			}
+		},
+		"mini_golf_windmill": {
+			"name": "Mini Golf Windmill",
+			"category": "furniture",
+			"stack": 1,
+			"price": 1800,
+			"color": "#e08a5a",
+			"desc": "A crazy golf hole with a windmill in the way.",
+			"placeable": {
+				"footprint": [
+					2,
+					2
+				],
+				"model": "kaykit:kenney_golf_windmill",
+				"rotatable": true,
+				"outdoor": true,
+				"landmark": true
+			}
+		},
+		"mini_golf_castle": {
+			"name": "Mini Golf Castle",
+			"category": "furniture",
+			"stack": 1,
+			"price": 1500,
+			"color": "#e08a5a",
+			"desc": "A crazy golf hole through a little castle.",
+			"placeable": {
+				"footprint": [
+					2,
+					2
+				],
+				"model": "kaykit:kenney_golf_castle",
+				"rotatable": true,
+				"outdoor": true,
+				"landmark": true
+			}
+		},
+		"skate_ramp": {
+			"name": "Skate Ramp",
+			"category": "furniture",
+			"stack": 1,
+			"price": 1400,
+			"color": "#d97a4e",
+			"desc": "A curved ramp for skateboards (and sliding down on your bottom).",
+			"placeable": {
+				"footprint": [
+					2,
+					2
+				],
+				"model": "kaykit:kenney_half_pipe",
+				"rotatable": true,
+				"outdoor": true,
+				"landmark": true
+			}
+		},
+		"grind_rail": {
+			"name": "Grind Rail",
+			"category": "furniture",
+			"stack": 1,
+			"price": 600,
+			"color": "#e0503c",
+			"desc": "A rail for skateboard tricks.",
+			"placeable": {
+				"footprint": [
+					1,
+					2
+				],
+				"model": "kaykit:kenney_skate_rail",
+				"rotatable": true,
+				"outdoor": true,
+				"landmark": true
+			}
+		},
+		"giant_rubber_duck": {
+			"name": "Giant Rubber Duck",
+			"category": "furniture",
+			"stack": 1,
+			"price": 2500,
+			"color": "#f6d34a",
+			"desc": "Bigger than any bath. Doesn't squeak, sadly.",
+			"placeable": {
+				"footprint": [
+					2,
+					2
+				],
+				"model": "landmark:rubber_duck",
+				"rotatable": true,
+				"outdoor": true,
+				"landmark": true
+			}
+		},
+		"moai_head": {
+			"name": "Moai Head",
+			"category": "furniture",
+			"stack": 1,
+			"price": 2000,
+			"color": "#8f8a80",
+			"desc": "A long, thoughtful stone face, like the ones on Easter Island.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "landmark:moai",
+				"rotatable": true,
+				"outdoor": true,
+				"landmark": true
+			}
+		},
+		"sphinx_cat": {
+			"name": "Sphinx Cat",
+			"category": "furniture",
+			"stack": 1,
+			"price": 4500,
+			"color": "#e3c38a",
+			"desc": "Like the Great Sphinx of Giza, if it were a cat.",
+			"placeable": {
+				"footprint": [
+					2,
+					3
+				],
+				"model": "landmark:sphinx_cat",
+				"rotatable": true,
+				"outdoor": true,
+				"landmark": true
+			}
+		},
+		"torch_statue": {
+			"name": "Torch Statue",
+			"category": "furniture",
+			"stack": 1,
+			"price": 3500,
+			"color": "#86c4ae",
+			"desc": "A small, very green Statue of Liberty. Her torch is lit at night.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "landmark:torch_statue",
+				"rotatable": true,
+				"outdoor": true,
+				"landmark": true
+			}
+		},
+		"leaning_tower": {
+			"name": "Leaning Tower",
+			"category": "furniture",
+			"stack": 1,
+			"price": 4000,
+			"color": "#f4efe6",
+			"desc": "Like the one in Pisa. It's meant to lean like that. Probably.",
+			"placeable": {
+				"footprint": [
+					2,
+					2
+				],
+				"model": "landmark:leaning_tower",
+				"rotatable": true,
+				"outdoor": true,
+				"landmark": true
+			}
+		},
+		"clock_tower": {
+			"name": "Clock Tower",
+			"category": "furniture",
+			"stack": 1,
+			"price": 4500,
+			"color": "#e9dcc0",
+			"desc": "Like Big Ben, only it doesn't bong. Its clock faces glow at night.",
+			"placeable": {
+				"footprint": [
+					2,
+					2
+				],
+				"model": "landmark:clock_tower",
+				"rotatable": true,
+				"outdoor": true,
+				"landmark": true
+			}
+		},
+		"lucky_cat": {
+			"name": "Lucky Cat",
+			"category": "furniture",
+			"stack": 1,
+			"price": 1500,
+			"color": "#f8f4ec",
+			"desc": "A maneki-neko, beckoning good luck (and visitors) your way.",
+			"placeable": {
+				"footprint": [
+					1,
+					1
+				],
+				"model": "landmark:lucky_cat",
+				"rotatable": true,
+				"outdoor": true,
+				"landmark": true,
+				"ride": "lucky_cat"
+			}
 		}
 	},
 	"fruits": {

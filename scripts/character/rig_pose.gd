@@ -108,8 +108,8 @@ static func blend(a: Dictionary, b: Dictionary, w: float) -> void:
 
 
 ## Turns the model's pivots (`pivots` in MAP order) towards a sample by `weight`, over
-## whatever pose they already have. `lift` scales how far the hips move up and down (0
-## keeps them still, as when sitting on a seat).
+## whatever pose they already have. `lift` scales how far the hips move (0 keeps them
+## still, as when sitting on a seat: the chair clip sits well back from where it stands).
 static func apply(pivots: Array[Node3D], pose: Dictionary, hip_height: float, lift: float = 1.0, weight: float = 1.0) -> void:
 	var globals := {}
 	for name in _order:
@@ -135,8 +135,7 @@ static func apply(pivots: Array[Node3D], pose: Dictionary, hip_height: float, li
 			# Turn about the hip joint (our hips pivot sits at the feet), and follow the
 			# hips up and down, scaled to our height.
 			var rest: Vector3 = _rest_globals["hips"].origin
-			var moved: Vector3 = (g.origin - rest) * (hip_height / maxf(rest.y, 0.01))
-			moved.y *= lift
+			var moved: Vector3 = (g.origin - rest) * (hip_height / maxf(rest.y, 0.01)) * lift
 			var joint := Vector3(0, hip_height, 0)
 			pivot.position = pivot.position.lerp(joint - want * joint + moved, weight)
 

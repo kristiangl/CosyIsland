@@ -169,4 +169,7 @@ Holiday, Halloween and Mixed Bag packs; neighbours' cottages, Lucy's market stal
 well, the windmill and building sites from the Medieval Hexagon Pack; and the characters'
 actions (chopping, digging, fishing, sitting, lying down, cheering...) from KayKit
 Character Animations, both by Kay Lousberg ([www.kaylousberg.com](https://www.kaylousberg.com),
-CC0), converted for the game by `tools/kaykit_import.gd`. Everything else is built in code.
+CC0). The fairground snack stands and gate, the mini golf holes and the skate ramp and rail
+are from Kenney's Coaster Kit, Minigolf Kit and Mini Skate ([www.kenney.nl](https://www.kenney.nl),
+CC0). Both are converted for the game by `tools/kaykit_import.gd`. Everything else is built
+in code.

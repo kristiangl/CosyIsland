@@ -76,6 +76,8 @@ func _run() -> void:
 	_test_weather()
 	_test_sounds()
 	_test_tour_crossings_and_pole()
+	_test_new_day()
+	_test_fairground_and_statues()
 	print("\n%d checks, %d failures" % [_checks, _failures])
 	IslandMap.finish()
 	get_tree().quit(1 if _failures > 0 else 0)
@@ -662,17 +664,23 @@ func _test_shop_and_house() -> void:
 	var today := Shop.stock(42, 100)
 	check(today == Shop.stock(42, 100), "the shop's stock is the same all day")
 	check(today != Shop.stock(42, 101), "and changes the next day")
-	check(today.size() == Shop.STAPLES.size() + 1 + Shop.FURNITURE_PER_DAY + Shop.OUTDOOR_PER_DAY + Shop.INTERIORS_PER_DAY + Shop.RECIPES_PER_DAY + Shop.CLOTHES_PER_DAY,
+	check(today.size() == Shop.STAPLES.size() + 1 + Shop.FURNITURE_PER_DAY + Shop.OUTDOOR_PER_DAY + Shop.LANDMARKS_PER_DAY + Shop.INTERIORS_PER_DAY + Shop.RECIPES_PER_DAY + Shop.CLOTHES_PER_DAY,
 		"the shop has a full stock (and an umbrella)")
-	check(today.filter(func(id): return ItemDB.placeable(id).get("outdoor", false)).size() == Shop.OUTDOOR_PER_DAY, "including something for outdoors")
+	check(today.filter(func(id): return ItemDB.placeable(id).get("outdoor", false) and not ItemDB.placeable(id).get("landmark", false)).size() == Shop.OUTDOOR_PER_DAY, "including something for outdoors")
+	check(today.filter(func(id): return ItemDB.placeable(id).get("landmark", false)).size() == Shop.LANDMARKS_PER_DAY, "and something big for the island")
 	check(today.any(func(id): return ItemDB.is_clothing(id)), "the shop sells clothes")
 	var thing: String = today[Shop.STAPLES.size()]
 	check(Shop.buy(thing, 100) != "", "can't buy without acorns")
 	Inventory.add_currency(Shop.buy_price(thing) * 2)
 	check(Shop.buy(thing, 100) == "" and Inventory.count_of(thing) == 1, "buying puts it in the pockets")
 	check(Inventory.currency == Shop.buy_price(thing), "and takes the acorns")
-	check(Shop.is_sold_out(thing, 100) and Shop.buy(thing, 100) != "", "one of each a day")
-	check(not Shop.is_sold_out(thing, 101), "new stock tomorrow")
+	Inventory.add_currency(Shop.buy_price(thing))
+	check(not Shop.is_sold_out(thing, 100) and Shop.buy(thing, 100) == "" and Inventory.count_of(thing) == 2, "Lucy has as many as you like")
+	var card: String = today.filter(func(id): return id.begins_with("recipe."))[0]
+	Inventory.add_currency(Shop.buy_price(card) * 2)
+	check(Shop.buy(card, 100) == "" and Shop.is_sold_out(card, 100) and Shop.buy(card, 100) != "", "but one of each recipe card a day")
+	check(not Shop.is_sold_out(card, 101), "new cards tomorrow")
+	check(Shop.is_sold_out(thing, 100, "tailors") == false and Shop.restocks(thing) and not Shop.restocks(thing, "tailors"), "other stalls still sell out")
 	check(Shop.buy("flimsy_axe", 100) == "" and not Shop.is_sold_out("flimsy_axe", 100), "staples never sell out")
 	Inventory.add_item("wood", 5)
 	var before := Inventory.currency
@@ -773,6 +781,14 @@ func _test_clothes() -> void:
 	fitting._select_tab(7)
 	check(fitting._content.find_children("*", "", true, false).any(func(n): return n is Label and n.text.begins_with("On the rail")),
 		"the fitting room shows the rail")
+	var rail_tile: CharacterCreator.OptionTile = null
+	for n in fitting._content.find_children("*", "", true, false):
+		if rail_tile == null and n is CharacterCreator.OptionTile and n.key == "item" and n.id in rail and not n.id in Inventory.closet:
+			rail_tile = n
+	if rail_tile:
+		fitting.caption(rail_tile)
+	check(rail_tile != null and fitting._caption.text.begins_with(ItemDB.display_name(rail_tile.id)) and fitting._caption.text.ends_with(UIStyle.acorns(Shop.buy_price(rail_tile.id))),
+		"the piece picked out on the rail is named, with its price (%s)" % (fitting._caption.text if rail_tile else ""))
 	var got := [{}]
 	fitting.fitted.connect(func(l): got[0] = l)
 	fitting._done()
@@ -1536,7 +1552,8 @@ func _test_tour_visitors() -> void:
 			Story.flags["last_move"] = GameClock.day_key()
 	GameClock.offset_seconds = start
 	check(thought > 0 and thought <= 120 / Story.MOVE_GAP_DAYS + 1 and not too_soon, "now and then someone wonders about moving (%d times in 120 days)" % thought)
-	Story.flags.erase("last_move")
+	# (Someone moved lately, so nobody new starts wondering today, whatever the date.)
+	Story.flags["last_move"] = GameClock.day_key()
 	Story.flags["moving"] = {"id": "maple", "day": GameClock.day_key() - 1, "state": "thinking"}
 	check(Story.check_moving(w).is_empty() and not Story.flags.has("moving") and not w.building_of("maple").is_empty(),
 		"if nobody asked them, they stay")
@@ -3178,3 +3195,128 @@ class ErrorLog extends Logger:
 	func _log_message(_message: String, _error: bool) -> void:
 		pass
 
+
+
+func _test_new_day() -> void:
+	# A sunrise covers the screen while the island catches up with the day, then goes.
+	var splash := SunriseSplash.new()
+	add_child(splash)
+	var seen: Array[String] = []
+	splash.covered.connect(func(): seen.append("covered"))
+	splash.done.connect(func(): seen.append("done"))
+	splash.play("Good morning!", "Mon 12 Oct")
+	splash._process(SunriseSplash.FADE_IN * 0.5)
+	check(seen.is_empty() and splash.playing and splash.modulate.a < 1.0, "the sunrise fades in")
+	splash._process(SunriseSplash.FADE_IN)
+	check(seen == ["covered"] and splash.modulate.a == 1.0, "and covers the screen")
+	splash._process(SunriseSplash.RISE + SunriseSplash.HOLD + SunriseSplash.FADE_OUT)
+	check(seen == ["covered", "done"] and not splash.playing and not splash.visible, "then it's gone")
+	splash.free()
+	check(Main.new_day_words(8.0) == "Good morning!" and Main.new_day_words(15.0) == "A new day!" and Main.new_day_words(9.0, true) == "Back a day!",
+		"it says good morning, or that it's a new day, or that you've gone back one")
+
+	# Campers you've met drop in now and then, never the same one two days running.
+	var saved_island := Game.island
+	var saved_flags := Story.flags.duplicate(true)
+	var d := IslandGenerator.generate(7)
+	var w := World.new()
+	add_child(w)
+	w.setup(d)
+	Game.island = w
+	var start := GameClock.offset_seconds
+	for met: Dictionary in [{"kiwi": 0}, {"kiwi": 0, "olive": 0}, {"kiwi": 0, "olive": 0, "rosie": 0}]:
+		Story.flags["met"] = met
+		var last := ""
+		var repeats := 0
+		var visits := 0
+		var faces := {}
+		for day in 90:
+			GameClock.offset_seconds += 86400
+			var who := Story.visitor_today()
+			repeats += 1 if who != "" and who == last else 0
+			visits += 1 if who != "" else 0
+			faces[who] = true
+			last = who
+		GameClock.offset_seconds = start
+		check(repeats == 0 and visits >= 15 and faces.size() == met.size() + 1,
+			"with %d met: %d visits in 90 days, never the same one two days running" % [met.size(), visits])
+
+	# On a new day every neighbour starts afresh from home, whatever they were doing.
+	var life := _life_island()
+	var folk: Array = life["folk"]
+	var hood: Neighbourhood = Game.neighbourhood
+	var fisher: Npc = folk[0]
+	fisher.position = fisher.home + Vector3(3, 0, 1)
+	fisher.pastime = "bugs"
+	fisher.pastime_left = 30.0
+	hood.game = {"kind": "hide", "by": folk[1].id, "left": 60.0}
+	hood.offer = {"by": folk[2].id, "kind": "race"}
+	hood.fresh_start()
+	check(fisher.pastime == "" and Vector2(fisher.position.x - fisher.home.x, fisher.position.z - fisher.home.z).length() < 0.01,
+		"a new day: back at their door with nothing on the go")
+	check(hood.game.is_empty() and hood.offer.is_empty(), "and any game or offer is called off")
+	_end_life(life)
+	w.free()
+	Game.island = saved_island
+	Story.flags = saved_flags
+
+	# Sitting on a chair keeps the hips over the seat (the chair clip sits well back).
+	var model := NpcData.model("maple")
+	add_child(model)
+	model.set_sitting(true)
+	for i in 20:
+		model.animate(0.05, 0.0)
+	var hips: Node3D = model._rig[0]
+	check(Vector2(hips.position.x, hips.position.z).length() < 0.06, "seated, the hips stay over the seat (%.2f off)" % Vector2(hips.position.x, hips.position.z).length())
+	model.free()
+
+
+func _test_fairground_and_statues() -> void:
+	var big: Array[String] = []
+	for id: String in ItemDB.items:
+		if ItemDB.placeable(id).get("landmark", false):
+			big.append(id)
+	check(big.size() >= 20, "lots of big things for the island (%d)" % big.size())
+	for id in big:
+		var pl := ItemDB.placeable(id)
+		var mesh := Models.get_mesh(pl["model"])
+		var tris := 0
+		for s in mesh.get_surface_count():
+			tris += mesh.surface_get_array_index_len(s) / 3
+		var size := mesh.get_aabb().size
+		var w: int = pl["footprint"][0]
+		var dd: int = pl["footprint"][1]
+		check(pl.get("outdoor", false) and tris > 0 and tris < maxi(2500, 900 * w * dd), "%s builds, outdoors only (%d triangles)" % [id, tris])
+		check(size.x <= w + 0.6 and size.z <= dd + 0.6, "%s fits its %dx%d footprint (%.1f x %.1f)" % [id, w, dd, size.x, size.z])
+		if pl.has("ride"):
+			check(Models.get_mesh("landmark:%s_base" % pl["ride"]).get_surface_count() > 0, "%s has its still parts" % id)
+	for id: String in ["ferris_wheel", "clock_tower", "torch_statue", "carousel"]:
+		check(Models.get_mesh(ItemDB.placeable(id)["model"]).has_meta("glow_surface"), "%s lights up at night" % id)
+	# The Ferris wheel turns, its cabins hanging level; the carousel's horses go round.
+	var d := IslandGenerator.generate(7)
+	var w := World.new()
+	add_child(w)
+	w.setup(d)
+	var spot := Rect2i()
+	for z in range(10, d.height - 10):
+		for x in range(10, d.width - 10):
+			if spot.size == Vector2i.ZERO and w.can_place(Rect2i(x, z, 4, 3), Vector3(-50, 0, -50)):
+				spot = Rect2i(x, z, 4, 2)
+	var wheel := w.place_item("ferris_wheel", spot, 0)
+	var ride: Ride = null
+	for child in w.node_of(wheel["uid"]).get_children():
+		if child is Ride:
+			ride = child
+	check(ride != null and ride.kind == "ferris_wheel" and ride._riders.size() == LandmarkModels.FERRIS_CABS, "the Ferris wheel has its wheel and cabins")
+	if ride:
+		var before: float = ride._main.rotation.z
+		var cab: Vector3 = ride._riders[0].position
+		ride._process(2.0)
+		check(not is_equal_approx(ride._main.rotation.z, before) and ride._riders[0].position.distance_to(cab) > 0.1, "it turns, carrying the cabins round")
+		check(absf(ride._riders[0].rotation.z) < 0.1, "and the cabins hang level")
+		check(ride._riders.all(func(r): return absf(r.position.distance_to(ride._main.position) - LandmarkModels.FERRIS_R) < 0.01), "on the rim")
+	var t0 := LandmarkModels.horse_spot(0, 0.0, 0.0)
+	var t1 := LandmarkModels.horse_spot(0, 0.5, 1.0)
+	check(t0.origin.distance_to(t1.origin) > 0.2 and absf(Vector2(t1.origin.x, t1.origin.z).length() - LandmarkModels.HORSE_R) < 0.01, "carousel horses go round on their poles")
+	check(t1.basis.z.dot(Vector3(t1.origin.x, 0, t1.origin.z).normalized()) < 0.1, "facing the way they go")
+	w.free()

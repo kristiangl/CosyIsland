@@ -50,6 +50,8 @@ var _cam_target := Vector3(0, 0.78, 0)
 var _tab := 0
 var _tab_buttons: Array[TabIcon] = []
 var _tab_title: Label
+## Names the tile in focus: clothes by name, and the price of those on the rail.
+var _caption: Label
 var _content: VBoxContainer
 var _scroll: ScrollContainer
 var _name_box: VBoxContainer
@@ -105,10 +107,20 @@ func _ready() -> void:
 		tab_row.add_child(t)
 		_tab_buttons.append(t)
 	tab_row.add_child(_shoulder_hint("{tab_next}"))
+	# The tab's name, and the name of whatever's picked out (with its price on the rail).
+	var title_row := HBoxContainer.new()
+	right.add_child(title_row)
 	_tab_title = Label.new()
 	_tab_title.add_theme_font_size_override("font_size", 22)
 	_tab_title.add_theme_color_override("font_color", UIStyle.BROWN_LIGHT)
-	right.add_child(_tab_title)
+	title_row.add_child(_tab_title)
+	_caption = Label.new()
+	_caption.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_caption.add_theme_font_size_override("font_size", 22)
+	_caption.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	_caption.clip_text = true
+	title_row.add_child(_caption)
 
 	_scroll = ScrollContainer.new()
 	_scroll.follow_focus = true
@@ -265,6 +277,7 @@ func _select_tab(i: int) -> void:
 		_tab_buttons[t].queue_redraw()
 	var tab: Dictionary = TABS[i]
 	_tab_title.text = tab["title"]
+	_caption.text = ""
 	_name_box.visible = _naming and i == 0
 	for child in _content.get_children():
 		child.free()
@@ -304,7 +317,7 @@ func _select_tab(i: int) -> void:
 
 
 func _focus_later(target: Control) -> void:
-	if is_instance_valid(target):
+	if is_instance_valid(target) and target.is_inside_tree():
 		target.grab_focus()
 
 
@@ -378,6 +391,18 @@ func _swatches(key: String, title: String) -> GridContainer:
 	for opt in Appearance.options(key):
 		grid.add_child(OptionTile.new(self, key, opt["id"], "", true))
 	return grid
+
+
+## Names the tile picked out beside the tab's title (clothes and styles; not swatches),
+## with the price of clothes on the tailors' rail.
+func caption(tile: OptionTile) -> void:
+	if tile.swatch:
+		_caption.text = ""
+		return
+	var text := tile.label()
+	if tile.key == "item" and tile.id in _rail and not tile.id in Inventory.closet:
+		text += "   " + UIStyle.acorns(Shop.buy_price(tile.id))
+	_caption.text = text
 
 
 ## Tries an option on.
@@ -527,6 +552,8 @@ class OptionTile:
 		tooltip_text = _name()
 		add_to_group("creator_tiles")
 		focus_entered.connect(queue_redraw)
+		focus_entered.connect(func(): creator.caption(self))
+		mouse_entered.connect(func(): creator.caption(self))
 		focus_exited.connect(queue_redraw)
 		pressed.connect(func(): creator.choose(key, id))
 
@@ -538,6 +565,9 @@ class OptionTile:
 					return false
 			return true
 		return creator.look.get(key, "") == id
+
+	func label() -> String:
+		return _name()
 
 	func _name() -> String:
 		if key == "item":

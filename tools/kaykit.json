@@ -1,5 +1,5 @@
 {
-	"_note": "KayKit models converted by tools/kaykit_import.gd into assets/kaykit/<name>.res. src is relative to the unpacked KayKit folder; scale or fit [width, height] is in game units (1 = a tile); palette moves colours onto the game's ramps.",
+	"_note": "KayKit models converted by tools/kaykit_import.gd into assets/kaykit/<name>.res. src is relative to the unpacked KayKit folder (and the kenney_ ones to Kenney's unpacked CC0 packs, kenney_coaster-kit, kenney_minigolf-kit and kenney_mini-skate, in the same folder); scale or fit [width, height] is in game units (1 = a tile); palette moves colours onto the game's ramps.",
 	"palettes": {
 		"nature": {
 			"green": [
@@ -913,6 +913,58 @@
 		"mixed_circus_tent": {
 			"src": "KayKit_Mixed_Bag_1_FREE/Assets/gltf/circus_tent.gltf",
 			"scale": 0.9
+		},
+		"kenney_stall_food": {
+			"src": "kenney_coaster-kit/Models/GLB format/stall-food.glb",
+			"fit": [
+				2.0,
+				2.4
+			],
+			"turn": 180
+		},
+		"kenney_stall_drinks": {
+			"src": "kenney_coaster-kit/Models/GLB format/stall-drinks.glb",
+			"fit": [
+				2.0,
+				2.4
+			],
+			"turn": 180
+		},
+		"kenney_park_entrance": {
+			"src": "kenney_coaster-kit/Models/GLB format/park-entrance.glb",
+			"fit": [
+				3.0,
+				3.0
+			]
+		},
+		"kenney_golf_windmill": {
+			"src": "kenney_minigolf-kit/Models/GLB format/windmill.glb",
+			"fit": [
+				2.0,
+				3.2
+			]
+		},
+		"kenney_golf_castle": {
+			"src": "kenney_minigolf-kit/Models/GLB format/castle.glb",
+			"fit": [
+				2.0,
+				2.6
+			]
+		},
+		"kenney_half_pipe": {
+			"src": "kenney_mini-skate/Models/GLB format/half-pipe.glb",
+			"fit": [
+				2.0,
+				1.6
+			],
+			"turn": 90
+		},
+		"kenney_skate_rail": {
+			"src": "kenney_mini-skate/Models/GLB format/rail-high.glb",
+			"fit": [
+				2.0,
+				1.0
+			]
 		}
 	},
 	"animations": {

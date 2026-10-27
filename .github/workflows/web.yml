@@ -1,0 +1,54 @@
+name: Web version
+
+# Builds the web version on every push and puts it on GitHub Pages, to play in a
+# browser at https://kristiangl.github.io/CosyIsland/ (saves stay in that browser).
+# Pages has to be switched on once: Settings > Pages > Build and deployment >
+# Source: GitHub Actions. Locally: tools/export_web.sh (see CLAUDE.md).
+
+on:
+  push:
+    branches: ["claude/ecstatic-meitner-398fjp", "main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+env:
+  GODOT_VERSION: "4.7.2"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get Godot and its web templates
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/godot.zip" "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          unzip -q "$RUNNER_TEMP/godot.zip" -d "$RUNNER_TEMP/godot"
+          echo "GODOT=$(ls "$RUNNER_TEMP"/godot/Godot_v*_linux.x86_64)" >> "$GITHUB_ENV"
+          python3 tools/fetch_web_templates.py "$GODOT_VERSION"
+          command -v ffmpeg || (sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg)
+
+      - name: Export the web version
+        run: tools/export_web.sh build/web
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -92,8 +92,9 @@ func _key_name(ev: InputEventKey) -> String:
 	var code := ev.physical_keycode
 	if code == KEY_NONE:
 		code = ev.keycode
-	# The key printed on this keyboard layout (headless runs can't ask).
-	var local := KEY_NONE if DisplayServer.get_name() == "headless" else DisplayServer.keyboard_get_keycode_from_physical(code)
+	# The key printed on this keyboard layout (headless runs and browsers can't ask).
+	var local := KEY_NONE if DisplayServer.get_name() == "headless" or OS.has_feature("web") \
+		else DisplayServer.keyboard_get_keycode_from_physical(code)
 	var name := OS.get_keycode_string(local if local != KEY_NONE else code)
 	return {"Escape": "Esc", "Shift": "Shift", "Space": "Space", "BackSpace": "Backspace"}.get(name, name)
 

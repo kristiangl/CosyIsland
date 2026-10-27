@@ -24,6 +24,17 @@ the network allows it, otherwise a build from source (about 30 minutes on 4 core
   `TerrainBuilder.sea_reach`): `xvfb-run -a -s "-screen 0 1920x1080x24" /opt/godot/godot
   --path . --rendering-driver opengl3 --resolution 1920x1080 -- --title=island
   --frames=40 --screenshot=/tmp/b.png`, then `ffmpeg -i /tmp/b.png -q:v 3 assets/title/backdrop.jpg`.
+- Web version: `python3 tools/fetch_web_templates.py` once (just Godot's web export
+  templates, read out of the official bundle), then `tools/export_web.sh [build/web]`
+  (exports a copy of the project with the music squeezed to 80 kbps, by the "Web" preset in
+  `export_presets.cfg`: single-threaded, so any static host works). GitHub Pages builds and
+  publishes it on every push (`.github/workflows/web.yml`). In a browser there are no worker
+  threads (`IslandMap` paints in place: `OS.has_feature("threads")`), no keyboard layout
+  lookup (`Prompts`), no Quit, saves live in the browser, a file's export is a download and
+  import uses the browser's picker (`SaveGame.download_file`, title screen
+  `_import_from_browser`, `JavaScriptBridge`), and MSAA and shadows are lighter (`.web`
+  overrides in `project.godot`). To try it here: serve `build/web` (`python3 -m http.server`)
+  and open it with Playwright's Chromium (software GL: about a frame a second).
 - Check every script parses: `tools/check_scripts.sh` (run this first; GDScript treats
   inferred-Variant types as errors, so type loop variables over literal arrays).
 - Art check scenes (render with `tools/screenshot_scene.sh out.png res://tools/<scene>`):

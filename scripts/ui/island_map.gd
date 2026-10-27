@@ -106,6 +106,12 @@ static func terrain_texture(data: IslandData) -> ImageTexture:
 		_task_for = data
 		_outdated = false
 		var copy := data.ground_copy()
+		if not OS.has_feature("threads"):
+			# No worker threads (the web build): paint it here and now.
+			_texture = ImageTexture.create_from_image(paint(copy))
+			_texture_for = data
+			_stale = null
+			return _texture
 		_task = WorkerThreadPool.add_task(func(): _painted = paint(copy), false, "Paint island map")
 	return _texture if _stale == data else null
 

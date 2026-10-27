@@ -2846,6 +2846,12 @@ func _test_neighbour_routines() -> void:
 		n.stop()
 		n.position = n.home
 	p.position = Vector3(-50, 0, -50)
+	# (About two days in three each one goes: on to a day someone does, whatever the date.)
+	for tries in 6:
+		if folk.any(func(n): return (hash(n.id) + GameClock.day_key()) % 3 != 0):
+			break
+		GameClock.offset_seconds += 86400
+	hood._visits_day = GameClock.day_key()
 	hood.routine(17.5, false)
 	var round: Array = folk.filter(func(n): return n.pastime == "campfire")
 	check(not round.is_empty(), "at dusk some go and sit by it (%d)" % round.size())

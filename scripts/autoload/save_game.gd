@@ -132,19 +132,35 @@ func export_file(n: int) -> String:
 		return ""
 	var dir := export_dir()
 	DirAccess.make_dir_recursive_absolute(dir)
-	var island: String = data.get("island_name", "")
-	var who: String = data.get("player_name", "")
-	var stem := "%s Island" % (island if island != "" else "My")
-	if who != "":
-		stem += " - " + who
-	stem += " - " + Time.get_date_string_from_system()
-	stem = safe_name(stem)
+	var stem := export_stem(n)
 	var to := dir.path_join("%s.%s" % [stem, EXPORT_EXT])
 	var tries := 2
 	while FileAccess.file_exists(to):
 		to = dir.path_join("%s (%d).%s" % [stem, tries, EXPORT_EXT])
 		tries += 1
 	return to if export_to(n, to) == OK else ""
+
+
+## A copy's name, without its ending: the island, the player and the date.
+func export_stem(n: int) -> String:
+	var data := read(n)
+	var island: String = data.get("island_name", "")
+	var who: String = data.get("player_name", "")
+	var stem := "%s Island" % (island if island != "" else "My")
+	if who != "":
+		stem += " - " + who
+	return safe_name(stem + " - " + Time.get_date_string_from_system())
+
+
+## In a browser: hands the browser a copy of file `n` to save to its downloads. The
+## name it's given, or "" if there's nothing to give.
+func download_file(n: int) -> String:
+	var data := read(n)
+	if data.is_empty() or not OS.has_feature("web"):
+		return ""
+	var name := "%s.%s" % [export_stem(n), EXPORT_EXT]
+	JavaScriptBridge.download_buffer(JSON.stringify(data).to_utf8_buffer(), name, "application/octet-stream")
+	return name
 
 
 ## Writes a copy of file `n` to `to` (a full path).

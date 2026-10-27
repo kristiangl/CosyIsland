@@ -1096,21 +1096,28 @@ func visitor_today() -> String:
 	if force_visitor in free:
 		return force_visitor
 	free.sort()
-	return _visitor_on(day, free, 6)
+	return _visitor_on(day, free)
 
 
 ## Who visits on `day` from `free`: the day's pick, or if they came yesterday someone
-## else (or nobody). Looks back `depth` days at most.
-func _visitor_on(day: int, free: Array, depth: int) -> String:
-	var who := _visitor_pick(day, free)
-	if who == "" or depth <= 0 or who != _visitor_on(day - 1, free, depth - 1):
-		return who
-	var others := free.filter(func(id): return id != who)
-	if others.is_empty():
-		return ""
-	var rng := RandomNumberGenerator.new()
-	rng.seed = hash(["visitor_other", day])
-	return others[rng.randi() % others.size()]
+## else (or nobody). Worked forward from the last day nobody was picked, when the
+## answer's certainly nobody, so it's never the same one two days running.
+func _visitor_on(day: int, free: Array) -> String:
+	var start := day
+	while start > day - 60 and _visitor_pick(start, free) != "":
+		start -= 1
+	var yesterday := ""
+	for d in range(start + 1, day + 1):
+		var who := _visitor_pick(d, free)
+		if who == yesterday:
+			var others := free.filter(func(id): return id != who)
+			who = ""
+			if not others.is_empty():
+				var rng := RandomNumberGenerator.new()
+				rng.seed = hash(["visitor_other", d])
+				who = others[rng.randi() % others.size()]
+		yesterday = who
+	return yesterday
 
 
 func _visitor_pick(day: int, free: Array) -> String:

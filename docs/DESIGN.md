@@ -308,6 +308,9 @@ Milestone 3b:
   Documents/Cosy Island, or anywhere with the system's save dialog), and Import a file on
   the title screen brings one into any file, checking it's a save from this version and
   asking before replacing an island.
+- [x] Playable in a browser (GitHub Pages, rebuilt on every push): the same game, saves kept
+  in the browser, a file downloaded to carry it elsewhere and uploaded to bring it back, a
+  Cosy Island loading screen, and lighter shadows and anti-aliasing for school laptops.
 - [x] Fences that join up: picket fences, palisades, low stone walls and iron railings, plus
   wooden and iron gates (standing open, to walk through). Each fills a tile, stacks to 99
   and goes down one after another without going back to the pockets; side by side they

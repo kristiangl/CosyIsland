@@ -58,6 +58,13 @@ A cosy island life game about crafting and decorating, made with Godot 4.
 
 ## Playing
 
+In a browser: **https://kristiangl.github.io/CosyIsland/** (rebuilt from this branch on
+every push by `.github/workflows/web.yml`; saves are kept in that browser, and a file's
+options can download a copy to carry on elsewhere). A computer with a keyboard or a
+controller works best.
+
+On a computer:
+
 1. Install [Godot 4.7](https://godotengine.org/download) (the standard build, not .NET).
 2. Open this folder in Godot and press Play, or run `godot --path .` from here.
 

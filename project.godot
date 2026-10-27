@@ -10,6 +10,9 @@ config/description="A cosy island life game focused on crafting and decorating."
 run/main_scene="res://scenes/title.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
+boot_splash/bg_color=Color(0.984, 0.953, 0.863, 1)
+boot_splash/image="res://assets/title/boot_splash.png"
+boot_splash/fullsize=false
 
 [autoload]
 
@@ -47,6 +50,10 @@ renderer/rendering_method.mobile="gl_compatibility"
 anti_aliasing/quality/msaa_3d=2
 lights_and_shadows/directional_shadow/size=4096
 lights_and_shadows/directional_shadow/soft_shadow_filter_quality=3
+; Lighter in a browser (school laptops and tablets).
+anti_aliasing/quality/msaa_3d.web=1
+lights_and_shadows/directional_shadow/size.web=2048
+lights_and_shadows/directional_shadow/soft_shadow_filter_quality.web=1
 environment/defaults/default_clear_color=Color(0.55, 0.78, 0.9, 1)
 
 [shader_globals]

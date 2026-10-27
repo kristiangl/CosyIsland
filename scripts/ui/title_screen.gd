@@ -191,6 +191,8 @@ func _build_menu() -> void:
 	quit.text = "Quit"
 	quit.custom_minimum_size = Vector2(0, 44)
 	quit.pressed.connect(func(): get_tree().quit())
+	# (In a browser you just close the tab.)
+	quit.visible = not OS.has_feature("web")
 	_menu.add_child(quit)
 	var hint := Label.new()
 	hint.text = "Files are saved as you play."
@@ -380,8 +382,14 @@ static func _native_files() -> bool:
 	return DisplayServer.has_feature(DisplayServer.FEATURE_NATIVE_DIALOG_FILE)
 
 
-## Saves a copy of file `n` in Documents/Cosy Island, to take to another computer.
+## Saves a copy of file `n` in Documents/Cosy Island, to take to another computer (in a
+## browser, to its downloads).
 func _export(n: int) -> void:
+	if OS.has_feature("web"):
+		var name := SaveGame.download_file(n)
+		_open_popup("Copy saved", "Your browser has saved it as \"%s\" (usually in Downloads).\n\nTo carry on somewhere else, choose Import a file on the title screen there and pick it." % name,
+			[["OK", _close_popup]])
+		return
 	var to := SaveGame.export_file(n)
 	if to == "":
 		_open_popup("Couldn't export", "Something went wrong saving the copy. Is the Documents folder full or locked?",
@@ -416,8 +424,15 @@ func _exported_elsewhere(n: int, to: String) -> void:
 		_open_popup("Couldn't export", "Something went wrong saving the copy there.", [["Back", func(): _file_options(n)]])
 
 
-## The copies found on this computer to bring in, newest first.
+## The copies found on this computer to bring in, newest first (in a browser, its own
+## file picker).
 func _import_list() -> void:
+	if OS.has_feature("web"):
+		_open_popup("Import a file", "Pick a .%s file you saved from Cosy Island." % SaveGame.EXPORT_EXT, [
+			["Choose a file...", _import_from_browser],
+			["Back", _close_popup],
+		])
+		return
 	var found := SaveGame.copies_found()
 	var options: Array = []
 	for copy: Dictionary in found:
@@ -440,6 +455,35 @@ func _import_picker() -> void:
 				_import_from.call_deferred(paths[0]))
 
 
+## Kept so the browser can call back once a file's picked.
+var _browser_pick: JavaScriptObject
+
+
+## The browser's file picker; the file it gives back is kept in user:// to import.
+func _import_from_browser() -> void:
+	_browser_pick = JavaScriptBridge.create_callback(func(args: Array):
+		var file := FileAccess.open(BROWSER_IMPORT, FileAccess.WRITE)
+		file.store_string(String(args[1]))
+		file.close()
+		_import_from.call_deferred(BROWSER_IMPORT))
+	JavaScriptBridge.eval("""
+		window.cosyPickFile = function(done) {
+			var input = document.createElement('input');
+			input.type = 'file';
+			input.accept = '.cosysave,.json';
+			input.onchange = function() {
+				var picked = input.files[0];
+				if (picked) { picked.text().then(function(text) { done(picked.name, text); }); }
+			};
+			input.click();
+		};
+	""", true)
+	JavaScriptBridge.get_interface("window").cosyPickFile(_browser_pick)
+
+
+const BROWSER_IMPORT := "user://browser_import.cosysave"
+
+
 ## Checks the copy at `from`, then asks which file it should go in.
 func _import_from(from: String) -> void:
 	var checked := SaveGame.check_import(from)
@@ -455,7 +499,7 @@ func _import_from(from: String) -> void:
 		options.append([label, func(): _import_into(from, n), "danger" if not s.is_empty() else ""])
 	options.append(["Back", _import_list])
 	var who: String = data.get("player_name", "")
-	_open_popup("Which file should it go in?", "%s Island%s" % [island, (", %s's" % who) if who != "" else ""], options)
+	_open_popup("Which file should it go in?", "%s Island%s" % [island.capitalize(), (", %s's" % who) if who != "" else ""], options)
 
 
 ## Puts the copy in file `n`, asking first if that means replacing an island.
@@ -471,7 +515,7 @@ func _import_into(from: String, n: int, sure := false) -> void:
 	if problem != "":
 		_open_popup("Can't import that", problem, [["Back", _import_list]])
 		return
-	_open_popup("Imported!", "%s Island is in file %d." % [_island_of(SaveGame.summary(n)), n], [
+	_open_popup("Imported!", "%s Island is in file %d." % [_island_of(SaveGame.summary(n)).capitalize(), n], [
 		["Play it", func(): _start_game(n, false)],
 		["OK", _close_popup],
 	])
